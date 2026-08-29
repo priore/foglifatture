@@ -44,3 +44,47 @@ export async function prossimoNumeroFattura(anno, mese) {
   const mesiFatturati = await listMesiFatturati();
   return String(mesiFatturati.length + 1);
 }
+
+// Legge tutte le fatture esistenti (tutti i mesi), ordinate per numero progressivo.
+async function tutteLeFatture() {
+  const chiavi = await listMesiFatturati();
+  const fatture = await Promise.all(
+    chiavi.map((chiave) => {
+      const [anno, mese] = chiave.split('-').map(Number);
+      return getInvoice(anno, mese);
+    })
+  );
+  return fatture.filter(Boolean).sort((a, b) => Number(a.numero) - Number(b.numero));
+}
+
+// Verifica che `numero` sia valido rispetto alle fatture già emesse: nessun duplicato,
+// nessun salto nella sequenza (deve essere l'ultimo progressivo + 1), escludendo dal
+// controllo la fattura del mese corrente (una rigenerazione riusa il proprio numero).
+export async function verificaIntegritaNumerazione(anno, mese, numero) {
+  const fatture = (await tutteLeFatture()).filter(
+    (f) => !(f.anno === anno && f.mese === mese)
+  );
+
+  const duplicato = fatture.find((f) => String(f.numero) === String(numero));
+  if (duplicato) {
+    return {
+      valido: false,
+      errore: `Numero fattura ${numero} già usato per ${duplicato.anno}-${String(duplicato.mese).padStart(2, '0')}`,
+    };
+  }
+
+  if (fatture.length === 0) {
+    if (String(numero) !== '1') {
+      return { valido: false, errore: `Prima fattura: il numero deve essere 1, non ${numero}` };
+    }
+    return { valido: true };
+  }
+
+  const ultimoNumero = Math.max(...fatture.map((f) => Number(f.numero)));
+  const atteso = ultimoNumero + 1;
+  if (Number(numero) !== atteso) {
+    return { valido: false, errore: `Numero fattura non sequenziale: atteso ${atteso}, ricevuto ${numero}` };
+  }
+
+  return { valido: true };
+}

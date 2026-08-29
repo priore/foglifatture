@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, getInvoice, saveInvoice, prossimoNumeroFattura } from '../services/invoiceService.js';
+import { calcolaCompenso, getInvoice, saveInvoice, prossimoNumeroFattura, verificaIntegritaNumerazione } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
 
@@ -45,6 +45,12 @@ invoiceRoutes.post('/:anno/:mese/genera', async (req, res) => {
   // Formato "Numero" a norma FatturaPA: progressivo numerico puro, senza barra/anno
   // (più compatibile con lo SDI secondo esperienza pregressa con formati misti).
   const numero = req.body.numero ?? await prossimoNumeroFattura(Number(anno), Number(mese));
+
+  const integrita = await verificaIntegritaNumerazione(Number(anno), Number(mese), numero);
+  if (!integrita.valido) {
+    return res.status(409).json({ errore: integrita.errore });
+  }
+
   const data = req.body.data ?? new Date(Number(anno), Number(mese) - 1, 28).toISOString().slice(0, 10);
   const descrizione = req.body.descrizione
     ?? `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${riepilogo.totaleOreDecimale.toFixed(2)} ore mensili.`;
