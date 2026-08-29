@@ -21,7 +21,10 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 ### 3. Backup / esportazione di `backend/data/`
 🟢 Nessun database, tutto è JSON flat + allegati ricevute su disco, singola macchina, nessun percorso di backup menzionato in alcun documento.
 - Aggiungere: "esporta backup" con un click (zip di `data/`) dalle Impostazioni, ripristinabile su una nuova macchina.
-- Sforzo: basso. Valore: alto — oggi il rischio di perdita totale dati è un singolo guasto disco.
+- 🔴 Backup automatico: cadenza configurabile (giornaliera/settimanale/mensile), path di destinazione da Impostazioni, flag abilita/disabilita. Richiede uno scheduler in-process (es. `node-cron`, non ancora installato) o task OS-level.
+- 🔴 Crittografia: zip cifrato con master password. Per l'automatico la password va persistita in modo recuperabile dal processo (keychain OS o file cifrato con chiave derivata) — nodo di sicurezza da chiarire prima di implementare, non solo dettaglio tecnico. Per il ripristino manuale la password è inserita dall'utente a runtime, nessuna persistenza necessaria.
+- Aggiungere voce "ripristina da backup" anche nel flusso di importa storico esistente, non solo come funzione separata.
+- Sforzo: medio (basso per export/import in chiaro on-demand; sale per cifratura + scheduling automatico + gestione sicura della master password). Valore: alto — oggi il rischio di perdita totale dati è un singolo guasto disco.
 
 ---
 

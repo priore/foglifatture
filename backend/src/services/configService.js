@@ -53,6 +53,15 @@ const DEFAULT_CONFIG = {
     intervalloPollingMinuti: 15,
     pollingAbilitato: true, // flag on/off del controllo automatico ricevute SDI via IMAP
   },
+  backup: {
+    // Backup automatico cifrato di backend/data/. La password è salvata in chiaro qui
+    // (stesso livello di sicurezza già accettato per pec.passwordMittente) perché
+    // serve al processo per cifrare senza intervento utente ad ogni giro.
+    abilitato: false,
+    percorsoDestinazione: '',
+    intervalloOreMinuti: 1440, // default: una volta al giorno
+    password: '',
+  },
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -73,6 +82,7 @@ export async function getConfig() {
     fatturazione: fondiSezione(DEFAULT_CONFIG.fatturazione, config.fatturazione),
     pec: fondiSezione(DEFAULT_CONFIG.pec, config.pec),
     sdi: fondiSezione(DEFAULT_CONFIG.sdi, config.sdi),
+    backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
   };
 }
 
@@ -86,6 +96,7 @@ export async function saveConfig(partialConfig) {
     fatturazione: fondiSezione(current.fatturazione, partialConfig.fatturazione),
     pec: fondiSezione(current.pec, partialConfig.pec),
     sdi: fondiSezione(current.sdi, partialConfig.sdi),
+    backup: fondiSezione(current.backup, partialConfig.backup),
   };
   await writeJson(CONFIG_FILE, next);
   return next;

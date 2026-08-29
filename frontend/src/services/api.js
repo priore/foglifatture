@@ -56,6 +56,26 @@ export const api = {
     return fetch(`${BASE_URL}/import/fattura`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
+
+  // Backup/restore cifrato di backend/data/
+  salvaImpostazioniBackup: (dati) => richiesta('/backup/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
+  esportaBackup: async (password) => {
+    const r = await fetch(`${BASE_URL}/backup/esporta`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`);
+    const nomeFile = (r.headers.get('content-disposition') || '').match(/filename="(.+)"/)?.[1] || 'backup.tsbk';
+    return { blob: await r.blob(), nomeFile };
+  },
+  ripristinaBackup: (file, password) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('password', password);
+    return fetch(`${BASE_URL}/backup/ripristina`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
 };
 
 export const authApi = {

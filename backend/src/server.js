@@ -14,8 +14,10 @@ import { invoiceRoutes } from './routes/invoiceRoutes.js';
 import { oauthConfigRoutes } from './routes/oauthConfigRoutes.js';
 import { sdiRoutes } from './routes/sdiRoutes.js';
 import { importRoutes } from './routes/importRoutes.js';
+import { backupRoutes } from './routes/backupRoutes.js';
 import { getConfig } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
+import { avviaBackupAutomatico } from './services/backupService.js';
 
 const PORT = process.env.PORT || 1969;
 const app = express();
@@ -46,6 +48,7 @@ app.use('/api/invoice', richiedeAutenticazione, invoiceRoutes);
 app.use('/api/oauth-config', richiedeAutenticazione, oauthConfigRoutes);
 app.use('/api/sdi', richiedeAutenticazione, sdiRoutes);
 app.use('/api/import', richiedeAutenticazione, importRoutes);
+app.use('/api/backup', richiedeAutenticazione, backupRoutes);
 
 // Serve il frontend Vue buildato (npm run build in ../frontend genera dist/).
 const frontendDist = path.join(import.meta.dirname, '..', '..', 'frontend', 'dist');
@@ -68,4 +71,9 @@ app.listen(PORT, async () => {
   const config = await getConfig();
   avviaPollingSdi(getConfig, config.sdi.intervalloPollingMinuti);
   logger.info(`Polling ricevute SDI avviato ogni ${config.sdi.intervalloPollingMinuti} minuti`);
+
+  if (config.backup.abilitato) {
+    avviaBackupAutomatico(getConfig, config.backup.intervalloOreMinuti);
+    logger.info(`Backup automatico avviato ogni ${config.backup.intervalloOreMinuti} minuti`);
+  }
 });

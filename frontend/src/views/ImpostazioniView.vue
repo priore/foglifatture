@@ -7,10 +7,11 @@ import StepFornitore from '../components/wizard/StepFornitore.vue';
 import StepCliente from '../components/wizard/StepCliente.vue';
 import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
+import StepBackup from '../components/wizard/StepBackup.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import { api } from '../services/api.js';
 
-const PASSI = ['Fornitore', 'Cliente', 'Tariffa & fiscali', 'PEC', 'Login Google'];
+const PASSI = ['Fornitore', 'Cliente', 'Tariffa & fiscali', 'PEC', 'Backup', 'Login Google'];
 // Lo step "Login Google" gestisce da sé il proprio salvataggio (scrive su .env, non su config.json).
 const PASSI_AUTOSALVANTI = ['Login Google'];
 const passoAttivo = ref(0);
@@ -25,6 +26,9 @@ async function salva() {
   messaggio.value = 'Salvataggio…';
   try {
     config.value = await api.saveConfig(config.value);
+    // Il backup automatico ha un proprio scheduler in background: va riavviato esplicitamente
+    // dopo ogni salvataggio, altrimenti un cambio di cadenza/path richiederebbe il riavvio del server.
+    config.value.backup = await api.salvaImpostazioniBackup(config.value.backup);
     messaggio.value = 'Salvato';
   } catch (err) {
     messaggio.value = `Errore: ${err.message}`;
@@ -74,6 +78,7 @@ async function vaiAlPasso(indice) {
         <StepCliente v-else-if="passoAttivo === 1" v-model="config.cliente" />
         <StepFatturazione v-else-if="passoAttivo === 2" v-model="config.fatturazione" />
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
+        <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
         <StepGoogleAuth v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">

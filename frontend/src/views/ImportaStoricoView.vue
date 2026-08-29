@@ -15,6 +15,15 @@ const fileFattura = ref(null);
 const importandoFattura = ref(false);
 const esitoFattura = ref('');
 
+const passwordEsporta = ref('');
+const esportandoBackup = ref(false);
+const esitoEsportaBackup = ref('');
+
+const fileBackup = ref(null);
+const passwordRipristina = ref('');
+const ripristinandoBackup = ref(false);
+const esitoRipristinaBackup = ref('');
+
 async function importaTimesheet() {
   if (!fileTimesheet.value) return;
   importandoTimesheet.value = true;
@@ -41,6 +50,42 @@ async function importaFattura() {
     esitoFattura.value = `Errore: ${err.message}`;
   } finally {
     importandoFattura.value = false;
+  }
+}
+
+async function esportaBackup() {
+  if (!passwordEsporta.value) return;
+  esportandoBackup.value = true;
+  esitoEsportaBackup.value = '';
+  try {
+    const { blob, nomeFile } = await api.esportaBackup(passwordEsporta.value);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nomeFile;
+    link.click();
+    URL.revokeObjectURL(url);
+    esitoEsportaBackup.value = 'Backup scaricato';
+    passwordEsporta.value = '';
+  } catch (err) {
+    esitoEsportaBackup.value = `Errore: ${err.message}`;
+  } finally {
+    esportandoBackup.value = false;
+  }
+}
+
+async function ripristinaBackup() {
+  if (!fileBackup.value || !passwordRipristina.value) return;
+  ripristinandoBackup.value = true;
+  esitoRipristinaBackup.value = '';
+  try {
+    const risultato = await api.ripristinaBackup(fileBackup.value, passwordRipristina.value);
+    esitoRipristinaBackup.value = `Ripristinati ${risultato.fileRipristinati} file. Riavvia l'app per applicare i dati.`;
+    passwordRipristina.value = '';
+  } catch (err) {
+    esitoRipristinaBackup.value = `Errore: ${err.message}`;
+  } finally {
+    ripristinandoBackup.value = false;
   }
 }
 </script>
@@ -86,6 +131,35 @@ async function importaFattura() {
           {{ importandoFattura ? 'Importo…' : 'Importa fattura' }}
         </button>
         <span v-if="esitoFattura" class="badge-mono">{{ esitoFattura }}</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-head"><h2>Esporta backup dati</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <p class="note-legal">Archivio cifrato di tutti i dati (timesheet, fatture, configurazione). Conserva la password: senza non è possibile ripristinare.</p>
+        <div class="form-grid">
+          <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordEsporta"></div>
+        </div>
+        <button class="btn btn-primary" :disabled="!passwordEsporta || esportandoBackup" @click="esportaBackup">
+          {{ esportandoBackup ? 'Esporto…' : 'Scarica backup' }}
+        </button>
+        <span v-if="esitoEsportaBackup" class="badge-mono">{{ esitoEsportaBackup }}</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-head"><h2>Ripristina da backup</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <p class="note-legal">Sovrascrive i dati esistenti su questa macchina con quelli del backup.</p>
+        <div class="form-grid">
+          <div class="field field-full full"><label>File backup</label><input type="file" accept=".tsbk" @change="e => fileBackup = e.target.files[0]"></div>
+          <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordRipristina"></div>
+        </div>
+        <button class="btn btn-primary" :disabled="!fileBackup || !passwordRipristina || ripristinandoBackup" @click="ripristinaBackup">
+          {{ ripristinandoBackup ? 'Ripristino…' : 'Ripristina backup' }}
+        </button>
+        <span v-if="esitoRipristinaBackup" class="badge-mono">{{ esitoRipristinaBackup }}</span>
       </div>
     </div>
   </div>
