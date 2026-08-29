@@ -43,10 +43,12 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 ## Priorità 2 — valore concreto quotidiano, sforzo basso
 
-### 4. Dashboard compenso annuale/trimestrale vs soglia forfettario
-🟡 Il regime forfettario ha un tetto di fatturato annuo (attualmente €85.000). Nulla nell'app traccia il compenso cumulato annuo o avvisa all'avvicinarsi della soglia — un guardrail davvero utile per l'esatto tipo di utente a cui serve questa app (freelance forfettario singolo).
-- Aggiungere: una vista dashboard che somma il compenso su tutte le fatture per anno, con banner di avviso vicino al tetto.
-- Sforzo: basso (`invoiceService.js` ha già tutti i mesi per anno via `listMesiFatturati`). Valore: alto — rilevante fiscalmente, non solo estetico.
+### 4. Dashboard compenso annuale/trimestrale vs soglia forfettario ✅ implementato
+🟢 Fatto (2026-08-30): nuova `DashboardView.vue` (voce sidebar "Dashboard forfettario") con 4 stat tile (ricavi cumulati, reddito imponibile, imposta stimata, proiezione fine anno) e due grafici a ciambella separati (`DonutChart.vue`, SVG puro, nessuna libreria) stile Flat-Tax: "Composizione compenso" (ricavi/compensi, reddito fiscale, imposta stimata — proporzionati tra loro) e "Soglia forfettario" (ricavi cumulati vs margine residuo agli 85.000€, con % al centro).
+- Backend: nuova sezione `config.forfettario` (`sogliaAnnua` default 85.000€ configurabile, `codiceAteco`, `settoreAteco`, `coefficenteRedditivita`, `dataInizioAttivita`) in `configService.js`; nuovo `forfettarioService.js` (`calcolaDashboardForfettario`: somma `imponibile` di tutte le fatture dell'anno via `invoiceService.listMesiFatturati`/`getInvoice`, calcola reddito imponibile = ricavi × coefficiente, imposta = reddito × aliquota, proiezione lineare fine anno); nuova route `GET /api/forfettario/dashboard` e `GET /api/forfettario/settori-ateco`.
+- Aliquota 5%/15%: 5% nei primi 5 anni solari dall'inizio attività (`dataInizioAttivita`), 15% dal sesto anno — logica in `aliquotaImposta()`.
+- Codici ATECO: dati sorgente da repo Gitea locale `danilo/Flat-Tax` (progetto iOS Flat-Tax, stesso autore) — estratti 520 codici unici (codice, descrizione, settore, coefficiente di redditività) da `Resources/codici_ateco.json` in `backend/src/data/atecoSettori.json`. Selezione in Impostazioni → step "Forfettario" (`StepForfettario.vue`): campo di ricerca libera che filtra per codice/descrizione/settore (nessuna libreria, filtro client-side su elenco già scaricato), selezione auto-compila settore e coefficiente, resta modificabile.
+- Verificato con Playwright: build frontend, riavvio backend, ricerca codice "62.01" → selezione "62.01.00 — Produzione di software non connesso all'edizione" (Informatica e Web, 67%) + data inizio 2024-01-15 → aliquota 5% applicata, imposta ricalcolata, entrambi i donut aggiornati, config.json verificato persistito.
 
 ### 5. Supporto multi-cliente
 🟡 Modello dati + UI attualmente presuppongono un cliente singolo (TODO in `PROJECT_CONTEXT.md`). Se questo consulente dovesse mai fatturare più di un cliente, il design attuale non può rappresentarlo.
@@ -67,14 +69,11 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 ## Priorità 3 — rifinitura, non essenziale
 
-### 8. Toggle manuale dark-mode
-🟡 Percorso CSS morto già esistente (selettore `data-theme` inutilizzato secondo `KNOWN_ISSUES.md`) — vittoria più economica possibile, basta collegare un pulsante toggle + persistenza `localStorage`.
-- Sforzo: molto basso. Valore: basso-medio (solo UX).
+### 8. Toggle manuale dark-mode ✅ implementato
+🟢 Fatto (2026-08-30, commit `8960f30`): bottone toggle in `AppSidebar.vue` (footer sidebar), collega il selettore `data-theme` già presente in `style.css` (prima morto). Persistenza `localStorage('theme')`; applicazione del tema salvato in `frontend/index.html` prima del mount Vue per evitare flash.
 
-### 9. Vista cronologia/timeline ricevute SDI
-🟢 Le ricevute sono salvate su disco (`sdiRicevuteService.js`) ma non esiste una vista UI dedicata che elenchi lo storico ricevute per fattura — attualmente probabilmente mostrato solo inline in `FatturaView.vue`.
-- Aggiungere: una timeline semplice (inviata → consegnata → notificata) per fattura, utile per audit/troubleshooting.
-- Sforzo: basso-medio. Valore: medio — riduce principalmente la ricerca manuale nella mailbox quando qualcosa va storto.
+### 9. Vista cronologia/timeline ricevute SDI ✅ implementato
+🟢 Fatto (2026-08-30): nuova funzione `listaRicevutePerFattura()` in `sdiRicevuteService.js` che legge la cartella archivio e filtra i file XML per prefisso `IT<piva>_<progressivoInvio>` (stesso nome generato da `generaNomeFileXml`), riusando `riconosciTipo()` già esistente. Nuova route `GET /api/invoice/:anno/:mese/ricevute-sdi`. `FatturaView.vue` mostra l'elenco ricevute (tipo + data) nella card "Ricevute SDI" esistente, aggiornato dopo generazione fattura, invio PEC e controllo manuale/automatico. Nessuno stato nuovo persistito: il filesystem archivio resta l'unica fonte di verità.
 
 ### 10. Validazione configurazione al salvataggio Impostazioni
 🟡 Nessun livello di validazione confermato sui campi di `config.json` (formato partita IVA, formato indirizzo PEC, checksum IBAN). Dati errati qui corrompono silenziosamente l'XML al momento della fattura.
@@ -129,7 +128,7 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 1. ~~Controllo integrità numerazione fattura (#2)~~ ✅ fatto.
 2. ~~Esportazione backup dati (#3)~~ ✅ fatto.
-3. Dashboard soglia compenso annuale (#4) — economico, rilevante fiscalmente.
+3. ~~Dashboard soglia compenso annuale (#4)~~ ✅ fatto.
 4. Esportazione annuale per commercialista (#7) — valore ricorrente reale.
 5. Hardening stato-invio/retry PEC (#1) — più grande, ma chiude il rischio #1 dichiarato dal progetto stesso.
 6. Il resto in modo opportunistico.

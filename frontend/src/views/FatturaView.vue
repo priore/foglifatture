@@ -20,14 +20,21 @@ const esitoPec = ref('');
 const meseMinimo = ref(null);
 const controllandoSdi = ref(false);
 const esitoSdi = ref('');
+const ricevuteSdi = ref([]);
 
 async function caricaAnteprima() {
   anteprima.value = await api.anteprimaFattura(anno.value, mese.value);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value);
+  await caricaRicevuteSdi();
+}
+
+async function caricaRicevuteSdi() {
+  ricevuteSdi.value = fatturaGenerata.value ? await api.ricevuteSdiFattura(anno.value, mese.value) : [];
 }
 
 async function generaFattura() {
   fatturaGenerata.value = await api.generaFattura(anno.value, mese.value);
+  await caricaRicevuteSdi();
 }
 
 async function scaricaXml() {
@@ -40,6 +47,7 @@ async function inviaPec() {
   try {
     const risultato = await api.inviaPec(anno.value, mese.value);
     esitoPec.value = risultato.inviato ? 'Inviata con successo' : `Errore: ${risultato.errore}`;
+    await caricaRicevuteSdi();
   } catch (err) {
     esitoPec.value = `Errore: ${err.message}`;
   } finally {
@@ -53,6 +61,7 @@ async function controllaSdi() {
   try {
     const risultato = await api.controllaRicevuteSdi();
     esitoSdi.value = risultato.errore ? `Errore: ${risultato.errore}` : `${risultato.nuove} nuovo/i documento/i`;
+    await caricaRicevuteSdi();
   } catch (err) {
     esitoSdi.value = `Errore: ${err.message}`;
   } finally {
@@ -138,6 +147,16 @@ onMounted(async () => {
               {{ controllandoSdi ? 'Controllo…' : 'Controlla ora' }}
             </button>
             <span v-if="esitoSdi" class="badge-mono">{{ esitoSdi }}</span>
+
+            <ul v-if="fatturaGenerata && ricevuteSdi.length" style="list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px">
+              <li v-for="r in ricevuteSdi" :key="r.nomeFile" style="display:flex;justify-content:space-between;gap:8px;font-size:13px">
+                <span>{{ r.descrizione }}</span>
+                <span class="badge-mono">{{ new Date(r.data).toLocaleDateString('it-IT') }}</span>
+              </li>
+            </ul>
+            <p v-else class="note-legal" style="opacity:.5">
+              {{ fatturaGenerata ? 'Nessuna ricevuta SDI archiviata per questa fattura.' : 'Genera prima la fattura per vedere la cronologia ricevute.' }}
+            </p>
           </div>
         </div>
       </div>

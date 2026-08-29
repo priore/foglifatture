@@ -35,6 +35,7 @@ export const api = {
   // XML FatturaPA e invio PEC
   urlDownloadXml: (anno, mese) => `${BASE_URL}/invoice/${anno}/${mese}/xml`,
   inviaPec: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/invia-pec`, { method: 'POST' }),
+  ricevuteSdiFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/ricevute-sdi`),
 
   // Credenziali Google OAuth (whitelist singolo utente)
   getOAuthConfig: () => richiesta('/oauth-config'),
@@ -79,6 +80,10 @@ export const api = {
 
   // Promemoria timesheet fine mese
   salvaImpostazioniReminder: (dati) => richiesta('/reminder/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
+
+  // Dashboard regime forfettario (soglia, imposta stimata, settori ATECO)
+  settoriAteco: () => richiesta('/forfettario/settori-ateco'),
+  dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
 };
 
 export const authApi = {

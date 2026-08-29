@@ -4,6 +4,7 @@ import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js'
 import { calcolaCompenso, getInvoice, saveInvoice, prossimoNumeroFattura, verificaIntegritaNumerazione } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
+import { listaRicevutePerFattura } from '../services/sdiRicevuteService.js';
 
 export const invoiceRoutes = Router();
 
@@ -97,4 +98,17 @@ invoiceRoutes.post('/:anno/:mese/invia-pec', async (req, res) => {
 
   const risultato = await inviaFatturaViaPec(config.pec, { nomeFile, contenutoXml: xml });
   res.json(risultato);
+});
+
+// Timeline ricevute SDI già archiviate su disco per questa fattura (inviata/consegnata/scartata).
+invoiceRoutes.get('/:anno/:mese/ricevute-sdi', async (req, res) => {
+  const { anno, mese } = req.params;
+  const config = await getConfig();
+  const invoice = await getInvoice(Number(anno), Number(mese));
+  if (!invoice) return res.status(404).json({ errore: 'Genera prima la fattura del mese' });
+
+  const nomeFile = generaNomeFileXml(config.fornitore, invoice.progressivoInvio);
+  const prefisso = nomeFile.replace(/\.xml$/i, '');
+  const ricevute = await listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
+  res.json(ricevute);
 });

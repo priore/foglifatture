@@ -16,6 +16,7 @@ import { sdiRoutes } from './routes/sdiRoutes.js';
 import { importRoutes } from './routes/importRoutes.js';
 import { backupRoutes } from './routes/backupRoutes.js';
 import { reminderRoutes } from './routes/reminderRoutes.js';
+import { forfettarioRoutes } from './routes/forfettarioRoutes.js';
 import { getConfig } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
@@ -52,6 +53,7 @@ app.use('/api/sdi', richiedeAutenticazione, sdiRoutes);
 app.use('/api/import', richiedeAutenticazione, importRoutes);
 app.use('/api/backup', richiedeAutenticazione, backupRoutes);
 app.use('/api/reminder', richiedeAutenticazione, reminderRoutes);
+app.use('/api/forfettario', richiedeAutenticazione, forfettarioRoutes);
 
 // Serve il frontend Vue buildato (npm run build in ../frontend genera dist/).
 const frontendDist = path.join(import.meta.dirname, '..', '..', 'frontend', 'dist');

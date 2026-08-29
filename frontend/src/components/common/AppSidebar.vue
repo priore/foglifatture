@@ -24,6 +24,7 @@ function toggleTheme() {
     <nav class="nav">
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
+      <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
       <router-link to="/impostazioni"><span class="dot"></span>Impostazioni</router-link>
     </nav>

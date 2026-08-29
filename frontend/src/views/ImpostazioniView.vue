@@ -9,10 +9,11 @@ import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
 import StepBackup from '../components/wizard/StepBackup.vue';
 import StepPromemoria from '../components/wizard/StepPromemoria.vue';
+import StepForfettario from '../components/wizard/StepForfettario.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import { api } from '../services/api.js';
 
-const PASSI = ['Fornitore', 'Cliente', 'Tariffa & fiscali', 'PEC', 'Backup', 'Promemoria', 'Login Google'];
+const PASSI = ['Fornitore', 'Cliente', 'Tariffa & fiscali', 'PEC', 'Backup', 'Promemoria', 'Forfettario', 'Login Google'];
 // Lo step "Login Google" gestisce da sé il proprio salvataggio (scrive su .env, non su config.json).
 const PASSI_AUTOSALVANTI = ['Login Google'];
 const passoAttivo = ref(0);
@@ -82,6 +83,7 @@ async function vaiAlPasso(indice) {
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
         <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
         <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" />
+        <StepForfettario v-else-if="passoAttivo === 6" v-model="config.forfettario" />
         <StepGoogleAuth v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">

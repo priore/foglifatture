@@ -68,6 +68,13 @@ const DEFAULT_CONFIG = {
     abilitato: false,
     ultimaNotifica: '', // "YYYY-MM-DD" dell'ultimo avviso inviato, evita doppi avvisi nello stesso giorno
   },
+  forfettario: {
+    sogliaAnnua: 85000, // tetto di fatturato annuo del regime forfettario
+    codiceAteco: '', // codice da backend/src/data/atecoSettori.json (es. "62.01.00")
+    settoreAteco: '', // nome del settore/sub-settore associato al codice selezionato
+    coefficenteRedditivita: 0, // % di redditività del settore selezionato (0-100)
+    dataInizioAttivita: '', // "YYYY-MM-DD": aliquota 5% nei primi 5 anni di attività, poi 15%
+  },
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -90,6 +97,7 @@ export async function getConfig() {
     sdi: fondiSezione(DEFAULT_CONFIG.sdi, config.sdi),
     backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
     reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
+    forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
   };
 }
 
@@ -105,6 +113,7 @@ export async function saveConfig(partialConfig) {
     sdi: fondiSezione(current.sdi, partialConfig.sdi),
     backup: fondiSezione(current.backup, partialConfig.backup),
     reminder: fondiSezione(current.reminder, partialConfig.reminder),
+    forfettario: fondiSezione(current.forfettario, partialConfig.forfettario),
   };
   await writeJson(CONFIG_FILE, next);
   return next;

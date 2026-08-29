@@ -6,7 +6,7 @@
 // casella resta intoccata e non viene nemmeno scaricata nel dettaglio.
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { sdiLogger } from '../lib/logger.js';
 import { notificaMac } from '../lib/macNotifier.js';
@@ -95,6 +95,29 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
 
   if (nuove > 0) notificaMac('Ricevute SDI', `${nuove} nuovo/i documento/i archiviato/i`);
   return { nuove };
+}
+
+/**
+ * Elenca le ricevute SDI già archiviate su disco per una specifica fattura,
+ * riconoscendo il file dal nome standard IT<piva>_<progressivo>_<TIPO>.xml
+ * (stesso prefisso del file XML fattura generato da generaNomeFileXml).
+ * @returns {Promise<Array<{ nomeFile, tipo, descrizione, data }>>}
+ */
+export async function listaRicevutePerFattura(percorsoArchivio, prefissoNomeFile) {
+  if (!percorsoArchivio || !prefissoNomeFile) return [];
+  let file;
+  try {
+    file = await readdir(percorsoArchivio);
+  } catch {
+    return []; // cartella non ancora creata: nessuna ricevuta archiviata
+  }
+  const trovati = file.filter((f) => f.startsWith(prefissoNomeFile) && f.toLowerCase().endsWith('.xml'));
+  const ricevute = await Promise.all(trovati.map(async (nomeFile) => {
+    const tipo = riconosciTipo(nomeFile);
+    const info = await stat(path.join(percorsoArchivio, nomeFile));
+    return { nomeFile, tipo: tipo.codice, descrizione: tipo.descrizione, data: info.mtime.toISOString() };
+  }));
+  return ricevute.sort((a, b) => a.data.localeCompare(b.data));
 }
 
 let timerPolling = null;
