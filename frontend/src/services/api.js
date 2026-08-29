@@ -76,6 +76,9 @@ export const api = {
     return fetch(`${BASE_URL}/backup/ripristina`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
+
+  // Promemoria timesheet fine mese
+  salvaImpostazioniReminder: (dati) => richiesta('/reminder/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
 };
 
 export const authApi = {

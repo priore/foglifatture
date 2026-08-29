@@ -64,3 +64,16 @@ export async function listMesiDisponibili() {
   const chiavi = await listKeys('timesheets');
   return chiavi.sort();
 }
+
+// Giorni feriali (lun-ven) del mese senza ore registrate e senza uno stato di assenza:
+// usato dal promemoria di fine mese per segnalare cosa manca ancora da compilare.
+export async function getGiorniMancanti(anno, mese) {
+  const timesheet = await getTimesheet(anno, mese);
+  return timesheet.giorni
+    .filter(g => {
+      const data = new Date(anno, mese - 1, g.giorno);
+      const feriale = data.getDay() !== 0 && data.getDay() !== 6;
+      return feriale && calcolaOreGiorno(g) === 0 && !g.stato;
+    })
+    .map(g => g.giorno);
+}

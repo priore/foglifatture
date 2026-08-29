@@ -53,10 +53,10 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 - Da fare solo se la situazione reale dell'utente è/sarà multi-cliente — altrimenti da saltare (YAGNI). Segnalato come domanda aperta, non come raccomandazione, finché non confermato.
 - Sforzo: alto (schema config, collegamento timesheet-cliente, numerazione fattura per cliente vs globale). Valore: condizionato.
 
-### 6. Promemoria timesheet
-🟡 Nessun meccanismo osservato che ricordi all'utente di registrare le ore giornaliere/prima della fatturazione di fine mese.
-- Aggiungere: notifica desktop locale (infrastruttura già esistente via `macNotifier.js` per le ricevute SDI — stesso meccanismo riusabile) che ricorda di registrare le ore di oggi, o segnala giorni mancanti vicino a fine mese prima della generazione fattura.
-- Sforzo: basso (riusa notificatore esistente). Valore: medio — riduce il problema "ho dimenticato di registrare 3 giorni" tipico dei timesheet manuali.
+### 6. Promemoria timesheet ✅ implementato
+🟢 Fatto (2026-08-30): notifica desktop (riuso `macNotifier.js`, stesso meccanismo delle ricevute SDI) con toggle abilita/disabilita da Impostazioni → step "Promemoria". Nessun avviso giornaliero: la notifica arriva solo l'ultimo giorno lavorativo del mese (esclude sabato/domenica, nessun calendario festività italiane), con l'elenco dei giorni feriali senza ore registrate e senza stato di assenza. Dedup su `reminder.ultimaNotifica` (data ISO) per evitare doppio avviso nello stesso giorno se il server resta attivo.
+- Backend: `configService.js` (blocco `reminder`), `timesheetService.js` (`getGiorniMancanti`), nuovo `reminderService.js` (scheduler orario `setInterval`, stesso pattern di `sdiRicevuteService.js`/`backupService.js`), nuovo `reminderRoutes.js` (`PUT /api/reminder/impostazioni`, riavvia lo scheduler a runtime).
+- Frontend: nuovo `StepPromemoria.vue`, wizard Impostazioni esteso con step "Promemoria".
 
 ### 7. Esportazione CSV/PDF del riepilogo annuale per il commercialista
 🟢 Esiste l'esportazione PDF per il timesheet mensile (`usePdfExport.js`) ma nulla produce un report annuale consolidato (tutti i mesi + totali compenso) da consegnare al commercialista in periodo fiscale.
@@ -133,6 +133,50 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 4. Esportazione annuale per commercialista (#7) — valore ricorrente reale.
 5. Hardening stato-invio/retry PEC (#1) — più grande, ma chiude il rischio #1 dichiarato dal progetto stesso.
 6. Il resto in modo opportunistico.
+
+---
+
+## Piano — Export codice su GitHub
+
+🟢 Richiesta esplicita utente: pubblicare il codice su repository GitHub, senza esporre dati sensibili (database, config, path locali, password), con auto-generazione dei file mancanti al primo avvio, script di installazione che installa tutti i tool necessari come su una macchina nuova, e avvio come servizio sempre attivo. Serve sia per Mac che per Windows.
+
+### 1. Cosa non deve mai finire su GitHub — già coperto da `.gitignore`
+
+🟢 Verificato: `.gitignore` in root esclude già `node_modules/`, `dist/`, `.env` (con `.env.example` come eccezione esplicita), `logs/`, `backend/data/` (contiene `config.json` con credenziali PEC/OAuth, più `invoices/` e `timesheets/`). **`.gitignore` da solo basta** per questo progetto: non esiste altro file con segreti fuori da `backend/data/` e `.env` — nessuna modifica necessaria qui, solo verifica che `git status`/`git ls-files` non mostri mai questi path prima del primo push.
+- Azione: eseguire `git ls-files | grep -E "config\.json|\.env$"` prima del primo commit pubblico — deve restituire vuoto (esclude `.env.example`).
+
+### 2. Auto-generazione file mancanti al primo avvio
+
+🟢 Già implementato per la config: `configService.js` fa merge con `DEFAULT_CONFIG` se `config.json` manca — nessun crash, valori di default sensati. Da estendere/verificare:
+- `backend/data/invoices/` e `backend/data/timesheets/` — verificare che il codice li crei con `mkdir -p`-equivalente al primo scritture (probabile già gestito da `jsonStore.js`, da confermare leggendo il file).
+- `backend/.env` — **non generabile con valori sensati di default** (richiede `SESSION_SECRET` casuale, credenziali OAuth). Lo script di installazione già lo crea da `.env.example` (`scripts/install.sh:21-24`) ma lascia `SESSION_SECRET=cambia-questo-segreto` — da correggere: generare un secret casuale reale (`openssl rand -hex 32` o equivalente Node) invece di lasciare il placeholder, altrimenti resta un default debole in ogni installazione nuova.
+
+### 3. Script di installazione — stato attuale e gap
+
+🟢 Esiste già `scripts/install.sh` (solo macOS): installa dipendenze npm frontend+backend, builda il frontend, copia `.env.example` → `.env` se mancante, registra un LaunchAgent (`launchctl`) con `KeepAlive` (riavvio automatico su crash) e `RunAtLoad` (avvio al boot). Assume Node già installato nel PATH (fallisce con messaggio chiaro se manca) — **non installa Node stesso**, richiesta esplicita dell'utente ("installa tutti i tool necessari come su computer nuovo") non ancora soddisfatta.
+
+Gap da colmare:
+- **Node.js non auto-installato** — aggiungere controllo versione + istruzioni/installazione automatica (`brew install node` su Mac se `brew` disponibile, altrimenti link nvm; su Windows: winget/chocolatey se disponibili, altrimenti istruzioni).
+- **Nessuno script Windows** — serve `scripts/install.ps1` equivalente: installa Node se mancante, `npm install`/`npm run build`, copia `.env.example`, genera `SESSION_SECRET` casuale, registra come servizio Windows sempre attivo (opzioni: Task Scheduler con trigger "at logon"/"at startup" + riavvio su fallimento, oppure NSSM per un vero servizio Windows — NSSM è più robusto per "sempre in esecuzione" ma è una dipendenza esterna da scaricare, Task Scheduler è nativo Windows e sufficiente per un uso single-desktop).
+- **Uninstall Windows** — `scripts/uninstall.ps1` equivalente a `scripts/uninstall.sh` (da verificare che esista già per Mac).
+
+### 4. README pubblico
+
+🟡 Se il repo diventa pubblico o condiviso, serve un README minimo (o aggiornamento dell'esistente) con: requisiti (Node), comando di installazione per Mac (`./scripts/install.sh`) e Windows (`scripts/install.ps1`), nota esplicita che `backend/.env` va compilato con le proprie credenziali OAuth/PEC al primo avvio (mai committare quel file), e che `backend/data/` viene creata automaticamente e resta locale/ignorata da git.
+
+### 5. Ordine di esecuzione consigliato
+
+1. Verifica `.gitignore` con `git ls-files` (nessuna modifica, solo controllo) — punto 1.
+2. Fix `SESSION_SECRET` placeholder → generazione casuale in `scripts/install.sh` — punto 2.
+3. Conferma/aggiungi auto-creazione directory `backend/data/invoices/` e `backend/data/timesheets/` se non già presente in `jsonStore.js` — punto 2.
+4. Aggiungi installazione automatica Node in `scripts/install.sh` (Mac) — punto 3.
+5. Scrivi `scripts/install.ps1` e `scripts/uninstall.ps1` per Windows — punto 3.
+6. Aggiorna README con istruzioni di installazione multipiattaforma — punto 4.
+7. Primo push su repository GitHub (privato consigliato per un primo giro, valutare pubblico solo dopo revisione manuale di `git log` per eventuali segreti già committati in passato).
+
+- Sforzo: basso-medio (script già esistenti per Mac, replicare pattern su Windows; nessun cambio architetturale). Valore: alto se l'obiettivo è versionamento/backup del codice o condivisione, prerequisito per qualunque collaborazione futura.
+
+🟢 Verificato (2026-08-30): `git log --all --full-history -- backend/data/config.json backend/.env` restituisce vuoto — nessun commit passato ha mai incluso questi file. Nessuna riscrittura di storia necessaria prima della pubblicazione.
 
 ---
 

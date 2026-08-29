@@ -62,6 +62,12 @@ const DEFAULT_CONFIG = {
     intervalloOreMinuti: 1440, // default: una volta al giorno
     password: '',
   },
+  reminder: {
+    // Promemoria: avvisa solo l'ultimo giorno lavorativo del mese (non ogni giorno) se
+    // ci sono giorni feriali senza ore registrate né stato di assenza.
+    abilitato: false,
+    ultimaNotifica: '', // "YYYY-MM-DD" dell'ultimo avviso inviato, evita doppi avvisi nello stesso giorno
+  },
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -83,6 +89,7 @@ export async function getConfig() {
     pec: fondiSezione(DEFAULT_CONFIG.pec, config.pec),
     sdi: fondiSezione(DEFAULT_CONFIG.sdi, config.sdi),
     backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
+    reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
   };
 }
 
@@ -97,6 +104,7 @@ export async function saveConfig(partialConfig) {
     pec: fondiSezione(current.pec, partialConfig.pec),
     sdi: fondiSezione(current.sdi, partialConfig.sdi),
     backup: fondiSezione(current.backup, partialConfig.backup),
+    reminder: fondiSezione(current.reminder, partialConfig.reminder),
   };
   await writeJson(CONFIG_FILE, next);
   return next;
