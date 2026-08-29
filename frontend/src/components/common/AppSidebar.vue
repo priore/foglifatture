@@ -8,6 +8,14 @@ onMounted(async () => {
   const config = await api.getConfig().catch(() => null);
   if (config?.fornitore?.denominazione) nomeFornitore.value = config.fornitore.denominazione;
 });
+
+const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
+function toggleTheme() {
+  isDark.value = !isDark.value;
+  const theme = isDark.value ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+}
 </script>
 
 <template>
@@ -19,6 +27,11 @@ onMounted(async () => {
       <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
       <router-link to="/impostazioni"><span class="dot"></span>Impostazioni</router-link>
     </nav>
-    <div class="side-foot">{{ nomeFornitore }}</div>
+    <div class="side-foot">
+      {{ nomeFornitore }}
+      <button type="button" class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Tema chiaro' : 'Tema scuro'">
+        {{ isDark ? '☀️' : '🌙' }}
+      </button>
+    </div>
   </aside>
 </template>

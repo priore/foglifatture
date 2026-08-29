@@ -7,6 +7,14 @@
     <title>Timesheet & Fatturazione</title>
   </head>
   <body>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t) document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
