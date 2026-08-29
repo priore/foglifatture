@@ -101,6 +101,44 @@ export async function getConfig() {
   };
 }
 
+// Stesse regole del frontend (useValidazioneFiscale.js): validazione formale, non di
+// congruità. Riga di difesa server-side indipendente dal client, non duplicazione superflua.
+const REGEX_PIVA = /^\d{11}$/;
+const REGEX_CF_PERSONA_FISICA = /^[A-Za-z]{6}\d{2}[A-Za-z]\d{2}[A-Za-z]\d{3}[A-Za-z]$/;
+const REGEX_CODICE_SDI = /^[A-Za-z0-9]{7}$/;
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function campoValido(valore, regex) {
+  const v = String(valore || '').trim();
+  return v === '' || regex.test(v);
+}
+
+export function validaConfig(partialConfig) {
+  const errori = [];
+  const piva = (sezione, dati) => {
+    if (dati?.partitaIva !== undefined && !campoValido(dati.partitaIva, REGEX_PIVA)) {
+      errori.push(`${sezione}: Partita IVA deve essere di 11 cifre numeriche`);
+    }
+  };
+  piva('fornitore', partialConfig.fornitore);
+  piva('cliente', partialConfig.cliente);
+  if (partialConfig.fornitore?.codiceFiscale !== undefined) {
+    const cf = partialConfig.fornitore.codiceFiscale;
+    if (!campoValido(cf, REGEX_CF_PERSONA_FISICA) && !campoValido(cf, REGEX_PIVA)) {
+      errori.push('fornitore: Codice Fiscale non valido (16 caratteri, o Partita IVA per società)');
+    }
+  }
+  if (partialConfig.cliente?.codiceDestinatarioSdi !== undefined
+    && !campoValido(partialConfig.cliente.codiceDestinatarioSdi, REGEX_CODICE_SDI)) {
+    errori.push('cliente: Codice destinatario SDI deve essere di 7 caratteri alfanumerici');
+  }
+  if (partialConfig.pec?.casellaMittente !== undefined
+    && !campoValido(partialConfig.pec.casellaMittente, REGEX_EMAIL)) {
+    errori.push('pec: Casella PEC mittente non è un indirizzo email valido');
+  }
+  return errori;
+}
+
 export async function saveConfig(partialConfig) {
   const current = await getConfig();
   const next = {

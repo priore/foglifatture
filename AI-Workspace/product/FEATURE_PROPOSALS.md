@@ -75,10 +75,11 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 ### 9. Vista cronologia/timeline ricevute SDI ✅ implementato
 🟢 Fatto (2026-08-30): nuova funzione `listaRicevutePerFattura()` in `sdiRicevuteService.js` che legge la cartella archivio e filtra i file XML per prefisso `IT<piva>_<progressivoInvio>` (stesso nome generato da `generaNomeFileXml`), riusando `riconosciTipo()` già esistente. Nuova route `GET /api/invoice/:anno/:mese/ricevute-sdi`. `FatturaView.vue` mostra l'elenco ricevute (tipo + data) nella card "Ricevute SDI" esistente, aggiornato dopo generazione fattura, invio PEC e controllo manuale/automatico. Nessuno stato nuovo persistito: il filesystem archivio resta l'unica fonte di verità.
 
-### 10. Validazione configurazione al salvataggio Impostazioni
-🟡 Nessun livello di validazione confermato sui campi di `config.json` (formato partita IVA, formato indirizzo PEC, checksum IBAN). Dati errati qui corrompono silenziosamente l'XML al momento della fattura.
-- Aggiungere: validazione a livello di campo negli step del wizard prima di consentire il salvataggio.
-- Sforzo: basso. Valore: medio — previene errori evitabili che altrimenti emergono solo all'invio PEC.
+### 10. Validazione configurazione al salvataggio Impostazioni ✅ implementato
+🟢 Fatto (2026-08-30). Nota: IBAN non esiste nel modello dati (`configService.js` non ha mai avuto un campo IBAN in nessuna sezione) — nessuna fattura/pagamento lo richiede oggi, quindi non c'era nulla da validare per quel campo, rimosso dallo scope.
+- Frontend: aggiunta `pecValida()` (regex formato email) in `useValidazioneFiscale.js`, applicata a `StepPec.vue` (campo `casellaMittente`) con lo stesso pattern visivo già usato per partita IVA/codice fiscale/codice SDI (classe `campo-non-valido` + `nota-errore`).
+- Backend (rete di sicurezza indipendente dal client, dove prima non c'era alcun controllo): nuova `validaConfig()` in `configService.js` con le stesse regex del frontend (partita IVA 11 cifre, codice fiscale, codice SDI 7 caratteri, PEC formato email), richiamata in `configRoutes.js` PUT `/api/config` — risponde `400 { errore }` e non scrive `config.json` se un campo presente nel payload non è valido. Pattern coerente con la gestione errori già in uso in `invoiceRoutes.js` (validazione esplicita in route, non throw).
+- Verificato via curl: payload con `partitaIva` non numerica o `casellaMittente` non email → 400 con messaggio, config non scritta; payload valido → 200, salvataggio normale invariato.
 
 ---
 

@@ -25,3 +25,11 @@ export function codiceSdiValido(valore) {
   const v = String(valore || '').trim();
   return v === '' || REGEX_CODICE_SDI.test(v);
 }
+
+// Validazione formale (non di deliverability) di un indirizzo email/PEC.
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function pecValida(valore) {
+  const v = String(valore || '').trim();
+  return v === '' || REGEX_EMAIL.test(v);
+}

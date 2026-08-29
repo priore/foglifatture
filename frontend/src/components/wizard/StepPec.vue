@@ -1,15 +1,24 @@
 <script setup>
-defineProps({
+import { computed } from 'vue';
+import { pecValida } from '../../composables/useValidazioneFiscale.js';
+
+const props = defineProps({
   modelValue: { type: Object, required: true }, // config.pec
   sdi: { type: Object, required: true }, // config.sdi
 });
+
+const casellaMittenteOk = computed(() => pecValida(props.modelValue.casellaMittente));
 </script>
 
 <template>
   <div class="form-grid">
     <div class="field"><label>Server SMTP PEC</label><input v-model="modelValue.smtpHost" placeholder="smtps.pec-provider.it"></div>
     <div class="field"><label>Porta SMTP</label><input type="number" v-model.number="modelValue.smtpPort"></div>
-    <div class="field"><label>Casella PEC mittente</label><input v-model="modelValue.casellaMittente" placeholder="nome@pec.it"></div>
+    <div class="field">
+      <label>Casella PEC mittente</label>
+      <input v-model="modelValue.casellaMittente" :class="{ 'campo-non-valido': !casellaMittenteOk }" placeholder="nome@pec.it">
+      <small v-if="!casellaMittenteOk" class="nota-errore">Formato email non valido.</small>
+    </div>
     <div class="field"><label>Password casella PEC</label><input type="password" v-model="modelValue.passwordMittente"></div>
     <div class="field field-full full"><label>Destinatario SDI</label><input v-model="modelValue.destinatarioSdi"></div>
   </div>
