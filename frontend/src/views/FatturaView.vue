@@ -1,0 +1,162 @@
+<script setup>
+// Schermata Fattura Pro-Forma: calcolo automatico da timesheet, generazione XML FatturaPA,
+// invio PEC. Il calcolo compenso è ricavato dal backend (unica fonte di verità sui totali).
+import { ref, watch, onMounted } from 'vue';
+import '../assets/print-fattura.css';
+import MonthSwitcher from '../components/common/MonthSwitcher.vue';
+import FatturaPrintPreview from '../components/fattura/FatturaPrintPreview.vue';
+import { api } from '../services/api.js';
+import { esportaPdf } from '../composables/usePdfExport.js';
+
+const oggi = new Date();
+const anno = ref(oggi.getFullYear());
+const mese = ref(oggi.getMonth() + 1);
+const config = ref(null);
+const anteprima = ref(null);
+const fatturaGenerata = ref(null);
+const anteprimaRef = ref(null);
+const inviandoPec = ref(false);
+const esitoPec = ref('');
+const meseMinimo = ref(null);
+const controllandoSdi = ref(false);
+const esitoSdi = ref('');
+
+async function caricaAnteprima() {
+  anteprima.value = await api.anteprimaFattura(anno.value, mese.value);
+  fatturaGenerata.value = await api.getFattura(anno.value, mese.value);
+}
+
+async function generaFattura() {
+  fatturaGenerata.value = await api.generaFattura(anno.value, mese.value);
+}
+
+async function scaricaXml() {
+  window.open(api.urlDownloadXml(anno.value, mese.value), '_blank');
+}
+
+async function inviaPec() {
+  inviandoPec.value = true;
+  esitoPec.value = '';
+  try {
+    const risultato = await api.inviaPec(anno.value, mese.value);
+    esitoPec.value = risultato.inviato ? 'Inviata con successo' : `Errore: ${risultato.errore}`;
+  } catch (err) {
+    esitoPec.value = `Errore: ${err.message}`;
+  } finally {
+    inviandoPec.value = false;
+  }
+}
+
+async function controllaSdi() {
+  controllandoSdi.value = true;
+  esitoSdi.value = '';
+  try {
+    const risultato = await api.controllaRicevuteSdi();
+    esitoSdi.value = risultato.errore ? `Errore: ${risultato.errore}` : `${risultato.nuove} nuovo/i documento/i`;
+  } catch (err) {
+    esitoSdi.value = `Errore: ${err.message}`;
+  } finally {
+    controllandoSdi.value = false;
+  }
+}
+
+async function esporta() {
+  await esportaPdf(anteprimaRef.value, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
+}
+
+watch([anno, mese], caricaAnteprima);
+onMounted(async () => {
+  config.value = await api.getConfig();
+  await caricaAnteprima();
+  const mesi = await api.listMesiTimesheet();
+  if (mesi.length) meseMinimo.value = mesi[0];
+});
+</script>
+
+<template>
+  <div>
+    <div class="page-head">
+      <div>
+        <h1>Fattura Pro-Forma</h1>
+        <p>Generata da Timesheet · Tariffa oraria configurabile in Impostazioni</p>
+      </div>
+      <div class="actions">
+        <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
+        <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
+      </div>
+    </div>
+
+    <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config">
+      <div>
+        <div class="card">
+          <div class="card-head"><h2>Calcolo compenso</h2></div>
+          <div class="card-body">
+            <table class="data-table">
+              <tr><td>Ore totali mensili</td><td style="text-align:right">{{ anteprima.totaleOre.toFixed(2) }}</td></tr>
+              <tr><td>Tariffa oraria</td><td style="text-align:right">€ {{ config.fatturazione.tariffaOraria.toFixed(2) }}</td></tr>
+              <tr><td>Imponibile</td><td style="text-align:right">€ {{ anteprima.imponibile.toFixed(2) }}</td></tr>
+              <tr><td>Rivalsa INPS</td><td style="text-align:right">assente</td></tr>
+              <tr v-if="anteprima.bolloApplicabile"><td>Bollo virtuale (&gt; {{ config.fatturazione.sogliaBolloVirtuale }}€)</td><td style="text-align:right">€ {{ anteprima.bollo.toFixed(2) }}</td></tr>
+            </table>
+            <div class="stat accent" style="margin-top:14px">
+              <div class="label">Netto da pagare</div>
+              <div class="value">€ {{ anteprima.nettoAPagare.toFixed(2) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note-legal">
+          Operazione ex art.1 commi 54–89 L.190/2014 (regime forfettario).
+          <span v-if="anteprima.bolloApplicabile">Imposta di bollo assolta in modalità virtuale ai sensi DM 17/06/2014.</span>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Fattura definitiva</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-primary" @click="generaFattura">
+              {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
+            </button>
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+              {{ inviandoPec ? 'Invio…' : 'Invia PEC a SDI' }}
+            </button>
+            <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Ricevute SDI</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <p class="note-legal" v-if="config.sdi.pollingAbilitato">
+              Controllo automatico periodico attivo in background. Usa questo bottone per un controllo immediato:
+              scarica ricevute/notifiche/fattura firmata nella cartella archivio configurata in Impostazioni.
+            </p>
+            <p class="note-legal" v-else>
+              Controllo ricevute SDI disattivato in Impostazioni &gt; PEC.
+            </p>
+            <button class="btn btn-ghost" :disabled="controllandoSdi || !config.sdi.pollingAbilitato" @click="controllaSdi">
+              {{ controllandoSdi ? 'Controllo…' : 'Controlla ora' }}
+            </button>
+            <span v-if="esitoSdi" class="badge-mono">{{ esitoSdi }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <div ref="anteprimaRef">
+          <FatturaPrintPreview
+            :fornitore="config.fornitore"
+            :cliente="config.cliente"
+            :numero="fatturaGenerata?.numero ?? '—'"
+            :data="fatturaGenerata?.data ?? new Date(anno, mese - 1, 28).toISOString().slice(0,10)"
+            :descrizione="fatturaGenerata?.descrizione ?? `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${anteprima.totaleOre.toFixed(2)} ore mensili.`"
+            :imponibile="anteprima.imponibile"
+            :bollo="anteprima.bollo"
+            :bollo-applicabile="anteprima.bolloApplicabile"
+            :netto-a-pagare="anteprima.nettoAPagare"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
