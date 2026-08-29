@@ -136,47 +136,45 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 ---
 
-## Piano — Export codice su GitHub
+## Analisi di fattibilità — Export codice su GitHub
 
-🟢 Richiesta esplicita utente: pubblicare il codice su repository GitHub, senza esporre dati sensibili (database, config, path locali, password), con auto-generazione dei file mancanti al primo avvio, script di installazione che installa tutti i tool necessari come su una macchina nuova, e avvio come servizio sempre attivo. Serve sia per Mac che per Windows.
+🟢 Richiesta esplicita utente: pubblicare il codice su repository GitHub, senza esporre dati sensibili (database, config, path locali, password), con auto-generazione dei file mancanti al primo avvio, script di installazione che installa tutti i tool necessari come su una macchina nuova, e avvio come servizio sempre attivo, sia su Mac che su Windows.
 
-### 1. Cosa non deve mai finire su GitHub — già coperto da `.gitignore`
+### Stato attuale (base di partenza, confermato dal codice)
 
-🟢 Verificato: `.gitignore` in root esclude già `node_modules/`, `dist/`, `.env` (con `.env.example` come eccezione esplicita), `logs/`, `backend/data/` (contiene `config.json` con credenziali PEC/OAuth, più `invoices/` e `timesheets/`). **`.gitignore` da solo basta** per questo progetto: non esiste altro file con segreti fuori da `backend/data/` e `.env` — nessuna modifica necessaria qui, solo verifica che `git status`/`git ls-files` non mostri mai questi path prima del primo push.
-- Azione: eseguire `git ls-files | grep -E "config\.json|\.env$"` prima del primo commit pubblico — deve restituire vuoto (esclude `.env.example`).
+🟢 `.gitignore` in root esclude già `node_modules/`, `dist/`, `.env` (con `.env.example` come eccezione esplicita), `logs/`, `backend/data/` (contiene `config.json` con credenziali PEC/OAuth, più `invoices/` e `timesheets/`). Nessun altro file con segreti risulta fuori da questi path.
 
-### 2. Auto-generazione file mancanti al primo avvio
+🟢 `git log --all --full-history -- backend/data/config.json backend/.env` restituisce vuoto (verificato 2026-08-30) — nessun commit passato ha mai incluso questi file, nessuna riscrittura di storia necessaria prima della pubblicazione.
 
-🟢 Già implementato per la config: `configService.js` fa merge con `DEFAULT_CONFIG` se `config.json` manca — nessun crash, valori di default sensati. Da estendere/verificare:
-- `backend/data/invoices/` e `backend/data/timesheets/` — verificare che il codice li crei con `mkdir -p`-equivalente al primo scritture (probabile già gestito da `jsonStore.js`, da confermare leggendo il file).
-- `backend/.env` — **non generabile con valori sensati di default** (richiede `SESSION_SECRET` casuale, credenziali OAuth). Lo script di installazione già lo crea da `.env.example` (`scripts/install.sh:21-24`) ma lascia `SESSION_SECRET=cambia-questo-segreto` — da correggere: generare un secret casuale reale (`openssl rand -hex 32` o equivalente Node) invece di lasciare il placeholder, altrimenti resta un default debole in ogni installazione nuova.
+🟢 `configService.js` fa già merge con `DEFAULT_CONFIG` se `config.json` manca — auto-generazione della config coperta, nessun crash.
 
-### 3. Script di installazione — stato attuale e gap
+🟢 `scripts/install.sh` esiste già (solo macOS): installa dipendenze npm frontend+backend, builda il frontend, copia `.env.example` → `.env` se mancante, registra un LaunchAgent (`launchctl`) con `KeepAlive` (riavvio su crash) e `RunAtLoad` (avvio al boot). Assume Node già presente nel PATH — non lo installa.
 
-🟢 Esiste già `scripts/install.sh` (solo macOS): installa dipendenze npm frontend+backend, builda il frontend, copia `.env.example` → `.env` se mancante, registra un LaunchAgent (`launchctl`) con `KeepAlive` (riavvio automatico su crash) e `RunAtLoad` (avvio al boot). Assume Node già installato nel PATH (fallisce con messaggio chiaro se manca) — **non installa Node stesso**, richiesta esplicita dell'utente ("installa tutti i tool necessari come su computer nuovo") non ancora soddisfatta.
+### Cosa servirebbe (in ordine di complessità crescente)
 
-Gap da colmare:
-- **Node.js non auto-installato** — aggiungere controllo versione + istruzioni/installazione automatica (`brew install node` su Mac se `brew` disponibile, altrimenti link nvm; su Windows: winget/chocolatey se disponibili, altrimenti istruzioni).
-- **Nessuno script Windows** — serve `scripts/install.ps1` equivalente: installa Node se mancante, `npm install`/`npm run build`, copia `.env.example`, genera `SESSION_SECRET` casuale, registra come servizio Windows sempre attivo (opzioni: Task Scheduler con trigger "at logon"/"at startup" + riavvio su fallimento, oppure NSSM per un vero servizio Windows — NSSM è più robusto per "sempre in esecuzione" ma è una dipendenza esterna da scaricare, Task Scheduler è nativo Windows e sufficiente per un uso single-desktop).
-- **Uninstall Windows** — `scripts/uninstall.ps1` equivalente a `scripts/uninstall.sh` (da verificare che esista già per Mac).
+1. **`.gitignore`** — nessuna modifica: già sufficiente da solo per questo progetto. Azione unica: `git ls-files | grep -E "config\.json|\.env$"` prima del primo commit pubblico, deve restituire vuoto (esclude `.env.example`). Regola permanente aggiunta in `CLAUDE.md` (versionata, arriva anche a chi forka il repo): ogni nuovo file/cartella con potenziali dati sensibili va valutato e aggiunto a `.gitignore` nello stesso commit, non dopo — non basta il controllo iniziale.
+2. **Auto-generazione directory dati** — confermare che `backend/data/invoices/` e `backend/data/timesheets/` vengano create al primo scritture (probabile già gestito da `jsonStore.js`, da verificare leggendo il file).
+3. **`SESSION_SECRET` debole** — `scripts/install.sh:21-24` copia `.env.example` → `.env` ma lascia il placeholder `SESSION_SECRET=cambia-questo-segreto` invariato. Da generare casuale (`openssl rand -hex 32` o equivalente Node) durante l'installazione, non lasciato a scelta manuale dell'utente.
+4. **Node.js non auto-installato** — `scripts/install.sh` fallisce con messaggio chiaro se Node manca, ma non lo installa. Richiesta esplicita dell'utente ("come su computer nuovo") non ancora soddisfatta: aggiungere `brew install node` (Mac, se `brew` disponibile) e installazione via winget/chocolatey (Windows, se disponibili), altrimenti istruzioni a schermo.
+5. **Script Windows mancanti** — nessun equivalente di `scripts/install.sh`/`uninstall.sh` per Windows. Serve `scripts/install.ps1`: installa Node se mancante, `npm install`/`npm run build`, copia `.env.example`, genera `SESSION_SECRET` casuale, registra servizio sempre attivo (Task Scheduler con trigger "at logon" + riavvio su fallimento è nativo e sufficiente per uso single-desktop; NSSM è più robusto ma è una dipendenza esterna da scaricare a parte). Più `scripts/uninstall.ps1` equivalente.
+6. **README pubblico** — se il repo diventa pubblico/condiviso, aggiornare con requisiti, comando di installazione per Mac e Windows, nota esplicita che `backend/.env` va compilato con credenziali proprie al primo avvio (mai committato), e che `backend/data/` è locale e auto-generata.
 
-### 4. README pubblico
+### Stima complessiva
 
-🟡 Se il repo diventa pubblico o condiviso, serve un README minimo (o aggiornamento dell'esistente) con: requisiti (Node), comando di installazione per Mac (`./scripts/install.sh`) e Windows (`scripts/install.ps1`), nota esplicita che `backend/.env` va compilato con le proprie credenziali OAuth/PEC al primo avvio (mai committare quel file), e che `backend/data/` viene creata automaticamente e resta locale/ignorata da git.
+🟡 Sforzo: basso-medio — nessun cambio architetturale, script Mac già esistenti da replicare su Windows con lo stesso pattern. Valore: alto se l'obiettivo è versionamento/backup del codice o collaborazione futura.
 
-### 5. Ordine di esecuzione consigliato
+### Raccomandazione
 
-1. Verifica `.gitignore` con `git ls-files` (nessuna modifica, solo controllo) — punto 1.
-2. Fix `SESSION_SECRET` placeholder → generazione casuale in `scripts/install.sh` — punto 2.
-3. Conferma/aggiungi auto-creazione directory `backend/data/invoices/` e `backend/data/timesheets/` se non già presente in `jsonStore.js` — punto 2.
-4. Aggiungi installazione automatica Node in `scripts/install.sh` (Mac) — punto 3.
-5. Scrivi `scripts/install.ps1` e `scripts/uninstall.ps1` per Windows — punto 3.
-6. Aggiorna README con istruzioni di installazione multipiattaforma — punto 4.
-7. Primo push su repository GitHub (privato consigliato per un primo giro, valutare pubblico solo dopo revisione manuale di `git log` per eventuali segreti già committati in passato).
+🟢 Repository privato per un primo giro; valutare pubblico solo dopo aver applicato i punti 2-5 sopra (directory dati, secret casuale, installazione Node, script Windows).
 
-- Sforzo: basso-medio (script già esistenti per Mac, replicare pattern su Windows; nessun cambio architetturale). Valore: alto se l'obiettivo è versionamento/backup del codice o condivisione, prerequisito per qualunque collaborazione futura.
+### Ordine consigliato se l'utente vuole procedere
 
-🟢 Verificato (2026-08-30): `git log --all --full-history -- backend/data/config.json backend/.env` restituisce vuoto — nessun commit passato ha mai incluso questi file. Nessuna riscrittura di storia necessaria prima della pubblicazione.
+1. Fix `SESSION_SECRET` placeholder → generazione casuale in `scripts/install.sh`.
+2. Conferma/aggiungi auto-creazione `backend/data/invoices/` e `backend/data/timesheets/` in `jsonStore.js` se mancante.
+3. Aggiungi installazione automatica Node in `scripts/install.sh` (Mac).
+4. Scrivi `scripts/install.ps1` e `scripts/uninstall.ps1` per Windows.
+5. Aggiorna README con istruzioni di installazione multipiattaforma.
+6. Primo push su repository GitHub privato.
 
 ---
 
@@ -185,7 +183,7 @@ Gap da colmare:
 - **Completezza:** le proposte coprono fasce chiusura-rischio, valore quotidiano e rifinitura; esclude esplicitamente idee fuori scope con motivazione.
 - **Accuratezza:** ogni proposta è tracciata a una lacuna confermata specifica o a un file; elementi speculativi marcati 🔴/🟡.
 - **Coerenza:** terminologia allineata a `GLOSSARY.md`; i problemi rimandano a `KNOWN_ISSUES.md`/`ROADMAP.md`.
-- **TODO:** confermare con l'utente se il multi-cliente (#5) è un bisogno futuro reale prima di qualsiasi lavoro di design; confermare use case reale della multi-utenza (persone multiple su un fornitore vs. più fornitori fiscali indipendenti) prima di stimare la multi-utenza/admin.
+- **TODO:** confermare con l'utente se il multi-cliente (#5) è un bisogno futuro reale prima di qualsiasi lavoro di design; confermare use case reale della multi-utenza (persone multiple su un fornitore vs. più fornitori fiscali indipendenti) prima di stimare la multi-utenza/admin; confermare se il repository GitHub va reso pubblico o resta privato prima di applicare i punti 2-5 dell'export codice.
 - **Informazioni mancanti:** nessun dato di utilizzo/punto di frustrazione reale dall'utente esiste nel repo per ordinare per attrito reale invece che rischio dedotto.
 - **Domande aperte:** la soglia forfettario attuale è €85.000 per la situazione fiscale di questo utente — confermare la regola dell'anno fiscale corrente prima di costruire la logica di avviso del punto #4.
 - **Livello di confidenza:** misto 🟢/🟡/🔴, taggato individualmente per voce.
