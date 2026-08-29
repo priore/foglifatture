@@ -13,18 +13,31 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 - Aggiungere: campo stato-invio sulla fattura (`inviata`/`consegnata`/`scartata`/`in_attesa`), avviso timeout se nessuna ricevuta SDI dopo X giorni, il reinvio manuale esiste già parzialmente — estendere con visualizzazione fallimenti in UI (`FatturaView.vue`).
 - Sforzo: medio. Valore: alto — è l'unica cosa che può rompersi silenziosamente nella fatturazione reale.
 
-### 2. Controllo integrità numerazione fattura
-🔴 Il numero progressivo FatturaPA deve essere rigorosamente sequenziale, senza salti né duplicati — requisito legale. Il modello attuale è un file JSON per mese (`invoices/<anno>-<mese>.json`); nessun controllo incrociato visibile che prevenga un `numero` saltato o duplicato.
-- Aggiungere: validazione al momento della generazione fattura che legge tutte le fatture precedenti e verifica l'incremento rigoroso prima di consentire la generazione XML.
-- Sforzo: basso (pura validazione, nessuna modifica di schema). Valore: alto — una numerazione non valida può invalidare una fattura fiscale reale.
+**Piano di verifica invio (2026-08-30, 🟢 confermato):**
 
-### 3. Backup / esportazione di `backend/data/`
-🟢 Nessun database, tutto è JSON flat + allegati ricevute su disco, singola macchina, nessun percorso di backup menzionato in alcun documento.
-- Aggiungere: "esporta backup" con un click (zip di `data/`) dalle Impostazioni, ripristinabile su una nuova macchina.
-- 🔴 Backup automatico: cadenza configurabile (giornaliera/settimanale/mensile), path di destinazione da Impostazioni, flag abilita/disabilita. Richiede uno scheduler in-process (es. `node-cron`, non ancora installato) o task OS-level.
-- 🔴 Crittografia: zip cifrato con master password. Per l'automatico la password va persistita in modo recuperabile dal processo (keychain OS o file cifrato con chiave derivata) — nodo di sicurezza da chiarire prima di implementare, non solo dettaglio tecnico. Per il ripristino manuale la password è inserita dall'utente a runtime, nessuna persistenza necessaria.
-- Aggiungere voce "ripristina da backup" anche nel flusso di importa storico esistente, non solo come funzione separata.
-- Sforzo: medio (basso per export/import in chiaro on-demand; sale per cifratura + scheduling automatico + gestione sicura della master password). Valore: alto — oggi il rischio di perdita totale dati è un singolo guasto disco.
+- Nessun intermediario (Aruba/FatturaPA): invio diretto via PEC, come oggi.
+- Provider PEC: **Postecert**. SMTP `smtps.postecert.it:465` (secure), IMAP `imaps.postecert.it:993` (secure) — stessa forma di `pec.smtpHost`/`pec.imapHost` già in `configService.js`.
+- Destinatario di test: `danilo.priore@gmail.com` (non SDI produzione — nessuna fattura fiscale reale generata/consumata).
+- `inviaFatturaViaPec()` (`pecService.js`) accetta `pecConfig` come parametro esplicito, non legge `config.json` internamente — quindi il test E2E passa un oggetto di config separato (creds da env, mai salvate su disco) e **non tocca `backend/data/config.json` attuale** (fornitore/cliente/tariffa/numerazione restano intatti).
+- Credenziali Postecert reali (mittente/password test) da passare via variabili d'ambiente al momento dell'esecuzione (`PEC_TEST_USER`, `PEC_TEST_PASS`), mai committate.
+- Aggiunto script riusabile `backend/src/services/pecService.e2e.js` (non nella suite `--test` automatica, va lanciato a mano) che invia una PEC reale di prova a `danilo.priore@gmail.com` tramite `inviaFatturaViaPec()`, per validare l'integrazione SMTP end-to-end senza toccare numerazione fattura o config prod.
+- Unit test `pecService.test.js` (mock `nodemailer`, nessuna rete) copre: config incompleta → blocco, invio riuscito → `messageId`, invio fallito → `errore` propagato — riusabile in CI, non richiede credenziali.
+
+**Esito test E2E reale (2026-08-30, 🟢 confermato, eseguito):**
+
+- Invio riuscito con credenziali Postecert reali già presenti in `config.json` (`priore@postecert.it`, host reale `mail.postecert.it:465` — diverso dall'endpoint teorico `smtps.postecert.it` ipotizzato prima del test, correzione presa dal config reale).
+- Ricevuto in `danilo.priore@gmail.com`: busta `postacert` con `tipo="posta-certificata" errore="nessuno"` e `<ricevuta tipo="completa" />` — consegna certificata confermata dal gestore Poste Italiane, non solo accettazione SMTP.
+- Firma S/MIME della busta valida (certificato AgID CA1 / Poste Italiane S.p.A.).
+- `config.json` verificato intoccato dopo il test (`git status` pulito) — confermato che passare `pecConfig` inline a `inviaFatturaViaPec()` non scrive su disco.
+- **Rischio "non testato con mailbox reale" del punto #1 sopra è ora chiuso per la parte invio SMTP/PEC.** Resta aperto solo il rischio di mancata ricevuta SDI (RC) dopo invio — il test qui copre PEC→destinatario, non il ciclo completo con SDI produzione (non testabile senza rischiare numerazione fiscale reale, vedi sopra).
+
+### 2. Controllo integrità numerazione fattura ✅ implementato
+🟢 Il numero progressivo FatturaPA deve essere rigorosamente sequenziale, senza salti né duplicati — requisito legale.
+- Fatto: validazione alla generazione fattura (commit `b950ae2`).
+
+### 3. Backup / esportazione di `backend/data/` ✅ implementato
+🟢 Fatto (commit `1368f7d`): export/import manuale cifrato (AES-256-GCM + gzip, nessuna dipendenza zip esterna) da "Importa storico"; backup automatico schedulato configurabile da Impostazioni (flag abilita/disabilita, path destinazione, cadenza in minuti, password) — stesso pattern del polling ricevute SDI esistente.
+- Nota di sicurezza residua: per l'automatico la password è salvata in chiaro in `config.json` (stesso livello già accettato per `pec.passwordMittente`), non in keychain OS — accettato come scelta pragmatica, non hardenizzato ulteriormente in questo giro.
 
 ---
 
@@ -114,8 +127,8 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 ## Ordine consigliato se l'utente vuole procedere
 
-1. Controllo integrità numerazione fattura (#2) — economico, protegge validità legale.
-2. Esportazione backup dati (#3) — economico, protegge da perdita totale.
+1. ~~Controllo integrità numerazione fattura (#2)~~ ✅ fatto.
+2. ~~Esportazione backup dati (#3)~~ ✅ fatto.
 3. Dashboard soglia compenso annuale (#4) — economico, rilevante fiscalmente.
 4. Esportazione annuale per commercialista (#7) — valore ricorrente reale.
 5. Hardening stato-invio/retry PEC (#1) — più grande, ma chiude il rischio #1 dichiarato dal progetto stesso.
