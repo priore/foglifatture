@@ -19,7 +19,12 @@ async function ricaviAnno(anno) {
       return getInvoice(a, m);
     })
   );
-  return { fatture: fatture.filter(Boolean), mesiFatturati: chiavi.length };
+  // "chiave.length" contava le entry, non i mesi civili: con più fatture nello stesso
+  // mese (multi-cliente) va contato il mese una sola volta, altrimenti la proiezione
+  // fine anno (ricaviCumulati / mesiFatturati * 12) risulta sballata per eccesso di mesi.
+  // slice(0,7) = "YYYY-MM" resta corretto sia su chiave "2026-08" sia su "2026-08-<clienteId>".
+  const mesiDistinti = new Set(chiavi.map((c) => c.slice(0, 7)));
+  return { fatture: fatture.filter(Boolean), mesiFatturati: mesiDistinti.size };
 }
 
 export async function calcolaDashboardForfettario(config, { anno = new Date().getFullYear(), meseCorrente = new Date().getMonth() + 1 } = {}) {
