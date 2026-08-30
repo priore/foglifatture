@@ -1,8 +1,8 @@
 <script setup>
 // Wizard di configurazione: fornitore, cliente, tariffa/dati fiscali, PEC.
 // I dati vengono salvati sul backend (config.json) ad ogni "Avanti"/"Salva".
-import { ref, onMounted } from 'vue';
-import WizardSteps from '../components/wizard/WizardSteps.vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import StepFornitore from '../components/wizard/StepFornitore.vue';
 import StepClienti from '../components/wizard/StepClienti.vue';
 import StepFatturazione from '../components/wizard/StepFatturazione.vue';
@@ -12,11 +12,19 @@ import StepPromemoria from '../components/wizard/StepPromemoria.vue';
 import StepForfettario from '../components/wizard/StepForfettario.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import { api } from '../services/api.js';
+import { PASSI_IMPOSTAZIONI as PASSI, PASSI_AUTOSALVANTI } from '../wizardImpostazioniPassi.js';
 
-const PASSI = ['Fornitore', 'Clienti', 'Tariffa & fiscali', 'PEC', 'Backup', 'Promemoria', 'Forfettario', 'Login Google'];
-// Lo step "Login Google" gestisce da sé il proprio salvataggio (scrive su .env, non su config.json).
-const PASSI_AUTOSALVANTI = ['Login Google'];
-const passoAttivo = ref(0);
+const route = useRoute();
+const router = useRouter();
+// Il passo attivo vive nella query string (?passo=N) invece che in uno stato locale,
+// così le sotto-voci verticali in AppSidebar possono linkarci direttamente con router-link.
+const passoAttivo = computed({
+  get: () => {
+    const n = Number(route.query.passo);
+    return Number.isInteger(n) && n >= 0 && n < PASSI.length ? n : 0;
+  },
+  set: (n) => router.push({ query: { passo: n } }),
+});
 const config = ref(null);
 const messaggio = ref('');
 
@@ -57,13 +65,14 @@ function indietro() {
   if (passoAttivo.value > 0) passoAttivo.value -= 1;
 }
 
-// Salto diretto a un passo qualsiasi cliccando la tabbar: salva il passo corrente
-// (se non autosalvante) prima di spostarsi, così i dati inseriti non si perdono.
-async function vaiAlPasso(indice) {
-  if (indice === passoAttivo.value) return;
-  if (!eAutosalvante(passoAttivo.value)) await salva();
-  passoAttivo.value = indice;
-}
+// Click su una sotto-voce diversa in AppSidebar: salva il passo corrente (se non
+// autosalvante) prima che la query cambi davvero, così i dati inseriti non si perdono.
+onBeforeRouteUpdate(async (to, from, next) => {
+  if (to.query.passo !== from.query.passo && !eAutosalvante(passoAttivo.value)) {
+    await salva();
+  }
+  next();
+});
 </script>
 
 <template>
@@ -71,8 +80,6 @@ async function vaiAlPasso(indice) {
     <div class="page-head">
       <div><h1>Impostazioni</h1><p>Configurazione guidata: anagrafica, tariffa, invio</p></div>
     </div>
-
-    <WizardSteps :passi="PASSI" :passo-attivo="passoAttivo" @vai="vaiAlPasso" />
 
     <div class="card">
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>

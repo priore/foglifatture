@@ -1,8 +1,11 @@
 <script setup>
 // Barra di navigazione laterale fissa: unico punto di accesso alle 3 schermate dell'app.
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { api } from '../../services/api.js';
+import { PASSI_IMPOSTAZIONI } from '../../wizardImpostazioniPassi.js';
 
+const route = useRoute();
 const nomeFornitore = ref('Consulente');
 onMounted(async () => {
   const config = await api.getConfig().catch(() => null);
@@ -27,6 +30,14 @@ function toggleTheme() {
       <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
       <router-link to="/impostazioni"><span class="dot"></span>Impostazioni</router-link>
+      <div v-if="route.path === '/impostazioni'" class="nav-sub">
+        <router-link
+          v-for="(passo, i) in PASSI_IMPOSTAZIONI" :key="passo"
+          :to="{ path: '/impostazioni', query: { passo: i } }"
+          active-class="" exact-active-class=""
+          :class="{ 'router-link-active': Number(route.query.passo || 0) === i }"
+        >{{ passo }}</router-link>
+      </div>
     </nav>
     <div class="side-foot">
       {{ nomeFornitore }}
