@@ -4,6 +4,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import '../assets/print-fattura.css';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
+import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import FatturaPrintPreview from '../components/fattura/FatturaPrintPreview.vue';
 import { api } from '../services/api.js';
 import { esportaPdf } from '../composables/usePdfExport.js';
@@ -128,9 +129,7 @@ onMounted(async () => {
         <p>{{ modoManuale ? 'Importo e dicitura liberi' : 'Generata da Timesheet · Tariffa oraria configurabile in Impostazioni' }}</p>
       </div>
       <div class="actions">
-        <select v-if="clientiAttivi.length > 1" v-model="clienteId" class="btn btn-ghost">
-          <option v-for="c in clientiAttivi" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
-        </select>
+        <ClienteSwitcher v-if="clientiAttivi.length > 1" v-model="clienteId" :clienti="clientiAttivi" />
         <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
         <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
       </div>

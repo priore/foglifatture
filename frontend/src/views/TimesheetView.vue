@@ -3,6 +3,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import '../assets/print-timesheet.css';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
+import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import TimesheetGrid from '../components/timesheet/TimesheetGrid.vue';
 import TimesheetPrintPreview from '../components/timesheet/TimesheetPrintPreview.vue';
 import { api } from '../services/api.js';
@@ -86,9 +87,7 @@ onMounted(async () => {
         <p>Pianificazione mensile ore, replica struttura foglio aziendale</p>
       </div>
       <div class="actions">
-        <select v-if="clientiAttivi.length > 1" v-model="clienteId" class="btn btn-ghost">
-          <option v-for="c in clientiAttivi" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
-        </select>
+        <ClienteSwitcher v-if="clientiAttivi.length > 1" v-model="clienteId" :clienti="clientiAttivi" />
         <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
         <button class="btn btn-ghost" :disabled="salvando" @click="salvaTimesheet">
           {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}

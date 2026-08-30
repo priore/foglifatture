@@ -1,22 +1,35 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import StepCliente from './StepCliente.vue';
 
 const props = defineProps({ modelValue: { type: Array, required: true } });
 
-const aperti = ref(new Set([0]));
-function toggleAperto(i) {
-  aperti.value.has(i) ? aperti.value.delete(i) : aperti.value.add(i);
+const ricerca = ref('');
+const clientiFiltrati = computed(() => {
+  const q = ricerca.value.trim().toLowerCase();
+  const attivi = props.modelValue.filter((c) => c.attivo);
+  if (!q) return attivi;
+  return attivi.filter((c) => (c.denominazione || '').toLowerCase().includes(q));
+});
+
+// Tracciato per id cliente, non per indice posizionale: con la ricerca attiva l'indice
+// nell'elenco filtrato cambia a ogni digitazione, un Set di indici aprirebbe/chiuderebbe
+// pannelli sbagliati.
+const aperti = ref(new Set(props.modelValue[0] ? [props.modelValue[0].id] : []));
+function toggleAperto(id) {
+  aperti.value.has(id) ? aperti.value.delete(id) : aperti.value.add(id);
   aperti.value = new Set(aperti.value);
 }
 
 function aggiungiCliente() {
-  props.modelValue.push({
+  const nuovo = {
     id: crypto.randomUUID(), attivo: true,
     denominazione: '', indirizzo: '', cap: '', comune: '', provincia: '',
     partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0,
-  });
-  aperti.value = new Set([props.modelValue.length - 1]);
+  };
+  props.modelValue.push(nuovo);
+  ricerca.value = '';
+  aperti.value = new Set([nuovo.id]);
 }
 
 // Cancellazione logica (attivo:false), mai rimozione dall'array: le fatture/timesheet
@@ -39,12 +52,23 @@ function riattivaCliente(cliente) {
 
 <template>
   <div>
-    <div v-for="(cliente, i) in modelValue.filter(c => c.attivo)" :key="cliente.id" class="card" style="margin-bottom:12px">
-      <div class="card-head" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" @click="toggleAperto(i)">
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button type="button" class="btn btn-primary" @click="aggiungiCliente">+ Aggiungi cliente</button>
+      <input
+        v-if="modelValue.filter(c => c.attivo).length > 1"
+        type="search" v-model="ricerca" placeholder="Cerca cliente…"
+        style="flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:.86rem;background:var(--ground);color:var(--ink)"
+      >
+    </div>
+
+    <p v-if="ricerca && !clientiFiltrati.length" class="note-legal">Nessun cliente trovato.</p>
+
+    <div v-for="cliente in clientiFiltrati" :key="cliente.id" class="card" style="margin-bottom:12px">
+      <div class="card-head" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" @click="toggleAperto(cliente.id)">
         <h3 style="margin:0">{{ cliente.denominazione || 'Nuovo cliente' }}</h3>
         <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
       </div>
-      <div class="card-body" v-show="aperti.has(i)">
+      <div class="card-body" v-show="aperti.has(cliente.id)">
         <StepCliente v-model="modelValue[modelValue.indexOf(cliente)]" />
         <div class="field" style="margin-top:12px">
           <label>Tariffa oraria (€)</label>
@@ -52,8 +76,6 @@ function riattivaCliente(cliente) {
         </div>
       </div>
     </div>
-
-    <button type="button" class="btn btn-primary" @click="aggiungiCliente">+ Aggiungi cliente</button>
 
     <details v-if="modelValue.some(c => !c.attivo)" style="margin-top:20px">
       <summary>Clienti disattivati</summary>
