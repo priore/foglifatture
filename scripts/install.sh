@@ -6,11 +6,18 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LABEL="com.prioregroup.fatturazione"
 PLIST_PATH="$HOME/Library/LaunchAgents/$LABEL.plist"
-NODE_BIN="$(command -v node)"
 LOG_DIR="$PROJECT_DIR/logs"
 
+if ! command -v node >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "Node.js non trovato: installazione tramite Homebrew..."
+    brew install node
+  fi
+fi
+
+NODE_BIN="$(command -v node)"
 if [ -z "$NODE_BIN" ]; then
-  echo "Errore: node non trovato nel PATH. Installa Node.js prima di continuare."
+  echo "Errore: node non trovato e installazione automatica non riuscita. Installa Node.js da nodejs.org e riprova."
   exit 1
 fi
 
@@ -66,3 +73,6 @@ echo "Installato e avviato: http://localhost:1969"
 echo "Log:   $LOG_DIR/out.log"
 echo "Stato: launchctl list | grep $LABEL"
 echo "Disinstalla con: scripts/uninstall.sh"
+
+sleep 2
+open "http://localhost:1969" 2>/dev/null || true

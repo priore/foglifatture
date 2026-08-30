@@ -2,22 +2,21 @@
 
 App per gestire il timesheet mensile e generare le fatture elettroniche, pensata per chi lavora in regime forfettario. Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
-## Installazione (Mac)
+## Installazione
 
-Serve solo la prima volta.
+Serve solo la prima volta. Lo script fa tutto da solo: installa Node.js se manca, scarica le librerie necessarie, prepara la configurazione, avvia l'app come servizio permanente e apre il browser sulla pagina iniziale.
 
-1. Se non hai già Node.js installato, scaricalo da [nodejs.org](https://nodejs.org/) (versione consigliata: LTS) e installalo come un programma qualsiasi.
-2. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
-3. Trascina la cartella del progetto nella finestra del Terminale per scriverne il percorso, poi premi Invio per entrarci:
+### Mac
+
+1. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
+2. Trascina la cartella del progetto nella finestra del Terminale per scriverne il percorso, poi premi Invio per entrarci:
    ```bash
    cd /percorso/della/cartella/Timesheet
    ```
-4. Lancia l'installazione:
+3. Lancia l'installazione:
    ```bash
    scripts/install.sh
    ```
-
-Lo script fa tutto da solo: scarica le librerie necessarie, prepara la configurazione e avvia l'app come servizio permanente. Alla fine vedrai scritto `Installato e avviato: http://localhost:1969`.
 
 Da quel momento l'app:
 - parte da sola ogni volta che accendi il Mac,
@@ -27,6 +26,32 @@ Da quel momento l'app:
 Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 ```bash
 scripts/uninstall.sh
+```
+
+### Windows
+
+1. Apri **PowerShell** (cerca "PowerShell" nel menu Start).
+2. Trascina la cartella del progetto nella finestra di PowerShell per scriverne il percorso, poi premi Invio per entrarci:
+   ```powershell
+   cd C:\percorso\della\cartella\Timesheet
+   ```
+3. Lancia l'installazione:
+   ```powershell
+   .\scripts\install.ps1
+   ```
+   Se PowerShell blocca lo script ("esecuzione script disabilitata"), esegui prima una volta:
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+   ```
+
+Da quel momento l'app:
+- parte da sola ad ogni accesso a Windows,
+- si riavvia da sola se dovesse bloccarsi,
+- resta sempre raggiungibile all'indirizzo `http://localhost:1969` (apri quel link con qualsiasi browser).
+
+Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
+```powershell
+.\scripts\uninstall.ps1
 ```
 
 ## Primo utilizzo
@@ -51,7 +76,7 @@ Sì, è facoltativo. Se non lo configuri, l'app è liberamente accessibile a chi
 1. Vai su [Google Cloud Console](https://console.cloud.google.com/) e crea delle credenziali "OAuth 2.0" (è una procedura di Google, gratuita, pensata anche per chi non è sviluppatore — cerca "Credenziali" nel menu).
 2. Come "Redirect URI" indica: `http://localhost:1969/auth/google/callback`.
 3. Apri il file `backend/.env` con un editor di testo qualsiasi (es. TextEdit) e incolla i due codici che Google ti dà (`GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`), più la tua email in `ALLOWED_EMAIL`.
-4. Riavvia l'app (`scripts/uninstall.sh` seguito da `scripts/install.sh`): da ora solo quella email potrà entrare.
+4. Riavvia l'app (`scripts/uninstall.sh` seguito da `scripts/install.sh`, oppure su Windows `.\scripts\uninstall.ps1` seguito da `.\scripts\install.ps1`): da ora solo quella email potrà entrare.
 
 ### Come invio le fatture?
 
@@ -65,7 +90,10 @@ Dalla schermata della fattura puoi inviarla via PEC direttamente, se in Impostaz
 
 Se vuoi ricontrollare che l'app sia davvero attiva:
 ```bash
-launchctl list | grep com.prioregroup.fatturazione
+launchctl list | grep com.prioregroup.fatturazione   # Mac
+```
+```powershell
+Get-ScheduledTask -TaskName PrioreGroupFatturazione   # Windows
 ```
 
 ## Note per chi programma
