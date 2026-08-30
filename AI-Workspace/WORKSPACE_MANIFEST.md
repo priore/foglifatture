@@ -24,6 +24,7 @@ Confidence levels used throughout the workspace: 🟢 confirmed by code · 🟡 
 | CHANGELOG | `product/CHANGELOG.md` | Running log of what changed in the codebase over time | PROJECT_ANALYSIS | 🟢 complete (baseline entry only — no git history) | Low | Any |
 | GLOSSARY | `product/GLOSSARY.md` | Domain and codebase terms (invoicing terminology, internal naming) | PROJECT_CONTEXT | 🟢 complete | Low | Any |
 | DESIGN_PATTERNS_AS_IS | `documentation/DESIGN_PATTERNS_AS_IS.md` | Factual architectural/design pattern inventory (backend + frontend) | PROJECT_ANALYSIS | 🟢 complete | Medium | Claude Sonnet |
+| MULTI_CLIENTE_ANALISI | `documentation/MULTI_CLIENTE_ANALISI.md` | Feasibility analysis for concurrent multi-client support (FEATURE_PROPOSALS #5): key migration, numbering invariant, forfettario bug, per-file impact | ARCHITECTURE, FEATURE_PROPOSALS | 🟢 complete | Low (conditional) | Claude Sonnet |
 
 Support directories (no fixed document set, populated incrementally as work happens):
 
