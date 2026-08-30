@@ -67,7 +67,7 @@ body {
 .page-head p { margin: 0; color: var(--ink-soft); font-size: .92rem; }
 .actions { display: flex; gap: 10px; align-items: center; }
 
-.cliente-switcher { position: relative; flex: 0 0 150px; }
+.cliente-switcher { position: relative; flex: 0 0 260px; }
 .cliente-switcher-bottone { display: flex; width: 100%; box-sizing: border-box; text-align: left; white-space: normal; line-height: 1.25; word-break: break-word; }
 .cliente-switcher-menu { list-style: none; margin: 4px 0 0; padding: 6px; position: absolute; top: 100%; left: 0; min-width: 200px; max-width: 280px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 20; }
 .cliente-switcher-menu li button { all: unset; cursor: pointer; display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 7px; font-size: .86rem; white-space: normal; line-height: 1.3; }
