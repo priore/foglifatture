@@ -1,7 +1,7 @@
 # Timesheet & Fatturazione
 
 App per chi lavora in regime forfettario, con due funzioni indipendenti:
-- **Timesheet mensile** — registra le ore lavorate giorno per giorno.
+- **Timesheet mensile** — registra le ore lavorate giorno per giorno, per uno o più clienti.
 - **Fatturazione elettronica** — genera fatture calcolate da timesheet (ore × tariffa) oppure a importo e descrizione liberi, senza bisogno del timesheet.
 
 Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
@@ -61,9 +61,9 @@ Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 ## Primo utilizzo
 
 1. Apri il browser su `http://localhost:1969`.
-2. Vai su **Impostazioni** e compila la procedura guidata: i tuoi dati (partita IVA, ecc.), i dati del cliente, la tariffa oraria.
-3. Da **Timesheet** registra le ore lavorate giorno per giorno.
-4. Da **Fattura Pro-Forma** genera la fattura del mese quando sei pronto: scegli "Da timesheet" (calcolo automatico ore × tariffa) oppure "Importo libero" se vuoi fatturare un importo e una descrizione a piacere senza passare dal timesheet.
+2. Vai su **Impostazioni** e compila la procedura guidata: i tuoi dati (partita IVA, ecc.), i dati del cliente (o dei clienti — puoi aggiungerne quanti ne servono, ognuno con la propria tariffa oraria), i dati PEC.
+3. Da **Timesheet** registra le ore lavorate giorno per giorno. Se hai più clienti, scegli quale con il selettore in alto.
+4. Da **Fattura Pro-Forma** genera la fattura del mese quando sei pronto (per il cliente scelto): scegli "Da timesheet" (calcolo automatico ore × tariffa) oppure "Importo libero" se vuoi fatturare un importo e una descrizione a piacere senza passare dal timesheet.
 
 Tutto qui — non serve altro per iniziare a usarla.
 
@@ -81,6 +81,10 @@ Sì, è facoltativo. Se non lo configuri, l'app è liberamente accessibile a chi
 2. Come "Redirect URI" indica: `http://localhost:1969/auth/google/callback`.
 3. Apri il file `backend/.env` con un editor di testo qualsiasi (es. TextEdit) e incolla i due codici che Google ti dà (`GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`), più la tua email in `ALLOWED_EMAIL`.
 4. Riavvia l'app (`scripts/uninstall.sh` seguito da `scripts/install.sh`, oppure su Windows `.\scripts\uninstall.ps1` seguito da `.\scripts\install.ps1`): da ora solo quella email potrà entrare.
+
+### Posso fatturare a più clienti?
+
+Sì. In Impostazioni → Clienti puoi aggiungerne quanti ne servono, ognuno con la propria anagrafica e tariffa oraria. Il timesheet e la fattura di ogni mese sono separati per cliente. La numerazione delle fatture resta però unica e progressiva su tutti i clienti insieme (è un obbligo di legge legato alla tua partita IVA, non al cliente).
 
 ### Come invio le fatture?
 
