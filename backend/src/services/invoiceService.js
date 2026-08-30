@@ -1,12 +1,19 @@
 // Calcolo e archiviazione della Fattura Pro-Forma: ore * tariffa oraria + bollo virtuale condizionale.
 import { readJson, writeJson, listKeys } from '../lib/jsonStore.js';
 
-function chiaveMese(anno, mese) {
-  return `${anno}-${String(mese).padStart(2, '0')}`;
+function chiaveMese(anno, mese, clienteId) {
+  return `${anno}-${String(mese).padStart(2, '0')}-${clienteId}`;
 }
 
-function percorsoFile(anno, mese) {
-  return `invoices/${chiaveMese(anno, mese)}.json`;
+function percorsoFile(anno, mese, clienteId) {
+  return `invoices/${chiaveMese(anno, mese, clienteId)}.json`;
+}
+
+// Spacca una chiave "anno-mese-clienteId" nelle sue parti. clienteId può contenere
+// trattini (uuid), quindi si spacca solo sui primi due segmenti, il resto è l'id.
+function parseChiave(chiave) {
+  const [anno, mese, ...restoId] = chiave.split('-');
+  return { chiave, anno: Number(anno), mese: Number(mese), clienteId: restoId.join('-') };
 }
 
 // Calcola bollo (dichiarato nell'XML FatturaPA se dovuto) e netto a pagare a partire
@@ -26,48 +33,55 @@ export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale,
   return calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo);
 }
 
-export async function getInvoice(anno, mese) {
-  return readJson(percorsoFile(anno, mese), null);
+export async function getInvoice(anno, mese, clienteId) {
+  return readJson(percorsoFile(anno, mese, clienteId), null);
 }
 
-export async function saveInvoice(anno, mese, invoice) {
-  await writeJson(percorsoFile(anno, mese), invoice);
+export async function saveInvoice(anno, mese, clienteId, invoice) {
+  await writeJson(percorsoFile(anno, mese, clienteId), invoice);
   return invoice;
 }
 
+// Restituisce le chiavi già parsate ({ chiave, anno, mese, clienteId }), non stringhe
+// grezze: evita che ogni consumatore debba rifare split('-') su un formato composito.
 export async function listMesiFatturati() {
   const chiavi = await listKeys('invoices');
-  return chiavi.sort();
+  return chiavi.map(parseChiave).sort((a, b) => a.chiave.localeCompare(b.chiave));
 }
 
 // Prossimo numero fattura (progressivo puro, senza barra/anno: formato più compatibile
-// con lo SDI secondo esperienza pregressa). Se il mese ha già una fattura salvata ne
-// riusa il numero (una rigenerazione non deve consumare un nuovo progressivo).
-export async function prossimoNumeroFattura(anno, mese) {
-  const esistente = await getInvoice(anno, mese);
+// con lo SDI secondo esperienza pregressa). Se il mese ha già una fattura salvata per
+// questo cliente ne riusa il numero (una rigenerazione non deve consumare un nuovo
+// progressivo). Il progressivo è unico per fornitore/P.IVA, non per cliente: conta le
+// fatture effettivamente scritte su disco (tutteLeFatture), non le entry di directory.
+export async function prossimoNumeroFattura(anno, mese, clienteId) {
+  const esistente = await getInvoice(anno, mese, clienteId);
   if (esistente) return esistente.numero;
-  const mesiFatturati = await listMesiFatturati();
-  return String(mesiFatturati.length + 1);
+  const fatture = await tutteLeFatture();
+  return String(fatture.length + 1);
 }
 
-// Legge tutte le fatture esistenti (tutti i mesi), ordinate per numero progressivo.
+// Legge tutte le fatture esistenti (tutti i mesi, tutti i clienti), ordinate per numero
+// progressivo. clienteId viene letto dal contenuto della fattura deserializzata (dove
+// saveInvoice lo scrive esplicitamente), mai dalla chiave file: questo evita che il
+// progressivo Number(f.numero) confonda il clienteId con parte del numero fattura.
 async function tutteLeFatture() {
   const chiavi = await listMesiFatturati();
   const fatture = await Promise.all(
-    chiavi.map((chiave) => {
-      const [anno, mese] = chiave.split('-').map(Number);
-      return getInvoice(anno, mese);
-    })
+    chiavi.map(({ anno, mese, clienteId }) => getInvoice(anno, mese, clienteId))
   );
   return fatture.filter(Boolean).sort((a, b) => Number(a.numero) - Number(b.numero));
 }
 
 // Verifica che `numero` sia valido rispetto alle fatture già emesse: nessun duplicato,
-// nessun salto nella sequenza (deve essere l'ultimo progressivo + 1), escludendo dal
-// controllo la fattura del mese corrente (una rigenerazione riusa il proprio numero).
-export async function verificaIntegritaNumerazione(anno, mese, numero) {
+// nessun salto nella sequenza (deve essere l'ultimo progressivo + 1) — la sequenza resta
+// UNICA cross-cliente (obbligo legale: il progressivo è per P.IVA fornitore, non per
+// cliente). Si esclude dal controllo solo la fattura dello stesso cliente/stesso mese
+// (una rigenerazione riusa il proprio numero); la fattura di un altro cliente nello
+// stesso mese civile resta nel controllo sequenza.
+export async function verificaIntegritaNumerazione(anno, mese, clienteId, numero) {
   const fatture = (await tutteLeFatture()).filter(
-    (f) => !(f.anno === anno && f.mese === mese)
+    (f) => !(f.anno === anno && f.mese === mese && f.clienteId === clienteId)
   );
 
   const duplicato = fatture.find((f) => String(f.numero) === String(numero));
