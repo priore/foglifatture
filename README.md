@@ -1,77 +1,95 @@
 # Timesheet & Fatturazione
 
-App locale per gestione timesheet mensile e fatturazione elettronica in regime forfettario.
+App per gestire il timesheet mensile e generare le fatture elettroniche, pensata per chi lavora in regime forfettario. Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
-## Struttura
+## Installazione (Mac)
 
-- `backend/` — API Express, generatore XML FatturaPA, invio PEC, storage JSON flat file, login Google OAuth opzionale.
-- `frontend/` — SPA Vue 3 (Composition API, `<script setup>`): Timesheet, Fattura Pro-Forma, Impostazioni (wizard).
-- `Templates/` — file originali (xls/doc/xml) usati come riferimento di stile e formato.
+Serve solo la prima volta.
 
-## Esecuzione permanente (avvio automatico, sopravvive al riavvio del Mac)
+1. Se non hai già Node.js installato, scaricalo da [nodejs.org](https://nodejs.org/) (versione consigliata: LTS) e installalo come un programma qualsiasi.
+2. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
+3. Trascina la cartella del progetto nella finestra del Terminale per scriverne il percorso, poi premi Invio per entrarci:
+   ```bash
+   cd /percorso/della/cartella/Timesheet
+   ```
+4. Lancia l'installazione:
+   ```bash
+   scripts/install.sh
+   ```
 
+Lo script fa tutto da solo: scarica le librerie necessarie, prepara la configurazione e avvia l'app come servizio permanente. Alla fine vedrai scritto `Installato e avviato: http://localhost:1969`.
+
+Da quel momento l'app:
+- parte da sola ogni volta che accendi il Mac,
+- si riavvia da sola se dovesse bloccarsi,
+- resta sempre raggiungibile all'indirizzo `http://localhost:1969` (apri quel link con qualsiasi browser).
+
+Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 ```bash
-scripts/install.sh     # build + installa come servizio launchd, avvia subito
-scripts/uninstall.sh   # ferma e rimuove il servizio (non tocca dati/config)
+scripts/uninstall.sh
 ```
 
-Dopo l'installazione l'app è sempre raggiungibile su `http://localhost:1969`,
-si riavvia da sola se va in crash e riparte automaticamente ad ogni accensione
-del Mac.
+## Primo utilizzo
 
-## Log
+1. Apri il browser su `http://localhost:1969`.
+2. Vai su **Impostazioni** e compila la procedura guidata: i tuoi dati (partita IVA, ecc.), i dati del cliente, la tariffa oraria.
+3. Da **Timesheet** registra le ore lavorate giorno per giorno.
+4. Da **Fattura Pro-Forma** genera la fattura del mese quando sei pronto.
 
-- `logs/out.log`, `logs/error.log` — output grezzo del processo (stdout/stderr), gestito da launchd.
-- `backend/logs/app.log` — log applicativo strutturato (una riga JSON per evento): richieste API, errori non gestiti, avvio server.
-- `backend/logs/pec.log` — log dedicato all'invio PEC (tentativi, successi, errori SMTP): è il primo posto da controllare se un invio non va a buon fine.
+Tutto qui — non serve altro per iniziare a usarla.
 
-## Primo avvio (sviluppo, senza installarlo come servizio)
+## Domande frequenti
+
+### Dove sono salvati i miei dati?
+
+Nella cartella `backend/data/` del progetto, in semplici file. Non escono mai dal tuo computer. Fai un backup ogni tanto: in **Impostazioni** trovi la funzione "Esporta storico" che crea una copia cifrata con password, e puoi anche attivare un backup automatico periodico.
+
+### Posso proteggere l'accesso con un login?
+
+Sì, è facoltativo. Se non lo configuri, l'app è liberamente accessibile a chiunque abbia accesso al tuo computer/rete locale — va bene per uso personale su un solo Mac. Se vuoi il login con il tuo account Google:
+
+1. Vai su [Google Cloud Console](https://console.cloud.google.com/) e crea delle credenziali "OAuth 2.0" (è una procedura di Google, gratuita, pensata anche per chi non è sviluppatore — cerca "Credenziali" nel menu).
+2. Come "Redirect URI" indica: `http://localhost:1969/auth/google/callback`.
+3. Apri il file `backend/.env` con un editor di testo qualsiasi (es. TextEdit) e incolla i due codici che Google ti dà (`GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`), più la tua email in `ALLOWED_EMAIL`.
+4. Riavvia l'app (`scripts/uninstall.sh` seguito da `scripts/install.sh`): da ora solo quella email potrà entrare.
+
+### Come invio le fatture?
+
+Dalla schermata della fattura puoi inviarla via PEC direttamente, se in Impostazioni hai inserito i dati della tua casella PEC (indirizzo, password, server del tuo gestore). Se qualcosa non va nell'invio, il file `backend/logs/pec.log` registra ogni tentativo — è il primo posto da controllare.
+
+### Qualcosa non funziona, dove guardo?
+
+- `logs/error.log` — errori generali del programma.
+- `backend/logs/app.log` — registro dettagliato di ogni operazione.
+- `backend/logs/pec.log` — solo per problemi di invio PEC.
+
+Se vuoi ricontrollare che l'app sia davvero attiva:
+```bash
+launchctl list | grep com.prioregroup.fatturazione
+```
+
+## Note per chi programma
+
+- `backend/` — API Express, generatore XML FatturaPA, invio PEC, storage su file JSON, login Google OAuth opzionale.
+- `frontend/` — SPA Vue 3 (Composition API, `<script setup>`).
+- `Templates/` — file originali (xls/doc/xml) usati come riferimento di stile e formato.
+
+Avvio in modalità sviluppo (senza installarlo come servizio):
 
 ```bash
 cd backend
 npm install
-cp .env.example .env   # lascia le credenziali Google vuote per ora
+cp .env.example .env
 npm start               # http://localhost:1969
 ```
-
-In un altro terminale, per build del frontend:
 
 ```bash
 cd frontend
 npm install
-npm run build
+npm run build            # oppure: npm run dev (hot-reload su :5173, proxy verso il backend)
 ```
 
-Il backend serve automaticamente `frontend/dist/` su `http://localhost:1969`.
-
-Per sviluppo con hot-reload frontend (porta separata, proxy verso il backend):
-
-```bash
-cd frontend
-npm run dev             # http://localhost:5173
-```
-
-## Prima configurazione
-
-Con `.env` senza credenziali Google, il login è disattivato: apri l'app e vai
-subito su **Impostazioni** per inserire anagrafica fornitore/cliente, tariffa
-oraria e (facoltativo) dati PEC.
-
-## Attivare il login Google (opzionale)
-
-1. Crea un progetto su [Google Cloud Console](https://console.cloud.google.com/) > Credenziali > ID client OAuth 2.0.
-2. Redirect URI: `http://localhost:1969/auth/google/callback`.
-3. Compila `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAIL` in `backend/.env`.
-4. Riavvia il backend: solo quell'email potrà accedere.
-
-## Invio PEC
-
-Il modulo è predisposto (`backend/src/services/pecService.js`) ma non testato
-con invio reale. Configura i dati della tua casella PEC in Impostazioni prima
-di usarlo.
-
-## Test
-
+Test:
 ```bash
 cd backend
 npm test

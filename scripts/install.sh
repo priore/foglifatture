@@ -23,6 +23,13 @@ if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
   echo "Creato backend/.env dai valori di default (nessuna credenziale Google configurata)."
 fi
 
+if grep -q '^SESSION_SECRET=cambia-questo-segreto$' "$PROJECT_DIR/backend/.env" 2>/dev/null; then
+  RANDOM_SECRET="$("$NODE_BIN" -e "console.log(require('crypto').randomBytes(32).toString('hex'))")"
+  sed -i.bak "s/^SESSION_SECRET=cambia-questo-segreto$/SESSION_SECRET=$RANDOM_SECRET/" "$PROJECT_DIR/backend/.env"
+  rm -f "$PROJECT_DIR/backend/.env.bak"
+  echo "Generato SESSION_SECRET casuale."
+fi
+
 mkdir -p "$LOG_DIR"
 
 cat > "$PLIST_PATH" <<EOF
