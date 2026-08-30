@@ -80,7 +80,20 @@ async function tutteLeFatture() {
 // (una rigenerazione riusa il proprio numero); la fattura di un altro cliente nello
 // stesso mese civile resta nel controllo sequenza.
 export async function verificaIntegritaNumerazione(anno, mese, clienteId, numero) {
-  const fatture = (await tutteLeFatture()).filter(
+  const tutte = await tutteLeFatture();
+  const fatturaCorrente = tutte.find(
+    (f) => f.anno === anno && f.mese === mese && f.clienteId === clienteId
+  );
+  // Rigenerare una fattura che riusa esattamente il proprio numero esistente è sempre
+  // valido, anche se non è più l'ultima della sequenza globale (con più clienti, altre
+  // fatture più recenti di altri clienti possono essere state generate nel frattempo —
+  // a differenza del caso a singolo cliente, "riusare il proprio numero" non coincide
+  // più sempre con "essere l'ultimo della sequenza").
+  if (fatturaCorrente && String(fatturaCorrente.numero) === String(numero)) {
+    return { valido: true };
+  }
+
+  const fatture = tutte.filter(
     (f) => !(f.anno === anno && f.mese === mese && f.clienteId === clienteId)
   );
 

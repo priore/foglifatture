@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 
 mock.module('./invoiceService.js', {
   exports: {
-    listMesiFatturati: async () => ['2026-01-cliA', '2026-01-cliB', '2026-02-cliA'],
+    listMesiFatturati: async () => [
+      { chiave: '2026-01-cliA', anno: 2026, mese: 1, clienteId: 'cliA' },
+      { chiave: '2026-01-cliB', anno: 2026, mese: 1, clienteId: 'cliB' },
+      { chiave: '2026-02-cliA', anno: 2026, mese: 2, clienteId: 'cliA' },
+    ],
     getInvoice: async (anno, mese) => {
       const chiave = `${anno}-${String(mese).padStart(2, '0')}`;
       const store = {

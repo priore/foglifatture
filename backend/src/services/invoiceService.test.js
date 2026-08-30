@@ -54,6 +54,13 @@ test('due clienti nello stesso mese devono avere numeri progressivi distinti: du
   assert.match(risultato.errore, /già usato/);
 });
 
+test('rigenerazione di una fattura non più ultima nella sequenza globale riusa comunque il proprio numero', async () => {
+  // CLI_A/gennaio ha numero 1, ma CLI_B/gennaio (numero 2) è stato generato dopo:
+  // rigenerare CLI_A non deve fallire solo perché non è più "l'ultimo" della sequenza.
+  const risultato = await verificaIntegritaNumerazione(2026, 1, CLI_A, '1');
+  assert.equal(risultato.valido, true);
+});
+
 test('un terzo cliente nello stesso mese di uno già fatturato prende il progressivo successivo, non un numero per-cliente', async () => {
   // CLI_C fattura a marzo (mese nuovo, dopo l'ultima fattura esistente CLI_A/febbraio=3):
   // il numero atteso è 4, cross-cliente — non riparte da 1 solo perché è il primo mese di CLI_C.

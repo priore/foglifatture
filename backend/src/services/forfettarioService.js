@@ -12,19 +12,18 @@ export function aliquotaImposta(dataInizioAttivita, anno) {
 }
 
 async function ricaviAnno(anno) {
-  const chiavi = (await listMesiFatturati()).filter((c) => c.startsWith(`${anno}-`));
-  const fatture = await Promise.all(
-    chiavi.map((chiave) => {
-      const [a, m] = chiave.split('-').map(Number);
-      return getInvoice(a, m);
-    })
+  const chiavi = (await listMesiFatturati()).filter((c) => c.anno === anno);
+  const risolte = await Promise.all(
+    chiavi.map(async (c) => ({ mese: c.mese, invoice: await getInvoice(c.anno, c.mese, c.clienteId) }))
   );
-  // "chiave.length" contava le entry, non i mesi civili: con più fatture nello stesso
-  // mese (multi-cliente) va contato il mese una sola volta, altrimenti la proiezione
-  // fine anno (ricaviCumulati / mesiFatturati * 12) risulta sballata per eccesso di mesi.
-  // slice(0,7) = "YYYY-MM" resta corretto sia su chiave "2026-08" sia su "2026-08-<clienteId>".
-  const mesiDistinti = new Set(chiavi.map((c) => c.slice(0, 7)));
-  return { fatture: fatture.filter(Boolean), mesiFatturati: mesiDistinti.size };
+  // Solo le chiavi che risolvono davvero a una fattura leggibile contano come "mese
+  // fatturato" — una chiave orfana/corrotta su disco non deve gonfiare il conteggio.
+  const risolteValide = risolte.filter((r) => r.invoice);
+  // Conta i mesi civili distinti, non le entry: con più fatture nello stesso mese
+  // (multi-cliente) un mese va contato una sola volta, altrimenti la proiezione fine
+  // anno (ricaviCumulati / mesiFatturati * 12) risulta sballata per eccesso di mesi.
+  const mesiDistinti = new Set(risolteValide.map((r) => r.mese));
+  return { fatture: risolteValide.map((r) => r.invoice), mesiFatturati: mesiDistinti.size };
 }
 
 export async function calcolaDashboardForfettario(config, { anno = new Date().getFullYear(), meseCorrente = new Date().getMonth() + 1 } = {}) {
