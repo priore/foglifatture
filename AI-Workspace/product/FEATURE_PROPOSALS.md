@@ -92,6 +92,30 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 - Backend (rete di sicurezza indipendente dal client, dove prima non c'era alcun controllo): nuova `validaConfig()` in `configService.js` con le stesse regex del frontend (partita IVA 11 cifre, codice fiscale, codice SDI 7 caratteri, PEC formato email), richiamata in `configRoutes.js` PUT `/api/config` — risponde `400 { errore }` e non scrive `config.json` se un campo presente nel payload non è valido. Pattern coerente con la gestione errori già in uso in `invoiceRoutes.js` (validazione esplicita in route, non throw).
 - Verificato via curl: payload con `partitaIva` non numerica o `casellaMittente` non email → 400 con messaggio, config non scritta; payload valido → 200, salvataggio normale invariato.
 
+### 12. Sicurezza codifica dati sensibili e password in `backend/data/`
+🔴 Rischio residuo: `config.json` (in `backend/data/`, escluso da `.gitignore` ma leggibile in chiaro sul filesystem locale) contiene credenziali in chiaro: `pec.passwordMittente` (password PEC/SMTP), `backup.password` (chiave cifratura backup AES-256). Nessun altro meccanismo di protezione a riposo attualmente (nessun keychain OS, nessun cifratura del file).
+- **Superfici di rischio concrete:**
+  - `config.json` leggibile da qualsiasi processo con accesso al filesystem utente (nessun permesso restrittivo applicato).
+  - Backup automatico scrive `config.json` non cifrato nell'archivio backup (la password usata per cifrare il backup è lei stessa in chiaro nello stesso file — `backup.password`).
+  - `backend/data/` è sul disco non cifrato se FileVault è disabilitato (configurazione non verificata/non forzata).
+- **Opzioni di hardening (in ordine di invasività crescente):**
+  1. **Keychain macOS** — salvare `pec.passwordMittente` e `backup.password` nel Keychain di sistema tramite `security add-generic-password` (CLI) o libreria npm `keytar`. Leggere al runtime, mai scrivere in `config.json`. Sforzo: basso-medio. Rischio portabilità: funziona solo su Mac (scenario attuale, ma limita il futuro supporto Windows).
+  2. **Cifratura `config.json` a riposo** — cifrare l'intero file (o solo le sezioni con segreti) con una master-password derivata (PBKDF2/Argon2) chiesta all'utente al primo avvio e tenuta solo in memoria per la sessione. Sforzo: medio. Rischio UX: richiede input password al lancio del backend (rompe l'avvio automatico come servizio macOS senza interazione utente).
+  3. **Permessi filesystem restrittivi** — `chmod 600 backend/data/config.json` (solo proprietario legge/scrive). Non protegge da processi dello stesso utente, ma riduce la superficie rispetto ad altri utenti di sistema. Sforzo: minimo (un'istruzione in `install.sh`/`install.ps1`).
+  4. **Separazione segreti da config** — spostare i campi password in un file separato `backend/data/.secrets.json` (escluso da `.gitignore` già configurato per `backend/data/`), con `chmod 600`, riferito da `config.json` tramite indirezione. Nessun cifratura, ma riduce il rischio di esposizione accidentale (log, debug print, copie di config).
+- **Raccomandazione minima immediata:** opzione 3 (permessi `chmod 600`) come fix a zero sforzo in `install.sh`; opzione 1 (Keychain) come target realistico; opzione 2 solo se si prevede avvio manuale interattivo e non come servizio.
+- Sforzo: basso (opzione 3) / medio (opzione 1) / alto (opzione 2). Valore: medio-alto — dato il contesto single-tenant locale Mac, il rischio reale è limitato, ma la presenza di credenziali reali (PEC Postecert) in chiaro su disco è un rischio documentato e non mitigato.
+
+### 13. Path `backend/data/` configurabile da Impostazioni
+🟡 Il percorso della cartella dati (`backend/data/`) è hardcoded in `jsonStore.js` come path relativo alla root del progetto. Non è modificabile dall'utente senza intervento sul codice — né da Impostazioni UI né da variabile d'ambiente.
+- **Use case concreto:** spostare `backend/data/` su una cartella sincronizzata (Dropbox, iCloud Drive, cartella di rete) per avere timesheet e fatture sempre disponibili su più Mac o come backup passivo automatico via sync cloud, senza dipendere dal backup schedulato (#3).
+- **Proposta:** aggiungere `DATA_PATH` come variabile d'ambiente in `backend/.env` (già escluso da `.gitignore`, già copiato da `.env.example` in install) e legguta da `jsonStore.js` come override del path base. Default invariato a `path.join(import.meta.dirname, '../../data')` se `DATA_PATH` non impostata — zero breaking change per chi non la configura.
+- **UI in Impostazioni (opzionale, da valutare separatamente):** nuovo step "Archivio dati" in Impostazioni che mostra il path attivo (da `DATA_PATH` o default) e permette di cambiarlo con un campo testo; richiede riavvio del backend per essere effettivo (come già accade per altri campi in Impostazioni che modificano il filesystem). In alternativa, solo `DATA_PATH` in `.env` senza UI — più semplice, meno scope.
+- **Rischi:**
+  - Se il path configurato punta a una cartella cloud sincronizzata, i conflitti di sync su scritture concorrenti di `config.json`/timesheet sono possibili ma poco probabili (uso single-user, raramente aperto su più Mac simultaneamente).
+  - Spostare `backend/data/` su iCloud Drive può causare problemi se la cartella è "ottimizzata per iCloud" (evicted): il file è sul cloud, non sul disco — `fs.readFileSync` fallisce silenziosamente o con ENOENT. Da documentare come vincolo.
+- Sforzo: basso (`DATA_PATH` env-only) / medio (env + UI Impostazioni). Valore: medio — utile per chi vuole sync passiva dei dati; non essenziale per chi accetta il backup schedulato (#3).
+
 ---
 
 ## Analisi di fattibilità — Multi-utenza con ruolo Admin
