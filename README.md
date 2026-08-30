@@ -1,6 +1,10 @@
 # Timesheet & Fatturazione
 
-App per gestire il timesheet mensile e generare le fatture elettroniche, pensata per chi lavora in regime forfettario. Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
+App per chi lavora in regime forfettario, con due funzioni indipendenti:
+- **Timesheet mensile** — registra le ore lavorate giorno per giorno.
+- **Fatturazione elettronica** — genera fatture calcolate da timesheet (ore × tariffa) oppure a importo e descrizione liberi, senza bisogno del timesheet.
+
+Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Installazione
 
@@ -59,7 +63,7 @@ Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 1. Apri il browser su `http://localhost:1969`.
 2. Vai su **Impostazioni** e compila la procedura guidata: i tuoi dati (partita IVA, ecc.), i dati del cliente, la tariffa oraria.
 3. Da **Timesheet** registra le ore lavorate giorno per giorno.
-4. Da **Fattura Pro-Forma** genera la fattura del mese quando sei pronto.
+4. Da **Fattura Pro-Forma** genera la fattura del mese quando sei pronto: scegli "Da timesheet" (calcolo automatico ore × tariffa) oppure "Importo libero" se vuoi fatturare un importo e una descrizione a piacere senza passare dal timesheet.
 
 Tutto qui — non serve altro per iniziare a usarla.
 

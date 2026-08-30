@@ -28,6 +28,7 @@ export const api = {
 
   // Fattura Pro-Forma
   anteprimaFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/anteprima`),
+  anteprimaFatturaManuale: (anno, mese, importo) => richiesta(`/invoice/${anno}/${mese}/anteprima-manuale?importo=${importo}`),
   getFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}`).catch(() => null),
   generaFattura: (anno, mese, dati = {}) =>
     richiesta(`/invoice/${anno}/${mese}/genera`, { method: 'POST', body: JSON.stringify(dati) }),

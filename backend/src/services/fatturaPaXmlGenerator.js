@@ -38,6 +38,10 @@ export function generaXmlFatturaPA(dati) {
   // documento: resta a carico del professionista, non riaddebitato al cliente.
   const importoTotale = fattura.imponibile;
 
+  // Fattura manuale (importo libero, senza timesheet): riga unica quantità 1.
+  const quantita = fattura.oreTotali ?? 1;
+  const prezzoUnitario = fattura.tariffaOraria ?? fattura.imponibile;
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <ns2:FatturaElettronica xmlns:ns2="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" versione="FPR12">
   <FatturaElettronicaHeader>
@@ -108,8 +112,8 @@ ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</I
       <DettaglioLinee>
         <NumeroLinea>1</NumeroLinea>
         <Descrizione>${escapeXml(fattura.descrizione)}</Descrizione>
-        <Quantita>${formattaImporto(fattura.oreTotali)}</Quantita>
-        <PrezzoUnitario>${formattaImporto(fattura.tariffaOraria)}</PrezzoUnitario>
+        <Quantita>${formattaImporto(quantita)}</Quantita>
+        <PrezzoUnitario>${formattaImporto(prezzoUnitario)}</PrezzoUnitario>
         <PrezzoTotale>${formattaImporto(fattura.imponibile)}</PrezzoTotale>
         <AliquotaIVA>0.00</AliquotaIVA>
         <Natura>N2.2</Natura>

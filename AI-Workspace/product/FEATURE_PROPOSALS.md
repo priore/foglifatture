@@ -67,6 +67,13 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 
 ---
 
+### 11. Fattura a importo libero (senza timesheet) ✅ implementato
+🟢 Fatto (2026-08-30): nuova modalità "Importo libero" in `FatturaView.vue` (radio Da timesheet / Importo libero), alternativa al calcolo ore×tariffa per chi deve fatturare un importo e una dicitura arbitrari senza passare dal timesheet mensile.
+- Backend: `invoiceService.js` — `calcolaCompenso` (ore×tariffa) ora delega a nuova `calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo)`, estratta per essere riusata anche con un imponibile diretto. `invoiceRoutes.js` — `POST /:anno/:mese/genera` ramifica su `req.body.importo` presente (manuale, richiede anche `descrizione` esplicita, niente default) vs assente (comportamento invariato, legge timesheet); nuova `GET /:anno/:mese/anteprima-manuale?importo=` per anteprima bollo/netto senza salvare. `oreTotali`/`tariffaOraria` diventano `null` sulla fattura manuale salvata.
+- `fatturaPaXmlGenerator.js`: riga XML `Quantita`/`PrezzoUnitario` usa fallback quantità 1 / prezzo unitario = imponibile quando `oreTotali`/`tariffaOraria` sono `null` — nessun altro campo XML toccato, FatturaPA resta valida.
+- Numerazione progressiva, PEC, ricevute SDI, dashboard forfettario: **nessuna modifica** — leggono solo `imponibile`/`numero`, indifferenti alla provenienza della fattura.
+- Bug preesistente scoperto testando (non causato da questa feature, non corretto qui): `verificaIntegritaNumerazione` fa `Number(f.numero)` su tutte le fatture per calcolare il progressivo atteso; la fattura reale `2026-08.json` ha `numero: "08/2026"` (formato con barra, non il "progressivo puro" che il codice stesso dichiara nei commenti) → `Number("08/2026")` = `NaN` → blocca la generazione di **qualsiasi** fattura successiva, manuale o da timesheet. Da sistemare separatamente prima di generare la prossima fattura reale.
+
 ## Priorità 3 — rifinitura, non essenziale
 
 ### 8. Toggle manuale dark-mode ✅ implementato
@@ -175,6 +182,57 @@ Solo analisi. Nessun impegno di roadmap — funzionalità candidate ordinate per
 4. Scrivi `scripts/install.ps1` e `scripts/uninstall.ps1` per Windows.
 5. Aggiorna README con istruzioni di installazione multipiattaforma.
 6. Primo push su repository GitHub privato.
+
+---
+
+## Analisi di fattibilità — Supporto altri regimi fiscali (oltre forfettario)
+
+🟢 Richiesta esplicita utente: valutare aggiunta, oltre alla gestione regime forfettario già implementata (#4), del supporto agli altri regimi fiscali previsti per un libero professionista in Italia.
+
+### Stato attuale (confermato dal codice)
+
+🟢 `configService.js`: `fornitore.regimeFiscale` esiste già come campo libero (default `'RF19'`, il codice FatturaPA per il forfettario) — usato solo per lo XML FatturaPA (`fatturaPaXmlGenerator.js`), non guida alcuna logica di calcolo.
+
+🟢 `forfettarioService.js` (`calcolaDashboardForfettario`, `aliquotaImposta`) è scritto **specificamente e unicamente** per il forfettario: coefficiente di redditività, aliquota 5%/15% sostitutiva, soglia €85.000. Nessuna astrazione di "regime fiscale" — la dashboard e il calcolo imposta sono monolitici su questa logica.
+
+🟢 `DashboardView.vue` + `StepForfettario.vue` sono nominati e costruiti solo per il forfettario (donut "Soglia forfettario", selezione ATECO/coefficiente).
+
+### Regimi rilevanti per libero professionista (persona fisica) in Italia
+
+🟡 Oltre al forfettario (L. 190/2014), un libero professionista persona fisica ricade tipicamente in:
+1. **Regime ordinario/semplificato** (contabilità semplificata, artt. 66/67 TUIR) — reddito = ricavi − costi documentati (non coefficiente forfettario), tassazione IRPEF a scaglioni progressivi + addizionali regionale/comunale, **soggetto a IVA** (aliquota su fattura, liquidazione periodica), **contributi INPS Gestione Separata o Cassa professionale** calcolati sul reddito netto, non assorbiti in un'unica imposta sostitutiva.
+2. **Regime forfettario con superamento soglia in corso d'anno** (>€100.000 dal 2023 → uscita immediata con IVA dal mese successivo; tra €85.000 e €100.000 → uscita l'anno dopo) — è una transizione dal forfettario al semplificato, non un regime a sé, ma va gestita come evento (oggi `forfettarioService.js` segnala solo `superamentoSoglia` come booleano, nessuna distinzione tra le due soglie né azione conseguente).
+3. **Regime forfettario per attività diverse con coefficienti multipli** (già in parte coperto: `atecoSettori.json` ha coefficiente per codice ATECO, ma un professionista con più attività/codici contemporaneamente non è modellato — oggi il config ha un solo `codiceAteco`/`coefficenteRedditivita`).
+
+🔴 Fuori scope realistico per un tool personale: regime di vantaggio (L. 398/98, ormai residuale/enti sportivi), regimi società (SRL/SNC — il progetto è esplicitamente single-tenant persona fisica, vedi `PROJECT_CONTEXT.md`).
+
+### Cosa servirebbe (in ordine di complessità crescente)
+
+1. **Selettore regime fiscale in config** — sostituire il campo libero `regimeFiscale` (oggi solo stringa per XML) con un valore controllato che pilota anche la logica di calcolo: `'forfettario' | 'semplificato'`. Basso sforzo, ma è la base architetturale di tutto il resto: introduce per la prima volta un branch di comportamento sul regime.
+2. **Astrazione del calcolo imposta** — `forfettarioService.js` andrebbe scisso: la parte "raccolta ricavi anno da fatture" (`ricaviAnno`) è già regime-agnostica e riusabile; la parte "calcolo imposta/aliquota" (`aliquotaImposta`, coefficiente, soglia) è forfettario-specifica. Servirebbe un nuovo modulo `regimeOrdinarioService.js` con la sua logica (scaglioni IRPEF, gestione costi deducibili) dietro la stessa interfaccia (`calcolaDashboard(config, opzioni)`), selezionato in base a `regimeFiscale`. Sforzo: medio — non è solo un nuovo file, è la prima volta che serve un'interfaccia comune tra due implementazioni.
+3. **Tracciamento costi deducibili** — il regime ordinario richiede reddito = ricavi − costi, ma **oggi il modello dati non ha alcun concetto di "costo/spesa"** (`backend/data/` contiene solo timesheet e fatture emesse, mai spese sostenute). Servirebbe un nuovo store (`spese-<anno>.json` o simile, via `jsonStore.js` come da convenzione) e relativa UI di inserimento. Sforzo: medio-alto — è la lacuna più grande, un intero dominio dati nuovo, non un'estensione di uno esistente.
+4. **Gestione IVA in fattura** — `fatturaPaXmlGenerator.js` oggi genera XML per regime senza IVA esposta in fattura (forfettario, natura N2.2 tipicamente). Il regime ordinario richiede aliquota IVA reale sulla riga, calcolo imponibile+IVA, e — se si vuole supporto completo — liquidazione periodica (mensile/trimestrale) che oggi non esiste in nessuna forma nel progetto. Sforzo: medio (aliquota su riga XML) fino ad alto (liquidazione periodica, se richiesta).
+5. **Contributi previdenziali (INPS Gestione Separata / Cassa)** — nessun modello esiste oggi (il forfettario non separa contributi da imposta, essendo sostitutiva unica). Servirebbe aliquota configurabile e calcolo sul reddito netto, mostrato in dashboard. Sforzo: medio.
+6. **Dashboard multi-regime** — `DashboardView.vue`/`StepForfettario.vue` andrebbero generalizzati (rinominare concettualmente, non necessariamente i file) per mostrare la card giusta in base al regime attivo, invece di essere hardcoded sul forfettario. Sforzo: medio, soprattutto per non rompere la UX già validata (#4 sopra).
+
+### Stima complessiva
+
+🔴 Sforzo: **medio-alto** — non paragonabile a una funzionalità incrementale come le altre di questa lista. Il forfettario è stato implementabile in un giorno perché è un calcolo chiuso (ricavi × coefficiente × aliquota fissa, soglia unica). Il regime ordinario introduce due domini dati mai esistiti nel progetto (spese/costi, IVA) più una logica di scaglioni IRPEF reale (5 fasce progressive aggiornate periodicamente da normativa, non un valore fisso come 5%/15%). Ordine di grandezza: giorni, non ore, anche in versione minima.
+
+🔴 Rischio-chiave: a differenza del forfettario (dati già tutti presenti: solo fatture emesse), il regime ordinario è **incompleto senza il tracciamento spese** — un tool che calcola l'IRPEF ordinaria solo sui ricavi (senza costi deducibili) darebbe una stima grossolanamente sbagliata per eccesso, peggio che non avere la funzione.
+
+### Raccomandazione
+
+🔴 Prima di investire: confermare se l'utente reale di questo tool ha effettivamente bisogno del regime ordinario (cioè: prevede di uscire dal forfettario, per superamento soglia o scelta) o se resta ipotesi teorica di "completezza". Se è solo teorica, è YAGNI puro — il forfettario copre il 100% dell'uso reale attuale (vedi dashboard #4 già tarata su soglia €85.000 per questo utente specifico). Se invece è concreto (es. proiezione ricavi vicina/oltre soglia), l'ordine minimo sensato è: (1) selettore regime in config, senza logica ancora, solo per iniziare a distinguere; (2) tracciamento spese come funzione a sé (utile comunque anche restando forfettari, per controllo di gestione personale); (3) solo dopo, calcolo IRPEF ordinaria completo.
+
+### Ordine consigliato se l'utente vuole procedere
+
+1. Confermare use case reale (uscita da forfettario prevista/probabile vs. teorica).
+2. Selettore `regimeFiscale` controllato in config (base per tutto il resto, sforzo basso).
+3. Modulo spese/costi deducibili (valore anche standalone, prerequisito per calcolo ordinario corretto).
+4. `regimeOrdinarioService.js`: scaglioni IRPEF + aliquota INPS configurabile.
+5. Estensione IVA in `fatturaPaXmlGenerator.js` (solo se il regime ordinario diventa operativo, non prima).
+6. Generalizzazione dashboard per mostrare la card corretta in base al regime.
 
 ---
 

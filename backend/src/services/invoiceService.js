@@ -9,16 +9,21 @@ function percorsoFile(anno, mese) {
   return `invoices/${chiaveMese(anno, mese)}.json`;
 }
 
-// Calcola imponibile, bollo (dichiarato nell'XML FatturaPA se dovuto) e netto a pagare.
-// Il bollo non va in tabella nella fattura pro-forma né sommato al netto richiesto al
-// cliente: resta solo l'indicazione legale "assolta in modo virtuale" e il campo DatiBollo XML.
-// Regime forfettario: nessuna rivalsa INPS, nessuna ritenuta d'acconto.
-export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale, importoBollo }) {
-  const imponibile = Number((totaleOre * tariffaOraria).toFixed(2));
+// Calcola bollo (dichiarato nell'XML FatturaPA se dovuto) e netto a pagare a partire
+// da un imponibile già noto. Il bollo non va in tabella nella fattura pro-forma né
+// sommato al netto richiesto al cliente: resta solo l'indicazione legale "assolta in
+// modo virtuale" e il campo DatiBollo XML. Regime forfettario: nessuna rivalsa INPS,
+// nessuna ritenuta d'acconto.
+export function calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo) {
   const bolloApplicabile = imponibile > sogliaBolloVirtuale;
   const bollo = bolloApplicabile ? importoBollo : 0;
-  const nettoAPagare = imponibile;
-  return { imponibile, bolloApplicabile, bollo, nettoAPagare };
+  return { imponibile, bolloApplicabile, bollo, nettoAPagare: imponibile };
+}
+
+// Imponibile da timesheet: ore * tariffa oraria.
+export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale, importoBollo }) {
+  const imponibile = Number((totaleOre * tariffaOraria).toFixed(2));
+  return calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo);
 }
 
 export async function getInvoice(anno, mese) {
