@@ -37,12 +37,16 @@ export function avviaPromemoria(getConfig, intervalloMinuti = 60) {
     if (config.reminder.ultimaNotifica === chiaveOggi) return;
 
     try {
-      const giorniMancanti = await getGiorniMancanti(anno, mese);
-      if (giorniMancanti.length > 0) {
-        notificaMac(
-          'Promemoria timesheet',
-          `Giorni senza ore registrate questo mese: ${giorniMancanti.join(', ')}`
-        );
+      const clientiAttivi = (config.clienti ?? []).filter((c) => c.attivo);
+      const righe = [];
+      for (const cliente of clientiAttivi) {
+        const giorniMancanti = await getGiorniMancanti(anno, mese, cliente.id);
+        if (giorniMancanti.length > 0) {
+          righe.push(`${cliente.denominazione || 'Cliente'}: ${giorniMancanti.join(', ')}`);
+        }
+      }
+      if (righe.length > 0) {
+        notificaMac('Promemoria timesheet', `Giorni senza ore registrate questo mese —\n${righe.join('\n')}`);
       }
       await saveConfig({ reminder: { ...config.reminder, ultimaNotifica: chiaveOggi } });
     } catch (err) {
