@@ -12,6 +12,7 @@ const oggi = new Date();
 const anno = ref(oggi.getFullYear());
 const mese = ref(oggi.getMonth() + 1);
 const config = ref(null);
+const clienteId = ref(null);
 const anteprima = ref(null);
 const fatturaGenerata = ref(null);
 const anteprimaRef = ref(null);
@@ -29,6 +30,9 @@ const descrizioneManuale = ref('');
 
 const importoValido = computed(() => Number.isFinite(Number(importoManuale.value)) && Number(importoManuale.value) > 0);
 
+const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
+const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
+
 const anteprimaEffettiva = computed(() => {
   if (!modoManuale.value) return anteprima.value;
   if (!config.value) return null;
@@ -39,32 +43,39 @@ const anteprimaEffettiva = computed(() => {
 });
 
 async function caricaAnteprima() {
-  anteprima.value = await api.anteprimaFattura(anno.value, mese.value);
-  fatturaGenerata.value = await api.getFattura(anno.value, mese.value);
+  if (!clienteId.value) return;
+  anteprima.value = await api.anteprimaFattura(anno.value, mese.value, clienteId.value);
+  fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
   await caricaRicevuteSdi();
 }
 
 async function caricaRicevuteSdi() {
-  ricevuteSdi.value = fatturaGenerata.value ? await api.ricevuteSdiFattura(anno.value, mese.value) : [];
+  ricevuteSdi.value = fatturaGenerata.value ? await api.ricevuteSdiFattura(anno.value, mese.value, clienteId.value) : [];
+}
+
+async function aggiornaMeseMinimo() {
+  const mesi = await api.listMesiTimesheet();
+  const mesiCliente = mesi.filter(m => m.clienteId === clienteId.value);
+  meseMinimo.value = mesiCliente.length ? mesiCliente[0].chiave.slice(0, 7) : null;
 }
 
 async function generaFattura() {
   const dati = modoManuale.value
     ? { importo: Number(importoManuale.value), descrizione: descrizioneManuale.value }
     : {};
-  fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, dati);
+  fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
   await caricaRicevuteSdi();
 }
 
 async function scaricaXml() {
-  window.open(api.urlDownloadXml(anno.value, mese.value), '_blank');
+  window.open(api.urlDownloadXml(anno.value, mese.value, clienteId.value), '_blank');
 }
 
 async function inviaPec() {
   inviandoPec.value = true;
   esitoPec.value = '';
   try {
-    const risultato = await api.inviaPec(anno.value, mese.value);
+    const risultato = await api.inviaPec(anno.value, mese.value, clienteId.value);
     esitoPec.value = risultato.inviato ? 'Inviata con successo' : `Errore: ${risultato.errore}`;
     await caricaRicevuteSdi();
   } catch (err) {
@@ -73,6 +84,14 @@ async function inviaPec() {
     inviandoPec.value = false;
   }
 }
+
+function inizializzaClienteId() {
+  const salvato = localStorage.getItem('clienteAttivoId');
+  clienteId.value = clientiAttivi.value.some(c => c.id === salvato)
+    ? salvato
+    : clientiAttivi.value[0]?.id ?? null;
+}
+watch(clienteId, (id) => { if (id) localStorage.setItem('clienteAttivoId', id); });
 
 async function controllaSdi() {
   controllandoSdi.value = true;
@@ -92,12 +111,12 @@ async function esporta() {
   await esportaPdf(anteprimaRef.value, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
-watch([anno, mese], caricaAnteprima);
+watch([anno, mese, clienteId], caricaAnteprima);
 onMounted(async () => {
   config.value = await api.getConfig();
+  inizializzaClienteId();
   await caricaAnteprima();
-  const mesi = await api.listMesiTimesheet();
-  if (mesi.length) meseMinimo.value = mesi[0];
+  await aggiornaMeseMinimo();
 });
 </script>
 
@@ -109,12 +128,15 @@ onMounted(async () => {
         <p>{{ modoManuale ? 'Importo e dicitura liberi' : 'Generata da Timesheet · Tariffa oraria configurabile in Impostazioni' }}</p>
       </div>
       <div class="actions">
+        <select v-if="clientiAttivi.length > 1" v-model="clienteId" class="btn btn-ghost">
+          <option v-for="c in clientiAttivi" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
+        </select>
         <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
         <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
       </div>
     </div>
 
-    <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config">
+    <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
       <div>
         <div class="card">
           <div class="card-head"><h2>Tipo fattura</h2></div>
@@ -144,7 +166,7 @@ onMounted(async () => {
           <div class="card-body">
             <table class="data-table">
               <tr v-if="!modoManuale"><td>Ore totali mensili</td><td style="text-align:right">{{ anteprima.totaleOre.toFixed(2) }}</td></tr>
-              <tr v-if="!modoManuale"><td>Tariffa oraria</td><td style="text-align:right">€ {{ config.fatturazione.tariffaOraria.toFixed(2) }}</td></tr>
+              <tr v-if="!modoManuale"><td>Tariffa oraria</td><td style="text-align:right">€ {{ clienteCorrente.tariffaOraria.toFixed(2) }}</td></tr>
               <tr><td>Imponibile</td><td style="text-align:right">€ {{ anteprimaEffettiva.imponibile.toFixed(2) }}</td></tr>
               <tr><td>Rivalsa INPS</td><td style="text-align:right">assente</td></tr>
               <tr v-if="anteprimaEffettiva.bolloApplicabile"><td>Bollo virtuale (&gt; {{ config.fatturazione.sogliaBolloVirtuale }}€)</td><td style="text-align:right">€ {{ anteprimaEffettiva.bollo.toFixed(2) }}</td></tr>
@@ -207,7 +229,7 @@ onMounted(async () => {
         <div ref="anteprimaRef">
           <FatturaPrintPreview
             :fornitore="config.fornitore"
-            :cliente="config.cliente"
+            :cliente="clienteCorrente"
             :numero="fatturaGenerata?.numero ?? '—'"
             :data="fatturaGenerata?.data ?? new Date(anno, mese - 1, 28).toISOString().slice(0,10)"
             :descrizione="fatturaGenerata?.descrizione ?? (modoManuale ? descrizioneManuale : `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${anteprima.totaleOre.toFixed(2)} ore mensili.`)"

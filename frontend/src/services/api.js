@@ -22,21 +22,21 @@ export const api = {
 
   // Timesheet mensile
   listMesiTimesheet: () => richiesta('/timesheet'),
-  getTimesheet: (anno, mese) => richiesta(`/timesheet/${anno}/${mese}`),
-  saveTimesheet: (anno, mese, giorni) =>
-    richiesta(`/timesheet/${anno}/${mese}`, { method: 'PUT', body: JSON.stringify({ giorni }) }),
+  getTimesheet: (anno, mese, clienteId) => richiesta(`/timesheet/${anno}/${mese}/${clienteId}`),
+  saveTimesheet: (anno, mese, clienteId, giorni) =>
+    richiesta(`/timesheet/${anno}/${mese}/${clienteId}`, { method: 'PUT', body: JSON.stringify({ giorni }) }),
 
   // Fattura Pro-Forma
-  anteprimaFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/anteprima`),
-  anteprimaFatturaManuale: (anno, mese, importo) => richiesta(`/invoice/${anno}/${mese}/anteprima-manuale?importo=${importo}`),
-  getFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}`).catch(() => null),
-  generaFattura: (anno, mese, dati = {}) =>
-    richiesta(`/invoice/${anno}/${mese}/genera`, { method: 'POST', body: JSON.stringify(dati) }),
+  anteprimaFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima`),
+  anteprimaFatturaManuale: (anno, mese, clienteId, importo) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima-manuale?importo=${importo}`),
+  getFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}`).catch(() => null),
+  generaFattura: (anno, mese, clienteId, dati = {}) =>
+    richiesta(`/invoice/${anno}/${mese}/${clienteId}/genera`, { method: 'POST', body: JSON.stringify(dati) }),
 
   // XML FatturaPA e invio PEC
-  urlDownloadXml: (anno, mese) => `${BASE_URL}/invoice/${anno}/${mese}/xml`,
-  inviaPec: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/invia-pec`, { method: 'POST' }),
-  ricevuteSdiFattura: (anno, mese) => richiesta(`/invoice/${anno}/${mese}/ricevute-sdi`),
+  urlDownloadXml: (anno, mese, clienteId) => `${BASE_URL}/invoice/${anno}/${mese}/${clienteId}/xml`,
+  inviaPec: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/invia-pec`, { method: 'POST' }),
+  ricevuteSdiFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/ricevute-sdi`),
 
   // Credenziali Google OAuth (whitelist singolo utente)
   getOAuthConfig: () => richiesta('/oauth-config'),
@@ -46,15 +46,16 @@ export const api = {
   controllaRicevuteSdi: () => richiesta('/sdi/controlla', { method: 'POST' }),
 
   // Import storico pregresso (timesheet da xls originale, fatture da XML FatturaPA già emesse)
-  importaTimesheet: (anno, mese, file) => {
+  importaTimesheet: (anno, mese, clienteId, file) => {
     const form = new FormData();
     form.append('file', file);
-    return fetch(`${BASE_URL}/import/timesheet/${anno}/${mese}`, { method: 'POST', body: form })
+    return fetch(`${BASE_URL}/import/timesheet/${anno}/${mese}/${clienteId}`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
-  importaFattura: (file) => {
+  importaFattura: (file, clienteId) => {
     const form = new FormData();
     form.append('file', file);
+    if (clienteId) form.append('clienteId', clienteId);
     return fetch(`${BASE_URL}/import/fattura`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },

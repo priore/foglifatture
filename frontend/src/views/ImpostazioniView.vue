@@ -4,7 +4,7 @@
 import { ref, onMounted } from 'vue';
 import WizardSteps from '../components/wizard/WizardSteps.vue';
 import StepFornitore from '../components/wizard/StepFornitore.vue';
-import StepCliente from '../components/wizard/StepCliente.vue';
+import StepClienti from '../components/wizard/StepClienti.vue';
 import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
 import StepBackup from '../components/wizard/StepBackup.vue';
@@ -13,7 +13,7 @@ import StepForfettario from '../components/wizard/StepForfettario.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import { api } from '../services/api.js';
 
-const PASSI = ['Fornitore', 'Cliente', 'Tariffa & fiscali', 'PEC', 'Backup', 'Promemoria', 'Forfettario', 'Login Google'];
+const PASSI = ['Fornitore', 'Clienti', 'Tariffa & fiscali', 'PEC', 'Backup', 'Promemoria', 'Forfettario', 'Login Google'];
 // Lo step "Login Google" gestisce da sé il proprio salvataggio (scrive su .env, non su config.json).
 const PASSI_AUTOSALVANTI = ['Login Google'];
 const passoAttivo = ref(0);
@@ -78,7 +78,7 @@ async function vaiAlPasso(indice) {
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
         <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" />
-        <StepCliente v-else-if="passoAttivo === 1" v-model="config.cliente" />
+        <StepClienti v-else-if="passoAttivo === 1" v-model="config.clienti" />
         <StepFatturazione v-else-if="passoAttivo === 2" v-model="config.fatturazione" />
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
         <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
