@@ -12,7 +12,6 @@ import path from 'node:path';
 import { DATA_DIR } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
 
-const CARTELLA_OUTBOX = path.join(DATA_DIR, 'mail-outbox');
 
 function escapaAppleScript(testo) {
   return String(testo).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -53,8 +52,9 @@ end tell`;
 // Salva il PDF nell'outbox locale e avvia il flusso di invio più adatto al sistema
 // operativo corrente. Ritorna { modalita, mailtoUrl? } per il frontend.
 export async function inviaPdfAlCliente({ bufferPdf, nomeFile, destinatari, oggetto, corpo }) {
-  await mkdir(CARTELLA_OUTBOX, { recursive: true });
-  const percorsoFile = path.join(CARTELLA_OUTBOX, nomeFile);
+  const cartellaOutbox = path.join(DATA_DIR, 'mail-outbox');
+  await mkdir(cartellaOutbox, { recursive: true });
+  const percorsoFile = path.join(cartellaOutbox, nomeFile);
   await writeFile(percorsoFile, bufferPdf);
 
   if (process.platform === 'darwin') {
