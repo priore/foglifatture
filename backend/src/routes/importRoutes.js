@@ -5,7 +5,7 @@ import multer from 'multer';
 import { XMLParser } from 'fast-xml-parser';
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { importaTimesheetDaXls } from '../services/xlsTimesheetImporter.js';
+import { importaTimesheetDaXls, estraiAnnoMeseDaNomeFile } from '../services/xlsTimesheetImporter.js';
 import { importaFatturaDaXml } from '../services/xmlInvoiceImporter.js';
 import { saveTimesheet } from '../services/timesheetService.js';
 import { saveInvoice } from '../services/invoiceService.js';
@@ -68,20 +68,42 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 
 export const importRoutes = Router();
 
-// Importa un timesheet storico: richiede anno/mese espliciti perché il layout xls
-// non li riporta in un formato univoco da estrarre in automatico.
+// Importa un timesheet storico: anno/mese in URL sono usati come fallback se il file
+// non riporta etichette "Anno:"/"Mese:" leggibili (l'xls ha sempre la precedenza).
 importRoutes.post('/timesheet/:anno/:mese/:clienteId', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
   const { anno, mese, clienteId } = req.params;
   try {
     const timesheet = importaTimesheetDaXls(req.file.buffer, Number(anno), Number(mese));
-    await saveTimesheet(Number(anno), Number(mese), clienteId, timesheet.giorni);
-    logger.info(`Importato timesheet storico ${anno}-${mese} da ${req.file.originalname}`);
+    await saveTimesheet(timesheet.anno, timesheet.mese, clienteId, timesheet.giorni);
+    logger.info(`Importato timesheet storico ${timesheet.anno}-${timesheet.mese} da ${req.file.originalname}`);
     res.json(timesheet);
   } catch (err) {
     logger.error(`Errore import timesheet ${anno}-${mese}`, { errore: err.message });
     res.status(400).json({ errore: `File non riconosciuto: ${err.message}` });
   }
+});
+
+// Importa più timesheet storici in una volta (selezione multi-file o intera cartella):
+// anno/mese vengono letti da ciascun file (etichette xls, poi nome file come fallback),
+// non c'è un unico anno/mese per la richiesta come nella rotta singola sopra.
+importRoutes.post('/timesheet-batch/:clienteId', upload.array('file'), async (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ errore: 'Nessun file caricato' });
+  const { clienteId } = req.params;
+  const risultati = [];
+  for (const file of req.files) {
+    try {
+      const fallback = estraiAnnoMeseDaNomeFile(file.originalname);
+      const timesheet = importaTimesheetDaXls(file.buffer, fallback.anno, fallback.mese);
+      await saveTimesheet(timesheet.anno, timesheet.mese, clienteId, timesheet.giorni);
+      logger.info(`Importato timesheet storico ${timesheet.anno}-${timesheet.mese} da ${file.originalname}`);
+      risultati.push({ file: file.originalname, ok: true, anno: timesheet.anno, mese: timesheet.mese });
+    } catch (err) {
+      logger.error(`Errore import timesheet da ${file.originalname}`, { errore: err.message });
+      risultati.push({ file: file.originalname, ok: false, errore: err.message });
+    }
+  }
+  res.json({ risultati });
 });
 
 async function fileEsiste(percorso) {
@@ -93,71 +115,93 @@ async function fileEsiste(percorso) {
   }
 }
 
+// Importa una singola fattura XML già letta in buffer: risolve/crea il cliente, salva
+// la fattura e archivia il file. Condivisa tra rotta singola e rotta batch.
+async function importaUnaFatturaXml(buffer, originalname, clienteIdRichiesto) {
+  const contenutoXml = buffer.toString('utf-8');
+  const invoice = importaFatturaDaXml(contenutoXml);
+  if (!invoice.anno || !invoice.mese) {
+    throw new Error('Impossibile determinare anno/mese dal campo Data della fattura');
+  }
+
+  let config = await getConfig();
+  let clienteId = clienteIdRichiesto || risolviClienteIdDaXml(contenutoXml, config.clienti);
+  if (!clienteId) {
+    const anagrafica = estraiAnagraficaCessionario(contenutoXml);
+    const pivaXml = anagrafica ? normalizzaPiva(anagrafica.partitaIva) : null;
+    const ambiguo = pivaXml && config.clienti.filter((c) => normalizzaPiva(c.partitaIva) === pivaXml).length > 1;
+    if (!anagrafica || ambiguo) {
+      throw new Error('Impossibile determinare il cliente automaticamente dalla partita IVA nell\'XML: specificare clienteId nel form');
+    }
+    // Nessun cliente con questa p.iva: lo creiamo dall'anagrafica XML invece di
+    // bloccare l'import. Se un cliente con questa p.iva esiste già (caso raro, race
+    // con normalizzazione) non lo tocchiamo: mai sovrascrivere anagrafica esistente.
+    const nuovoCliente = {
+      id: randomUUID(),
+      attivo: true,
+      denominazione: anagrafica.denominazione,
+      indirizzo: anagrafica.indirizzo,
+      cap: anagrafica.cap,
+      comune: anagrafica.comune,
+      provincia: anagrafica.provincia,
+      partitaIva: anagrafica.partitaIva,
+      codiceDestinatarioSdi: anagrafica.codiceDestinatarioSdi,
+      logoDataUrl: '',
+      tariffaOraria: 0,
+      email: '',
+    };
+    config = await saveConfig({ clienti: [...config.clienti, nuovoCliente] });
+    clienteId = nuovoCliente.id;
+    logger.info(`Creato nuovo cliente da import XML: ${nuovoCliente.denominazione} (p.iva ${nuovoCliente.partitaIva})`);
+  }
+  invoice.clienteId = clienteId;
+  await saveInvoice(invoice.anno, invoice.mese, clienteId, invoice);
+
+  const percorsoArchivio = config.sdi.percorsoArchivio;
+  let archiviato = null;
+  if (percorsoArchivio) {
+    const destinazione = path.join(percorsoArchivio, originalname);
+    if (await fileEsiste(destinazione)) {
+      logger.info(`File XML già presente in archivio, non sovrascritto: ${destinazione}`);
+    } else {
+      await mkdir(percorsoArchivio, { recursive: true });
+      await writeFile(destinazione, buffer);
+      archiviato = destinazione;
+      logger.info(`XML copiato in archivio: ${destinazione}`);
+    }
+  }
+
+  logger.info(`Importata fattura storica ${invoice.anno}-${invoice.mese} n.${invoice.numero} da ${originalname}`);
+  return { ...invoice, archiviato };
+}
+
 // Importa una fattura storica da XML FatturaPA: anno/mese/numero vengono letti dal file stesso.
 // Se il file XML non è già presente nella cartella archivio (config.sdi.percorsoArchivio) lo
 // copia lì; se esiste già non viene MAI sovrascritto, si importano solo i dati nell'app.
 importRoutes.post('/fattura', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
   try {
-    const contenutoXml = req.file.buffer.toString('utf-8');
-    const invoice = importaFatturaDaXml(contenutoXml);
-    if (!invoice.anno || !invoice.mese) {
-      return res.status(400).json({ errore: 'Impossibile determinare anno/mese dal campo Data della fattura' });
-    }
-
-    let config = await getConfig();
-    let clienteId = req.body.clienteId || risolviClienteIdDaXml(contenutoXml, config.clienti);
-    if (!clienteId) {
-      const anagrafica = estraiAnagraficaCessionario(contenutoXml);
-      const pivaXml = anagrafica ? normalizzaPiva(anagrafica.partitaIva) : null;
-      const ambiguo = pivaXml && config.clienti.filter((c) => normalizzaPiva(c.partitaIva) === pivaXml).length > 1;
-      if (!anagrafica || ambiguo) {
-        return res.status(400).json({
-          errore: 'Impossibile determinare il cliente automaticamente dalla partita IVA nell\'XML: specificare clienteId nel form',
-        });
-      }
-      // Nessun cliente con questa p.iva: lo creiamo dall'anagrafica XML invece di
-      // bloccare l'import. Se un cliente con questa p.iva esiste già (caso raro, race
-      // con normalizzazione) non lo tocchiamo: mai sovrascrivere anagrafica esistente.
-      const nuovoCliente = {
-        id: randomUUID(),
-        attivo: true,
-        denominazione: anagrafica.denominazione,
-        indirizzo: anagrafica.indirizzo,
-        cap: anagrafica.cap,
-        comune: anagrafica.comune,
-        provincia: anagrafica.provincia,
-        partitaIva: anagrafica.partitaIva,
-        codiceDestinatarioSdi: anagrafica.codiceDestinatarioSdi,
-        logoDataUrl: '',
-        tariffaOraria: 0,
-        email: '',
-      };
-      config = await saveConfig({ clienti: [...config.clienti, nuovoCliente] });
-      clienteId = nuovoCliente.id;
-      logger.info(`Creato nuovo cliente da import XML: ${nuovoCliente.denominazione} (p.iva ${nuovoCliente.partitaIva})`);
-    }
-    invoice.clienteId = clienteId;
-    await saveInvoice(invoice.anno, invoice.mese, clienteId, invoice);
-
-    const percorsoArchivio = config.sdi.percorsoArchivio;
-    let archiviato = null;
-    if (percorsoArchivio) {
-      const destinazione = path.join(percorsoArchivio, req.file.originalname);
-      if (await fileEsiste(destinazione)) {
-        logger.info(`File XML già presente in archivio, non sovrascritto: ${destinazione}`);
-      } else {
-        await mkdir(percorsoArchivio, { recursive: true });
-        await writeFile(destinazione, req.file.buffer);
-        archiviato = destinazione;
-        logger.info(`XML copiato in archivio: ${destinazione}`);
-      }
-    }
-
-    logger.info(`Importata fattura storica ${invoice.anno}-${invoice.mese} n.${invoice.numero} da ${req.file.originalname}`);
-    res.json({ ...invoice, archiviato });
+    const risultato = await importaUnaFatturaXml(req.file.buffer, req.file.originalname, req.body.clienteId);
+    res.json(risultato);
   } catch (err) {
     logger.error('Errore import fattura XML', { errore: err.message });
     res.status(400).json({ errore: `File non riconosciuto: ${err.message}` });
   }
+});
+
+// Importa più fatture XML in una volta (selezione multi-file o intera cartella): ogni
+// file è indipendente, anno/mese/numero/cliente vengono risolti per singolo file.
+importRoutes.post('/fattura-batch', upload.array('file'), async (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ errore: 'Nessun file caricato' });
+  const risultati = [];
+  for (const file of req.files) {
+    try {
+      const invoice = await importaUnaFatturaXml(file.buffer, file.originalname, req.body.clienteId);
+      risultati.push({ file: file.originalname, ok: true, ...invoice });
+    } catch (err) {
+      logger.error(`Errore import fattura da ${file.originalname}`, { errore: err.message });
+      risultati.push({ file: file.originalname, ok: false, errore: err.message });
+    }
+  }
+  res.json({ risultati });
 });

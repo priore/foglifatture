@@ -22,6 +22,7 @@ const oggi = new Date();
 const annoTimesheet = ref(oggi.getFullYear());
 const meseTimesheet = ref(oggi.getMonth() + 1);
 const fileTimesheet = ref(null);
+const fileTimesheetMulti = ref([]);
 const importandoTimesheet = ref(false);
 const esitoTimesheet = ref('');
 
@@ -30,8 +31,17 @@ const clienteIdTimesheet = ref(null);
 const clienteIdFattura = ref(''); // opzionale: solo se il match automatico per p.iva fallisce
 
 const fileFattura = ref(null);
+const fileFatturaMulti = ref([]);
 const importandoFattura = ref(false);
 const esitoFattura = ref('');
+
+// Esito di un import batch: un risultato ok/errore per file, mostrato come lista invece
+// del messaggio singolo usato per l'import di un file solo.
+function formattaEsitoBatch(risultati) {
+  return risultati
+    .map(r => r.ok ? `✓ ${r.file}` : `✗ ${r.file}: ${r.errore}`)
+    .join('\n');
+}
 
 onMounted(async () => {
   const config = await api.getConfig();
@@ -49,12 +59,17 @@ const ripristinandoBackup = ref(false);
 const esitoRipristinaBackup = ref('');
 
 async function importaTimesheet() {
-  if (!fileTimesheet.value || !clienteIdTimesheet.value) return;
+  if (!clienteIdTimesheet.value) return;
   importandoTimesheet.value = true;
   esitoTimesheet.value = '';
   try {
-    await api.importaTimesheet(annoTimesheet.value, meseTimesheet.value, clienteIdTimesheet.value, fileTimesheet.value);
-    esitoTimesheet.value = `Importato: timesheet ${meseTimesheet.value}/${annoTimesheet.value}`;
+    if (fileTimesheetMulti.value.length) {
+      const { risultati } = await api.importaTimesheetBatch(clienteIdTimesheet.value, fileTimesheetMulti.value);
+      esitoTimesheet.value = formattaEsitoBatch(risultati);
+    } else if (fileTimesheet.value) {
+      await api.importaTimesheet(annoTimesheet.value, meseTimesheet.value, clienteIdTimesheet.value, fileTimesheet.value);
+      esitoTimesheet.value = `Importato: timesheet ${meseTimesheet.value}/${annoTimesheet.value}`;
+    }
   } catch (err) {
     esitoTimesheet.value = `Errore: ${err.message}`;
   } finally {
@@ -63,13 +78,18 @@ async function importaTimesheet() {
 }
 
 async function importaFattura() {
-  if (!fileFattura.value) return;
+  if (!fileFattura.value && !fileFatturaMulti.value.length) return;
   importandoFattura.value = true;
   esitoFattura.value = '';
   try {
-    const invoice = await api.importaFattura(fileFattura.value, clienteIdFattura.value || undefined);
-    const notaArchivio = invoice.archiviato ? ' · XML copiato in archivio' : ' · XML già presente in archivio, non toccato';
-    esitoFattura.value = `Importata: fattura n.${invoice.numero} del ${invoice.mese}/${invoice.anno}${notaArchivio}`;
+    if (fileFatturaMulti.value.length) {
+      const { risultati } = await api.importaFatturaBatch(fileFatturaMulti.value, clienteIdFattura.value || undefined);
+      esitoFattura.value = formattaEsitoBatch(risultati);
+    } else {
+      const invoice = await api.importaFattura(fileFattura.value, clienteIdFattura.value || undefined);
+      const notaArchivio = invoice.archiviato ? ' · XML copiato in archivio' : ' · XML già presente in archivio, non toccato';
+      esitoFattura.value = `Importata: fattura n.${invoice.numero} del ${invoice.mese}/${invoice.anno}${notaArchivio}`;
+    }
   } catch (err) {
     esitoFattura.value = `Errore: ${err.message}`;
   } finally {
@@ -141,12 +161,19 @@ async function ripristinaBackup() {
               <option v-for="c in clienti" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
             </select>
           </div>
-          <div class="field field-full full"><label>File .xls</label><input type="file" accept=".xls,.xlsx" @change="e => fileTimesheet = e.target.files[0]"></div>
+          <div class="field field-full full">
+            <label>File .xls (uno o più; anno/mese letti dal file)</label>
+            <input type="file" accept=".xls,.xlsx" multiple @change="e => { fileTimesheetMulti = [...e.target.files]; fileTimesheet = fileTimesheetMulti.length === 1 ? fileTimesheetMulti[0] : null; }">
+          </div>
+          <div class="field field-full full">
+            <label>Oppure intera cartella</label>
+            <input type="file" webkitdirectory @change="e => { fileTimesheetMulti = [...e.target.files].filter(f => /\.xlsx?$/i.test(f.name)); fileTimesheet = null; }">
+          </div>
         </div>
-        <button class="btn btn-primary" :disabled="!fileTimesheet || !clienteIdTimesheet || importandoTimesheet" @click="importaTimesheet">
+        <button class="btn btn-primary" :disabled="(!fileTimesheet && !fileTimesheetMulti.length) || !clienteIdTimesheet || importandoTimesheet" @click="importaTimesheet">
           {{ importandoTimesheet ? 'Importo…' : 'Importa timesheet' }}
         </button>
-        <span v-if="esitoTimesheet" class="badge-mono">{{ esitoTimesheet }}</span>
+        <pre v-if="esitoTimesheet" class="badge-mono" style="white-space:pre-wrap">{{ esitoTimesheet }}</pre>
       </div>
     </div>
 
@@ -155,7 +182,14 @@ async function ripristinaBackup() {
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Anno, mese e numero vengono letti direttamente dal file XML. Il cliente viene riconosciuto dalla partita IVA nell'XML; specificalo qui solo se l'import segnala di non riuscire a determinarlo automaticamente.</p>
         <div class="form-grid">
-          <div class="field field-full full"><label>File .xml</label><input type="file" accept=".xml" @change="e => fileFattura = e.target.files[0]"></div>
+          <div class="field field-full full">
+            <label>File .xml (uno o più)</label>
+            <input type="file" accept=".xml" multiple @change="e => { fileFatturaMulti = [...e.target.files]; fileFattura = fileFatturaMulti.length === 1 ? fileFatturaMulti[0] : null; }">
+          </div>
+          <div class="field field-full full">
+            <label>Oppure intera cartella</label>
+            <input type="file" webkitdirectory @change="e => { fileFatturaMulti = [...e.target.files].filter(f => /\.xml$/i.test(f.name)); fileFattura = null; }">
+          </div>
           <div class="field field-full full" v-if="clienti.length > 1">
             <label>Cliente (solo se richiesto)</label>
             <select v-model="clienteIdFattura">
@@ -164,10 +198,10 @@ async function ripristinaBackup() {
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" :disabled="!fileFattura || importandoFattura" @click="importaFattura">
+        <button class="btn btn-primary" :disabled="(!fileFattura && !fileFatturaMulti.length) || importandoFattura" @click="importaFattura">
           {{ importandoFattura ? 'Importo…' : 'Importa fattura' }}
         </button>
-        <span v-if="esitoFattura" class="badge-mono">{{ esitoFattura }}</span>
+        <pre v-if="esitoFattura" class="badge-mono" style="white-space:pre-wrap">{{ esitoFattura }}</pre>
       </div>
     </div>
 
