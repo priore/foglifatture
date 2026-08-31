@@ -7,8 +7,8 @@ import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import FatturaPrintPreview from '../components/fattura/FatturaPrintPreview.vue';
 import { api } from '../services/api.js';
-import { esportaPdf } from '../composables/usePdfExport.js';
-import { apriMailto } from '../composables/useMailto.js';
+import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
+import { inviaPdfEmail } from '../composables/useMailto.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -24,6 +24,8 @@ const meseMinimo = ref(null);
 const controllandoSdi = ref(false);
 const esitoSdi = ref('');
 const ricevuteSdi = ref([]);
+const inviandoEmail = ref(false);
+const esitoEmail = ref('');
 
 // Fattura manuale: importo e dicitura liberi, nessun calcolo da timesheet.
 const modoManuale = ref(false);
@@ -113,10 +115,23 @@ async function esporta() {
   await esportaPdf(anteprimaRef.value, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
-function inviaEmail() {
-  const oggetto = `Fattura ${fatturaGenerata.value?.numero ?? ''} — ${String(mese.value).padStart(2, '0')}/${anno.value}`;
-  const corpo = `Buongiorno,\n\nin allegato la fattura relativa al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
-  apriMailto(clienteCorrente.value.email, oggetto, corpo);
+async function inviaEmail() {
+  inviandoEmail.value = true;
+  esitoEmail.value = '';
+  try {
+    const pdfBlob = await generaPdfBlob(anteprimaRef.value);
+    const nomeFile = `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
+    const oggetto = `Fattura ${fatturaGenerata.value?.numero ?? ''} — ${String(mese.value).padStart(2, '0')}/${anno.value}`;
+    const corpo = `Buongiorno,\n\nin allegato la fattura relativa al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
+    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, clienteCorrente.value.email, oggetto, corpo);
+    esitoEmail.value = risultato.modalita === 'mail-app-mac'
+      ? 'Bozza aperta in Mail con allegato pronto'
+      : 'PDF salvato e rivelato nel file manager: trascinalo nella mail appena aperta';
+  } catch (err) {
+    esitoEmail.value = `Errore: ${err.message}`;
+  } finally {
+    inviandoEmail.value = false;
+  }
 }
 
 watch([anno, mese, clienteId], caricaAnteprima);
@@ -136,7 +151,7 @@ onMounted(async () => {
         <p>{{ modoManuale ? 'Importo e dicitura liberi' : 'Generata da Timesheet · Tariffa oraria configurabile in Impostazioni' }}</p>
       </div>
       <div class="actions">
-        <ClienteSwitcher v-if="clientiAttivi.length > 1" v-model="clienteId" :clienti="clientiAttivi" />
+        <ClienteSwitcher v-if="clientiAttivi.length" v-model="clienteId" :clienti="clientiAttivi" />
         <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
         <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
       </div>
@@ -196,10 +211,11 @@ onMounted(async () => {
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email" @click="inviaEmail">
-              Invia email al cliente
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
+              {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
             <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
+            <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : 'Invia PEC a SDI' }}
             </button>

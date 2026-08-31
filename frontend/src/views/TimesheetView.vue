@@ -8,8 +8,8 @@ import TimesheetGrid from '../components/timesheet/TimesheetGrid.vue';
 import TimesheetPrintPreview from '../components/timesheet/TimesheetPrintPreview.vue';
 import { api } from '../services/api.js';
 import { calcolaTotaleMensile, calcolaOreGiorno, decimaleAHHmm, STATI_ASSENZA } from '../composables/useTimeCalculator.js';
-import { esportaPdf } from '../composables/usePdfExport.js';
-import { apriMailto } from '../composables/useMailto.js';
+import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
+import { inviaPdfEmail } from '../composables/useMailto.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -21,6 +21,8 @@ const salvando = ref(false);
 const messaggioSalvataggio = ref('');
 const anteprimaRef = ref(null);
 const meseMinimo = ref(null);
+const inviandoEmail = ref(false);
+const esitoEmail = ref('');
 
 const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
 const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
@@ -64,10 +66,23 @@ function esportaVms() {
   window.open(api.urlExportVms(anno.value, mese.value, clienteId.value), '_blank');
 }
 
-function inviaEmail() {
-  const oggetto = `Timesheet ${String(mese.value).padStart(2, '0')}/${anno.value}`;
-  const corpo = `Buongiorno,\n\nin allegato il timesheet relativo al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
-  apriMailto(clienteCorrente.value.email, oggetto, corpo);
+async function inviaEmail() {
+  inviandoEmail.value = true;
+  esitoEmail.value = '';
+  try {
+    const pdfBlob = await generaPdfBlob(anteprimaRef.value);
+    const nomeFile = `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
+    const oggetto = `Timesheet ${String(mese.value).padStart(2, '0')}/${anno.value}`;
+    const corpo = `Buongiorno,\n\nin allegato il timesheet relativo al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
+    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, clienteCorrente.value.email, oggetto, corpo);
+    esitoEmail.value = risultato.modalita === 'mail-app-mac'
+      ? 'Bozza aperta in Mail con allegato pronto'
+      : 'PDF salvato e rivelato nel file manager: trascinalo nella mail appena aperta';
+  } catch (err) {
+    esitoEmail.value = `Errore: ${err.message}`;
+  } finally {
+    inviandoEmail.value = false;
+  }
 }
 
 // Ultimo cliente selezionato persistito in localStorage (stesso pattern del tema in
@@ -98,16 +113,19 @@ onMounted(async () => {
         <p>Pianificazione mensile ore, replica struttura foglio aziendale</p>
       </div>
       <div class="actions">
-        <ClienteSwitcher v-if="clientiAttivi.length > 1" v-model="clienteId" :clienti="clientiAttivi" />
+        <ClienteSwitcher v-if="clientiAttivi.length" v-model="clienteId" :clienti="clientiAttivi" />
         <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
         <button class="btn btn-ghost" :disabled="salvando" @click="salvaTimesheet">
           {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
         </button>
         <button class="btn btn-primary" @click="esporta">Esporta PDF</button>
-        <button class="btn btn-ghost" :disabled="!clienteCorrente?.email" @click="inviaEmail">Invia email al cliente</button>
+        <button class="btn btn-ghost" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
+          {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
+        </button>
         <button class="btn btn-ghost" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
       </div>
     </div>
+    <p v-if="esitoEmail" class="badge-mono" style="margin-top:-10px;margin-bottom:16px">{{ esitoEmail }}</p>
 
     <div class="summary-row">
       <div class="stat accent"><div class="label">Ore lavorate</div><div class="value">{{ totaleMensile.toFixed(1) }}</div></div>

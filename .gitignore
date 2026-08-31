@@ -23,3 +23,4 @@ backend/src/data/atecoSettori.json.bak
 .idea
 .vscode/*
 !.vscode/extensions.json
+.playwright-mcp/
