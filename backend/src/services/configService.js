@@ -90,6 +90,10 @@ const CLIENTE_VUOTO = {
   logoDataUrl: '',
   tariffaOraria: 0,
   email: '', // una o più email separate da virgola, destinatarie di timesheet/fattura via mailto
+  figura: '', // campo header PDF timesheet
+  commessa: '', // campo header PDF timesheet
+  clientePdf: '', // campo header PDF timesheet (etichetta "Cliente", distinta da denominazione)
+  progetto: '', // campo header PDF timesheet
 };
 
 // Elenco clienti salvato: fonde ogni cliente coi campi di default (stesso motivo di

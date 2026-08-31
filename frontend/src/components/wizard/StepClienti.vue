@@ -26,6 +26,7 @@ function aggiungiCliente() {
     id: crypto.randomUUID(), attivo: true,
     denominazione: '', indirizzo: '', cap: '', comune: '', provincia: '',
     partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0, email: '',
+    figura: '', commessa: '', clientePdf: '', progetto: '',
   };
   props.modelValue.push(nuovo);
   ricerca.value = '';

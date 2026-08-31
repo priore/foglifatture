@@ -152,6 +152,10 @@ onMounted(async () => {
             :consulente="config.fornitore.denominazione"
             :localita="config.fornitore.comune"
             :logo-data-url="clienteCorrente.logoDataUrl"
+            :figura="clienteCorrente.figura"
+            :commessa="clienteCorrente.commessa"
+            :cliente="clienteCorrente.clientePdf"
+            :progetto="clienteCorrente.progetto"
           />
         </div>
       </div>

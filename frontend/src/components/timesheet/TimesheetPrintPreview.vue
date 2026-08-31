@@ -12,6 +12,10 @@ const props = defineProps({
   consulente: { type: String, default: '' },
   localita: { type: String, default: '' },
   logoDataUrl: { type: String, default: '' },
+  figura: { type: String, default: '' },
+  commessa: { type: String, default: '' },
+  cliente: { type: String, default: '' },
+  progetto: { type: String, default: '' },
 });
 
 const NOMI_MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -42,16 +46,16 @@ const totaleAssenze = computed(() =>
     </div>
 
     <table class="xls-info">
-      <tr><td class="k">Consulente:</td><td class="v">{{ consulente }}</td><td class="k">Commessa:</td><td class="v"></td></tr>
-      <tr><td class="k">Figura:</td><td class="v"></td><td class="k">Cliente:</td><td class="v"></td></tr>
+      <tr><td class="k">Consulente:</td><td class="v">{{ consulente }}</td><td class="k">Commessa:</td><td class="v">{{ commessa }}</td></tr>
+      <tr><td class="k">Figura:</td><td class="v">{{ figura }}</td><td class="k">Cliente:</td><td class="v">{{ cliente }}</td></tr>
       <tr><td class="k">Mese:</td><td class="v">{{ NOMI_MESI[mese - 1] }}</td><td class="k">Località:</td><td class="v">{{ localita }}</td></tr>
-      <tr><td class="k">Anno:</td><td class="v">{{ anno }}</td><td class="k">Progetto:</td><td class="v"></td></tr>
+      <tr><td class="k">Anno:</td><td class="v">{{ anno }}</td><td class="k">Progetto:</td><td class="v">{{ progetto }}</td></tr>
     </table>
     <div class="doc-gap"></div>
 
     <table class="xls-grid">
       <thead>
-        <tr><th>GG</th><th>Entrata</th><th>Uscita</th><th>Entrata</th><th>Uscita</th><th>Totale<br>Giorn.</th><th>Motivo<br>Assenza</th><th>NOTE</th></tr>
+        <tr><th>GG</th><th>Giorno</th><th>Entrata</th><th>Uscita</th><th>Entrata</th><th>Uscita</th><th>Totale<br>Giorn.</th><th>Motivo<br>Assenza</th><th>NOTE</th></tr>
       </thead>
       <tbody>
         <tr v-for="giorno in giorni" :key="giorno.giorno" :class="{ wknd: isWeekend(giorno.nomeGiorno) }">
