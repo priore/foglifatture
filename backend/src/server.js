@@ -18,7 +18,7 @@ import { backupRoutes } from './routes/backupRoutes.js';
 import { reminderRoutes } from './routes/reminderRoutes.js';
 import { forfettarioRoutes } from './routes/forfettarioRoutes.js';
 import { mailRoutes } from './routes/mailRoutes.js';
-import { getConfig } from './services/configService.js';
+import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
 import { avviaPromemoria } from './services/reminderService.js';
@@ -75,6 +75,7 @@ app.listen(PORT, async () => {
   logger.info(`Server avviato su http://localhost:${PORT}`);
   logger.info(`Autenticazione Google: ${isAuthConfigurato() ? 'attiva' : 'disattivata (configurala in .env)'}`);
 
+  await applicaPercorsoDatiAllAvvio();
   const config = await getConfig();
   avviaPollingSdi(getConfig, config.sdi.intervalloPollingMinuti);
   logger.info(`Polling ricevute SDI avviato ogni ${config.sdi.intervalloPollingMinuti} minuti`);

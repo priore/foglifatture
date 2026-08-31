@@ -8,12 +8,12 @@ import StepClienti from '../components/wizard/StepClienti.vue';
 import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
 import StepBackup from '../components/wizard/StepBackup.vue';
+import StepPercorsoDati from '../components/wizard/StepPercorsoDati.vue';
 import StepPromemoria from '../components/wizard/StepPromemoria.vue';
-import StepForfettario from '../components/wizard/StepForfettario.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import StepGemini from '../components/wizard/StepGemini.vue';
 import { api } from '../services/api.js';
-import { PASSI_IMPOSTAZIONI as PASSI, PASSI_AUTOSALVANTI } from '../wizardImpostazioniPassi.js';
+import { PASSI_IMPOSTAZIONI as PASSI, PASSI_AUTOSALVANTI, DESCRIZIONI_PASSI } from '../wizardImpostazioniPassi.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -79,19 +79,19 @@ onBeforeRouteUpdate(async (to, from, next) => {
 <template>
   <div v-if="config">
     <div class="page-head">
-      <div><h1>Impostazioni</h1><p>Configurazione guidata: anagrafica, tariffa, invio</p></div>
+      <div><h1>Impostazioni</h1><p>{{ DESCRIZIONI_PASSI[PASSI[passoAttivo]] }}</p></div>
     </div>
 
     <div class="card">
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
-        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" />
+        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" />
         <StepClienti v-else-if="passoAttivo === 1" v-model="config.clienti" />
         <StepFatturazione v-else-if="passoAttivo === 2" v-model="config.fatturazione" />
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
-        <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
-        <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" />
-        <StepForfettario v-else-if="passoAttivo === 6" v-model="config.forfettario" />
+        <StepPercorsoDati v-else-if="passoAttivo === 4" v-model="config.dati" />
+        <StepBackup v-else-if="passoAttivo === 5" v-model="config.backup" />
+        <StepPromemoria v-else-if="passoAttivo === 6" v-model="config.reminder" />
         <StepGoogleAuth v-else-if="passoAttivo === 7" />
         <StepGemini v-else />
 

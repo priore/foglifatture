@@ -1,8 +1,10 @@
 // Gestione configurazione: anagrafica fornitore, clienti, tariffa oraria, dati PEC/SDI.
 // Un unico file config.json salvato nella root dei dati.
 import { randomUUID } from 'node:crypto';
+import { rename, readdir, mkdir, rm } from 'node:fs/promises';
+import path from 'node:path';
 import keytar from 'keytar';
-import { readJson, writeJson } from '../lib/jsonStore.js';
+import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
 
 const CONFIG_FILE = 'config.json';
 
@@ -79,6 +81,11 @@ const DEFAULT_CONFIG = {
     coefficenteRedditivita: 0, // % di redditività del settore selezionato (0-100)
     dataInizioAttivita: '', // "YYYY-MM-DD": aliquota 5% nei primi 5 anni di attività, poi 15%
   },
+  dati: {
+    // Override di backend/data/, es. una cartella sincronizzata (Dropbox/iCloud/OneDrive)
+    // per avere timesheet e fatture su più macchine. Vuoto = default (data/ nel progetto).
+    percorso: '',
+  },
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -144,6 +151,7 @@ export async function getConfig() {
       backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
       reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
       forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
+      dati: fondiSezione(DEFAULT_CONFIG.dati, config.dati),
     }
     : { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
 
@@ -276,8 +284,54 @@ export async function saveConfig(partialConfig) {
     backup: { ...fondiSezione(current.backup, partialConfig.backup), password: '' },
     reminder: fondiSezione(current.reminder, partialConfig.reminder),
     forfettario: fondiSezione(current.forfettario, partialConfig.forfettario),
+    // dati.percorso non passa mai da qui: cambiarlo senza spostare i file lascerebbe
+    // config.json a mentire sul percorso reale. Va solo tramite spostaPercorsoDati().
+    dati: current.dati,
   };
   // Su disco (config.json) le due password restano sempre vuote: risiedono solo nel Keychain.
   await writeJson(CONFIG_FILE, next);
   return { ...next, pec: { ...next.pec, passwordMittente }, backup: { ...next.backup, password: backupPassword } };
+}
+
+// Da chiamare una sola volta all'avvio del server: applica l'override di backend/data/
+// letto da config.json (nella cartella di default) prima di qualunque altra I/O.
+export async function applicaPercorsoDatiAllAvvio() {
+  const config = await readJson(CONFIG_FILE, null);
+  if (config?.dati?.percorso) setDataDir(config.dati.percorso);
+}
+
+// Cambia backend/data/ spostando fisicamente ogni file esistente nella nuova cartella
+// (mai perdita dati: se la nuova cartella esiste già e non è vuota, si rifiuta). Usata da
+// Impostazioni → Percorso dati, non tramite saveConfig (vedi commento su dati.percorso sopra).
+export async function spostaPercorsoDati(nuovoPercorso) {
+  const percorsoAssoluto = path.resolve(nuovoPercorso || '');
+  if (!percorsoAssoluto) throw new Error('Percorso mancante');
+  if (percorsoAssoluto === DATA_DIR) throw new Error('Il percorso indicato è già quello attuale');
+
+  await mkdir(percorsoAssoluto, { recursive: true });
+  const vociEsistenti = await readdir(percorsoAssoluto);
+  if (vociEsistenti.length > 0) {
+    throw new Error('La cartella scelta non è vuota: spostare/svuotare manualmente prima di riprovare');
+  }
+
+  const vecchioDir = DATA_DIR;
+  const voci = await readdir(vecchioDir).catch((err) => {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  });
+  // rename() è atomico per voce quando sorgente/destinazione sono sullo stesso filesystem;
+  // su filesystem diversi Node lo emula con copia+cancellazione automaticamente.
+  for (const voce of voci) {
+    await rename(path.join(vecchioDir, voce), path.join(percorsoAssoluto, voce));
+  }
+
+  setDataDir(percorsoAssoluto);
+  const config = await readJson(CONFIG_FILE, null);
+  await writeJson(CONFIG_FILE, { ...config, dati: { ...(config?.dati ?? {}), percorso: percorsoAssoluto } });
+
+  // Cartella vecchia: a questo punto è vuota (tutto spostato con rename sopra).
+  // recursive:true serve comunque a fs.rm per rimuovere una directory anche vuota.
+  await rm(vecchioDir, { recursive: true }).catch(() => {});
+
+  return percorsoAssoluto;
 }

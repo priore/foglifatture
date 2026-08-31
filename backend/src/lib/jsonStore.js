@@ -3,7 +3,18 @@
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-const DATA_DIR = path.join(import.meta.dirname, '..', '..', 'data');
+const DATA_DIR_DEFAULT = path.join(import.meta.dirname, '..', '..', 'data');
+
+// Mutabile: cambiata da configService dopo lo spostamento fisico dei file (percorso dati
+// configurabile da Impostazioni). Il binding `export let` è live per chi importa DATA_DIR,
+// niente riavvio del processo necessario.
+export let DATA_DIR = DATA_DIR_DEFAULT;
+
+// Usata da configService per applicare l'override letto da config.json all'avvio, prima
+// di qualunque altra lettura/scrittura su disco.
+export function setDataDir(dir) {
+  DATA_DIR = dir || DATA_DIR_DEFAULT;
+}
 
 async function ensureDir(dir) {
   await mkdir(dir, { recursive: true });
@@ -40,4 +51,3 @@ export async function listKeys(relativeDir) {
   }
 }
 
-export { DATA_DIR };
