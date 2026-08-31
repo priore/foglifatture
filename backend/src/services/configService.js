@@ -90,6 +90,7 @@ const CLIENTE_VUOTO = {
   codiceDestinatarioSdi: '',
   logoDataUrl: '',
   tariffaOraria: 0,
+  email: '', // una o più email separate da virgola, destinatarie di timesheet/fattura via mailto
 };
 
 // Elenco clienti salvato: fonde ogni cliente coi campi di default (stesso motivo di
@@ -170,6 +171,12 @@ export function validaConfig(partialConfig) {
         errori.push(`cliente[${etichetta}]: ogni cliente deve avere un id univoco`);
       }
       idVisti.add(c.id);
+      if (c.email !== undefined && String(c.email).trim()) {
+        const nonValide = String(c.email).split(',').map(e => e.trim()).filter(e => e && !REGEX_EMAIL.test(e));
+        if (nonValide.length) {
+          errori.push(`cliente[${etichetta}]: email non valida: ${nonValide.join(', ')}`);
+        }
+      }
     });
   }
   if (partialConfig.pec?.casellaMittente !== undefined

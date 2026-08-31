@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
-const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ALLOWED_EMAIL'];
+const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ALLOWED_EMAIL', 'GEMINI_API_KEY'];
 
 function parseEnv(contenuto) {
   const righe = contenuto.split('\n');
@@ -25,17 +25,19 @@ export async function leggiCredenzialiOAuth() {
     // Il secret non viene mai restituito al frontend: solo se è impostato o meno.
     googleClientSecretImpostato: Boolean(valori.GOOGLE_CLIENT_SECRET),
     allowedEmail: valori.ALLOWED_EMAIL || '',
+    geminiApiKeyImpostata: Boolean(valori.GEMINI_API_KEY),
   };
 }
 
 // Aggiorna solo le righe delle chiavi gestite, preservando il resto del file (commenti, PORT, ecc.).
-export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail }) {
+export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey }) {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
 
   const nuoviValori = { ...valori, GOOGLE_CLIENT_ID: googleClientId, ALLOWED_EMAIL: allowedEmail };
-  // Il secret si aggiorna solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare).
+  // Il secret/la key si aggiornano solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare).
   if (googleClientSecret) nuoviValori.GOOGLE_CLIENT_SECRET = googleClientSecret;
+  if (geminiApiKey) nuoviValori.GEMINI_API_KEY = geminiApiKey;
 
   const righeAggiornate = [];
   const chiaviScritte = new Set();
@@ -53,4 +55,10 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   }
 
   await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
+}
+
+// Letta a parte (non da process.env) così la key vale subito dopo il salvataggio, senza riavviare il server.
+export async function leggiGeminiApiKey() {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  return parseEnv(contenuto).valori.GEMINI_API_KEY || '';
 }

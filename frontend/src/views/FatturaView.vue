@@ -8,6 +8,7 @@ import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import FatturaPrintPreview from '../components/fattura/FatturaPrintPreview.vue';
 import { api } from '../services/api.js';
 import { esportaPdf } from '../composables/usePdfExport.js';
+import { apriMailto } from '../composables/useMailto.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -112,6 +113,12 @@ async function esporta() {
   await esportaPdf(anteprimaRef.value, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
+function inviaEmail() {
+  const oggetto = `Fattura ${fatturaGenerata.value?.numero ?? ''} — ${String(mese.value).padStart(2, '0')}/${anno.value}`;
+  const corpo = `Buongiorno,\n\nin allegato la fattura relativa al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
+  apriMailto(clienteCorrente.value.email, oggetto, corpo);
+}
+
 watch([anno, mese, clienteId], caricaAnteprima);
 onMounted(async () => {
   config.value = await api.getConfig();
@@ -189,6 +196,10 @@ onMounted(async () => {
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email" @click="inviaEmail">
+              Invia email al cliente
+            </button>
+            <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : 'Invia PEC a SDI' }}
             </button>

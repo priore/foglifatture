@@ -10,12 +10,28 @@ const props = defineProps({
 
 const codici = ref([]);
 const ricerca = ref('');
+const aggiornando = ref(false);
+const messaggioAggiorna = ref('');
 
 onMounted(async () => {
   codici.value = await api.settoriAteco();
   const attuale = codici.value.find((c) => c.codice === props.modelValue.codiceAteco);
   if (attuale) ricerca.value = `${attuale.codice} — ${attuale.descrizione}`;
 });
+
+async function aggiornaElencoAteco() {
+  aggiornando.value = true;
+  messaggioAggiorna.value = '';
+  try {
+    const risultato = await api.aggiornaSettoriAteco();
+    codici.value = await api.settoriAteco();
+    messaggioAggiorna.value = `Elenco aggiornato (${risultato.numero} codici)`;
+  } catch (err) {
+    messaggioAggiorna.value = `Errore: ${err.message}`;
+  } finally {
+    aggiornando.value = false;
+  }
+}
 
 const risultati = computed(() => {
   const termine = ricerca.value.trim().toLowerCase();
@@ -40,8 +56,18 @@ function selezionaCodice(c) {
     <div class="field"><label>Soglia fatturato annuo (€)</label><input type="number" step="1" min="1" v-model.number="modelValue.sogliaAnnua"></div>
     <div class="field"><label>Data inizio attività</label><input type="date" v-model="modelValue.dataInizioAttivita"></div>
     <div class="field field-full" style="position:relative">
-      <label>Codice ATECO</label>
-      <input type="text" v-model="ricerca" placeholder="Cerca per codice, descrizione o settore…" autocomplete="off">
+      <label style="display:flex;align-items:center;gap:8px">
+        Codice ATECO
+        <button
+          type="button"
+          class="btn-icon"
+          title="Aggiorna elenco codici ATECO e coefficienti da Gemini"
+          :disabled="aggiornando"
+          @click="aggiornaElencoAteco"
+        >{{ aggiornando ? '…' : '⟳' }}</button>
+        <span v-if="messaggioAggiorna" class="badge-mono" style="font-weight:normal">{{ messaggioAggiorna }}</span>
+      </label>
+      <input type="text" v-model="ricerca" placeholder="Cerca per codice, descrizione o settore… (anche sotto-codici es. 62.20.10)" autocomplete="off">
       <ul v-if="risultati.length" class="ateco-risultati">
         <li v-for="c in risultati" :key="c.codice" @click="selezionaCodice(c)">
           <strong>{{ c.codice }}</strong> — {{ c.descrizione }}
@@ -59,6 +85,12 @@ function selezionaCodice(c) {
 </template>
 
 <style scoped>
+.btn-icon {
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 6px; width: 24px; height: 24px; line-height: 1; cursor: pointer;
+  font-size: .95rem;
+}
+.btn-icon:disabled { opacity: .5; cursor: default; }
 .ateco-risultati {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
   background: var(--card); border: 1px solid var(--line); border-radius: 8px;

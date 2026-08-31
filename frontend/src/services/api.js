@@ -25,6 +25,7 @@ export const api = {
   getTimesheet: (anno, mese, clienteId) => richiesta(`/timesheet/${anno}/${mese}/${clienteId}`),
   saveTimesheet: (anno, mese, clienteId, giorni) =>
     richiesta(`/timesheet/${anno}/${mese}/${clienteId}`, { method: 'PUT', body: JSON.stringify({ giorni }) }),
+  urlExportVms: (anno, mese, clienteId) => `${BASE_URL}/timesheet/${anno}/${mese}/${clienteId}/export-vms`,
 
   // Fattura Pro-Forma
   anteprimaFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima`),
@@ -85,6 +86,7 @@ export const api = {
 
   // Dashboard regime forfettario (soglia, imposta stimata, settori ATECO)
   settoriAteco: () => richiesta('/forfettario/settori-ateco'),
+  aggiornaSettoriAteco: () => richiesta('/forfettario/settori-ateco/aggiorna', { method: 'POST' }),
   dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
 };
 

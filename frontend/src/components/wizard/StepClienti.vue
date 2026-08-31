@@ -25,7 +25,7 @@ function aggiungiCliente() {
   const nuovo = {
     id: crypto.randomUUID(), attivo: true,
     denominazione: '', indirizzo: '', cap: '', comune: '', provincia: '',
-    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0,
+    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0, email: '',
   };
   props.modelValue.push(nuovo);
   ricerca.value = '';
@@ -73,6 +73,11 @@ function riattivaCliente(cliente) {
         <div class="field" style="margin-top:12px">
           <label>Tariffa oraria (€)</label>
           <input type="number" step="0.01" v-model.number="cliente.tariffaOraria">
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Email cliente</label>
+          <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
+          <small class="note-legal">Una o più email separate da virgola, usate per l'invio di timesheet e fattura via app di posta.</small>
         </div>
       </div>
     </div>

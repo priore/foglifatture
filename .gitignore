@@ -12,6 +12,7 @@ logs/
 *.log
 backend/data/
 backend/logs/
+backend/src/data/atecoSettori.json.bak
 
 .DS_Store
 *.suo

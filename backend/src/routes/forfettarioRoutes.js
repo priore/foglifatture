@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { readFile } from 'node:fs/promises';
 import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
+import { aggiornaAtecoSettoriDaGemini } from '../services/geminiAtecoService.js';
 
 export const forfettarioRoutes = Router();
 
@@ -11,6 +12,16 @@ const percorsoAteco = new URL('../data/atecoSettori.json', import.meta.url);
 forfettarioRoutes.get('/settori-ateco', async (req, res) => {
   const json = await readFile(percorsoAteco, 'utf-8');
   res.type('application/json').send(json);
+});
+
+// Rigenera l'elenco via Gemini (icona "aggiorna" accanto alla ricerca ATECO in Impostazioni → Forfettario).
+forfettarioRoutes.post('/settori-ateco/aggiorna', async (req, res) => {
+  try {
+    const numero = await aggiornaAtecoSettoriDaGemini();
+    res.json({ ok: true, numero });
+  } catch (err) {
+    res.status(502).json({ ok: false, errore: err.message });
+  }
 });
 
 forfettarioRoutes.get('/dashboard', async (req, res) => {

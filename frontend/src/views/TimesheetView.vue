@@ -9,6 +9,7 @@ import TimesheetPrintPreview from '../components/timesheet/TimesheetPrintPreview
 import { api } from '../services/api.js';
 import { calcolaTotaleMensile, calcolaOreGiorno, decimaleAHHmm, STATI_ASSENZA } from '../composables/useTimeCalculator.js';
 import { esportaPdf } from '../composables/usePdfExport.js';
+import { apriMailto } from '../composables/useMailto.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -59,6 +60,16 @@ async function esporta() {
   await esportaPdf(anteprimaRef.value, `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
+function esportaVms() {
+  window.open(api.urlExportVms(anno.value, mese.value, clienteId.value), '_blank');
+}
+
+function inviaEmail() {
+  const oggetto = `Timesheet ${String(mese.value).padStart(2, '0')}/${anno.value}`;
+  const corpo = `Buongiorno,\n\nin allegato il timesheet relativo al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
+  apriMailto(clienteCorrente.value.email, oggetto, corpo);
+}
+
 // Ultimo cliente selezionato persistito in localStorage (stesso pattern del tema in
 // AppSidebar.vue), ripristinato al prossimo accesso; fallback al primo cliente attivo
 // se il valore salvato non corrisponde più a un cliente attivo esistente.
@@ -93,6 +104,8 @@ onMounted(async () => {
           {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
         </button>
         <button class="btn btn-primary" @click="esporta">Esporta PDF</button>
+        <button class="btn btn-ghost" :disabled="!clienteCorrente?.email" @click="inviaEmail">Invia email al cliente</button>
+        <button class="btn btn-ghost" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
       </div>
     </div>
 
