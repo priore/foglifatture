@@ -151,7 +151,7 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/xml', async (req, res) => {
     return res.status(422).json({ errore: 'Dati fattura non conformi a FatturaPA', dettagli: validazione.errori });
   }
 
-  const progressivoInvio = ultimoProgressivoONuovo(invoice) ?? await prossimoProgressivoInvio();
+  const progressivoInvio = ultimoProgressivoONuovo(invoice) ?? prossimoProgressivoInvio();
   const xml = generaXmlFatturaPA({
     fornitore: config.fornitore,
     cliente,
@@ -180,7 +180,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/invia-pec', async (req, res) => {
     return res.status(422).json({ errore: 'Dati fattura non conformi a FatturaPA', dettagli: validazione.errori });
   }
 
-  const progressivoInvio = await prossimoProgressivoInvio();
+  const progressivoInvio = prossimoProgressivoInvio();
   const xml = generaXmlFatturaPA({ fornitore: config.fornitore, cliente, fattura: { ...invoice, progressivoInvio } });
   const nomeFile = generaNomeFileXml(config.fornitore, progressivoInvio);
 

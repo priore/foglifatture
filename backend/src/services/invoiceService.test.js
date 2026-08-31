@@ -12,12 +12,9 @@ mock.module('../lib/jsonStore.js', {
     readJson: async (relativePath) => {
       const chiave = relativePath.replace('invoices/', '').replace('.json', '');
       const store = {
-        [`2026-01-${CLI_A}`]: {
-          anno: 2026, mese: 1, clienteId: CLI_A, numero: '1',
-          invii: [{ progressivoInvio: 1, esito: 'errore-invio' }, { progressivoInvio: 3, esito: 'inviata' }],
-        },
-        [`2026-01-${CLI_B}`]: { anno: 2026, mese: 1, clienteId: CLI_B, numero: '2', invii: [{ progressivoInvio: 2, esito: 'inviata' }] },
-        [`2026-02-${CLI_A}`]: { anno: 2026, mese: 2, clienteId: CLI_A, numero: '3', invii: [] },
+        [`2026-01-${CLI_A}`]: { anno: 2026, mese: 1, clienteId: CLI_A, numero: '1' },
+        [`2026-01-${CLI_B}`]: { anno: 2026, mese: 1, clienteId: CLI_B, numero: '2' },
+        [`2026-02-${CLI_A}`]: { anno: 2026, mese: 2, clienteId: CLI_A, numero: '3' },
       };
       return store[chiave] ?? null;
     },
@@ -28,9 +25,11 @@ mock.module('../lib/jsonStore.js', {
 
 const { verificaIntegritaNumerazione, prossimoProgressivoInvio } = await import('./invoiceService.js');
 
-test('prossimo progressivo invio è il max usato + 1, cross-fattura e cross-tentativo', async () => {
-  const progressivo = await prossimoProgressivoInvio();
-  assert.equal(progressivo, 4); // usati: 1, 3 (CLI_A), 2 (CLI_B) → max 3 + 1
+test('prossimo progressivo invio è alfanumerico, univoco ad ogni chiamata', () => {
+  const a = prossimoProgressivoInvio();
+  const b = prossimoProgressivoInvio();
+  assert.match(a, /^[0-9a-f]{10}$/);
+  assert.notEqual(a, b);
 });
 
 test('numero sequenziale successivo è valido', async () => {

@@ -48,6 +48,6 @@ test('escapa caratteri speciali XML nella denominazione', () => {
   assert.match(xml, /A &amp; B &lt;Srl&gt;/);
 });
 
-test('nome file conforme allo standard IT<CF>_<PROGRESSIVO>.xml', () => {
-  assert.equal(generaNomeFileXml(fornitore, 8), 'IT11111111111_00008.xml');
+test('nome file conforme allo standard IT<P.IVA>_<PROGRESSIVO>.xml (progressivo alfanumerico libero)', () => {
+  assert.equal(generaNomeFileXml(fornitore, 'a1b2c3d4e5'), 'IT11111111111_a1b2c3d4e5.xml');
 });

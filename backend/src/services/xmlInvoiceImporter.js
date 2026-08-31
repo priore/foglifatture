@@ -40,7 +40,9 @@ export function importaFatturaDaXml(contenutoXml) {
     // Fattura storica: si assume già accettata da SDI (altrimenti non sarebbe nell'archivio
     // XML da cui si importa), quindi un solo tentativo di invio con esito "inviata".
     invii: [{
-      progressivoInvio: Number(header.DatiTrasmissione.ProgressivoInvio) || 1,
+      // Alfanumerico libero (spec FatturaPA): preservato as-is, non convertito a Number
+      // (i gestionali precedenti usano progressivi non numerici, es. "XEYon").
+      progressivoInvio: String(header.DatiTrasmissione.ProgressivoInvio),
       dataInvio: data,
       esito: 'inviata',
       errore: null,

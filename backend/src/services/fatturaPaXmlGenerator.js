@@ -130,8 +130,8 @@ ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</I
 `;
 }
 
-// Nome file conforme allo standard: IT<CODICE_FISCALE>_<PROGRESSIVO>.xml
+// Nome file conforme allo standard: IT<P.IVA>_<PROGRESSIVO>.xml. Il progressivo è
+// alfanumerico libero (spec FatturaPA, max 10 caratteri) — non un numero a lunghezza fissa.
 export function generaNomeFileXml(fornitore, progressivo) {
-  const numeroProgressivo = String(progressivo).padStart(5, '0');
-  return `IT${fornitore.partitaIva}_${numeroProgressivo}.xml`;
+  return `IT${fornitore.partitaIva}_${progressivo}.xml`;
 }
