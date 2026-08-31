@@ -31,8 +31,13 @@ const esitoEmail = ref('');
 const modoManuale = ref(false);
 const importoManuale = ref(0);
 const descrizioneManuale = ref('');
+const dataFattura = ref('');
 
 const importoValido = computed(() => Number.isFinite(Number(importoManuale.value)) && Number(importoManuale.value) > 0);
+
+function dataDefault() {
+  return `${anno.value}-${String(mese.value).padStart(2, '0')}-28`;
+}
 
 const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
 const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
@@ -50,6 +55,7 @@ async function caricaAnteprima() {
   if (!clienteId.value) return;
   anteprima.value = await api.anteprimaFattura(anno.value, mese.value, clienteId.value);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
+  dataFattura.value = fatturaGenerata.value?.data ?? dataDefault();
   await caricaRicevuteSdi();
 }
 
@@ -58,16 +64,19 @@ async function caricaRicevuteSdi() {
 }
 
 async function aggiornaMeseMinimo() {
-  const mesi = await api.listMesiTimesheet();
-  const mesiCliente = mesi.filter(m => m.clienteId === clienteId.value);
-  meseMinimo.value = mesiCliente.length ? mesiCliente[0].chiave.slice(0, 7) : null;
+  const [mesiTimesheet, mesiFatture] = await Promise.all([api.listMesiTimesheet(), api.listMesiFatturati()]);
+  const chiavi = [...mesiTimesheet, ...mesiFatture]
+    .filter(m => m.clienteId === clienteId.value)
+    .map(m => m.chiave.slice(0, 7));
+  meseMinimo.value = chiavi.length ? chiavi.sort()[0] : null;
 }
 
 async function generaFattura() {
   const dati = modoManuale.value
-    ? { importo: Number(importoManuale.value), descrizione: descrizioneManuale.value }
-    : {};
+    ? { importo: Number(importoManuale.value), descrizione: descrizioneManuale.value, data: dataFattura.value }
+    : { data: dataFattura.value };
   fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
+  dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
   await caricaRicevuteSdi();
 }
 
@@ -207,6 +216,10 @@ onMounted(async () => {
         <div class="card">
           <div class="card-head"><h2>Fattura definitiva</h2></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div class="field">
+              <label>Data fattura</label>
+              <input type="date" v-model="dataFattura" />
+            </div>
             <button class="btn btn-primary" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
@@ -257,7 +270,7 @@ onMounted(async () => {
             :fornitore="config.fornitore"
             :cliente="clienteCorrente"
             :numero="fatturaGenerata?.numero ?? '—'"
-            :data="fatturaGenerata?.data ?? new Date(anno, mese - 1, 28).toISOString().slice(0,10)"
+            :data="fatturaGenerata?.data ?? dataFattura"
             :descrizione="fatturaGenerata?.descrizione ?? (modoManuale ? descrizioneManuale : `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${anteprima.totaleOre.toFixed(2)} ore mensili.`)"
             :imponibile="anteprimaEffettiva.imponibile"
             :bollo="anteprimaEffettiva.bollo"

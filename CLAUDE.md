@@ -30,3 +30,8 @@ Follow the conventions already in the codebase — don't introduce a new pattern
 - **Single-tenant assumptions are intentional**, not an oversight (see `FEATURE_PROPOSALS.md` multi-tenant feasibility analysis) — don't refactor toward multi-user/multi-client support unless explicitly asked.
 - **No test framework is configured.** `backend/package.json` runs tests via Node's built-in `--test` runner (`*.test.js` files, see `pecService.test.js`). Use that pattern for new backend tests; don't add Jest/Vitest/Mocha.
 - Before adding a new file or service, check whether an existing one already does something close (e.g. `backupService.js`/`sdiRicevuteService.js`/`reminderService.js` all share the same `setInterval` polling pattern — reuse it, don't reinvent).
+
+## Dev workflow
+
+- Backend runs as a persistent background process on port 1969, serving `frontend/dist/` statically — no frontend dev-server hot-reload in this setup. After building the frontend, or after any backend code change, the running node process must be killed and restarted to pick up changes — it won't do so on its own. **Always ask the user for confirmation before restarting** (`lsof -i :1969 -sTCP:LISTEN -t` to find the PID, kill it, `nohup node src/server.js &` to relaunch); never do it silently.
+- `AI-Workspace/` holds structured analysis/product docs, indexed by `AI-Workspace/WORKSPACE_MANIFEST.md` (see `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`, `UI_ANALYSIS.md`, `FEATURE_PROPOSALS.md`, etc.). These are analysis-only — no code changes there. Exception: when a completed feature originated from a numbered entry in `FEATURE_PROPOSALS.md` (or an issue in `KNOWN_ISSUES.md`), update that entry immediately (✅ implemented, date, commit) as the last step of the task — don't leave it stale.

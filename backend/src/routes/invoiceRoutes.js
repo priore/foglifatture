@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, verificaIntegritaNumerazione } from '../services/invoiceService.js';
+import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, verificaIntegritaNumerazione, listMesiFatturati } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
 import { listaRicevutePerFattura } from '../services/sdiRicevuteService.js';
 
 export const invoiceRoutes = Router();
+
+invoiceRoutes.get('/', async (req, res) => {
+  res.json(await listMesiFatturati());
+});
 
 // Risolve il cliente dalla config (inclusi i disattivati: cancellazione è logica,
 // una fattura storica di un cliente disattivato resta leggibile/rigenerabile).
@@ -106,7 +110,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     return res.status(409).json({ errore: integrita.errore });
   }
 
-  const data = req.body.data ?? new Date(Number(anno), Number(mese) - 1, 28).toISOString().slice(0, 10);
+  const data = req.body.data ?? `${anno}-${String(mese).padStart(2, '0')}-28`;
   const descrizione = req.body.descrizione ?? descrizioneDefault;
 
   const invoice = {

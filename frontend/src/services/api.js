@@ -31,6 +31,7 @@ export const api = {
   anteprimaFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima`),
   anteprimaFatturaManuale: (anno, mese, clienteId, importo) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima-manuale?importo=${importo}`),
   getFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}`).catch(() => null),
+  listMesiFatturati: () => richiesta('/invoice'),
   generaFattura: (anno, mese, clienteId, dati = {}) =>
     richiesta(`/invoice/${anno}/${mese}/${clienteId}/genera`, { method: 'POST', body: JSON.stringify(dati) }),
 
