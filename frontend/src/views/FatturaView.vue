@@ -42,7 +42,24 @@ function dataDefault() {
 const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
 const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
 
+// Fatture storiche importate da XML possono avere una descrizione salvata senza il
+// totale ore (fedele al documento originale emesso): a video, solo per leggibilità,
+// si integra il dato ore preso da oreTotali se non già menzionato nel testo.
+const descrizioneVisualizzata = computed(() => {
+  if (modoManuale.value) return descrizioneManuale.value;
+  const descrizioneSalvata = fatturaGenerata.value?.descrizione;
+  const oreTotali = fatturaGenerata.value?.oreTotali ?? anteprima.value?.totaleOre;
+  if (descrizioneSalvata) {
+    if (/ore/i.test(descrizioneSalvata) || oreTotali == null) return descrizioneSalvata;
+    return `${descrizioneSalvata} per un totale di ${oreTotali.toFixed(2)} ore mensili.`;
+  }
+  return `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${(anteprima.value?.totaleOre ?? 0).toFixed(2)} ore mensili.`;
+});
+
 const anteprimaEffettiva = computed(() => {
+  // Fattura già salvata (generata o importata da XML): mostra i valori congelati,
+  // non ricalcolare dal timesheet corrente — che per un mese storico può essere vuoto.
+  if (fatturaGenerata.value) return fatturaGenerata.value;
   if (!modoManuale.value) return anteprima.value;
   if (!config.value) return null;
   const imponibile = Number((Number(importoManuale.value) || 0).toFixed(2));
@@ -159,11 +176,13 @@ onMounted(async () => {
         <h1>Fattura Pro-Forma</h1>
         <p>{{ modoManuale ? 'Importo e dicitura liberi' : 'Generata da Timesheet · Tariffa oraria configurabile in Impostazioni' }}</p>
       </div>
-      <div class="actions">
-        <ClienteSwitcher v-if="clientiAttivi.length" v-model="clienteId" :clienti="clientiAttivi" />
-        <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-        <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
-      </div>
+    </div>
+    <div class="cliente-row" v-if="clientiAttivi.length">
+      <ClienteSwitcher v-model="clienteId" :clienti="clientiAttivi" />
+    </div>
+    <div class="actions" style="margin-bottom:16px">
+      <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
+      <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
     </div>
 
     <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
@@ -195,8 +214,8 @@ onMounted(async () => {
           <div class="card-head"><h2>Calcolo compenso</h2></div>
           <div class="card-body">
             <table class="data-table">
-              <tr v-if="!modoManuale"><td>Ore totali mensili</td><td style="text-align:right">{{ anteprima.totaleOre.toFixed(2) }}</td></tr>
-              <tr v-if="!modoManuale"><td>Tariffa oraria</td><td style="text-align:right">€ {{ clienteCorrente.tariffaOraria.toFixed(2) }}</td></tr>
+              <tr v-if="!modoManuale"><td>Ore totali mensili</td><td style="text-align:right">{{ (fatturaGenerata?.oreTotali ?? anteprima.totaleOre).toFixed(2) }}</td></tr>
+              <tr v-if="!modoManuale"><td>Tariffa oraria</td><td style="text-align:right">€ {{ (fatturaGenerata?.tariffaOraria ?? clienteCorrente.tariffaOraria).toFixed(2) }}</td></tr>
               <tr><td>Imponibile</td><td style="text-align:right">€ {{ anteprimaEffettiva.imponibile.toFixed(2) }}</td></tr>
               <tr><td>Rivalsa INPS</td><td style="text-align:right">assente</td></tr>
               <tr v-if="anteprimaEffettiva.bolloApplicabile"><td>Bollo virtuale (&gt; {{ config.fatturazione.sogliaBolloVirtuale }}€)</td><td style="text-align:right">€ {{ anteprimaEffettiva.bollo.toFixed(2) }}</td></tr>
@@ -271,7 +290,7 @@ onMounted(async () => {
             :cliente="clienteCorrente"
             :numero="fatturaGenerata?.numero ?? '—'"
             :data="fatturaGenerata?.data ?? dataFattura"
-            :descrizione="fatturaGenerata?.descrizione ?? (modoManuale ? descrizioneManuale : `Servizi di Informatica prestati per vs. Azienda conto terzi per un totale di ${anteprima.totaleOre.toFixed(2)} ore mensili.`)"
+            :descrizione="descrizioneVisualizzata"
             :imponibile="anteprimaEffettiva.imponibile"
             :bollo="anteprimaEffettiva.bollo"
             :bollo-applicabile="anteprimaEffettiva.bolloApplicabile"

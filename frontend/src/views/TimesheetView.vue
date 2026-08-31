@@ -112,18 +112,20 @@ onMounted(async () => {
         <h1>Timesheet — {{ mese }}/{{ anno }}</h1>
         <p>Pianificazione mensile ore, replica struttura foglio aziendale</p>
       </div>
-      <div class="actions">
-        <ClienteSwitcher v-if="clientiAttivi.length" v-model="clienteId" :clienti="clientiAttivi" />
-        <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-        <button class="btn btn-ghost" :disabled="salvando" @click="salvaTimesheet">
-          {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
-        </button>
-        <button class="btn btn-primary" @click="esporta">Esporta PDF</button>
-        <button class="btn btn-ghost" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
-          {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
-        </button>
-        <button class="btn btn-ghost" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
-      </div>
+    </div>
+    <div class="cliente-row" v-if="clientiAttivi.length">
+      <ClienteSwitcher v-model="clienteId" :clienti="clientiAttivi" />
+    </div>
+    <div class="actions" style="margin-bottom:16px">
+      <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
+      <button class="btn btn-ghost" :disabled="salvando" @click="salvaTimesheet">
+        {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
+      </button>
+      <button class="btn btn-primary" @click="esporta">Esporta PDF</button>
+      <button class="btn btn-ghost" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
+        {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
+      </button>
+      <button class="btn btn-ghost" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
     </div>
     <p v-if="esitoEmail" class="badge-mono" style="margin-top:-10px;margin-bottom:16px">{{ esitoEmail }}</p>
 
