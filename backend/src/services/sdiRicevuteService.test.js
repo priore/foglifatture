@@ -35,3 +35,12 @@ test('codice sconosciuto non ha dettaglio aggiuntivo', () => {
 test('NS senza ListaErrori restituisce array vuoto', () => {
   assert.deepEqual(estraiErroriScarto(Buffer.from('<x/>', 'utf8')), []);
 });
+
+test('entità XML nel testo (es. nomi di tag citati) vengono decodificate una sola volta', () => {
+  const xml = NS_REALE.replace(
+    'File non conforme al formato',
+    '1.1.1.2 &lt;IdCodice&gt; non valido'
+  );
+  const [errore] = estraiErroriScarto(Buffer.from(xml, 'utf8'));
+  assert.match(errore.descrizione, /1\.1\.1\.2 <IdCodice> non valido/);
+});

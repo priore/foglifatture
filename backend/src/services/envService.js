@@ -34,7 +34,11 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
 
-  const nuoviValori = { ...valori, GOOGLE_CLIENT_ID: googleClientId, ALLOWED_EMAIL: allowedEmail };
+  const nuoviValori = { ...valori };
+  // Ogni chiamante (step Google, step Gemini) invia solo i propri campi: si aggiorna
+  // solo quanto presente nel payload, il resto resta invariato.
+  if (googleClientId !== undefined) nuoviValori.GOOGLE_CLIENT_ID = googleClientId;
+  if (allowedEmail !== undefined) nuoviValori.ALLOWED_EMAIL = allowedEmail;
   // Il secret/la key si aggiornano solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare).
   if (googleClientSecret) nuoviValori.GOOGLE_CLIENT_SECRET = googleClientSecret;
   if (geminiApiKey) nuoviValori.GEMINI_API_KEY = geminiApiKey;

@@ -47,6 +47,7 @@ export const api = {
 
   // Ricevute/notifiche SDI (ricezione via PEC, ping manuale oltre al polling automatico)
   controllaRicevuteSdi: () => richiesta('/sdi/controlla', { method: 'POST' }),
+  cronologiaPec: () => richiesta('/sdi/cronologia'),
 
   // Import storico pregresso (timesheet da xls originale, fatture da XML FatturaPA già emesse)
   importaTimesheet: (anno, mese, clienteId, file) => {

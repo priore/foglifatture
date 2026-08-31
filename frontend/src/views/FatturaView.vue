@@ -101,7 +101,16 @@ async function scaricaXml() {
   window.open(api.urlDownloadXml(anno.value, mese.value, clienteId.value), '_blank');
 }
 
+// L'ultima ricevuta (ricevuteSdi è ordinata più recente prima) è una notifica di
+// scarto: un nuovo invio è un vero REinvio, non il primo. Chiede conferma esplicita
+// perché consuma comunque un nuovo ProgressivoInvio SDI.
+const ultimoScarto = computed(() => ricevuteSdi.value[0]?.tipo === 'NS' ? ricevuteSdi.value[0] : null);
+
 async function inviaPec() {
+  if (ultimoScarto.value) {
+    const motivo = ultimoScarto.value.errori?.[0]?.descrizione ?? 'motivo non disponibile';
+    if (!window.confirm(`La fattura è stata scartata da SDI (${motivo}).\n\nReinviare con un nuovo progressivo di trasmissione?`)) return;
+  }
   inviandoPec.value = true;
   esitoPec.value = '';
   try {
@@ -113,13 +122,6 @@ async function inviaPec() {
   } finally {
     inviandoPec.value = false;
   }
-}
-
-// Reinvio dopo scarto: chiede conferma esplicita (ogni reinvio consuma un nuovo
-// ProgressivoInvio SDI, quindi non è un'azione a costo zero da fare per errore).
-async function confermaReinvio() {
-  if (!window.confirm('Reinviare la fattura a SDI con un nuovo progressivo di trasmissione?')) return;
-  await inviaPec();
 }
 
 function inizializzaClienteId() {
@@ -255,8 +257,8 @@ onMounted(async () => {
             </button>
             <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
-            <button class="btn btn-ghost" style="background:#7c3aed;color:#fff;border-color:#7c3aed" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
-              {{ inviandoPec ? 'Invio…' : 'Invia PEC a SDI' }}
+            <button class="btn btn-ghost" :style="ultimoScarto ? 'background:var(--warn);color:#fff;border-color:var(--warn)' : 'background:#7c3aed;color:#fff;border-color:#7c3aed'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+              {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
           </div>
@@ -281,16 +283,13 @@ onMounted(async () => {
               <li v-for="r in ricevuteSdi" :key="r.nomeFile" style="display:flex;flex-direction:column;gap:4px;font-size:13px">
                 <div style="display:flex;justify-content:space-between;gap:8px">
                   <span>{{ r.descrizione }}</span>
-                  <span class="badge-mono">{{ new Date(r.data).toLocaleDateString('it-IT') }}</span>
+                  <span class="badge-mono">{{ new Date(r.data).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
                 </div>
-                <div v-for="(e, i) in r.errori" :key="i" style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px">
+                <div v-for="(e, i) in r.errori" :key="i" style="background:var(--warn-bg);border:1px solid var(--warn);border-radius:6px;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px;color:var(--ink)">
                   <span><strong>{{ e.codice }}</strong> — {{ e.descrizione }}</span>
                   <span v-if="e.dettaglio" style="opacity:.85">{{ e.dettaglio }}</span>
                   <span v-else-if="e.suggerimento" style="opacity:.75">{{ e.suggerimento }}</span>
                 </div>
-                <button v-if="r.tipo === 'NS'" class="btn btn-ghost" style="align-self:flex-start;background:#dc2626;color:#fff;border-color:#dc2626" :disabled="inviandoPec" @click="confermaReinvio">
-                  Reinvia
-                </button>
               </li>
             </ul>
             <p v-else class="note-legal" style="opacity:.5">

@@ -1,4 +1,5 @@
 // Calcolo e archiviazione della Fattura Pro-Forma: ore * tariffa oraria + bollo virtuale condizionale.
+import { randomBytes } from 'node:crypto';
 import { readJson, writeJson, listKeys } from '../lib/jsonStore.js';
 
 function chiaveMese(anno, mese, clienteId) {
@@ -73,15 +74,17 @@ async function tutteLeFatture() {
   return fatture.filter(Boolean).sort((a, b) => Number(a.numero) - Number(b.numero));
 }
 
-// Prossimo ProgressivoInvio SDI: a differenza del numero fattura (che identifica il
-// documento fiscale e non cambia mai), il progressivo identifica il singolo TENTATIVO
-// di trasmissione — ogni invio o reinvio via PEC (anche dopo scarto) ne consuma uno
-// nuovo, univoco per fornitore/P.IVA su tutte le fatture, per evitare conflitti tipo
-// "file/progressivo duplicato" lato SDI. Conta gli invii già registrati (invoice.invii[]).
-export async function prossimoProgressivoInvio() {
-  const fatture = await tutteLeFatture();
-  const usati = fatture.flatMap((f) => (f.invii ?? []).map((i) => Number(i.progressivoInvio)));
-  return usati.length ? Math.max(...usati) + 1 : 1;
+// ProgressivoInvio SDI: a differenza del numero fattura (che identifica il documento
+// fiscale e non cambia mai), il progressivo identifica il singolo TENTATIVO di
+// trasmissione — ogni invio o reinvio via PEC (anche dopo scarto) ne consuma uno nuovo.
+// SDI rifiuta come "00002 nome file duplicato" qualunque nome già visto per lo stesso
+// trasmittente, anche a distanza di mesi/anni e anche da gestionali precedenti (visto
+// coi progressivi alfanumerici tipo "XEYon" nell'archivio storico) — un contatore
+// sequenziale locale (1, 2, 3…) può quindi collidere con progressivi mai registrati nel
+// nostro DB. Alfanumerico casuale (spec FatturaPA: max 10 caratteri) rende la collisione
+// trascurabile senza dover conoscere lo storico completo presso SDI.
+export function prossimoProgressivoInvio() {
+  return randomBytes(5).toString('hex');
 }
 
 // Verifica che `numero` sia valido rispetto alle fatture già emesse: nessun duplicato,

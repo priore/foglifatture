@@ -79,6 +79,13 @@ function annoRicevuta(contenutoXml) {
   return fallback?.[1] ?? String(new Date().getFullYear());
 }
 
+// SDI include nel testo di <Descrizione>/<Suggerimento> nomi di tag XML citati
+// letteralmente (es. "1.1.1.2 &lt;IdCodice&gt; non valido"): vanno decodificati una
+// volta qui, altrimenti l'interpolazione Vue li ri-escapa mostrando "&lt;" a video.
+function decodeEntitaXml(testo) {
+  return testo?.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&') ?? null;
+}
+
 // Estrae la lista errori dichiarati in una Notifica di Scarto (NS): ogni <Errore> ha
 // codice/descrizione/suggerimento ufficiali SDI (es. 00300 "IdCodice non valido").
 export function estraiErroriScarto(contenutoXml) {
@@ -88,8 +95,8 @@ export function estraiErroriScarto(contenutoXml) {
     const codice = blocco.match(/<Codice>\s*([^<]+?)\s*<\/Codice>/)?.[1] ?? null;
     return {
       codice,
-      descrizione: blocco.match(/<Descrizione>\s*([\s\S]+?)\s*<\/Descrizione>/)?.[1] ?? null,
-      suggerimento: blocco.match(/<Suggerimento>\s*([\s\S]+?)\s*<\/Suggerimento>/)?.[1] ?? null,
+      descrizione: decodeEntitaXml(blocco.match(/<Descrizione>\s*([\s\S]+?)\s*<\/Descrizione>/)?.[1]),
+      suggerimento: decodeEntitaXml(blocco.match(/<Suggerimento>\s*([\s\S]+?)\s*<\/Suggerimento>/)?.[1]),
       dettaglio: messaggioPerCodice(codice),
     };
   });
@@ -190,6 +197,21 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
  */
 export async function listaRicevutePerFattura(percorsoArchivio, prefissoNomeFile) {
   if (!percorsoArchivio || !prefissoNomeFile) return [];
+  return listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile);
+}
+
+/**
+ * Elenca tutte le ricevute SDI archiviate su disco, di qualunque fattura (usato dalla
+ * pagina Cronologia). Stessa scansione di cartelle di listaRicevutePerFattura ma senza
+ * filtro di prefisso.
+ * @returns {Promise<Array<{ nomeFile, tipo, descrizione, data }>>}
+ */
+export async function listaTutteRicevute(percorsoArchivio) {
+  if (!percorsoArchivio) return [];
+  return listaRicevuteArchivio(percorsoArchivio, '');
+}
+
+async function listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile) {
   // Le ricevute sono smistate in <archivio>/<anno>/<esito>/ (Accettate/Rifiutate/...); si
   // scandiscono anche la cartella archivio e le sue sottocartelle esito direttamente, per
   // restare compatibili con l'eventuale struttura pre-smistamento per anno.
