@@ -13,9 +13,11 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Nuova sezione "Versamenti F24": registrazione manuale dei versamenti effettivi, confronto con l'imposta stimata, import da testo copiato dal Cassetto Fiscale (Versamenti → Modello F24), export CSV per anno.
 - Export CSV "per il commercialista" dalla Dashboard forfettario: elenco fatture emesse nell'anno (numero, data, cliente, imponibile, bollo, netto) più riepilogo ricavi/imposta/soglia.
 - Nuova sezione "Pagamenti fatture": riconosce la data di incasso caricando un CSV di movimenti dall'home banking. Solo i nomi delle colonne del file (mai importi o dati reali) vengono inviati a Gemini per riconoscere automaticamente la struttura del file, poi i movimenti vengono abbinati alle fatture emesse per importo. La data di incasso confermata compare anche nell'export CSV per il commercialista.
+- Selezione file in stile app con drag & drop (Logo, Importa storico, Ripristina backup, Pagamenti fatture), al posto del controllo standard del browser.
 
 ### Fixed
 - Aggiornamento codici ATECO via Gemini: se il modello configurato non è più disponibile viene rilevato automaticamente quello valido; messaggio chiaro quando la quota Gemini è esaurita.
+- Salvataggio della Gemini API Key da Impostazioni: non mostra più l'avviso di riavvio del servizio (la key vale subito, a differenza delle credenziali Google).
 
 ## 2026-08-31 — Sicurezza e rifiniture
 

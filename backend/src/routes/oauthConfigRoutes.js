@@ -10,9 +10,13 @@ oauthConfigRoutes.get('/', async (req, res) => {
 });
 
 oauthConfigRoutes.put('/', async (req, res) => {
+  const { googleClientId, googleClientSecret, allowedEmail, geminiApiKey } = req.body;
   await salvaCredenzialiOAuth(req.body);
-  res.json({
-    ok: true,
-    messaggio: 'Salvato. Riavvia il servizio perché le nuove credenziali abbiano effetto (scripts/install.sh oppure launchctl kickstart -k gui/$UID/com.prioregroup.fatturazione).',
-  });
+  // Le credenziali Google (passport) si applicano solo al riavvio; la Gemini API key
+  // viene invece riletta da file ad ogni chiamata (vedi envService.leggiGeminiApiKey), quindi vale subito.
+  const toccaGoogle = googleClientId !== undefined || googleClientSecret || allowedEmail !== undefined;
+  const messaggio = toccaGoogle
+    ? 'Salvato. Riavvia il servizio perché le nuove credenziali abbiano effetto (scripts/install.sh oppure launchctl kickstart -k gui/$UID/com.prioregroup.fatturazione).'
+    : 'Salvato. La API key vale subito, senza bisogno di riavviare il servizio.';
+  res.json({ ok: true, messaggio });
 });
