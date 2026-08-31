@@ -5,6 +5,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../services/api.js';
 import { PASSI_IMPORTA_STORICO as PASSI } from '../wizardImportaStoricoPassi.js';
+import FileDrop from '../components/common/FileDrop.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -163,11 +164,21 @@ async function ripristinaBackup() {
           </div>
           <div class="field field-full full">
             <label>File .xls (uno o più; anno/mese letti dal file)</label>
-            <input type="file" accept=".xls,.xlsx" multiple @change="e => { fileTimesheetMulti = [...e.target.files]; fileTimesheet = fileTimesheetMulti.length === 1 ? fileTimesheetMulti[0] : null; }">
+            <FileDrop
+              accept=".xls,.xlsx"
+              multiple
+              label="Trascina i file .xls o clicca per sfogliare"
+              @change="files => { fileTimesheetMulti = files; fileTimesheet = files.length === 1 ? files[0] : null; }"
+            />
+            <span v-if="fileTimesheetMulti.length" class="badge-mono">{{ fileTimesheetMulti.length }} file selezionati</span>
           </div>
           <div class="field field-full full">
             <label>Oppure intera cartella</label>
-            <input type="file" webkitdirectory @change="e => { fileTimesheetMulti = [...e.target.files].filter(f => /\.xlsx?$/i.test(f.name)); fileTimesheet = null; }">
+            <FileDrop
+              directory
+              label="Trascina una cartella o clicca per sceglierla"
+              @change="files => { fileTimesheetMulti = files.filter(f => /\.xlsx?$/i.test(f.name)); fileTimesheet = null; }"
+            />
           </div>
         </div>
         <button class="btn btn-primary" :disabled="(!fileTimesheet && !fileTimesheetMulti.length) || !clienteIdTimesheet || importandoTimesheet" @click="importaTimesheet">
@@ -184,11 +195,21 @@ async function ripristinaBackup() {
         <div class="form-grid">
           <div class="field field-full full">
             <label>File .xml (uno o più)</label>
-            <input type="file" accept=".xml" multiple @change="e => { fileFatturaMulti = [...e.target.files]; fileFattura = fileFatturaMulti.length === 1 ? fileFatturaMulti[0] : null; }">
+            <FileDrop
+              accept=".xml"
+              multiple
+              label="Trascina i file .xml o clicca per sfogliare"
+              @change="files => { fileFatturaMulti = files; fileFattura = files.length === 1 ? files[0] : null; }"
+            />
+            <span v-if="fileFatturaMulti.length" class="badge-mono">{{ fileFatturaMulti.length }} file selezionati</span>
           </div>
           <div class="field field-full full">
             <label>Oppure intera cartella</label>
-            <input type="file" webkitdirectory @change="e => { fileFatturaMulti = [...e.target.files].filter(f => /\.xml$/i.test(f.name)); fileFattura = null; }">
+            <FileDrop
+              directory
+              label="Trascina una cartella o clicca per sceglierla"
+              @change="files => { fileFatturaMulti = files.filter(f => /\.xml$/i.test(f.name)); fileFattura = null; }"
+            />
           </div>
           <div class="field field-full full" v-if="clienti.length > 1">
             <label>Cliente (solo se richiesto)</label>
@@ -224,7 +245,11 @@ async function ripristinaBackup() {
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Sovrascrive i dati esistenti su questa macchina con quelli del backup.</p>
         <div class="form-grid">
-          <div class="field field-full full"><label>File backup</label><input type="file" accept=".tsbk" @change="e => fileBackup = e.target.files[0]"></div>
+          <div class="field field-full full">
+            <label>File backup</label>
+            <FileDrop accept=".tsbk" label="Trascina il file .tsbk o clicca per sfogliare" @change="files => fileBackup = files[0] ?? null" />
+            <span v-if="fileBackup" class="badge-mono">{{ fileBackup.name }}</span>
+          </div>
           <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordRipristina"></div>
         </div>
         <button class="btn btn-primary" :disabled="!fileBackup || !passwordRipristina || ripristinandoBackup" @click="ripristinaBackup">

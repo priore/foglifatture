@@ -4,15 +4,15 @@
 // reali), vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md.
 import { ref } from 'vue';
 import { api } from '../services/api.js';
+import FileDrop from '../components/common/FileDrop.vue';
 
-const fileInput = ref(null);
 const analizzando = ref(false);
 const errore = ref('');
 const proposte = ref([]);
 const confermati = ref(new Set());
 
-async function analizzaFile(event) {
-  const file = event.target.files[0];
+async function analizzaFile(files) {
+  const file = files[0];
   if (!file) return;
   errore.value = '';
   proposte.value = [];
@@ -24,7 +24,6 @@ async function analizzaFile(event) {
     errore.value = err.message;
   } finally {
     analizzando.value = false;
-    event.target.value = '';
   }
 }
 
@@ -60,7 +59,7 @@ function formattaEuro(valore) {
           importi o causali reali. Il mapping viene salvato: lo stesso formato file non richiede una
           seconda chiamata a Gemini.
         </p>
-        <input ref="fileInput" type="file" accept=".csv" @change="analizzaFile" style="margin-top:10px" :disabled="analizzando">
+        <FileDrop accept=".csv" label="Trascina il CSV o clicca per sfogliare" style="margin-top:10px" :disabled="analizzando" @change="analizzaFile" />
         <p v-if="analizzando" class="note-legal">Analisi in corso…</p>
 
         <table v-if="proposte.length" class="data-table" style="margin-top:16px">
