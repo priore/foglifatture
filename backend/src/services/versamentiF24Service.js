@@ -51,6 +51,14 @@ export function estraiVersamentiDaTesto(testo) {
 // pagina, incollata di nuovo o con la sua "quietanza" aggiornata): il nuovo sostituisce il
 // vecchio invece di duplicarlo. Data+importo, non la sola data, perché nella stessa giornata
 // possono legittimamente cadere più versamenti F24 distinti (es. due rate).
+export function esportaVersamentiCsv(versamenti) {
+  const righe = ['Data,Tipo,Importo'];
+  for (const v of versamenti) {
+    righe.push(`${v.data},${v.tipo},${v.importo.toFixed(2)}`);
+  }
+  return righe.join('\n');
+}
+
 export async function importaVersamenti(candidati) {
   const esistenti = await readJson(FILE, []);
   let aggiornati = 0;

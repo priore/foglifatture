@@ -87,6 +87,10 @@ const versamentiFiltrati = computed(() => versamenti.value.filter((v) => {
 
 const totaleVersato = computed(() => versamenti.value.reduce((tot, v) => tot + v.importo, 0));
 
+function esportaCsv() {
+  window.open(api.urlExportVersamentiF24(annoSelezionato.value), '_blank');
+}
+
 function formattaEuro(valore) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
 }
@@ -112,7 +116,10 @@ function formattaEuro(valore) {
     </div>
 
     <div class="card" style="margin-top:20px">
-      <div class="card-head"><h2>Elenco versamenti {{ annoSelezionato }}</h2></div>
+      <div class="card-head">
+        <h2>Elenco versamenti {{ annoSelezionato }}</h2>
+        <button type="button" class="btn btn-ghost" @click="esportaCsv">Esporta CSV</button>
+      </div>
       <div class="card-body">
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <div class="field"><label>Cerca per tipo</label><input type="text" v-model="ricerca" placeholder="es. INPS"></div>

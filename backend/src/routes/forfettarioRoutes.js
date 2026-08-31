@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
-import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti } from '../services/versamentiF24Service.js';
+import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 
 export const forfettarioRoutes = Router();
 
@@ -84,6 +84,14 @@ forfettarioRoutes.post('/versamenti/importa-testo/anteprima', async (req, res) =
   const versamenti = estraiVersamentiDaTesto(testo);
   if (!versamenti.length) return res.status(400).json({ errore: 'Nessun versamento riconosciuto nel testo incollato' });
   res.json({ versamenti });
+});
+
+forfettarioRoutes.get('/versamenti/export', async (req, res) => {
+  const anno = req.query.anno ? Number(req.query.anno) : undefined;
+  const csv = esportaVersamentiCsv(await listVersamenti(anno));
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="versamenti-f24-${anno ?? 'tutti'}.csv"`);
+  res.send(csv);
 });
 
 forfettarioRoutes.post('/versamenti/importa-testo', async (req, res) => {
