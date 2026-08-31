@@ -14,10 +14,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Export CSV "per il commercialista" dalla Dashboard forfettario: elenco fatture emesse nell'anno (numero, data, cliente, imponibile, bollo, netto) più riepilogo ricavi/imposta/soglia.
 - Nuova sezione "Pagamenti fatture": riconosce la data di incasso caricando un CSV di movimenti dall'home banking. Solo i nomi delle colonne del file (mai importi o dati reali) vengono inviati a Gemini per riconoscere automaticamente la struttura del file, poi i movimenti vengono abbinati alle fatture emesse per importo. La data di incasso confermata compare anche nell'export CSV per il commercialista.
 - Selezione file in stile app con drag & drop (Logo, Importa storico, Ripristina backup, Pagamenti fatture), al posto del controllo standard del browser.
+- Data di incasso confermata mostrata anche nella schermata Fattura Pro-Forma, accanto agli esiti email/PEC.
+- Blocco alla rigenerazione di una fattura già accettata dallo SDI, comprese quelle importate da storico (emessa, non più modificabile per legge: va corretta con nota di variazione).
+- Promemoria desktop giornaliero se una fattura risulta scartata da SDI e non ancora reinviata, con avviso quando supera i 5 giorni previsti per la riemissione (rischio sanzione).
 
 ### Fixed
 - Aggiornamento codici ATECO via Gemini: se il modello configurato non è più disponibile viene rilevato automaticamente quello valido; messaggio chiaro quando la quota Gemini è esaurita.
 - Salvataggio della Gemini API Key da Impostazioni: non mostra più l'avviso di riavvio del servizio (la key vale subito, a differenza delle credenziali Google).
+- Import CSV pagamenti fatture: riconosciuto automaticamente anche il separatore punto e virgola o tabulazione, non solo la virgola.
+- Import CSV pagamenti fatture: riconosciuti anche i file con colonne separate Entrate/Uscite (invece di un'unica colonna importo con segno), che risultavano in "nessun movimento riconosciuto".
+- Import CSV pagamenti fatture: escluse le righe di saldo iniziale/finale (non sono movimenti); corretto lo stile del badge "nessuna fattura corrispondente" che si sovrapponeva nella tabella.
+- Rigenerare una fattura già incassata non cancella più la data di pagamento registrata.
 
 ## 2026-08-31 — Sicurezza e rifiniture
 

@@ -5,7 +5,7 @@ import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroF
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
-import { listaRicevutePerFattura } from '../services/sdiRicevuteService.js';
+import { listaRicevutePerFattura, statoSdiFattura } from '../services/sdiRicevuteService.js';
 
 export const invoiceRoutes = Router();
 
@@ -118,11 +118,22 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
   // degli invii/tentativi già fatti verso SDI: si riusa quello della fattura esistente.
   const esistente = await getInvoice(Number(anno), Number(mese), clienteId);
 
+  // Una fattura accettata dallo SDI è emessa e non più modificabile per legge: eventuali
+  // errori si correggono solo con nota di variazione, mai riscrivendo l'originale
+  // (Circolare Agenzia Entrate 13/E/2018; principio di diritto n.17/2020).
+  if (esistente) {
+    const { stato } = await statoSdiFattura(esistente, config);
+    if (stato === 'accettata') {
+      return res.status(409).json({ errore: 'Fattura già accettata dallo SDI: non può essere rigenerata. Per correggere un errore, emetti una nota di variazione.' });
+    }
+  }
+
   const invoice = {
     anno: Number(anno), mese: Number(mese), clienteId, numero, data, descrizione,
     oreTotali, tariffaOraria,
     ...compenso,
     invii: esistente?.invii ?? [],
+    dataPagamento: esistente?.dataPagamento ?? null,
   };
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);

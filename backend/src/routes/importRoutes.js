@@ -155,6 +155,10 @@ async function importaUnaFatturaXml(buffer, originalname, clienteIdRichiesto) {
     logger.info(`Creato nuovo cliente da import XML: ${nuovoCliente.denominazione} (p.iva ${nuovoCliente.partitaIva})`);
   }
   invoice.clienteId = clienteId;
+  // Un XML FatturaPA esiste solo se è già stato realmente trasmesso allo SDI: il
+  // documento originale non va più toccato, anche se qui invii[] resta vuoto perché
+  // l'invio non è mai passato da questa app (vedi statoSdiFattura in sdiRicevuteService.js).
+  invoice.importataDaStorico = true;
   await saveInvoice(invoice.anno, invoice.mese, clienteId, invoice);
 
   const percorsoArchivio = config.sdi.percorsoArchivio;

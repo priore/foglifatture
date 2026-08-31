@@ -16,6 +16,7 @@ async function analizzaFile(files) {
   if (!file) return;
   errore.value = '';
   proposte.value = [];
+  confermati.value = new Set();
   analizzando.value = true;
   try {
     const { proposte: trovate } = await api.analizzaCsvPagamenti(file);
@@ -72,8 +73,8 @@ function formattaEuro(valore) {
               <td>
                 <span v-if="confermati.has(i)">✓ Registrato</span>
                 <span v-else-if="p.fattura">N. {{ p.fattura.numero }} ({{ p.fattura.anno }}-{{ String(p.fattura.mese).padStart(2, '0') }})</span>
-                <span v-else-if="p.ambiguo" class="note-legal">Più fatture con lo stesso importo</span>
-                <span v-else class="note-legal">Nessuna fattura corrispondente</span>
+                <span v-else-if="p.ambiguo" style="color:var(--muted)">Più fatture con lo stesso importo</span>
+                <span v-else style="color:var(--muted)">Nessuna fattura corrispondente</span>
               </td>
               <td>
                 <button v-if="p.fattura && !confermati.has(i)" type="button" class="btn btn-ok" @click="conferma(p, i)">Conferma</button>

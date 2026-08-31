@@ -18,9 +18,25 @@ function firmaIntestazioni(intestazioni) {
   return createHash('sha256').update(normalizzate).digest('hex');
 }
 
+function rilevaSeparatore(primaRiga) {
+  const candidati = ['\t', ';'];
+  let migliore = ';';
+  let maxConteggio = 0;
+  for (const sep of candidati) {
+    const conteggio = primaRiga.split(sep).length;
+    if (conteggio > maxConteggio) {
+      maxConteggio = conteggio;
+      migliore = sep;
+    }
+  }
+  return migliore;
+}
+
 function parseCsv(testo) {
   const righe = testo.split(/\r?\n/).filter((r) => r.trim() !== '');
-  return righe.map((riga) => riga.split(',').map((cella) => cella.trim().replace(/^"|"$/g, '')));
+  if (righe.length === 0) return [];
+  const separatore = rilevaSeparatore(righe[0]);
+  return righe.map((riga) => riga.split(separatore).map((cella) => cella.trim().replace(/^"|"$/g, '')));
 }
 
 async function chiediMappingAGemini(intestazioni) {
@@ -31,9 +47,17 @@ async function chiediMappingAGemini(intestazioni) {
   const prompt = `Queste sono le intestazioni colonna di un file CSV esportato da un home banking italiano:
 ${JSON.stringify(intestazioni)}
 
-Indica l'indice (0-based) della colonna che contiene la data operazione, l'indice della colonna
-importo, e l'indice della colonna descrizione/causale. Rispondi SOLO con un oggetto JSON valido
-(nessun testo, nessun markdown): {"colonnaData": 0, "colonnaImporto": 2, "colonnaDescrizione": 1}`;
+Indica l'indice (0-based) della colonna data operazione, quella descrizione/causale, e quella
+dell'importo dell'ACCREDITO (incasso, denaro ricevuto — mai un addebito/uscita).
+
+Se l'importo è su un'UNICA colonna con segno (es. "Importo": +150,00 o -50,00), rispondi con
+"colonnaImporto". Se invece il file ha colonne SEPARATE per entrate e uscite (es. "Entrate"/"Uscite",
+"Dare"/"Avere", "Accrediti"/"Addebiti"), rispondi con "colonnaEntrate" = indice della colonna
+entrate/accrediti, e NON includere "colonnaImporto".
+
+Rispondi SOLO con un oggetto JSON valido (nessun testo, nessun markdown), uno di questi due formati:
+{"colonnaData": 0, "colonnaImporto": 2, "colonnaDescrizione": 1}
+{"colonnaData": 0, "colonnaEntrate": 3, "colonnaDescrizione": 4}`;
 
   const risposta = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
@@ -51,7 +75,8 @@ importo, e l'indice della colonna descrizione/causale. Rispondi SOLO con un ogge
   const fine = testo.lastIndexOf('}');
   if (inizio === -1 || fine === -1) throw new Error('Risposta Gemini senza oggetto JSON riconoscibile');
   const mapping = JSON.parse(testo.slice(inizio, fine + 1));
-  if (![mapping.colonnaData, mapping.colonnaImporto, mapping.colonnaDescrizione].every((v) => Number.isInteger(v))) {
+  const importoValido = Number.isInteger(mapping.colonnaImporto) || Number.isInteger(mapping.colonnaEntrate);
+  if (!Number.isInteger(mapping.colonnaData) || !Number.isInteger(mapping.colonnaDescrizione) || !importoValido) {
     throw new Error('Mapping colonne restituito da Gemini incompleto');
   }
   return mapping;
@@ -88,11 +113,14 @@ function parseData(valore) {
 export function estraiMovimentiDaCsv(testoCsv, mapping) {
   const [, ...righe] = parseCsv(testoCsv);
   const movimenti = [];
+  const indiceImporto = Number.isInteger(mapping.colonnaEntrate) ? mapping.colonnaEntrate : mapping.colonnaImporto;
   for (const cella of righe) {
+    const descrizione = cella[mapping.colonnaDescrizione] || '';
+    if (/^saldo\b/i.test(descrizione.trim())) continue;
     const data = parseData(cella[mapping.colonnaData]);
-    const importo = parseImporto(cella[mapping.colonnaImporto]);
+    const importo = parseImporto(cella[indiceImporto]);
     if (!data || !Number.isFinite(importo) || importo <= 0) continue;
-    movimenti.push({ data, importo: Number(importo.toFixed(2)), descrizione: cella[mapping.colonnaDescrizione] || '' });
+    movimenti.push({ data, importo: Number(importo.toFixed(2)), descrizione });
   }
   return movimenti;
 }

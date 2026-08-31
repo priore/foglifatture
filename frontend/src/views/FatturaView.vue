@@ -106,6 +106,13 @@ async function scaricaXml() {
 // perché consuma comunque un nuovo ProgressivoInvio SDI.
 const ultimoScarto = computed(() => ricevuteSdi.value[0]?.tipo === 'NS' ? ricevuteSdi.value[0] : null);
 
+// Fattura accettata dallo SDI: emessa e non più modificabile per legge (Circolare
+// Agenzia Entrate 13/E/2018). Stesso criterio del backend in invoiceRoutes.js.
+const TIPI_ACCETTAZIONE_SDI = new Set(['RC', 'DT', 'EC']);
+const fatturaAccettataSdi = computed(() =>
+  fatturaGenerata.value?.importataDaStorico || TIPI_ACCETTAZIONE_SDI.has(ricevuteSdi.value[0]?.tipo)
+);
+
 async function inviaPec() {
   if (ultimoScarto.value) {
     const motivo = ultimoScarto.value.errori?.[0]?.descrizione ?? 'motivo non disponibile';
@@ -248,9 +255,14 @@ onMounted(async () => {
               <label>Data fattura</label>
               <input type="date" v-model="dataFattura" />
             </div>
-            <button class="btn btn-primary" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
+            <div class="field" v-if="fatturaGenerata?.dataPagamento">
+              <label>Data incasso</label>
+              <input type="date" :value="fatturaGenerata.dataPagamento" disabled />
+            </div>
+            <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
+            <small v-if="fatturaAccettataSdi" class="note-legal">Fattura accettata dallo SDI: emessa e non più modificabile. Per correggere un errore, emetti una nota di variazione.</small>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}

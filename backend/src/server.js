@@ -22,6 +22,7 @@ import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
 import { avviaPromemoria } from './services/reminderService.js';
+import { avviaPromemoriaScartoSdi } from './services/sdiScartoReminderService.js';
 
 const PORT = process.env.PORT || 1969;
 const app = express();
@@ -89,4 +90,7 @@ app.listen(PORT, async () => {
     avviaPromemoria(getConfig);
     logger.info('Promemoria timesheet fine mese attivo');
   }
+
+  avviaPromemoriaScartoSdi(getConfig);
+  logger.info('Promemoria fatture scartate da SDI attivo');
 });

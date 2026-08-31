@@ -11,6 +11,7 @@ import path from 'node:path';
 import { sdiLogger } from '../lib/logger.js';
 import { notificaMac } from '../lib/macNotifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
+import { generaNomeFileXml } from './fatturaPaXmlGenerator.js';
 
 const MITTENTE_SDI_DOMINIO = '@pec.fatturapa.it';
 
@@ -201,6 +202,37 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
 export async function listaRicevutePerFattura(percorsoArchivio, prefissoNomeFile) {
   if (!percorsoArchivio || !prefissoNomeFile) return [];
   return listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile);
+}
+
+// Tipi di ricevuta che equivalgono ad accettazione della fattura da parte dello SDI
+// (RC/DT: accettata dal sistema; EC: esito accettato dal committente, già filtrato da
+// risolviSottocartella/esitoNotificaEsito in fase di archiviazione).
+const TIPI_ACCETTAZIONE = new Set(['RC', 'DT', 'EC']);
+
+/**
+ * Stato SDI corrente di una fattura, determinato dalla ricevuta più recente tra tutti i
+ * tentativi di invio registrati (invoice.invii), letta dalle ricevute già archiviate su
+ * disco — nessuno stato duplicato: la ricevuta su disco resta l'unica fonte di verità.
+ * Una fattura mai inviata o senza ricevute ancora arrivate risulta 'in-attesa'.
+ * @returns {Promise<{ stato: 'accettata'|'scartata'|'in-attesa', data: string|null }>}
+ */
+export async function statoSdiFattura(invoice, config) {
+  // Fattura storica importata da XML FatturaPA: il documento esiste solo perché è già
+  // stato realmente trasmesso e accettato, anche se qui invii[] è vuoto (l'invio non è
+  // mai passato da questa app) — trattata sempre come accettata, mai rigenerabile.
+  if (invoice?.importataDaStorico) return { stato: 'accettata', data: invoice.data ?? null };
+
+  const invii = invoice?.invii ?? [];
+  if (invii.length === 0) return { stato: 'in-attesa', data: null };
+
+  const perProgressivo = await Promise.all(invii.map(({ progressivoInvio }) => {
+    const prefisso = generaNomeFileXml(config.fornitore, progressivoInvio).replace(/\.xml$/i, '');
+    return listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
+  }));
+  const tutte = perProgressivo.flat().sort((a, b) => b.data.localeCompare(a.data));
+  const ultima = tutte.find((r) => TIPI_ACCETTAZIONE.has(r.tipo) || r.tipo === 'NS');
+  if (!ultima) return { stato: 'in-attesa', data: null };
+  return { stato: TIPI_ACCETTAZIONE.has(ultima.tipo) ? 'accettata' : 'scartata', data: ultima.data };
 }
 
 /**
