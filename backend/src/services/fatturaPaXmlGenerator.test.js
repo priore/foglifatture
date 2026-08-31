@@ -23,6 +23,14 @@ test('include DatiBollo quando imponibile supera la soglia', () => {
   assert.match(xml, /<ImportoTotaleDocumento>1800\.00<\/ImportoTotaleDocumento>/);
 });
 
+test('IdTrasmittente usa il codice fiscale, non la P.IVA (SDI errore 00300 su P.IVA nel campo)', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore, cliente,
+    fattura: { numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 },
+  });
+  assert.match(xml, /<IdTrasmittente>\s*<IdPaese>IT<\/IdPaese>\s*<IdCodice>PRRDNL80A01H501X<\/IdCodice>\s*<\/IdTrasmittente>/);
+});
+
 test('omette DatiBollo quando non applicabile', () => {
   const xml = generaXmlFatturaPA({
     fornitore, cliente,

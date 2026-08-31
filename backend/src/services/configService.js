@@ -23,7 +23,6 @@ const DEFAULT_CONFIG = {
   // selettori UI, ma resta risolvibile per fatture/timesheet storici già emessi).
   clienti: [],
   fatturazione: {
-    progressivoInvio: 1,
     sogliaBolloVirtuale: 77.47,
     importoBollo: 2.00,
   },

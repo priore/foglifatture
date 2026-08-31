@@ -115,6 +115,13 @@ async function inviaPec() {
   }
 }
 
+// Reinvio dopo scarto: chiede conferma esplicita (ogni reinvio consuma un nuovo
+// ProgressivoInvio SDI, quindi non è un'azione a costo zero da fare per errore).
+async function confermaReinvio() {
+  if (!window.confirm('Reinviare la fattura a SDI con un nuovo progressivo di trasmissione?')) return;
+  await inviaPec();
+}
+
 function inizializzaClienteId() {
   const salvato = localStorage.getItem('clienteAttivoId');
   clienteId.value = clientiAttivi.value.some(c => c.id === salvato)
@@ -182,7 +189,7 @@ onMounted(async () => {
     </div>
     <div class="actions" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-ghost" @click="esporta">Scarica PDF</button>
+      <button class="btn btn-ghost" style="background:#16a34a;color:#fff;border-color:#16a34a" @click="esporta">Scarica PDF</button>
     </div>
 
     <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
@@ -239,16 +246,16 @@ onMounted(async () => {
               <label>Data fattura</label>
               <input type="date" v-model="dataFattura" />
             </div>
-            <button class="btn btn-primary" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
+            <button class="btn btn-primary" style="background:#2563eb;border-color:#2563eb" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
+            <button class="btn btn-ghost" style="background:#d97706;color:#fff;border-color:#d97706" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
+            <button class="btn btn-ghost" style="background:#0891b2;color:#fff;border-color:#0891b2" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
             <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+            <button class="btn btn-ghost" style="background:#7c3aed;color:#fff;border-color:#7c3aed" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : 'Invia PEC a SDI' }}
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
@@ -271,9 +278,19 @@ onMounted(async () => {
             <span v-if="esitoSdi" class="badge-mono">{{ esitoSdi }}</span>
 
             <ul v-if="fatturaGenerata && ricevuteSdi.length" style="list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px">
-              <li v-for="r in ricevuteSdi" :key="r.nomeFile" style="display:flex;justify-content:space-between;gap:8px;font-size:13px">
-                <span>{{ r.descrizione }}</span>
-                <span class="badge-mono">{{ new Date(r.data).toLocaleDateString('it-IT') }}</span>
+              <li v-for="r in ricevuteSdi" :key="r.nomeFile" style="display:flex;flex-direction:column;gap:4px;font-size:13px">
+                <div style="display:flex;justify-content:space-between;gap:8px">
+                  <span>{{ r.descrizione }}</span>
+                  <span class="badge-mono">{{ new Date(r.data).toLocaleDateString('it-IT') }}</span>
+                </div>
+                <div v-for="(e, i) in r.errori" :key="i" style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px">
+                  <span><strong>{{ e.codice }}</strong> — {{ e.descrizione }}</span>
+                  <span v-if="e.dettaglio" style="opacity:.85">{{ e.dettaglio }}</span>
+                  <span v-else-if="e.suggerimento" style="opacity:.75">{{ e.suggerimento }}</span>
+                </div>
+                <button v-if="r.tipo === 'NS'" class="btn btn-ghost" style="align-self:flex-start;background:#dc2626;color:#fff;border-color:#dc2626" :disabled="inviandoPec" @click="confermaReinvio">
+                  Reinvia
+                </button>
               </li>
             </ul>
             <p v-else class="note-legal" style="opacity:.5">

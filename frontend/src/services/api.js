@@ -9,7 +9,8 @@ async function richiesta(percorso, opzioni = {}) {
   });
   if (!risposta.ok) {
     const corpo = await risposta.json().catch(() => ({}));
-    throw new Error(corpo.errore || `Errore HTTP ${risposta.status}`);
+    const messaggio = corpo.dettagli?.length ? `${corpo.errore}: ${corpo.dettagli.join('; ')}` : corpo.errore;
+    throw new Error(messaggio || `Errore HTTP ${risposta.status}`);
   }
   const tipo = risposta.headers.get('content-type') || '';
   return tipo.includes('application/json') ? risposta.json() : risposta.text();

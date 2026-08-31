@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, verificaIntegritaNumerazione, listMesiFatturati } from '../services/invoiceService.js';
+import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
+import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
 import { listaRicevutePerFattura } from '../services/sdiRicevuteService.js';
 
@@ -113,17 +114,30 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
   const data = req.body.data ?? `${anno}-${String(mese).padStart(2, '0')}-28`;
   const descrizione = req.body.descrizione ?? descrizioneDefault;
 
+  // Rigenerare una fattura (es. dopo modifica ore/importo) non deve perdere lo storico
+  // degli invii/tentativi già fatti verso SDI: si riusa quello della fattura esistente.
+  const esistente = await getInvoice(Number(anno), Number(mese), clienteId);
+
   const invoice = {
     anno: Number(anno), mese: Number(mese), clienteId, numero, data, descrizione,
     oreTotali, tariffaOraria,
     ...compenso,
-    progressivoInvio: config.fatturazione.progressivoInvio,
+    invii: esistente?.invii ?? [],
   };
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);
 });
 
+// Progressivo dell'ultimo tentativo di invio, o del prossimo mai ancora fatto (fattura
+// generata ma non ancora inviata): usato per nome file XML scaricabile "in anteprima".
+function ultimoProgressivoONuovo(invoice) {
+  const ultimo = invoice.invii?.at(-1)?.progressivoInvio;
+  return ultimo ?? null;
+}
+
 // Genera l'XML FatturaPA della fattura già salvata e lo restituisce come download.
+// Rispecchia l'ultimo tentativo di invio già effettuato (stesso ProgressivoInvio/nome
+// file); se non è mai stata inviata, usa il progressivo che /invia-pec assegnerebbe.
 invoiceRoutes.get('/:anno/:mese/:clienteId/xml', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
@@ -132,19 +146,27 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/xml', async (req, res) => {
   const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
   if (!invoice) return res.status(404).json({ errore: 'Genera prima la fattura del mese' });
 
+  const validazione = validaDatiFatturaPA({ fornitore: config.fornitore, cliente, fattura: invoice });
+  if (!validazione.valido) {
+    return res.status(422).json({ errore: 'Dati fattura non conformi a FatturaPA', dettagli: validazione.errori });
+  }
+
+  const progressivoInvio = ultimoProgressivoONuovo(invoice) ?? await prossimoProgressivoInvio();
   const xml = generaXmlFatturaPA({
     fornitore: config.fornitore,
     cliente,
-    fattura: invoice,
+    fattura: { ...invoice, progressivoInvio },
   });
-  const nomeFile = generaNomeFileXml(config.fornitore, invoice.progressivoInvio);
+  const nomeFile = generaNomeFileXml(config.fornitore, progressivoInvio);
 
   res.setHeader('Content-Type', 'application/xml; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${nomeFile}"`);
   res.send(xml);
 });
 
-// Invia l'XML già generato alla PEC del Sistema di Interscambio.
+// Invia l'XML alla PEC del Sistema di Interscambio. Ogni chiamata (primo invio o
+// reinvio dopo scarto/mancata consegna) consuma un nuovo ProgressivoInvio: evita che
+// SDI rifiuti il reinvio come duplicato (stesso identificativo trasmissione già visto).
 invoiceRoutes.post('/:anno/:mese/:clienteId/invia-pec', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
@@ -153,22 +175,39 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/invia-pec', async (req, res) => {
   const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
   if (!invoice) return res.status(404).json({ errore: 'Genera prima la fattura del mese' });
 
-  const xml = generaXmlFatturaPA({ fornitore: config.fornitore, cliente, fattura: invoice });
-  const nomeFile = generaNomeFileXml(config.fornitore, invoice.progressivoInvio);
+  const validazione = validaDatiFatturaPA({ fornitore: config.fornitore, cliente, fattura: invoice });
+  if (!validazione.valido) {
+    return res.status(422).json({ errore: 'Dati fattura non conformi a FatturaPA', dettagli: validazione.errori });
+  }
+
+  const progressivoInvio = await prossimoProgressivoInvio();
+  const xml = generaXmlFatturaPA({ fornitore: config.fornitore, cliente, fattura: { ...invoice, progressivoInvio } });
+  const nomeFile = generaNomeFileXml(config.fornitore, progressivoInvio);
 
   const risultato = await inviaFatturaViaPec(config.pec, { nomeFile, contenutoXml: xml });
+  invoice.invii = [...(invoice.invii ?? []), {
+    progressivoInvio,
+    dataInvio: new Date().toISOString(),
+    esito: risultato.inviato ? 'inviata' : 'errore-invio',
+    errore: risultato.errore ?? null,
+  }];
+  await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(risultato);
 });
 
-// Timeline ricevute SDI già archiviate su disco per questa fattura (inviata/consegnata/scartata).
+// Timeline ricevute SDI già archiviate su disco per questa fattura (inviata/consegnata/scartata),
+// cercate per ognuno dei ProgressivoInvio usati nei tentativi di invio (non solo l'ultimo:
+// dopo uno scarto e reinvio, la ricevuta di scarto resta sul progressivo precedente).
 invoiceRoutes.get('/:anno/:mese/:clienteId/ricevute-sdi', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
   const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
   if (!invoice) return res.status(404).json({ errore: 'Genera prima la fattura del mese' });
 
-  const nomeFile = generaNomeFileXml(config.fornitore, invoice.progressivoInvio);
-  const prefisso = nomeFile.replace(/\.xml$/i, '');
-  const ricevute = await listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
-  res.json(ricevute);
+  const progressivi = invoice.invii?.length ? invoice.invii.map((i) => i.progressivoInvio) : [];
+  const risultati = await Promise.all(progressivi.map((progressivoInvio) => {
+    const prefisso = generaNomeFileXml(config.fornitore, progressivoInvio).replace(/\.xml$/i, '');
+    return listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
+  }));
+  res.json(risultati.flat().sort((a, b) => b.data.localeCompare(a.data)));
 });

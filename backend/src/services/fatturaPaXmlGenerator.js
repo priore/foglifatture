@@ -48,7 +48,7 @@ export function generaXmlFatturaPA(dati) {
     <DatiTrasmissione>
       <IdTrasmittente>
         <IdPaese>IT</IdPaese>
-        <IdCodice>${escapeXml(fornitore.partitaIva)}</IdCodice>
+        <IdCodice>${escapeXml(fornitore.codiceFiscale)}</IdCodice>
       </IdTrasmittente>
       <ProgressivoInvio>${escapeXml(fattura.progressivoInvio)}</ProgressivoInvio>
       <FormatoTrasmissione>FPR12</FormatoTrasmissione>

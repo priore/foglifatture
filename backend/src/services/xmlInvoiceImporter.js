@@ -37,6 +37,13 @@ export function importaFatturaDaXml(contenutoXml) {
     bolloApplicabile: Boolean(datiGenerali.DatiBollo),
     bollo,
     nettoAPagare: Number(datiGenerali.ImportoTotaleDocumento) || 0,
-    progressivoInvio: Number(header.DatiTrasmissione.ProgressivoInvio) || 1,
+    // Fattura storica: si assume già accettata da SDI (altrimenti non sarebbe nell'archivio
+    // XML da cui si importa), quindi un solo tentativo di invio con esito "inviata".
+    invii: [{
+      progressivoInvio: Number(header.DatiTrasmissione.ProgressivoInvio) || 1,
+      dataInvio: data,
+      esito: 'inviata',
+      errore: null,
+    }],
   };
 }

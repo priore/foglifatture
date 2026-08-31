@@ -73,6 +73,17 @@ async function tutteLeFatture() {
   return fatture.filter(Boolean).sort((a, b) => Number(a.numero) - Number(b.numero));
 }
 
+// Prossimo ProgressivoInvio SDI: a differenza del numero fattura (che identifica il
+// documento fiscale e non cambia mai), il progressivo identifica il singolo TENTATIVO
+// di trasmissione — ogni invio o reinvio via PEC (anche dopo scarto) ne consuma uno
+// nuovo, univoco per fornitore/P.IVA su tutte le fatture, per evitare conflitti tipo
+// "file/progressivo duplicato" lato SDI. Conta gli invii già registrati (invoice.invii[]).
+export async function prossimoProgressivoInvio() {
+  const fatture = await tutteLeFatture();
+  const usati = fatture.flatMap((f) => (f.invii ?? []).map((i) => Number(i.progressivoInvio)));
+  return usati.length ? Math.max(...usati) + 1 : 1;
+}
+
 // Verifica che `numero` sia valido rispetto alle fatture già emesse: nessun duplicato,
 // nessun salto nella sequenza (deve essere l'ultimo progressivo + 1) — la sequenza resta
 // UNICA cross-cliente (obbligo legale: il progressivo è per P.IVA fornitore, non per
