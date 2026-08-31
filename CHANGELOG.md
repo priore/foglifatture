@@ -6,6 +6,14 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Percorso della cartella dati configurabile da Impostazioni (es. cartella sincronizzata Dropbox/iCloud/OneDrive): sposta subito tutti i file esistenti senza perdita dati, senza riavvio del server.
+- Import storico multi-file: selezione di più file .xls/.xml o di un'intera cartella, non solo un file alla volta.
+- Selezione del modello Gemini da Impostazioni → Google → Gemini, tra quelli disponibili per la propria API key, con verifica prima del salvataggio.
+
+### Fixed
+- Aggiornamento codici ATECO via Gemini: se il modello configurato non è più disponibile viene rilevato automaticamente quello valido; messaggio chiaro quando la quota Gemini è esaurita.
+
 ## 2026-08-31 — Sicurezza e rifiniture
 
 ### Security

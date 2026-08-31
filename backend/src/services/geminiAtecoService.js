@@ -6,10 +6,10 @@
 // (PDF Agenzia Entrate, xlsx ISTAT) sono documenti statici, per questo si delega il
 // recupero+incrocio a Gemini invece di scrivere un parser PDF/xlsx dedicato.
 import { writeFile, copyFile } from 'node:fs/promises';
-import { leggiGeminiApiKey } from './envService.js';
+import { leggiGeminiApiKey, leggiGeminiModello, salvaGeminiModello } from './envService.js';
 
 const PERCORSO_ATECO = new URL('../data/atecoSettori.json', import.meta.url);
-const MODELLO = 'gemini-2.0-flash';
+const MODELLO_DEFAULT = 'gemini-2.0-flash';
 
 const PROMPT = `Genera l'elenco completo e aggiornato dei codici ATECO 2025 (inclusi tutti i sotto-codici,
 es. 62.20.10, non solo i codici a 4 cifre) con il relativo coefficiente di redditività del regime
@@ -36,12 +36,60 @@ function estraiArrayJson(testo) {
   return JSON.parse(testo.slice(inizio, fine + 1));
 }
 
-export async function aggiornaAtecoSettoriDaGemini() {
+// Interroga la ListModels ufficiale: fonte primaria per sapere quali nomi modello sono
+// validi con questa key, invece di tenere un nome hardcoded che l'API può deprecare
+// senza preavviso. Usata sia per il fallback automatico sia per la select in Impostazioni.
+async function elencaModelliCompatibili(apiKey) {
+  const risposta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+  if (!risposta.ok) throw new Error(`Gemini ListModels ha risposto ${risposta.status}: ${await risposta.text()}`);
+  const dati = await risposta.json();
+  return (dati.models || [])
+    .filter((m) => m.name?.includes('gemini') && m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => m.name.replace(/^models\//, ''));
+}
+
+async function scopriModelloDisponibile(apiKey) {
+  const [modello] = await elencaModelliCompatibili(apiKey);
+  if (!modello) throw new Error('Nessun modello Gemini con supporto generateContent trovato per questa API key');
+  return modello;
+}
+
+// Elenco per la select in Impostazioni → Gemini.
+export async function elencaModelliGemini() {
   const apiKey = await leggiGeminiApiKey();
   if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → Google → Gemini)');
+  return elencaModelliCompatibili(apiKey);
+}
 
+// Verifica il modello scelto dall'utente con una chiamata reale, e lo salva solo se funziona.
+export async function verificaESalvaModelloGemini(modello) {
+  const apiKey = await leggiGeminiApiKey();
+  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → Google → Gemini)');
   const risposta = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODELLO}:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: 'Rispondi solo con: OK' }] }] }),
+    },
+  );
+  if (!risposta.ok) {
+    const testoErrore = await risposta.text();
+    if (erroreQuotaEsaurita(risposta.status, testoErrore)) {
+      throw new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi.');
+    }
+    throw new Error(`Verifica fallita: Gemini API ha risposto ${risposta.status}: ${testoErrore}`);
+  }
+  await salvaGeminiModello(modello);
+}
+
+function erroreQuotaEsaurita(status, testo) {
+  return status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(testo);
+}
+
+async function chiamaGemini(apiKey, modello) {
+  const risposta = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -51,7 +99,37 @@ export async function aggiornaAtecoSettoriDaGemini() {
       }),
     },
   );
-  if (!risposta.ok) throw new Error(`Gemini API ha risposto ${risposta.status}: ${await risposta.text()}`);
+  return risposta;
+}
+
+export async function aggiornaAtecoSettoriDaGemini() {
+  const apiKey = await leggiGeminiApiKey();
+  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → Google → Gemini)');
+
+  let modello = (await leggiGeminiModello()) || MODELLO_DEFAULT;
+  let risposta = await chiamaGemini(apiKey, modello);
+
+  if (!risposta.ok) {
+    const testoErrore = await risposta.text();
+    if (erroreQuotaEsaurita(risposta.status, testoErrore)) {
+      throw new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi o passa a una API key con piano a pagamento.');
+    }
+    // Modello non valido/deprecato: scopre quello corretto dalla ListModels e riprova una volta sola.
+    if (risposta.status === 404 || risposta.status === 400) {
+      modello = await scopriModelloDisponibile(apiKey);
+      risposta = await chiamaGemini(apiKey, modello);
+      if (!risposta.ok) {
+        const secondoErrore = await risposta.text();
+        if (erroreQuotaEsaurita(risposta.status, secondoErrore)) {
+          throw new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi o passa a una API key con piano a pagamento.');
+        }
+        throw new Error(`Gemini API ha risposto ${risposta.status}: ${secondoErrore}`);
+      }
+      await salvaGeminiModello(modello);
+    } else {
+      throw new Error(`Gemini API ha risposto ${risposta.status}: ${testoErrore}`);
+    }
+  }
 
   const dati = await risposta.json();
   const testo = dati.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';

@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
-const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ALLOWED_EMAIL', 'GEMINI_API_KEY'];
+const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ALLOWED_EMAIL', 'GEMINI_API_KEY', 'GEMINI_MODEL'];
 
 function parseEnv(contenuto) {
   const righe = contenuto.split('\n');
@@ -26,6 +26,7 @@ export async function leggiCredenzialiOAuth() {
     googleClientSecretImpostato: Boolean(valori.GOOGLE_CLIENT_SECRET),
     allowedEmail: valori.ALLOWED_EMAIL || '',
     geminiApiKeyImpostata: Boolean(valori.GEMINI_API_KEY),
+    geminiModello: valori.GEMINI_MODEL || '',
   };
 }
 
@@ -65,4 +66,32 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
 export async function leggiGeminiApiKey() {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.GEMINI_API_KEY || '';
+}
+
+// Modello Gemini valido scoperto/verificato l'ultima volta (vedi geminiAtecoService):
+// evita di rifare la ListModels ad ogni chiamata finché il modello continua a funzionare.
+export async function leggiGeminiModello() {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  return parseEnv(contenuto).valori.GEMINI_MODEL || '';
+}
+
+export async function salvaGeminiModello(modello) {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const { righe, valori } = parseEnv(contenuto);
+  valori.GEMINI_MODEL = modello;
+  const righeAggiornate = [];
+  const chiaviScritte = new Set();
+  for (const riga of righe) {
+    const match = /^([A-Z_]+)=/.exec(riga);
+    if (match && CHIAVI_GESTITE.includes(match[1])) {
+      righeAggiornate.push(`${match[1]}=${valori[match[1]] ?? ''}`);
+      chiaviScritte.add(match[1]);
+    } else {
+      righeAggiornate.push(riga);
+    }
+  }
+  for (const chiave of CHIAVI_GESTITE) {
+    if (!chiaviScritte.has(chiave)) righeAggiornate.push(`${chiave}=${valori[chiave] ?? ''}`);
+  }
+  await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
 }

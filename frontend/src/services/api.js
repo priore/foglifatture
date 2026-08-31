@@ -20,6 +20,7 @@ export const api = {
   // Configurazione (anagrafica fornitore/cliente, tariffa, PEC)
   getConfig: () => richiesta('/config'),
   saveConfig: (config) => richiesta('/config', { method: 'PUT', body: JSON.stringify(config) }),
+  spostaPercorsoDati: (percorso) => richiesta('/config/percorso-dati', { method: 'PUT', body: JSON.stringify({ percorso }) }),
 
   // Timesheet mensile
   listMesiTimesheet: () => richiesta('/timesheet'),
@@ -63,6 +64,19 @@ export const api = {
     return fetch(`${BASE_URL}/import/fattura`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
+  importaTimesheetBatch: (clienteId, files) => {
+    const form = new FormData();
+    for (const file of files) form.append('file', file);
+    return fetch(`${BASE_URL}/import/timesheet-batch/${clienteId}`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
+  importaFatturaBatch: (files, clienteId) => {
+    const form = new FormData();
+    for (const file of files) form.append('file', file);
+    if (clienteId) form.append('clienteId', clienteId);
+    return fetch(`${BASE_URL}/import/fattura-batch`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
 
   // Backup/restore cifrato di backend/data/
   salvaImpostazioniBackup: (dati) => richiesta('/backup/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
@@ -91,6 +105,8 @@ export const api = {
   settoriAteco: () => richiesta('/forfettario/settori-ateco'),
   aggiornaSettoriAteco: () => richiesta('/forfettario/settori-ateco/aggiorna', { method: 'POST' }),
   dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
+  modelliGemini: () => richiesta('/forfettario/gemini/modelli'),
+  verificaModelloGemini: (modello) => richiesta('/forfettario/gemini/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
 };
 
 export const authApi = {
