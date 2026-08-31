@@ -1,9 +1,20 @@
 // Gestione configurazione: anagrafica fornitore, clienti, tariffa oraria, dati PEC/SDI.
 // Un unico file config.json salvato nella root dei dati.
 import { randomUUID } from 'node:crypto';
+import keytar from 'keytar';
 import { readJson, writeJson } from '../lib/jsonStore.js';
 
 const CONFIG_FILE = 'config.json';
+
+// Password sensibili (pec.passwordMittente, backup.password) non vengono mai scritte in
+// config.json: risiedono nel Keychain OS (keytar) e vengono iniettate in memoria da
+// getConfig(). Il service, non conta account: un solo utente per installazione.
+const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
+const KEYTAR_ACCOUNT_PEC = 'pec.passwordMittente';
+const KEYTAR_ACCOUNT_BACKUP = 'backup.password';
+// Placeholder restituito al frontend al posto della password reale quando una password è
+// già salvata nel Keychain: il campo GET non deve mai esporre il segreto in chiaro via HTTP.
+const PASSWORD_PLACEHOLDER = '••••••••';
 
 const DEFAULT_CONFIG = {
   fornitore: {
@@ -116,22 +127,57 @@ function fondiClienti(salvati, vecchioClienteSingolo, vecchiaTariffaOraria) {
   return [{ ...CLIENTE_VUOTO, id: randomUUID() }];
 }
 
+// Uso interno (pecService, sdiRicevuteService, backupService): password reali iniettate
+// dal Keychain OS, mai lette da config.json (che le tiene sempre vuote per retrocompatibilità
+// e migrazione automatica di installazioni precedenti a questa modifica).
 export async function getConfig() {
   const config = await readJson(CONFIG_FILE, null);
-  if (!config) {
-    return { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
+  const base = config
+    ? {
+      ...DEFAULT_CONFIG,
+      ...config,
+      fornitore: fondiSezione(DEFAULT_CONFIG.fornitore, config.fornitore),
+      clienti: fondiClienti(config.clienti, config.cliente, config.fatturazione?.tariffaOraria),
+      fatturazione: fondiSezione(DEFAULT_CONFIG.fatturazione, config.fatturazione),
+      pec: fondiSezione(DEFAULT_CONFIG.pec, config.pec),
+      sdi: fondiSezione(DEFAULT_CONFIG.sdi, config.sdi),
+      backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
+      reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
+      forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
+    }
+    : { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
+
+  // Migrazione automatica: se una password è ancora in chiaro in config.json (installazione
+  // precedente a keytar), spostala nel Keychain al primo avvio e ripulisci il file su disco.
+  if (base.pec.passwordMittente) {
+    await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_PEC, base.pec.passwordMittente);
+    await writeJson(CONFIG_FILE, { ...(config ?? base), pec: { ...base.pec, passwordMittente: '' } });
   }
+  if (base.backup.password) {
+    await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_BACKUP, base.backup.password);
+    await writeJson(CONFIG_FILE, { ...(config ?? base), backup: { ...base.backup, password: '' } });
+  }
+
+  const [passwordMittente, backupPassword] = await Promise.all([
+    keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_PEC),
+    keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_BACKUP),
+  ]);
+
   return {
-    ...DEFAULT_CONFIG,
+    ...base,
+    pec: { ...base.pec, passwordMittente: passwordMittente || '' },
+    backup: { ...base.backup, password: backupPassword || '' },
+  };
+}
+
+// Uso da GET /api/config (frontend): le password reali non vengono mai esposte via HTTP,
+// solo un placeholder se una password è già salvata nel Keychain, o stringa vuota altrimenti.
+export async function getConfigSicura() {
+  const config = await getConfig();
+  return {
     ...config,
-    fornitore: fondiSezione(DEFAULT_CONFIG.fornitore, config.fornitore),
-    clienti: fondiClienti(config.clienti, config.cliente, config.fatturazione?.tariffaOraria),
-    fatturazione: fondiSezione(DEFAULT_CONFIG.fatturazione, config.fatturazione),
-    pec: fondiSezione(DEFAULT_CONFIG.pec, config.pec),
-    sdi: fondiSezione(DEFAULT_CONFIG.sdi, config.sdi),
-    backup: fondiSezione(DEFAULT_CONFIG.backup, config.backup),
-    reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
-    forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
+    pec: { ...config.pec, passwordMittente: config.pec.passwordMittente ? PASSWORD_PLACEHOLDER : '' },
+    backup: { ...config.backup, password: config.backup.password ? PASSWORD_PLACEHOLDER : '' },
   };
 }
 
@@ -189,6 +235,21 @@ export function validaConfig(partialConfig) {
   return errori;
 }
 
+// Interpreta il valore password arrivato dal frontend: placeholder o undefined → non toccare
+// (utente non ha modificato il campo), stringa vuota → utente ha cancellato la password,
+// altro valore → nuova password da salvare nel Keychain.
+async function applicaPassword(account, valoreInArrivo, valoreAttuale) {
+  if (valoreInArrivo === undefined || valoreInArrivo === PASSWORD_PLACEHOLDER) {
+    return valoreAttuale;
+  }
+  if (valoreInArrivo === '') {
+    await keytar.deletePassword(KEYTAR_SERVICE, account);
+    return '';
+  }
+  await keytar.setPassword(KEYTAR_SERVICE, account, valoreInArrivo);
+  return valoreInArrivo;
+}
+
 export async function saveConfig(partialConfig) {
   const current = await getConfig();
   // clienti[] arriva intero dal frontend (che tiene l'intero elenco in memoria prima di
@@ -196,18 +257,27 @@ export async function saveConfig(partialConfig) {
   // garantire che ogni cliente abbia un id anche se il chiamante ne ha aggiunto uno senza.
   const clienti = (partialConfig.clienti ?? current.clienti)
     .map((c) => ({ ...c, id: c.id || randomUUID() }));
+
+  const passwordMittente = await applicaPassword(
+    KEYTAR_ACCOUNT_PEC, partialConfig.pec?.passwordMittente, current.pec.passwordMittente,
+  );
+  const backupPassword = await applicaPassword(
+    KEYTAR_ACCOUNT_BACKUP, partialConfig.backup?.password, current.backup.password,
+  );
+
   const next = {
     ...current,
     ...partialConfig,
     fornitore: fondiSezione(current.fornitore, partialConfig.fornitore),
     clienti,
     fatturazione: fondiSezione(current.fatturazione, partialConfig.fatturazione),
-    pec: fondiSezione(current.pec, partialConfig.pec),
+    pec: { ...fondiSezione(current.pec, partialConfig.pec), passwordMittente: '' },
     sdi: fondiSezione(current.sdi, partialConfig.sdi),
-    backup: fondiSezione(current.backup, partialConfig.backup),
+    backup: { ...fondiSezione(current.backup, partialConfig.backup), password: '' },
     reminder: fondiSezione(current.reminder, partialConfig.reminder),
     forfettario: fondiSezione(current.forfettario, partialConfig.forfettario),
   };
+  // Su disco (config.json) le due password restano sempre vuote: risiedono solo nel Keychain.
   await writeJson(CONFIG_FILE, next);
-  return next;
+  return { ...next, pec: { ...next.pec, passwordMittente }, backup: { ...next.backup, password: backupPassword } };
 }

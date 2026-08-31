@@ -16,6 +16,10 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 🟢 Live time formatting + row copy/paste in the timesheet grid; client emailing via `mailto` (with real PDF attachment, not inline); CSV timesheet export for VMS; Gemini-assisted ATECO code updates; historical XML/timesheet import edge-case fixes (client matching, months without a timesheet); FatturaPA XML compliance fixes (IdTrasmittente uses codice fiscale not P.IVA, alphanumeric ProgressivoInvio/SDI progressivo formatting); global PEC history view; sidebar/UI polish; hard-coded button colors moved to CSS variables.
 
+## 2026-08-31 — Secrets moved to OS Keychain
+
+🟢 `pec.passwordMittente` and `backup.password` no longer stored in plaintext in `config.json`; moved to the OS Keychain via `keytar`, with automatic one-time migration of any pre-existing plaintext value on first read. `GET /api/config` returns a masked placeholder instead of the real password; `PUT /api/config` treats the placeholder as "unchanged", an empty string as "clear", any other value as "set".
+
 ---
 
 ## Review Checklist
