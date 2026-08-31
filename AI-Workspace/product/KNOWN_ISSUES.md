@@ -4,17 +4,9 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 Observed gaps and inconsistencies. Documentation only — nothing here is fixed by this workspace.
 
-## PEC send/receive untested against a real mailbox
+## Unreferenced dead file: `StepCliente.vue`
 
-🟢 The project's own README and `pecService.js` comments state the PEC module is "predisposto... ma non testato con invio reale" (implemented but not tested with real sending). Source: `AI-Workspace/architecture/product/PROJECT_CONTEXT.md`. Risk: the core send/receive loop (invoice → PEC → SDI → receipt) may fail silently in production against a real SDI mailbox.
-
-## "Light glass" design intent vs. implementation
-
-🟡 BOOTSTRAP.md/README describe the visual design as "light glass," but `style.css` has zero `backdrop-filter`/`blur()` rules. The effect is approximated via translucency and shadow only. Not necessarily a bug — may be an intentional simplification — but the gap between stated intent and implementation is worth a product decision. See `DESIGN_SYSTEM.md`.
-
-## Dark-mode manual toggle: dead CSS path
-
-🟡 `style.css` defines a `:root[data-theme="dark"]` override selector, but no JS anywhere in `frontend/src` ever sets `data-theme`. Today dark mode is OS-preference-only; the explicit-toggle CSS path is unreachable. Either unfinished scaffolding for a future toggle, or leftover dead code. See `UI_ANALYSIS.md`.
+🟢 `frontend/src/components/wizard/StepCliente.vue` (singular, single-client form) is never imported anywhere in the app — superseded by `StepClienti.vue` (plural, multi-client list) but never deleted. See `COMPONENT_LIBRARY.md`.
 
 ## Unused `cors` dependency
 
@@ -26,20 +18,24 @@ Observed gaps and inconsistencies. Documentation only — nothing here is fixed 
 
 ## Session store is in-memory (unscaled, acceptable for stated use)
 
-🟡 `express-session` has no explicit store configured, defaulting to `MemoryStore`. Not production-safe for multi-instance deployments, but consistent with the app's confirmed single-user, single-machine design (`PROJECT_CONTEXT.md`) — flagged for awareness only, not as a defect given current scope.
+🟡 `express-session` has no explicit store configured, defaulting to `MemoryStore`. Not production-safe for multi-instance deployments, but consistent with the app's single-machine, single-operator deployment shape — flagged for awareness only, not as a defect given current scope.
 
 ## No formal design-token scale for spacing/radius/font-size
 
 🟡 Colors and shadows are tokenized as CSS custom properties; spacing, border-radius, and font sizes are hardcoded per rule with no `--space-*`/`--radius-*`/`--font-size-*` scale. See `DESIGN_TOKENS.md`.
 
+## "Light glass" design intent vs. implementation
+
+🟡 The app describes its visual design as "light glass," but `style.css` has zero `backdrop-filter`/`blur()` rules. The effect is approximated via translucency and shadow only. Not necessarily a bug — may be an intentional simplification — but the gap between stated intent and implementation is worth a product decision. See `DESIGN_SYSTEM.md`.
+
 ---
 
 ## Review Checklist
 
-- **Completeness:** captures issues surfaced during PROJECT_CONTEXT, ARCHITECTURE, UI_ANALYSIS, and DESIGN_SYSTEM passes. Not an exhaustive bug hunt (out of scope — documentation only).
+- **Completeness:** captures issues surfaced during architecture, UI, and design passes. Not an exhaustive bug hunt (out of scope — documentation only).
 - **Accuracy:** each item traces to a confirmed source document listed inline.
 - **Consistency:** confidence tags match originating documents.
-- **TODO:** re-scan after PROJECT_ANALYSIS data-schema gaps are resolved (config.json/invoices/timesheets shapes undocumented — may surface more issues).
+- **TODO:** re-scan after a data-schema note (config.json/invoices/timesheets shapes) is written — may surface more issues.
 - **Missing information:** no runtime/production incident history available in-repo to cross-check against.
-- **Open questions:** which of these are acceptable-as-is for a single-user local tool vs. genuinely worth fixing? Product decision, not answered here.
+- **Open questions:** which of these are acceptable-as-is vs. genuinely worth fixing — product decision, not answered here.
 - **Confidence level:** mixed 🟢/🟡, each tagged individually above.

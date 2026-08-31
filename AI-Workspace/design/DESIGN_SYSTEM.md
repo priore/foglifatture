@@ -10,7 +10,7 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 ## "Light glass" look — how it's actually built
 
-🟡 README/BOOTSTRAP describe the design as "light glass," but `style.css` contains **zero** `backdrop-filter`/`blur()` rules (grep-confirmed). The glass-like effect is approximated instead through:
+🟡 The app describes its design as "light glass," but `style.css` contains **zero** `backdrop-filter`/`blur()` rules (grep-confirmed). The glass-like effect is approximated instead through:
 - translucent overlays: `rgba(255,255,255,.08)` / `.06` on active/hover nav states;
 - `color-mix(in srgb, var(--line) 40%, transparent)` for subtle row tinting (weekend rows in the timesheet table);
 - a soft two-layer `--shadow` token for elevation instead of blur.
@@ -19,7 +19,7 @@ This is a naming mismatch worth tracking: the design intent (glassmorphism) and 
 
 ## Dark mode
 
-🟢 Implemented via CSS custom properties re-assigned in two override blocks in `style.css`: one gated by `@media (prefers-color-scheme: dark)` combined with `:root:not([data-theme="light"])`, one by an explicit `:root[data-theme="dark"]` attribute selector. 🟡 Per `UI_ANALYSIS.md`, no JS anywhere sets `data-theme` — dark mode today is **OS-preference-driven only**; the explicit-attribute override path is present in CSS but currently unreachable (dead code, no toggle UI exists).
+🟢 Implemented via CSS custom properties re-assigned in two override blocks in `style.css`: one gated by `@media (prefers-color-scheme: dark)` combined with `:root:not([data-theme="light"])` (OS-preference default), one by an explicit `:root[data-theme="dark"]` attribute selector. A manual toggle in `AppSidebar.vue`'s footer sets `data-theme` on `document.documentElement` and persists the choice to `localStorage`. See `UI_ANALYSIS.md`.
 
 ## Accessibility
 
@@ -39,6 +39,6 @@ This is a naming mismatch worth tracking: the design intent (glassmorphism) and 
 - **Accuracy:** all claims read directly from `style.css` and repo-wide greps for `backdrop-filter`, `data-theme`, `<style`, `aria-`.
 - **Consistency:** aligns with `UI_ANALYSIS.md` (dark mode / a11y findings) and `DESIGN_TOKENS.md` (exact values).
 - **TODO:** none for this pass.
-- **Missing information:** no design-intent documentation exists in-repo explaining the "light glass" phrase's origin (BOOTSTRAP.md only, not the codebase).
+- **Missing information:** no design-intent documentation exists in-repo explaining the "light glass" phrase's origin.
 - **Open questions:** is the glassmorphism gap (no blur) an intentional simplification or an unfinished feature? Recorded as an open question in `KNOWN_ISSUES.md`.
 - **Confidence level:** predominantly 🟢, two 🟡 inferences (glass-effect mismatch, dead dark-mode toggle path).

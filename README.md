@@ -106,9 +106,8 @@ Get-ScheduledTask -TaskName PrioreGroupFatturazione   # Windows
 
 ## Note per chi programma
 
-- `backend/` — API Express, generatore XML FatturaPA, invio PEC, storage su file JSON, login Google OAuth opzionale.
+- `backend/` — API Express, generatore/validatore XML FatturaPA, invio PEC, storage su file JSON, login Google OAuth opzionale.
 - `frontend/` — SPA Vue 3 (Composition API, `<script setup>`).
-- `Templates/` — file originali (xls/doc/xml) usati come riferimento di stile e formato.
 
 Avvio in modalità sviluppo (senza installarlo come servizio):
 

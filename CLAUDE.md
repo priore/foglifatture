@@ -17,8 +17,6 @@ This repository is meant to be published/forked on GitHub. No sensitive data (cr
 
 Don't treat `.gitignore` as a one-time static guarantee: re-check it every time a new data source is introduced, not just once at project start.
 
-See also the full analysis in `AI-Workspace/product/FEATURE_PROPOSALS.md` → "Analisi di fattibilità — Export codice su GitHub".
-
 ## Code quality rules
 
 Follow the conventions already in the codebase — don't introduce a new pattern when an existing one covers the case.
@@ -27,7 +25,7 @@ Follow the conventions already in the codebase — don't introduce a new pattern
 - **Layering**: routes (`backend/src/routes/*Routes.js`) stay thin — validation + calling a service. Business logic lives in `backend/src/services/*Service.js`. Don't put logic in routes.
 - **Domain naming stays Italian**: variables, functions, and comments describing invoicing/timesheet domain concepts (`fattura`, `fornitore`, `cliente`, `numerazione`) keep their existing Italian names — this is a deliberate, established convention, not something to "fix" to English. This is separate from the AI-infra-English rule above, which only covers files meant to be read by an AI (this `CLAUDE.md`, agent/skill configs, memory), not application code.
 - **No new dependencies for what a few lines of stdlib/already-installed packages can do.** Check `backend/package.json`/`frontend/package.json` before adding one.
-- **Single-tenant assumptions are intentional**, not an oversight (see `FEATURE_PROPOSALS.md` multi-tenant feasibility analysis) — don't refactor toward multi-user/multi-client support unless explicitly asked.
+- **Single-user auth, multi-client data.** One operator (`ALLOWED_EMAIL` whitelist) can bill multiple concurrent clients (`config.clienti[]`, one shared invoice-numbering sequence). Don't refactor toward multi-user/multi-tenant auth unless explicitly asked — that's a different axis from the existing multi-client support.
 - **No test framework is configured.** `backend/package.json` runs tests via Node's built-in `--test` runner (`*.test.js` files, see `pecService.test.js`). Use that pattern for new backend tests; don't add Jest/Vitest/Mocha.
 - Before adding a new file or service, check whether an existing one already does something close (e.g. `backupService.js`/`sdiRicevuteService.js`/`reminderService.js` all share the same `setInterval` polling pattern — reuse it, don't reinvent).
 

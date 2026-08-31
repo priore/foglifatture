@@ -15,8 +15,8 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 ## Codebase terms (Italian naming used throughout the code)
 
-- 🟢 **Fornitore** — supplier (the app owner/consultant issuing invoices).
-- 🟢 **Cliente** — client (the invoice recipient).
+- 🟢 **Fornitore** — supplier (the app owner/consultant issuing invoices). One per install.
+- 🟢 **Cliente** — client (an invoice recipient). Stored as `config.clienti[]`, an array — the app supports multiple concurrent clients, each with a stable `id` and own hourly rate; `attivo:false` marks a soft-deleted client (hidden from pickers, still resolvable for historical data).
 - 🟢 **Compenso** — fee/compensation, computed from timesheet hours × rate.
 - 🟢 **Anteprima** — preview (e.g. `anteprimaFattura` = invoice preview).
 - 🟢 **Fattura Pro-Forma** — the pro-forma invoice preview generated before final XML generation/send.
@@ -24,7 +24,9 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 - 🟢 **Riepilogo** — summary (e.g. monthly hours summary computed by `calcolaRiepilogo`).
 - 🟢 **Impostazioni** — settings (the wizard view: `ImpostazioniView.vue`).
 - 🟢 **Importa storico** — historical import (one-off import of legacy timesheets/invoices).
-- 🟢 **Passo / Passi** — wizard step / steps (`passoAttivo`, `PASSI`).
+- 🟢 **Passo / Passi** — wizard step / steps (`passoAttivo`, `wizardImpostazioniPassi.js`).
+- 🟢 **Regime forfettario (dashboard)** — the app's yearly income-vs-threshold and estimated-tax view (`forfettarioService.js`, `DashboardView.vue`), distinct from the regulatory term above.
+- 🟢 **Promemoria** — reminder (end-of-month timesheet-fill reminder, `reminderService.js`).
 
 ---
 

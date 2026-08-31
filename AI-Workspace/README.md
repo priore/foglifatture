@@ -2,18 +2,18 @@
 
 Evolving Knowledge Base for the **Fatturazione** project (Timesheet & Italian e-invoicing app). Source of truth for any AI agent — or human — working on this codebase.
 
-Rules governing this workspace: [`BOOTSTRAP.md`](../BOOTSTRAP.md) at repo root, mirrored for AI agents in [`.claude/CLAUDE.md`](../.claude/CLAUDE.md).
+Rules governing this workspace: [`CLAUDE.md`](../CLAUDE.md) at repo root.
 
 ## Start here
 
 - [`WORKSPACE_MANIFEST.md`](WORKSPACE_MANIFEST.md) — full document registry, dependency order, status, priority.
-- [`architecture/product/PROJECT_CONTEXT.md`](architecture/product/PROJECT_CONTEXT.md) — what this app is, who it's for, the end-to-end workflow.
+- [`architecture/PROJECT_CONTEXT.md`](architecture/PROJECT_CONTEXT.md) — what this app is, who it's for, the end-to-end workflow.
 
 ## Structure
 
 ```
 architecture/
-  product/PROJECT_CONTEXT.md   — purpose, users, domain, workflow
+  PROJECT_CONTEXT.md           — purpose, users, domain, workflow
   PROJECT_ANALYSIS.md          — stack, entry points, scripts, env, folders
   ARCHITECTURE.md              — system shape, request pipeline, integrations, data flow
   UI_ANALYSIS.md               — routes, views, components, state

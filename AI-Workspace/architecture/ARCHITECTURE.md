@@ -10,9 +10,9 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 🟢 Middleware order: `express.json()` → `/api` request logger (`logger`) → `express-session` → `passport.initialize()` → `passport.session()` → routers → `express.static(frontend/dist)` → SPA fallback (`GET /{*splat}` → `index.html`) → global 4-arg error handler (logs via `logger.error`, responds `500 { errore: 'Errore interno del server' }`).
 
-🟢 Routers mounted: `/auth` → `authRoutes.js` (unguarded); all of `/api/config`, `/api/timesheet`, `/api/invoice`, `/api/oauth-config`, `/api/sdi`, `/api/import` wrapped in `richiedeAutenticazione` (`lib/auth.js`).
+🟢 Routers mounted: `/auth` → `authRoutes.js` (unguarded); all of `/api/config`, `/api/timesheet`, `/api/invoice`, `/api/oauth-config`, `/api/sdi`, `/api/import`, `/api/backup`, `/api/reminder`, `/api/forfettario`, `/api/mail` wrapped in `richiedeAutenticazione` (`lib/auth.js`).
 
-🟢 Session: `express-session({ secret: process.env.SESSION_SECRET || 'segreto-di-sviluppo', resave: false, saveUninitialized: false })`. No explicit store configured. 🟡 Inferred: default in-memory `MemoryStore` — acceptable for a single-user local app, not production-safe at scale (not a concern here given `PROJECT_CONTEXT.md`'s single-user model).
+🟢 Session: `express-session({ secret: process.env.SESSION_SECRET || 'segreto-di-sviluppo', resave: false, saveUninitialized: false })`. No explicit store configured — default in-memory `MemoryStore`. 🟡 Acceptable for a single-machine app with one auth-whitelisted operator; not production-safe for multi-instance deployments (not a concern for this deployment shape).
 
 🟢 `cors` is a listed dependency (`package.json`) but `cors()` middleware is never applied in `server.js` — 🟡 inferred vestigial/unused dependency (same-origin architecture makes it unnecessary).
 
@@ -27,38 +27,44 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 ## Key flow: generate and send an invoice
 
 🟢 Full trace, function-level:
-1. `FatturaView.vue` `generaFattura()` → `api.generaFattura(anno, mese, dati)` → `POST /api/invoice/:anno/:mese/genera`.
-2. `invoiceRoutes.js` handler: `getConfig()`, `getTimesheet()`, `calcolaRiepilogo()`, `calcolaCompenso()` (`invoiceService.js`/`timesheetService.js`) → computes numero/data/descrizione → `saveInvoice()` (JSON persist).
-3. Download: `api.urlDownloadXml` opens `GET /api/invoice/:anno/:mese/xml`; route loads saved invoice + config, calls `generaXmlFatturaPA()` + `generaNomeFileXml()` (`fatturaPaXmlGenerator.js`), streams XML as attachment.
-4. Send: `FatturaView.vue` `inviaPec()` → `POST /api/invoice/:anno/:mese/invia-pec`; route regenerates XML, calls `inviaFatturaViaPec(config.pec, { nomeFile, contenutoXml })` (`pecService.js`, nodemailer).
-5. Receipts: `FatturaView.vue` `api.controllaRicevuteSdi()` → `POST /api/sdi/controlla` → `controllaRicevuteSdi()` (`sdiRicevuteService.js`) — manual trigger; the same function also runs periodically from the boot-time `avviaPollingSdi()` background job.
+1. `FatturaView.vue` `generaFattura()` → `api.generaFattura(anno, mese, clienteId, dati)` → `POST /api/invoice/:anno/:mese/:clienteId/genera`.
+2. `invoiceRoutes.js` handler: `getConfig()`, resolves the client by id, `getTimesheet()`, `calcolaRiepilogo()`, `calcolaCompenso()` (`invoiceService.js`/`timesheetService.js`) — or, for a free-amount invoice, takes the amount/description directly — computes numero/data/descrizione (numbering is one shared progressive sequence across all clients) → `saveInvoice()` (JSON persist).
+3. Download: `api.urlDownloadXml` opens `GET /api/invoice/:anno/:mese/:clienteId/xml`; route loads saved invoice + config, calls `generaXmlFatturaPA()` + `generaNomeFileXml()` (`fatturaPaXmlGenerator.js`), validates via `fatturaPaXmlValidator.js`, streams XML as attachment.
+4. Send: `FatturaView.vue` `inviaPec()` → `POST /api/invoice/:anno/:mese/:clienteId/invia-pec`; route regenerates XML, calls `inviaFatturaViaPec(config.pec, { nomeFile, contenutoXml })` (`pecService.js`, nodemailer).
+5. Receipts: `FatturaView.vue` `api.controllaRicevuteSdi()` → `POST /api/sdi/controlla` → `controllaRicevuteSdi()` (`sdiRicevuteService.js`) — manual trigger; the same function also runs periodically from the boot-time `avviaPollingSdi()` background job. History across all clients viewable in `CronologiaPecView.vue`.
+
+🟢 PEC send/receive has been tested against a real mailbox (Postecert) — `backend/src/services/pecService.e2e.js`. No longer an open gap (see `KNOWN_ISSUES.md`).
 
 ## External integrations
 
 | Integration | Library | Used in | Purpose |
 |---|---|---|---|
-| 🟢 Google OAuth | `passport-google-oauth20` | `lib/auth.js` | App login only (single-user whitelist), `callbackURL: /auth/google/callback`. 🟡 Scope assumed default profile/email — not fully confirmed. |
-| 🟢 PEC/SMTP send | `nodemailer` | `services/pecService.js` | Sends FatturaPA XML as email attachment to SDI's PEC address. |
+| 🟢 Google OAuth | `passport-google-oauth20` | `lib/auth.js` | App login only (single-email whitelist), `callbackURL: /auth/google/callback`. |
+| 🟢 PEC/SMTP send | `nodemailer` | `services/pecService.js` | Sends FatturaPA XML as email attachment to SDI's PEC address; also used by `mailService.js` for other outgoing mail (e.g. reminders). |
 | 🟢 IMAP polling | `imapflow` + `mailparser` | `services/sdiRicevuteService.js` | Polls PEC mailbox, parses incoming SDI receipt emails, saves attachments to disk. |
 | 🟢 XLSX import | `xlsx` | `services/xlsTimesheetImporter.js` | Imports historical timesheets. |
-| 🟢 XML import | `fast-xml-parser` | `services/xmlInvoiceImporter.js` | Imports previously issued FatturaPA XML invoices. |
+| 🟢 XML import/validate | `fast-xml-parser` | `services/xmlInvoiceImporter.js`, `fatturaPaXmlValidator.js` | Imports previously issued FatturaPA XML invoices; validates generated XML against schema before send. |
+| 🟡 Gemini API | — | `services/geminiAtecoService.js` | Optional ATECO business-code lookup during setup wizard (`StepGemini.vue`); not wired to `/api` auth guard list, low-risk optional feature. |
 
 ## Data persistence — entities
 
 🟢 No database. `jsonStore.js` (`readJson`/`writeJson`/`listKeys`) over `backend/data/`:
-- `config.json` — single app config (fornitore, cliente, pec, fatturazione, sdi settings) — `configService.js`.
-- `invoices/<anno>-<mese>.json` — one file per month — `invoiceService.js` (`listMesiFatturati` uses `listKeys('invoices')`).
-- `timesheets/<anno>-<mese>.json` — one file per month — `timesheetService.js`.
-- 🟡 SDI receipt attachments saved as raw files (not JSON) under an archive path via `mkdir`/`writeFile` in `sdiRicevuteService.js` — inferred to bypass `jsonStore.js` entirely (binary/email attachments, not JSON records).
+- `config.json` — single app config: `fornitore` (supplier), `clienti[]` (array of clients, each with a stable `id` and own hourly rate — replaced a single `cliente` object), `fatturazione`, `pec`, `sdi` settings — `configService.js`.
+- `invoices/<anno>-<mese>-<clienteId>.json` — one file per client per month — `invoiceService.js` (`listMesiFatturati` uses `listKeys('invoices')`).
+- `timesheets/<anno>-<mese>-<clienteId>.json` — one file per client per month — `timesheetService.js`.
+- `mail-outbox/` — generated PDF attachments for outgoing mail (e.g. timesheet PDFs sent via reminder/mail flows).
+- 🟡 SDI receipt attachments saved as raw files (not JSON) under an archive path via `mkdir`/`writeFile` in `sdiRicevuteService.js` — bypasses `jsonStore.js` entirely (binary/email attachments, not JSON records).
+
+Invoice numbering stays a single progressive sequence across all clients, independent of the per-client file keying — a legal requirement tied to the VAT number.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** request pipeline, integrations, key flow trace, and persistence entities covered. Auth OAuth scope detail incomplete.
-- **Accuracy:** all 🟢 items read directly from `server.js`, `api.js`, route/service files, `vite.config.js`.
+- **Completeness:** request pipeline, all routers, integrations, key flow trace (multi-client + free-amount), and persistence entities covered.
+- **Accuracy:** all 🟢 items read directly from `server.js`, `api.js`, route/service files, `configService.js`, `vite.config.js`.
 - **Consistency:** function names match `PROJECT_ANALYSIS.md` and `PROJECT_CONTEXT.md` workflow steps.
-- **TODO:** confirm exact Google OAuth scopes in `lib/auth.js`; confirm SDI attachment archive path.
-- **Missing information:** JSON schema of `config.json`/`invoices/*.json`/`timesheets/*.json`.
-- **Open questions:** is unused `cors` dependency safe to note as dead, or reserved for a future non-same-origin deployment?
-- **Confidence level:** predominantly 🟢, three 🟡 inferences flagged inline.
+- **TODO:** none outstanding.
+- **Missing information:** JSON schema of `invoices/*.json`/`timesheets/*.json` not fully itemized field-by-field.
+- **Open questions:** is unused `cors` dependency safe to remove, or reserved for a future non-same-origin deployment?
+- **Confidence level:** predominantly 🟢, two 🟡 inferences flagged inline (session store scaling, Gemini integration scope).
