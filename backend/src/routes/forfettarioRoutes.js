@@ -1,12 +1,16 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { readFile } from 'node:fs/promises';
 import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
+import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento } from '../services/pagamentiFattureService.js';
 
 export const forfettarioRoutes = Router();
+
+const uploadCsv = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const percorsoAteco = new URL('../data/atecoSettori.json', import.meta.url);
 
@@ -112,4 +116,34 @@ forfettarioRoutes.post('/versamenti/importa-testo', async (req, res) => {
   const versamenti = estraiVersamentiDaTesto(testo);
   if (!versamenti.length) return res.status(400).json({ errore: 'Nessun versamento riconosciuto nel testo incollato' });
   res.json(await importaVersamenti(versamenti));
+});
+
+// Data di incasso fatture da CSV home banking: solo i nomi colonna vengono inviati a Gemini
+// per il mapping (mai righe/importi/causali reali), vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md.
+// Un unico endpoint: rileva mapping (cache o Gemini), estrae movimenti, propone abbinamenti.
+forfettarioRoutes.post('/pagamenti/analizza-csv', uploadCsv.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
+  try {
+    const testoCsv = req.file.buffer.toString('utf-8');
+    const [primaRiga] = testoCsv.split(/\r?\n/);
+    const intestazioni = primaRiga.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
+    const mapping = await rilevaMappingColonne(intestazioni);
+    const movimenti = estraiMovimentiDaCsv(testoCsv, mapping);
+    if (!movimenti.length) return res.status(400).json({ errore: 'Nessun movimento riconosciuto nel file' });
+    const proposte = await proponiAbbinamenti(movimenti);
+    res.json({ proposte });
+  } catch (err) {
+    res.status(502).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.post('/pagamenti/conferma', async (req, res) => {
+  const { anno, mese, clienteId, dataPagamento } = req.body;
+  if (!anno || !mese || !clienteId || !dataPagamento) return res.status(400).json({ errore: 'Dati mancanti' });
+  try {
+    await confermaPagamento(Number(anno), Number(mese), clienteId, dataPagamento);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
 });

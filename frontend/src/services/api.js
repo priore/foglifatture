@@ -115,6 +115,19 @@ export const api = {
   anteprimaImportVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo/anteprima', { method: 'POST', body: JSON.stringify({ testo }) }),
   importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
   urlExportVersamentiF24: (anno) => `${BASE_URL}/forfettario/versamenti/export${anno ? `?anno=${anno}` : ''}`,
+
+  // Data di incasso fatture da CSV home banking (mapping colonne via Gemini)
+  analizzaCsvPagamenti: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return fetch(`${BASE_URL}/forfettario/pagamenti/analizza-csv`, { method: 'POST', body: form })
+      .then(async (r) => {
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`);
+        return r.json();
+      });
+  },
+  confermaPagamentoFattura: (anno, mese, clienteId, dataPagamento) =>
+    richiesta('/forfettario/pagamenti/conferma', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento }) }),
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 };
 

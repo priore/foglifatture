@@ -21,7 +21,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
   const dashboard = await calcolaDashboardForfettario(config, { anno });
   const clientiPerId = new Map(config.clienti.map((c) => [c.id, c]));
 
-  const righe = ['Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare'];
+  const righe = ['Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento'];
   for (const f of fatture) {
     const cliente = clientiPerId.get(f.clienteId);
     righe.push([
@@ -32,6 +32,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
       f.imponibile.toFixed(2),
       f.bollo.toFixed(2),
       f.nettoAPagare.toFixed(2),
+      f.dataPagamento ?? '',
     ].join(','));
   }
 
@@ -45,9 +46,9 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     ['Soglia regime forfettario', dashboard.sogliaAnnua.toFixed(2)],
     ['% soglia raggiunta', `${dashboard.percentualeSoglia}%`],
   ];
-  righe.push(`,,,,,,`);
+  righe.push(`,,,,,,,`);
   for (const [etichetta, valore] of riepilogo) {
-    righe.push(`${etichetta},${valore},,,,,`);
+    righe.push(`${etichetta},${valore},,,,,,`);
   }
 
   return righe.join('\n');
