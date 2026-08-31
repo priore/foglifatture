@@ -191,7 +191,7 @@ onMounted(async () => {
     </div>
     <div class="actions" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-ghost" style="background:#16a34a;color:#fff;border-color:#16a34a" @click="esporta">Scarica PDF</button>
+      <button class="btn btn-ok" @click="esporta">Scarica PDF</button>
     </div>
 
     <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
@@ -257,7 +257,7 @@ onMounted(async () => {
             </button>
             <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
-            <button class="btn btn-ghost" :style="ultimoScarto ? 'background:var(--warn);color:#fff;border-color:var(--warn)' : 'background:#16a34a;color:#fff;border-color:#16a34a'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+            <button class="btn" :class="ultimoScarto ? 'btn-warn' : 'btn-ok'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>

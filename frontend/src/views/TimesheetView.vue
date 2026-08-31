@@ -118,14 +118,14 @@ onMounted(async () => {
     </div>
     <div class="actions" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-ghost" style="background:#2563eb;color:#fff;border-color:#2563eb" :disabled="salvando" @click="salvaTimesheet">
+      <button class="btn btn-blue" :disabled="salvando" @click="salvaTimesheet">
         {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
       </button>
-      <button class="btn btn-primary" style="background:#16a34a;border-color:#16a34a" @click="esporta">Esporta PDF</button>
-      <button class="btn btn-ghost" style="background:#d97706;color:#fff;border-color:#d97706" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
+      <button class="btn btn-ok" @click="esporta">Esporta PDF</button>
+      <button class="btn btn-amber" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
         {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
       </button>
-      <button class="btn btn-ghost" style="background:#7c3aed;color:#fff;border-color:#7c3aed" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
+      <button class="btn btn-violet" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
     </div>
     <p v-if="esitoEmail" class="badge-mono" style="margin-top:-10px;margin-bottom:16px">{{ esitoEmail }}</p>
 

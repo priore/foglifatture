@@ -32,7 +32,7 @@ function rimuovi() {
   <div class="field">
     <label>{{ etichetta }}</label>
     <div style="display:flex;align-items:center;gap:12px">
-      <img v-if="modelValue" :src="modelValue" alt="Logo" style="height:48px;max-width:120px;object-fit:contain;border:1px solid var(--line);border-radius:6px;padding:4px;background:#fff">
+      <img v-if="modelValue" :src="modelValue" alt="Logo" style="height:48px;max-width:120px;object-fit:contain;border:1px solid var(--line);border-radius:6px;padding:4px;background:var(--card)">
       <span v-else class="badge-mono">Nessun logo</span>
       <input type="file" accept="image/png,image/jpeg,image/svg+xml" @change="onFileSelezionato">
       <button v-if="modelValue" type="button" class="btn btn-ghost" @click="rimuovi">Rimuovi</button>
