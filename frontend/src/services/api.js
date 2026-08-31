@@ -107,6 +107,13 @@ export const api = {
   dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
   modelliGemini: () => richiesta('/forfettario/gemini/modelli'),
   verificaModelloGemini: (modello) => richiesta('/forfettario/gemini/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
+
+  // Versamenti F24 effettivi (imposta sostitutiva, INPS), inseriti a mano
+  versamentiF24: (anno) => richiesta(`/forfettario/versamenti${anno ? `?anno=${anno}` : ''}`),
+  aggiungiVersamentoF24: (dati) => richiesta('/forfettario/versamenti', { method: 'POST', body: JSON.stringify(dati) }),
+  eliminaVersamentoF24: (id) => richiesta(`/forfettario/versamenti/${id}`, { method: 'DELETE' }),
+  anteprimaImportVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo/anteprima', { method: 'POST', body: JSON.stringify({ testo }) }),
+  importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
 };
 
 export const authApi = {

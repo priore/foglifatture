@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
+import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti } from '../services/versamentiF24Service.js';
 
 export const forfettarioRoutes = Router();
 
@@ -51,4 +52,44 @@ forfettarioRoutes.get('/dashboard', async (req, res) => {
   const anno = req.query.anno ? Number(req.query.anno) : undefined;
   const dashboard = await calcolaDashboardForfettario(config, anno ? { anno } : {});
   res.json(dashboard);
+});
+
+// Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, per il confronto
+// stimato/versato in dashboard (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md).
+forfettarioRoutes.get('/versamenti', async (req, res) => {
+  const anno = req.query.anno ? Number(req.query.anno) : undefined;
+  res.json(await listVersamenti(anno));
+});
+
+forfettarioRoutes.post('/versamenti', async (req, res) => {
+  try {
+    const versamento = await aggiungiVersamento(req.body);
+    res.status(201).json(versamento);
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.delete('/versamenti/:id', async (req, res) => {
+  await eliminaVersamento(req.params.id);
+  res.status(204).end();
+});
+
+// Import da testo incollato dal Cassetto Fiscale (Versamenti > Modello F24, dopo cmd+A/cmd+C
+// sulla pagina). /anteprima estrae senza salvare, per mostrare all'utente cosa verrà importato
+// prima di confermare.
+forfettarioRoutes.post('/versamenti/importa-testo/anteprima', async (req, res) => {
+  const { testo } = req.body;
+  if (!testo) return res.status(400).json({ errore: 'Testo mancante' });
+  const versamenti = estraiVersamentiDaTesto(testo);
+  if (!versamenti.length) return res.status(400).json({ errore: 'Nessun versamento riconosciuto nel testo incollato' });
+  res.json({ versamenti });
+});
+
+forfettarioRoutes.post('/versamenti/importa-testo', async (req, res) => {
+  const { testo } = req.body;
+  if (!testo) return res.status(400).json({ errore: 'Testo mancante' });
+  const versamenti = estraiVersamentiDaTesto(testo);
+  if (!versamenti.length) return res.status(400).json({ errore: 'Nessun versamento riconosciuto nel testo incollato' });
+  res.json(await importaVersamenti(versamenti));
 });
