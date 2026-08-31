@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../../services/api.js';
 import { PASSI_IMPOSTAZIONI } from '../../wizardImpostazioniPassi.js';
+import { PASSI_IMPORTA_STORICO } from '../../wizardImportaStoricoPassi.js';
 
 const route = useRoute();
 const nomeFornitore = ref('Consulente');
@@ -29,6 +30,14 @@ function toggleTheme() {
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
       <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
+      <div v-if="route.path === '/importa-storico'" class="nav-sub">
+        <router-link
+          v-for="(passo, i) in PASSI_IMPORTA_STORICO" :key="passo"
+          :to="{ path: '/importa-storico', query: { passo: i } }"
+          active-class="" exact-active-class=""
+          :class="{ 'router-link-active': Number(route.query.passo || 0) === i }"
+        >{{ passo }}</router-link>
+      </div>
       <router-link to="/impostazioni"><span class="dot"></span>Impostazioni</router-link>
       <div v-if="route.path === '/impostazioni'" class="nav-sub">
         <router-link

@@ -1,8 +1,22 @@
 <script setup>
 // Import di storico pregresso: timesheet da xls originale (stesso layout del template),
 // fatture da XML FatturaPA già emesse. Azione one-off, indipendente dalla configurazione.
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { api } from '../services/api.js';
+import { PASSI_IMPORTA_STORICO as PASSI } from '../wizardImportaStoricoPassi.js';
+
+const route = useRoute();
+const router = useRouter();
+// La sezione attiva vive nella query string (?passo=N), come in Impostazioni,
+// così le sotto-voci verticali in AppSidebar possono linkarci direttamente con router-link.
+const passoAttivo = computed({
+  get: () => {
+    const n = Number(route.query.passo);
+    return Number.isInteger(n) && n >= 0 && n < PASSI.length ? n : 0;
+  },
+  set: (n) => router.push({ query: { passo: n } }),
+});
 
 const oggi = new Date();
 const annoTimesheet = ref(oggi.getFullYear());
@@ -114,7 +128,7 @@ async function ripristinaBackup() {
       nelle rispettive schermate.
     </p>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 0">
       <div class="card-head"><h2>Importa Timesheet da Excel</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">File xls con lo stesso layout del foglio originale (MRO Pianificazione Mensile).</p>
@@ -136,7 +150,7 @@ async function ripristinaBackup() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 1">
       <div class="card-head"><h2>Importa Fattura da XML FatturaPA</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Anno, mese e numero vengono letti direttamente dal file XML. Il cliente viene riconosciuto dalla partita IVA nell'XML; specificalo qui solo se l'import segnala di non riuscire a determinarlo automaticamente.</p>
@@ -157,7 +171,7 @@ async function ripristinaBackup() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 2">
       <div class="card-head"><h2>Esporta backup dati</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Archivio cifrato di tutti i dati (timesheet, fatture, configurazione). Conserva la password: senza non è possibile ripristinare.</p>
@@ -171,7 +185,7 @@ async function ripristinaBackup() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 3">
       <div class="card-head"><h2>Ripristina da backup</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Sovrascrive i dati esistenti su questa macchina con quelli del backup.</p>
