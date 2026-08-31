@@ -248,16 +248,16 @@ onMounted(async () => {
               <label>Data fattura</label>
               <input type="date" v-model="dataFattura" />
             </div>
-            <button class="btn btn-primary" style="background:#2563eb;border-color:#2563eb" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
+            <button class="btn btn-primary" :disabled="modoManuale && (!importoValido || !descrizioneManuale)" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
-            <button class="btn btn-ghost" style="background:#d97706;color:#fff;border-color:#d97706" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
-            <button class="btn btn-ghost" style="background:#0891b2;color:#fff;border-color:#0891b2" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
             <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
-            <button class="btn btn-ghost" :style="ultimoScarto ? 'background:var(--warn);color:#fff;border-color:var(--warn)' : 'background:#7c3aed;color:#fff;border-color:#7c3aed'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+            <button class="btn btn-ghost" :style="ultimoScarto ? 'background:var(--warn);color:#fff;border-color:var(--warn)' : 'background:#16a34a;color:#fff;border-color:#16a34a'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>

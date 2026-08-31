@@ -150,7 +150,10 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
         // imbustato in un .eml di trasporto (es. postacert.eml di Aruba/Legalmail): si
         // raccolgono entrambe le fonti, senza assumere quale delle due sia usata.
         const allegatiDiretti = email.attachments || [];
-        const allegatiEml = allegatiDiretti.filter(a => a.filename?.toLowerCase().endsWith('.eml'));
+        // eml.content può mancare se l'allegato non è stato scaricato per intero da
+        // ImapFlow (stesso motivo del guard su "content" sopra): si scarta silenziosamente
+        // invece di far fallire l'intero giro di polling per un singolo allegato vuoto.
+        const allegatiEml = allegatiDiretti.filter(a => a.filename?.toLowerCase().endsWith('.eml') && a.content);
         const allegatiImbustati = (await Promise.all(
           allegatiEml.map(async (eml) => (await simpleParser(eml.content)).attachments || [])
         )).flat();

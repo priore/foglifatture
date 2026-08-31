@@ -25,10 +25,10 @@ mock.module('../lib/jsonStore.js', {
 
 const { verificaIntegritaNumerazione, prossimoProgressivoInvio } = await import('./invoiceService.js');
 
-test('prossimo progressivo invio è alfanumerico, univoco ad ogni chiamata', () => {
+test('prossimo progressivo invio rispetta le regole di nomenclatura SDI (max 5 char, A-Z0-9), univoco ad ogni chiamata', () => {
   const a = prossimoProgressivoInvio();
   const b = prossimoProgressivoInvio();
-  assert.match(a, /^[0-9a-f]{10}$/);
+  assert.match(a, /^[A-Z0-9]{5}$/);
   assert.notEqual(a, b);
 });
 

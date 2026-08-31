@@ -81,10 +81,14 @@ async function tutteLeFatture() {
 // trasmittente, anche a distanza di mesi/anni e anche da gestionali precedenti (visto
 // coi progressivi alfanumerici tipo "XEYon" nell'archivio storico) — un contatore
 // sequenziale locale (1, 2, 3…) può quindi collidere con progressivi mai registrati nel
-// nostro DB. Alfanumerico casuale (spec FatturaPA: max 10 caratteri) rende la collisione
-// trascurabile senza dover conoscere lo storico completo presso SDI.
+// nostro DB. Alfanumerico casuale rende la collisione trascurabile senza dover conoscere
+// lo storico completo presso SDI — ma il PROGRESSIVO nel nome file (a differenza del tag
+// <ProgressivoInvio> nell'XML, che può arrivare a 10 caratteri) è vincolato dalle regole
+// di nomenclatura SDI a max 5 caratteri, solo A-Z maiuscole e 0-9 (scarto 00001 altrimenti).
+const ALFABETO_PROGRESSIVO = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 export function prossimoProgressivoInvio() {
-  return randomBytes(5).toString('hex');
+  const byte = randomBytes(5);
+  return Array.from(byte, (b) => ALFABETO_PROGRESSIVO[b % ALFABETO_PROGRESSIVO.length]).join('');
 }
 
 // Verifica che `numero` sia valido rispetto alle fatture già emesse: nessun duplicato,
