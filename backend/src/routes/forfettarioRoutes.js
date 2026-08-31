@@ -4,6 +4,7 @@ import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
+import { esportaReportCommercialistaCsv } from '../services/exportService.js';
 
 export const forfettarioRoutes = Router();
 
@@ -52,6 +53,17 @@ forfettarioRoutes.get('/dashboard', async (req, res) => {
   const anno = req.query.anno ? Number(req.query.anno) : undefined;
   const dashboard = await calcolaDashboardForfettario(config, anno ? { anno } : {});
   res.json(dashboard);
+});
+
+// Export CSV per il commercialista: fatture emesse nell'anno + riepilogo forfettario
+// (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
+forfettarioRoutes.get('/export-commercialista', async (req, res) => {
+  const anno = Number(req.query.anno) || new Date().getFullYear();
+  const config = await getConfig();
+  const csv = await esportaReportCommercialistaCsv(config, anno);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="report-commercialista-${anno}.csv"`);
+  res.send(csv);
 });
 
 // Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, per il confronto

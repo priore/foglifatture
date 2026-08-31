@@ -11,6 +11,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Import storico multi-file: selezione di più file .xls/.xml o di un'intera cartella, non solo un file alla volta.
 - Selezione del modello Gemini da Impostazioni → Google → Gemini, tra quelli disponibili per la propria API key, con verifica prima del salvataggio.
 - Nuova sezione "Versamenti F24": registrazione manuale dei versamenti effettivi, confronto con l'imposta stimata, import da testo copiato dal Cassetto Fiscale (Versamenti → Modello F24), export CSV per anno.
+- Export CSV "per il commercialista" dalla Dashboard forfettario: elenco fatture emesse nell'anno (numero, data, cliente, imponibile, bollo, netto) più riepilogo ricavi/imposta/soglia.
 
 ### Fixed
 - Aggiornamento codici ATECO via Gemini: se il modello configurato non è più disponibile viene rilevato automaticamente quello valido; messaggio chiaro quando la quota Gemini è esaurita.

@@ -47,15 +47,22 @@ const fetteSoglia = computed(() => {
 function formattaEuro(valore) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
 }
+
+function esportaCommercialista() {
+  window.open(api.urlExportCommercialista(annoSelezionato.value), '_blank');
+}
 </script>
 
 <template>
   <div>
     <div class="page-head">
       <div><h1>Dashboard forfettario</h1><p>Compenso cumulato vs soglia, previsione imposta sostitutiva</p></div>
-      <select v-model.number="annoSelezionato" class="status">
-        <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
-      </select>
+      <div class="page-head-actions">
+        <button type="button" class="btn btn-ghost" @click="esportaCommercialista">Esporta per commercialista</button>
+        <select v-model.number="annoSelezionato" class="status">
+          <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
+        </select>
+      </div>
     </div>
 
     <p v-if="errore" class="note-legal">Errore: {{ errore }}</p>

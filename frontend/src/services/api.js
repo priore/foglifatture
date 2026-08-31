@@ -115,6 +115,7 @@ export const api = {
   anteprimaImportVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo/anteprima', { method: 'POST', body: JSON.stringify({ testo }) }),
   importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
   urlExportVersamentiF24: (anno) => `${BASE_URL}/forfettario/versamenti/export${anno ? `?anno=${anno}` : ''}`,
+  urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 };
 
 export const authApi = {

@@ -72,6 +72,7 @@ body {
 
 .main { padding: 32px 40px; max-width: 1180px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+.page-head-actions { display: flex; gap: 8px; align-items: center; }
 .page-head h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.7rem; margin: 0 0 4px; }
 .page-head p { margin: 0; color: var(--ink-soft); font-size: .92rem; }
 .actions { display: flex; gap: 10px; align-items: center; }
@@ -119,7 +120,7 @@ table.data-table tfoot td { padding: 12px 10px; font-weight: 700; border-top: 2p
 
 .time-input { width: 64px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-family: 'IBM Plex Mono', monospace; font-size: .82rem; background: var(--ground); color: var(--ink); }
 .time-input:disabled { opacity: .35; }
-select.status { border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: .8rem; background: var(--card); color: var(--ink); }
+select.status { border: 1px solid var(--line); border-radius: 8px; padding: 9px 16px; font-size: .86rem; font-weight: 600; background: var(--card); color: var(--ink); }
 input.note { border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: .8rem; width: 130px; background: var(--card); color: var(--ink); }
 
 .pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; font-size: .72rem; font-weight: 600; }
