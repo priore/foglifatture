@@ -38,20 +38,20 @@ function toggleTheme() {
           :class="{ 'router-link-active': Number(route.query.passo || 0) === i }"
         >{{ passo }}</router-link>
       </div>
-      <router-link to="/impostazioni"><span class="dot"></span>Impostazioni</router-link>
-      <div v-if="route.path === '/impostazioni'" class="nav-sub">
+      <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') }"><span class="dot"></span>Impostazioni</router-link>
+      <div v-if="route.path.startsWith('/impostazioni')" class="nav-sub">
         <template v-for="(passo, i) in PASSI_IMPOSTAZIONI" :key="passo">
           <router-link
             :to="{ path: '/impostazioni', query: { passo: i } }"
             active-class="" exact-active-class=""
-            :class="{ 'router-link-active': Number(route.query.passo || 0) === i }"
+            :class="{ 'router-link-active': route.path === '/impostazioni' && Number(route.query.passo || 0) === i }"
           >{{ passo }}</router-link>
-          <router-link v-if="passo === 'PEC'" to="/impostazioni/pec-cronologia" class="nav-sub-sub">Cronologia</router-link>
+          <router-link
+            v-if="passo === 'PEC'" to="/impostazioni/pec-cronologia" class="nav-sub-sub"
+            active-class="" exact-active-class=""
+            :class="{ 'router-link-active': route.path === '/impostazioni/pec-cronologia' }"
+          >Cronologia</router-link>
         </template>
-      </div>
-      <div v-if="route.path === '/impostazioni/pec-cronologia'" class="nav-sub">
-        <router-link :to="{ path: '/impostazioni', query: { passo: 3 } }">PEC</router-link>
-        <router-link to="/impostazioni/pec-cronologia" class="nav-sub-sub router-link-active">Cronologia</router-link>
       </div>
     </nav>
     <div class="side-foot">

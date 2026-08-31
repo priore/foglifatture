@@ -102,8 +102,9 @@ onBeforeRouteUpdate(async (to, from, next) => {
             {{ passoAttivo === PASSI.length - 1 ? 'Salva' : 'Avanti →' }}
           </button>
         </div>
-        <div v-else style="margin-top:20px;display:flex;justify-content:flex-start">
+        <div v-else style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-ghost" @click="indietro">← Indietro</button>
+          <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary" @click="avanti">Avanti →</button>
         </div>
       </div>
     </div>
