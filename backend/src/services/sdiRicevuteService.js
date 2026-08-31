@@ -66,6 +66,10 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
       const messaggiTrovati = await client.search({ seen: false, from: MITTENTE_SDI_DOMINIO });
       for (const uid of messaggiTrovati || []) {
         const { content } = await client.download(uid, undefined, { uid: true });
+        if (!content) {
+          await sdiLogger.error(`Email SDI senza contenuto scaricabile, ignorata (uid ${uid})`);
+          continue;
+        }
         const email = await simpleParser(content);
         await sdiLogger.info(`Email SDI ricevuta: ${email.subject}`, { da: email.from?.text });
 
