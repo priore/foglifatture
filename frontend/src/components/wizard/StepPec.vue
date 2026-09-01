@@ -23,7 +23,10 @@ const casellaMittenteOk = computed(() => pecValida(props.modelValue.casellaMitte
     <div class="field field-full full"><label>Destinatario SDI</label><input v-model="modelValue.destinatarioSdi"></div>
   </div>
   <p class="note-legal" style="margin-top:16px">
-    Il modulo di invio è predisposto ma non testato con invio reale: verifica queste credenziali con il tuo gestore PEC prima del primo invio effettivo al Sistema di Interscambio.
+    Le fatture inviate tramite SDI restano archiviate solo localmente: non equivale a conservazione a norma
+    (obbligo di legge, 10 anni). Attiva il servizio gratuito di conservazione dell'Agenzia delle Entrate —
+    copre automaticamente e gratuitamente tutte le fatture transitate da SDI, adesione una tantum sul portale.
+    <a href="https://www.agenziaentrate.gov.it/portale/aree-tematiche/fatturazione-elettronica/guida-fatturazione-elettronica/i-servizi-dell-agenzia-fe/servizio-conservazione-elettronica" target="_blank" rel="noopener">Attiva la conservazione su Agenzia Entrate</a>.
   </p>
 
   <h3 style="margin-top:24px;font-size:.95rem">Ricezione ricevute SDI (IMAP)</h3>

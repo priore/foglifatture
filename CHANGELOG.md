@@ -8,6 +8,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Changed
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").
+- Impostazioni → PEC: nota aggiornata sulla conservazione a norma delle fatture SDI, con link per attivare il servizio gratuito di Agenzia delle Entrate.
 
 ### Added
 - Percorso della cartella dati configurabile da Impostazioni (es. cartella sincronizzata Dropbox/iCloud/OneDrive): sposta subito tutti i file esistenti senza perdita dati, senza riavvio del server.
