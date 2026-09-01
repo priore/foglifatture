@@ -46,7 +46,10 @@ const spicchi = computed(() => {
     <ul class="donut-legend">
       <li v-for="f in spicchi" :key="f.etichetta">
         <span class="dot" :style="{ background: f.colore }"></span>
-        {{ f.etichetta }} — <strong>{{ f.percentuale }}%</strong>
+        <span>
+          {{ f.etichetta }} — <strong>{{ f.percentuale }}%</strong>
+          <template v-if="f.valoreTesto"><br><small class="donut-legend-valore">{{ f.valoreTesto }}</small></template>
+        </span>
       </li>
     </ul>
   </div>
@@ -58,6 +61,7 @@ const spicchi = computed(() => {
 .donut-pct { font-family: 'IBM Plex Mono', monospace; font-size: 1.7rem; font-weight: 600; fill: var(--ink); }
 .donut-sub { font-size: .68rem; fill: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .donut-legend { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.donut-legend li { font-size: .88rem; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.donut-legend li { font-size: .88rem; color: var(--ink-soft); display: flex; align-items: flex-start; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-top: 5px; }
+.donut-legend-valore { color: var(--muted); font-size: .78rem; }
 </style>

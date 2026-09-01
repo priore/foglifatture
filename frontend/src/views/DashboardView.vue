@@ -92,9 +92,9 @@ const fetteComposizione = computed(() => {
   if (!dashboard.value) return [];
   const { ricaviCumulati, redditoImponibile, impostaStimata } = dashboard.value;
   return [
-    { etichetta: 'Ricavi/compensi', valore: ricaviCumulati, colore: 'var(--ok)' },
-    { etichetta: 'Reddito fiscale', valore: redditoImponibile, colore: 'var(--accent)' },
-    { etichetta: 'Imposta stimata', valore: impostaStimata, colore: 'var(--warn)' },
+    { etichetta: 'Ricavi/compensi', valore: ricaviCumulati, colore: 'var(--ok)', valoreTesto: formattaEuro(ricaviCumulati) },
+    { etichetta: 'Reddito fiscale', valore: redditoImponibile, colore: 'var(--accent)', valoreTesto: formattaEuro(redditoImponibile) },
+    { etichetta: 'Imposta stimata', valore: impostaStimata, colore: 'var(--warn)', valoreTesto: formattaEuro(impostaStimata) },
   ];
 });
 
@@ -104,8 +104,8 @@ const fetteSoglia = computed(() => {
   const { sogliaAnnua, ricaviCumulati } = dashboard.value;
   const margineResiduo = Math.max(sogliaAnnua - ricaviCumulati, 0);
   return [
-    { etichetta: 'Ricavi cumulati', valore: ricaviCumulati, colore: dashboard.value.superamentoSoglia ? 'var(--warn)' : 'var(--accent)' },
-    { etichetta: 'Margine alla soglia', valore: margineResiduo, colore: 'var(--line)' },
+    { etichetta: 'Ricavi cumulati', valore: ricaviCumulati, colore: dashboard.value.superamentoSoglia ? 'var(--warn)' : 'var(--accent)', valoreTesto: formattaEuro(ricaviCumulati) },
+    { etichetta: 'Margine alla soglia', valore: margineResiduo, colore: 'var(--line)', valoreTesto: formattaEuro(margineResiduo) },
   ];
 });
 
