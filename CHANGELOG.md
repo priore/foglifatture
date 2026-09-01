@@ -11,6 +11,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Impostazioni → PEC: nota aggiornata sulla conservazione a norma delle fatture SDI, con link per attivare il servizio gratuito di Agenzia delle Entrate.
 
 ### Added
+- Nuova pagina "Privacy e trattamento dati" (link nel piè di pagina della barra laterale): informativa su titolare, dati trattati, comunicazione a terzi (SDI, PEC, Google, Gemini), conservazione, sicurezza e diritti dell'interessato.
 - Percorso della cartella dati configurabile da Impostazioni (es. cartella sincronizzata Dropbox/iCloud/OneDrive): sposta subito tutti i file esistenti senza perdita dati, senza riavvio del server.
 - Import storico multi-file: selezione di più file .xls/.xml o di un'intera cartella, non solo un file alla volta.
 - Selezione del modello Gemini da Impostazioni → Google → Gemini, tra quelli disponibili per la propria API key, con verifica prima del salvataggio.

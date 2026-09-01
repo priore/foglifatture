@@ -56,10 +56,11 @@ function toggleTheme() {
       </div>
     </nav>
     <div class="side-foot">
-      {{ nomeFornitore }}
+      <span>{{ nomeFornitore }}</span>
       <button type="button" class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Tema chiaro' : 'Tema scuro'">
         {{ isDark ? '☀️' : '🌙' }}
       </button>
     </div>
+    <router-link to="/privacy" class="privacy-link">Privacy</router-link>
   </aside>
 </template>

@@ -6,6 +6,7 @@ import ImpostazioniView from '../views/ImpostazioniView.vue';
 import CronologiaPecView from '../views/CronologiaPecView.vue';
 import DashboardView from '../views/DashboardView.vue';
 import VersamentiF24View from '../views/VersamentiF24View.vue';
+import PrivacyView from '../views/PrivacyView.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -18,5 +19,6 @@ export const router = createRouter({
     { path: '/importa-storico', name: 'importa-storico', component: ImportaStoricoView },
     { path: '/impostazioni', name: 'impostazioni', component: ImpostazioniView },
     { path: '/impostazioni/pec-cronologia', name: 'pec-cronologia', component: CronologiaPecView },
+    { path: '/privacy', name: 'privacy', component: PrivacyView },
   ],
 });
