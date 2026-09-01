@@ -19,6 +19,7 @@ import { reminderRoutes } from './routes/reminderRoutes.js';
 import { forfettarioRoutes } from './routes/forfettarioRoutes.js';
 import { mailRoutes } from './routes/mailRoutes.js';
 import { sistemaRoutes } from './routes/sistemaRoutes.js';
+import { updateRoutes } from './routes/updateRoutes.js';
 import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
@@ -59,6 +60,7 @@ app.use('/api/reminder', richiedeAutenticazione, reminderRoutes);
 app.use('/api/forfettario', richiedeAutenticazione, forfettarioRoutes);
 app.use('/api/mail', richiedeAutenticazione, mailRoutes);
 app.use('/api/sistema', richiedeAutenticazione, sistemaRoutes);
+app.use('/api/update', richiedeAutenticazione, updateRoutes);
 
 // Serve il frontend Vue buildato (npm run build in ../frontend genera dist/).
 const frontendDist = path.join(import.meta.dirname, '..', '..', 'frontend', 'dist');

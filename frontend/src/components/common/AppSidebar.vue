@@ -2,15 +2,18 @@
 // Barra di navigazione laterale fissa: unico punto di accesso alle 3 schermate dell'app.
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { api } from '../../services/api.js';
+import { api, updateApi } from '../../services/api.js';
 import { PASSI_IMPOSTAZIONI } from '../../wizardImpostazioniPassi.js';
 import { PASSI_IMPORTA_STORICO } from '../../wizardImportaStoricoPassi.js';
 
 const route = useRoute();
 const nomeFornitore = ref('Consulente');
+const versioneApp = ref('');
 onMounted(async () => {
   const config = await api.getConfig().catch(() => null);
   if (config?.fornitore?.denominazione) nomeFornitore.value = config.fornitore.denominazione;
+  const stato = await updateApi.stato().catch(() => null);
+  versioneApp.value = stato?.versioneLocale || '';
 });
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
@@ -61,6 +64,9 @@ function toggleTheme() {
         {{ isDark ? '☀️' : '🌙' }}
       </button>
     </div>
-    <router-link to="/privacy" class="privacy-link">Privacy</router-link>
+    <div class="side-foot-links">
+      <router-link to="/privacy" class="privacy-link">Privacy</router-link>
+      <span v-if="versioneApp" class="app-version">{{ versioneApp }}</span>
+    </div>
   </aside>
 </template>

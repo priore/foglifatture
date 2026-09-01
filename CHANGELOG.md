@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Dashboard: pulsante "Aggiornamento disponibile" (visibile solo se c'è una nuova release), con popup di dettaglio versione/changelog e aggiornamento automatico (download, build, riavvio) con un click. Versione app corrente mostrata a piè di pagina.
+
 ### Changed
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").
 - Impostazioni → PEC: nota aggiornata sulla conservazione a norma delle fatture SDI, con link per attivare il servizio gratuito di Agenzia delle Entrate.

@@ -153,6 +153,11 @@ export const api = {
   scadenzeFiscali: () => richiesta('/forfettario/scadenze-fiscali'),
 };
 
+export const updateApi = {
+  stato: () => richiesta('/update/stato'),
+  esegui: () => richiesta('/update/esegui', { method: 'POST' }),
+};
+
 export const authApi = {
   stato: () => fetch('/auth/stato').then(r => r.json()),
   logout: () => fetch('/auth/logout', { method: 'POST' }),

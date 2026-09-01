@@ -4,7 +4,9 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
-import { api } from '../services/api.js';
+import UpdateModal from '../components/UpdateModal.vue';
+import { api, updateApi } from '../services/api.js';
+import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 
 const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
@@ -12,6 +14,25 @@ const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
 const annoSelezionato = ref(new Date().getFullYear());
 const dashboard = ref(null);
 const errore = ref('');
+
+const { stato: statoAggiornamento } = useUpdateCheck();
+const mostraPopupAggiornamento = ref(false);
+const aggiornamentoInCorso = ref(false);
+
+async function eseguiAggiornamento() {
+  aggiornamentoInCorso.value = true;
+  try {
+    await updateApi.esegui();
+    // Il backend termina a fine script: polling finché non torna a rispondere, poi reload.
+    const attendiRipristino = setInterval(async () => {
+      const ok = await fetch('/api/update/stato').then(r => r.ok).catch(() => false);
+      if (ok) { clearInterval(attendiRipristino); window.location.reload(); }
+    }, 3000);
+  } catch (err) {
+    aggiornamentoInCorso.value = false;
+    errore.value = `Aggiornamento non riuscito: ${err.message}`;
+  }
+}
 
 const fattureAperte = ref([]);
 const scadenzeFiscali = ref([]);
@@ -95,6 +116,10 @@ function esportaCommercialista() {
     <div class="page-head">
       <div><h1>Dashboard forfettario</h1><p>Compenso cumulato vs soglia, previsione imposta sostitutiva</p></div>
       <div class="page-head-actions">
+        <button
+          v-if="statoAggiornamento.disponibile" type="button" class="btn btn-blue"
+          @click="mostraPopupAggiornamento = true"
+        >Aggiornamento disponibile</button>
         <button type="button" class="btn btn-ghost" @click="esportaCommercialista">Esporta per commercialista</button>
         <select v-model.number="annoSelezionato" class="status">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
@@ -176,6 +201,16 @@ function esportaCommercialista() {
         </div>
       </div>
     </template>
+
+    <UpdateModal
+      v-if="mostraPopupAggiornamento"
+      :versione-locale="statoAggiornamento.versioneLocale"
+      :versione-remota="statoAggiornamento.versioneRemota"
+      :changelog="statoAggiornamento.changelog"
+      :in-corso="aggiornamentoInCorso"
+      @aggiorna="eseguiAggiornamento"
+      @annulla="mostraPopupAggiornamento = false"
+    />
   </div>
 </template>
 
