@@ -9,6 +9,13 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 ### Changed
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").
 - Impostazioni → PEC: nota aggiornata sulla conservazione a norma delle fatture SDI, con link per attivare il servizio gratuito di Agenzia delle Entrate.
+- Dashboard forfettario spostata come prima voce di menu e schermata di apertura predefinita dell'app.
+- Dashboard forfettario: aggiunti andamento mensile dei ricavi, elenco fatture emesse non ancora incassate e prossime scadenze fiscali (imposta sostitutiva, INPS), aggiornate periodicamente tramite Gemini con ricerca web.
+- Fattura Pro-Forma: nuovo campo "Scadenza pagamento" (termine commerciale, modificabile anche a fattura già emessa); se impostata, la dashboard la usa per evidenziare le fatture da incassare scadute.
+
+### Fixed
+- Impostazioni → Google → Gemini: il modello selezionato ora resta visibile nella select anche uscendo/rientrando dalla pagina o riavviando l'app.
+- Fattura Pro-Forma: il campo "Data fattura" non era più disabilitato dopo l'accettazione SDI (era possibile modificarlo pur non potendo rigenerare la fattura).
 
 ### Added
 - Nuova pagina "Privacy e trattamento dati" (link nel piè di pagina della barra laterale): informativa su titolare, dati trattati, comunicazione a terzi (SDI, PEC, Google, Gemini), conservazione, sicurezza e diritti dell'interessato.

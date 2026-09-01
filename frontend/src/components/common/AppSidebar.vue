@@ -26,9 +26,9 @@ function toggleTheme() {
   <aside class="sidebar">
     <div class="brand">Fogli & Fatture<small>Consulenza IT · Regime forfettario</small></div>
     <nav class="nav">
+      <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
-      <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
       <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
       <div v-if="route.path === '/importa-storico'" class="nav-sub">

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati } from '../services/invoiceService.js';
+import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati, impostaScadenzaPagamento } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
@@ -60,6 +60,18 @@ invoiceRoutes.get('/:anno/:mese/:clienteId', async (req, res) => {
   const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
   if (!invoice) return res.status(404).json({ errore: 'Fattura non ancora generata per questo mese' });
   res.json(invoice);
+});
+
+// Termine di pagamento pattuito col cliente: sempre modificabile, anche a fattura già
+// accettata da SDI (dato commerciale, non fiscale — non passa da /genera).
+invoiceRoutes.patch('/:anno/:mese/:clienteId/scadenza-pagamento', async (req, res) => {
+  const { anno, mese, clienteId } = req.params;
+  try {
+    const invoice = await impostaScadenzaPagamento(Number(anno), Number(mese), clienteId, req.body.dataScadenzaPagamento);
+    res.json(invoice);
+  } catch (err) {
+    res.status(404).json({ errore: err.message });
+  }
 });
 
 // Genera e salva la fattura definitiva del mese (numero, data, importi congelati).

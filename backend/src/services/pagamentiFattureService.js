@@ -126,7 +126,7 @@ export function estraiMovimentiDaCsv(testoCsv, mapping) {
 }
 
 // Fatture emesse ancora senza data di pagamento registrata.
-async function fattureAperte() {
+export async function fattureAperte() {
   const chiavi = await listMesiFatturati();
   const fatture = await Promise.all(chiavi.map((c) => getInvoice(c.anno, c.mese, c.clienteId)));
   return fatture.filter((f) => f && !f.dataPagamento);

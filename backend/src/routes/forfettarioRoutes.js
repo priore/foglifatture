@@ -6,7 +6,8 @@ import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
-import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento } from '../services/pagamentiFattureService.js';
+import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
+import { prossimeScadenzeFiscali } from '../services/scadenzeFiscaliService.js';
 
 export const forfettarioRoutes = Router();
 
@@ -57,6 +58,22 @@ forfettarioRoutes.get('/dashboard', async (req, res) => {
   const anno = req.query.anno ? Number(req.query.anno) : undefined;
   const dashboard = await calcolaDashboardForfettario(config, anno ? { anno } : {});
   res.json(dashboard);
+});
+
+// Fatture emesse non ancora incassate, per il widget "da incassare" in dashboard.
+forfettarioRoutes.get('/fatture-aperte', async (req, res) => {
+  res.json(await fattureAperte());
+});
+
+// Prossime scadenze fiscali (imposta sostitutiva, INPS) note per il regime forfettario.
+// Cache su disco aggiornata via Gemini con ricerca web (vedi scadenzeFiscaliService.js):
+// le date/regole cambiano di anno in anno, non vanno hardcodate qui.
+forfettarioRoutes.get('/scadenze-fiscali', async (req, res) => {
+  try {
+    res.json(await prossimeScadenzeFiscali());
+  } catch (err) {
+    res.status(502).json({ errore: err.message });
+  }
 });
 
 // Export CSV per il commercialista: fatture emesse nell'anno + riepilogo forfettario

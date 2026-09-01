@@ -43,6 +43,17 @@ export async function saveInvoice(anno, mese, clienteId, invoice) {
   return invoice;
 }
 
+// Termine di pagamento pattuito col cliente: dato commerciale, non fiscale (non entra
+// nell'XML FatturaPA), quindi scrivibile anche a fattura già accettata da SDI — a
+// differenza di importo/descrizione/numero, che passano da /genera e restano bloccati.
+export async function impostaScadenzaPagamento(anno, mese, clienteId, dataScadenzaPagamento) {
+  const invoice = await getInvoice(anno, mese, clienteId);
+  if (!invoice) throw new Error('Fattura non trovata');
+  invoice.dataScadenzaPagamento = dataScadenzaPagamento || null;
+  await saveInvoice(anno, mese, clienteId, invoice);
+  return invoice;
+}
+
 // Restituisce le chiavi già parsate ({ chiave, anno, mese, clienteId }), non stringhe
 // grezze: evita che ogni consumatore debba rifare split('-') su un formato composito.
 export async function listMesiFatturati() {

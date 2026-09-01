@@ -11,7 +11,7 @@ import PrivacyView from '../views/PrivacyView.vue';
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/timesheet' },
+    { path: '/', redirect: '/dashboard' },
     { path: '/timesheet', name: 'timesheet', component: TimesheetView },
     { path: '/fattura', name: 'fattura', component: FatturaView },
     { path: '/dashboard', name: 'dashboard', component: DashboardView },

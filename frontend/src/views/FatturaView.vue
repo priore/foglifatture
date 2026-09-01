@@ -32,6 +32,8 @@ const modoManuale = ref(false);
 const importoManuale = ref(0);
 const descrizioneManuale = ref('');
 const dataFattura = ref('');
+const dataScadenzaPagamento = ref('');
+const salvandoScadenza = ref(false);
 
 const importoValido = computed(() => Number.isFinite(Number(importoManuale.value)) && Number(importoManuale.value) > 0);
 
@@ -73,6 +75,7 @@ async function caricaAnteprima() {
   anteprima.value = await api.anteprimaFattura(anno.value, mese.value, clienteId.value);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
   dataFattura.value = fatturaGenerata.value?.data ?? dataDefault();
+  dataScadenzaPagamento.value = fatturaGenerata.value?.dataScadenzaPagamento ?? '';
   await caricaRicevuteSdi();
 }
 
@@ -95,6 +98,15 @@ async function generaFattura() {
   fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
   dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
   await caricaRicevuteSdi();
+}
+
+async function salvaScadenzaPagamento() {
+  salvandoScadenza.value = true;
+  try {
+    fatturaGenerata.value = await api.impostaScadenzaPagamento(anno.value, mese.value, clienteId.value, dataScadenzaPagamento.value || null);
+  } finally {
+    salvandoScadenza.value = false;
+  }
 }
 
 async function scaricaXml() {
@@ -253,7 +265,12 @@ onMounted(async () => {
           <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
             <div class="field">
               <label>Data fattura</label>
-              <input type="date" v-model="dataFattura" />
+              <input type="date" v-model="dataFattura" :disabled="fatturaAccettataSdi" />
+            </div>
+            <div class="field" v-if="fatturaGenerata">
+              <label>Scadenza pagamento</label>
+              <input type="date" v-model="dataScadenzaPagamento" :disabled="salvandoScadenza" @change="salvaScadenzaPagamento" />
+              <small class="note-legal">Termine commerciale, non fiscale: modificabile anche a fattura già emessa.</small>
             </div>
             <div class="field" v-if="fatturaGenerata?.dataPagamento">
               <label>Data incasso</label>

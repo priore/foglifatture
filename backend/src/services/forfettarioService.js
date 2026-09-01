@@ -23,13 +23,25 @@ async function ricaviAnno(anno) {
   // (multi-cliente) un mese va contato una sola volta, altrimenti la proiezione fine
   // anno (ricaviCumulati / mesiFatturati * 12) risulta sballata per eccesso di mesi.
   const mesiDistinti = new Set(risolteValide.map((r) => r.mese));
-  return { fatture: risolteValide.map((r) => r.invoice), mesiFatturati: mesiDistinti.size };
+  return { fatture: risolteValide.map((r) => r.invoice), mesiFatturati: mesiDistinti.size, risolteValide };
+}
+
+// Ricavi (imponibile) aggregati per mese civile, per il grafico andamento mensile in dashboard.
+function ricaviPerMese(risolteValide) {
+  const perMese = new Map();
+  for (const { mese, invoice } of risolteValide) {
+    perMese.set(mese, (perMese.get(mese) || 0) + invoice.imponibile);
+  }
+  return Array.from({ length: 12 }, (_, i) => ({
+    mese: i + 1,
+    ricavi: Number((perMese.get(i + 1) || 0).toFixed(2)),
+  }));
 }
 
 export async function calcolaDashboardForfettario(config, { anno = new Date().getFullYear(), meseCorrente = new Date().getMonth() + 1 } = {}) {
   const { sogliaAnnua, coefficenteRedditivita, dataInizioAttivita } = config.forfettario;
 
-  const { fatture, mesiFatturati } = await ricaviAnno(anno);
+  const { fatture, mesiFatturati, risolteValide } = await ricaviAnno(anno);
   const ricaviCumulati = Number(fatture.reduce((tot, f) => tot + f.imponibile, 0).toFixed(2));
 
   const redditoImponibile = Number((ricaviCumulati * coefficenteRedditivita / 100).toFixed(2));
@@ -60,6 +72,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     impostaStimata,
     nettoStimato,
     mesiFatturati,
+    ricaviMensili: ricaviPerMese(risolteValide),
     ricaviProiettati,
     percentualeSoglia,
     percentualeSogliaProiettata,

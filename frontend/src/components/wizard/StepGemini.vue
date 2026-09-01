@@ -99,6 +99,7 @@ async function salvaGemini() {
           <div class="field full" style="display:flex;align-items:center;gap:12px">
             <select v-model="modelloScelto" style="flex:1">
               <option value="" disabled>{{ modelliDisponibili.length ? 'Seleziona un modello' : 'Carica l\'elenco modelli' }}</option>
+              <option v-if="modelloScelto && !modelliDisponibili.includes(modelloScelto)" :value="modelloScelto">{{ modelloScelto }}</option>
               <option v-for="m in modelliDisponibili" :key="m" :value="m">{{ m }}</option>
             </select>
             <button class="btn" :disabled="caricandoModelli" @click="caricaModelli">{{ caricandoModelli ? 'Carico…' : 'Carica elenco' }}</button>

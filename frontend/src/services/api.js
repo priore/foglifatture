@@ -36,6 +36,8 @@ export const api = {
   listMesiFatturati: () => richiesta('/invoice'),
   generaFattura: (anno, mese, clienteId, dati = {}) =>
     richiesta(`/invoice/${anno}/${mese}/${clienteId}/genera`, { method: 'POST', body: JSON.stringify(dati) }),
+  impostaScadenzaPagamento: (anno, mese, clienteId, dataScadenzaPagamento) =>
+    richiesta(`/invoice/${anno}/${mese}/${clienteId}/scadenza-pagamento`, { method: 'PATCH', body: JSON.stringify({ dataScadenzaPagamento }) }),
 
   // XML FatturaPA e invio PEC
   urlDownloadXml: (anno, mese, clienteId) => `${BASE_URL}/invoice/${anno}/${mese}/${clienteId}/xml`,
@@ -129,6 +131,10 @@ export const api = {
   confermaPagamentoFattura: (anno, mese, clienteId, dataPagamento) =>
     richiesta('/forfettario/pagamenti/conferma', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento }) }),
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
+
+  // Widget dashboard: fatture non incassate, prossime scadenze fiscali
+  fattureAperte: () => richiesta('/forfettario/fatture-aperte'),
+  scadenzeFiscali: () => richiesta('/forfettario/scadenze-fiscali'),
 };
 
 export const authApi = {

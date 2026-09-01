@@ -3,12 +3,18 @@
 // grafico a torta stile Flat-Tax (netto / imposta / margine residuo alla soglia).
 import { ref, computed, onMounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
+import BarChart from '../components/BarChart.vue';
 import { api } from '../services/api.js';
+
+const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
 const annoSelezionato = ref(new Date().getFullYear());
 const dashboard = ref(null);
 const errore = ref('');
+
+const fattureAperte = ref([]);
+const scadenzeFiscali = ref([]);
 
 async function carica() {
   errore.value = '';
@@ -19,8 +25,39 @@ async function carica() {
   }
 }
 
-onMounted(carica);
+async function caricaFattureAperte() {
+  fattureAperte.value = await api.fattureAperte().catch(() => []);
+}
+
+async function caricaScadenzeFiscali() {
+  const risposta = await api.scadenzeFiscali().catch(() => null);
+  scadenzeFiscali.value = risposta?.scadenze ?? [];
+}
+
+onMounted(() => {
+  carica();
+  caricaFattureAperte();
+  caricaScadenzeFiscali();
+});
 watch(annoSelezionato, carica);
+
+const barreRicaviMensili = computed(() => {
+  if (!dashboard.value) return [];
+  return dashboard.value.ricaviMensili.map((m) => ({
+    etichetta: MESI_BREVI[m.mese - 1],
+    valore: m.ricavi,
+    valoreTesto: formattaEuro(m.ricavi),
+  }));
+});
+
+function formattaData(valore) {
+  return new Date(valore).toLocaleDateString('it-IT');
+}
+
+const oggiIso = new Date().toISOString().slice(0, 10);
+function fatturaScaduta(f) {
+  return Boolean(f.dataScadenzaPagamento) && f.dataScadenzaPagamento < oggiIso;
+}
 
 // Composizione del compenso: ricavi/reddito fiscale/imposta, proporzionati tra loro.
 const fetteComposizione = computed(() => {
@@ -99,6 +136,55 @@ function esportaCommercialista() {
           </div>
         </div>
       </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+        <div class="card">
+          <div class="card-head"><h2>Andamento mensile ricavi</h2></div>
+          <div class="card-body">
+            <BarChart :barre="barreRicaviMensili" />
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column">
+          <div class="card-head"><h2>Fatture da incassare</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;flex:1">
+            <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
+            <ul v-else class="lista-piatta lista-scroll">
+              <li v-for="f in fattureAperte" :key="`${f.anno}-${f.mese}-${f.clienteId}-${f.numero}`">
+                <span>
+                  <span class="dot-scaduta" :class="{ visibile: fatturaScaduta(f) }" :title="fatturaScaduta(f) ? `Scaduta il ${formattaData(f.dataScadenzaPagamento)}` : ''"></span>
+                  Fattura {{ f.numero }} — {{ formattaData(f.data) }}
+                  <template v-if="f.dataScadenzaPagamento">· scadenza {{ formattaData(f.dataScadenzaPagamento) }}</template>
+                </span>
+                <strong>{{ formattaEuro(f.nettoAPagare) }}</strong>
+              </li>
+            </ul>
+            <p class="nota-piede">Incasso rilevato solo da import CSV home banking (Importa storico → Pagamenti fatture): senza import risultano sempre non incassate.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><h2>Prossime scadenze fiscali</h2></div>
+        <div class="card-body">
+          <p v-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota nei prossimi mesi.</p>
+          <ul v-else class="lista-piatta">
+            <li v-for="s in scadenzeFiscali" :key="`${s.data}-${s.tipo}`">
+              <span>{{ formattaData(s.data) }} — {{ s.tipo }}<br><small class="note-legal">{{ s.descrizione }}</small></span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </template>
   </div>
 </template>
+
+<style scoped>
+.lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.lista-piatta li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
+.nota-piede { margin-top: 10px; font-size: .68rem; color: var(--muted); }
+.dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
+.dot-scaduta.visibile { background: var(--warn); }
+.lista-scroll { max-height: 220px; overflow-y: auto; }
+.nota-piede { margin-top: auto; position: sticky; bottom: 0; background: var(--card); padding-top: 6px; }
+</style>
