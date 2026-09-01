@@ -62,6 +62,13 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     ? Number((ricaviProiettati / sogliaAnnua * 100).toFixed(1))
     : 0;
 
+  // Acconto anno successivo, metodo storico (100% dell'imposta sull'intero anno
+  // corrente): a differenza di impostaStimata (calcolata sul consuntivo parziale
+  // a oggi), qui la base è il reddito imponibile proiettato a fine anno — è la stima
+  // di quanto si verserà davvero come acconto, non l'imposta maturata finora.
+  const redditoImponibileProiettato = Number((ricaviProiettati * coefficenteRedditivita / 100).toFixed(2));
+  const accontoStimato = Number((redditoImponibileProiettato * aliquota / 100).toFixed(2));
+
   return {
     anno,
     sogliaAnnua,
@@ -70,6 +77,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     ricaviCumulati,
     redditoImponibile,
     impostaStimata,
+    accontoStimato,
     nettoStimato,
     mesiFatturati,
     ricaviMensili: ricaviPerMese(risolteValide),

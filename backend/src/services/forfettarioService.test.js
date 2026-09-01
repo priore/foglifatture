@@ -38,3 +38,10 @@ test('proiezione fine anno usa i mesi civili distinti, non le entry', async () =
   assert.equal(risultato.ricaviCumulati, 2500);
   assert.equal(risultato.ricaviProiettati, 15000);
 });
+
+test('accontoStimato usa metodo storico su ricavi proiettati fine anno, non sul consuntivo parziale', async () => {
+  const risultato = await calcolaDashboardForfettario(configBase, { anno: 2026, meseCorrente: 12 });
+  // ricaviProiettati 15000, coefficiente 78%, aliquota 15% (nessuna dataInizioAttivita) -> 15000*0.78*0.15 = 1755
+  assert.equal(risultato.accontoStimato, 1755);
+  assert.notEqual(risultato.accontoStimato, risultato.impostaStimata);
+});

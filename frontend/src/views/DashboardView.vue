@@ -140,8 +140,21 @@ function esportaCommercialista() {
       <div class="summary-row">
         <div class="stat"><div class="label">Ricavi cumulati</div><div class="value">{{ formattaEuro(dashboard.ricaviCumulati) }}</div></div>
         <div class="stat"><div class="label">Reddito imponibile</div><div class="value">{{ formattaEuro(dashboard.redditoImponibile) }}</div></div>
-        <div class="stat" :class="dashboard.superamentoSoglia ? 'warn' : 'ok'"><div class="label">Imposta stimata ({{ dashboard.aliquota }}%)</div><div class="value">{{ formattaEuro(dashboard.impostaStimata) }}</div></div>
         <div class="stat accent"><div class="label">Proiezione fine anno</div><div class="value">{{ formattaEuro(dashboard.ricaviProiettati) }}</div></div>
+      </div>
+
+      <div class="stat-gruppo-stima">
+        <div class="stat-gruppo-riga">
+          <div class="stat" :class="dashboard.superamentoSoglia ? 'warn' : 'ok'">
+            <div class="label">Imposta stimata ({{ dashboard.aliquota }}%)</div>
+            <div class="value">{{ formattaEuro(dashboard.impostaStimata) }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Acconto {{ dashboard.anno + 1 }} suggerito</div>
+            <div class="value">{{ formattaEuro(dashboard.accontoStimato) }}</div>
+          </div>
+        </div>
+        <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
@@ -223,6 +236,11 @@ function esportaCommercialista() {
 </template>
 
 <style scoped>
+.summary-row { grid-template-columns: repeat(3, 1fr); }
+.stat-gruppo-stima { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
+.stat-gruppo-riga { display: flex; gap: 32px; }
+.stat-gruppo-riga .stat { background: none; border: none; box-shadow: none; padding: 0; }
+.nota-stima { font-size: .68rem; color: var(--muted); margin-top: 14px; line-height: 1.3; border-top: 1px solid var(--line); padding-top: 10px; }
 .lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .lista-piatta li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
 .nota-piede { margin-top: 10px; font-size: .68rem; color: var(--muted); }

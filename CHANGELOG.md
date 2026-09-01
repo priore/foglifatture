@@ -15,6 +15,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard forfettario spostata come prima voce di menu e schermata di apertura predefinita dell'app.
 - Dashboard forfettario: aggiunti andamento mensile dei ricavi, elenco fatture emesse non ancora incassate e prossime scadenze fiscali (imposta sostitutiva, INPS), aggiornate periodicamente tramite Gemini con ricerca web.
 - Fattura Pro-Forma: nuovo campo "Scadenza pagamento" (termine commerciale, modificabile anche a fattura già emessa); se impostata, la dashboard la usa per evidenziare le fatture da incassare scadute.
+- Dashboard forfettario: aggiunta stima acconto anno successivo (metodo storico), con nota che invita a verificare col commercialista.
 
 ### Fixed
 - Notifiche desktop (promemoria ore, esiti SDI, backup): su Windows/Linux non tentano più di lanciare un comando macOS-only, evitando errori silenziosi nei log.
