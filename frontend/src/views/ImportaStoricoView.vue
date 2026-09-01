@@ -58,6 +58,8 @@ const fileBackup = ref(null);
 const passwordRipristina = ref('');
 const ripristinandoBackup = ref(false);
 const esitoRipristinaBackup = ref('');
+const serveRiavvio = ref(false);
+const riavviando = ref(false);
 
 async function importaTimesheet() {
   if (!clienteIdTimesheet.value) return;
@@ -162,11 +164,25 @@ async function ripristinaBackup() {
   try {
     const risultato = await api.ripristinaBackup(fileBackup.value, passwordRipristina.value);
     esitoRipristinaBackup.value = `Ripristinati ${risultato.fileRipristinati} file. Riavvia l'app per applicare i dati.`;
+    serveRiavvio.value = true;
     passwordRipristina.value = '';
   } catch (err) {
     esitoRipristinaBackup.value = `Errore: ${err.message}`;
   } finally {
     ripristinandoBackup.value = false;
+  }
+}
+
+async function riavvia() {
+  riavviando.value = true;
+  try {
+    await api.riavviaApp();
+    esitoRipristinaBackup.value = 'Riavvio in corso…';
+    serveRiavvio.value = false;
+  } catch (err) {
+    esitoRipristinaBackup.value = `Errore: ${err.message}`;
+  } finally {
+    riavviando.value = false;
   }
 }
 </script>
@@ -324,9 +340,12 @@ async function ripristinaBackup() {
           </div>
           <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordRipristina"></div>
         </div>
-        <button class="btn btn-primary" :disabled="!fileBackup || !passwordRipristina || ripristinandoBackup" @click="ripristinaBackup">
-          {{ ripristinandoBackup ? 'Ripristino…' : 'Ripristina backup' }}
-        </button>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn btn-primary" :disabled="!fileBackup || !passwordRipristina || ripristinandoBackup" @click="ripristinaBackup">
+            {{ ripristinandoBackup ? 'Ripristino…' : 'Ripristina backup' }}
+          </button>
+          <button class="btn btn-warn" v-if="serveRiavvio" :disabled="riavviando" @click="riavvia">{{ riavviando ? 'Riavvio…' : 'Riavvia app' }}</button>
+        </div>
         <span v-if="esitoRipristinaBackup" class="badge-mono">{{ esitoRipristinaBackup }}</span>
       </div>
     </div>

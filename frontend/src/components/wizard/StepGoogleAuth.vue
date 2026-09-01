@@ -13,6 +13,8 @@ const secretGiaImpostato = ref(false);
 const autenticazioneAttiva = ref(false);
 const messaggio = ref('');
 const salvando = ref(false);
+const serveRiavvio = ref(false);
+const riavviando = ref(false);
 
 onMounted(async () => {
   const dati = await api.getOAuthConfig();
@@ -32,12 +34,26 @@ async function salva() {
       allowedEmail: allowedEmail.value,
     });
     messaggio.value = risultato.messaggio;
+    serveRiavvio.value = risultato.messaggio.includes('Riavvia il servizio');
     if (clientSecret.value) secretGiaImpostato.value = true;
     clientSecret.value = '';
   } catch (err) {
     messaggio.value = `Errore: ${err.message}`;
   } finally {
     salvando.value = false;
+  }
+}
+
+async function riavvia() {
+  riavviando.value = true;
+  try {
+    await api.riavviaApp();
+    messaggio.value = 'Riavvio in corso…';
+    serveRiavvio.value = false;
+  } catch (err) {
+    messaggio.value = `Errore: ${err.message}`;
+  } finally {
+    riavviando.value = false;
   }
 }
 
@@ -77,6 +93,7 @@ async function salva() {
 
     <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
       <button class="btn btn-primary" :disabled="salvando" @click="salva">{{ salvando ? 'Salvo…' : 'Salva credenziali' }}</button>
+      <button class="btn btn-warn" v-if="serveRiavvio" :disabled="riavviando" @click="riavvia">{{ riavviando ? 'Riavvio…' : 'Riavvia app' }}</button>
       <span class="badge-mono" v-if="messaggio">{{ messaggio }}</span>
     </div>
 
@@ -95,10 +112,7 @@ async function salva() {
             <div class="badge-mono" style="margin-top:4px;display:inline-block">http://localhost:1969/auth/google/callback</div>
           </li>
           <li>Clicca <strong>Crea</strong>: Google mostra <strong>Client ID</strong> e <strong>Client secret</strong> in un popup. Copiali subito (il secret non sarà più visibile per intero dopo).</li>
-          <li>Incollali nei campi qui sopra, insieme alla tua email Gmail in "Email autorizzata", e salva.</li>
-          <li>Riavvia il servizio perché le nuove credenziali abbiano effetto:
-            <div class="badge-mono" style="margin-top:4px;display:inline-block">launchctl kickstart -k gui/$UID/com.prioregroup.fatturazione</div>
-          </li>
+          <li>Incollali nei campi qui sopra, insieme alla tua email Gmail in "Email autorizzata", e salva: comparirà il pulsante "Riavvia app" per applicare subito le nuove credenziali.</li>
         </ol>
       </div>
     </div>

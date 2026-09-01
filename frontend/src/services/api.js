@@ -100,6 +100,22 @@ export const api = {
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
 
+  // Riavvio del servizio (launchd lo rilancia subito, vedi backend/src/routes/sistemaRoutes.js).
+  // Dopo la richiesta il processo muore: aspetta che torni su, poi ricarica la pagina.
+  riavviaApp: async () => {
+    await richiesta('/sistema/riavvia', { method: 'POST' });
+    await new Promise(r => setTimeout(r, 500));
+    for (;;) {
+      try {
+        await fetch(`${BASE_URL}/config`);
+        break;
+      } catch {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    location.reload();
+  },
+
   // Promemoria timesheet fine mese
   salvaImpostazioniReminder: (dati) => richiesta('/reminder/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
 

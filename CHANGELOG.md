@@ -27,6 +27,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Nuova sezione "Pagamenti fatture": riconosce la data di incasso caricando un CSV di movimenti dall'home banking. Solo i nomi delle colonne del file (mai importi o dati reali) vengono inviati a Gemini per riconoscere automaticamente la struttura del file, poi i movimenti vengono abbinati alle fatture emesse per importo. La data di incasso confermata compare anche nell'export CSV per il commercialista.
 - Selezione file in stile app con drag & drop (Logo, Importa storico, Ripristina backup, Pagamenti fatture), al posto del controllo standard del browser.
 - Data di incasso confermata mostrata anche nella schermata Fattura Pro-Forma, accanto agli esiti email/PEC.
+- Pulsante "Riavvia app" in UI (Ripristina backup, Impostazioni → Google → Login) per applicare senza comandi manuali le modifiche che richiedono il riavvio del servizio.
 - Blocco alla rigenerazione di una fattura già accettata dallo SDI, comprese quelle importate da storico (emessa, non più modificabile per legge: va corretta con nota di variazione).
 - Promemoria desktop giornaliero se una fattura risulta scartata da SDI e non ancora reinviata, con avviso quando supera i 5 giorni previsti per la riemissione (rischio sanzione).
 
