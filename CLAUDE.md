@@ -32,6 +32,7 @@ Follow the conventions already in the codebase — don't introduce a new pattern
 - **Vue 3**: Composition API + `<script setup>`, matching existing components — don't mix in Options API. Reuse existing composables before writing a new one.
 - **Backend is ESM** (`"type": "module"`): `import`/`export`, no `require`. Async routes/services use `async`/`await`, not raw `.then()` chains.
 - **Express routes**: errors go through the existing error-handling middleware/pattern already in `backend/src/routes/` — don't add a one-off `try/catch` + custom JSON error shape per route.
+- **Inline shell/external scripts from JS** (e.g. `osascript`/AppleScript via `execFile`): a one-line script can stay inline as a template string. A multi-line script must be extracted to a dedicated file (see `backend/src/scripts/mailAppMac.applescript`), with parameters passed via argv instead of manual string escaping/interpolation.
 
 ## Dev workflow
 
