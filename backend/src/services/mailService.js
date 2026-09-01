@@ -9,17 +9,15 @@
 import { execFile } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { DATA_DIR } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
 
+const SCRIPT_MAIL_APP_MAC = fileURLToPath(new URL('../scripts/mailAppMac.applescript', import.meta.url));
 
-function escapaAppleScript(testo) {
-  return String(testo).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
-function eseguiOsascript(script) {
+function eseguiOsascriptFile(percorsoScript, argv) {
   return new Promise((resolve, reject) => {
-    execFile('osascript', ['-e', script], (err, stdout, stderr) => {
+    execFile('osascript', [percorsoScript, ...argv], (err, stdout, stderr) => {
       if (err) return reject(new Error(stderr || err.message));
       resolve(stdout);
     });
@@ -36,17 +34,7 @@ function rivelaFileNelFileManager(percorsoFile) {
 // Crea un messaggio in Mail.app con allegato reale già inserito (destinatari multipli
 // separati da virgola supportati nativamente dalla proprietà "to recipients" di Mail).
 async function inviaViaMailAppMac(destinatari, oggetto, corpo, percorsoFile) {
-  const listaDestinatari = destinatari.map(d => `make new to recipient at end of to recipients with properties {address:"${escapaAppleScript(d)}"}`).join('\n');
-  const script = `
-tell application "Mail"
-  set nuovoMessaggio to make new outgoing message with properties {subject:"${escapaAppleScript(oggetto)}", content:"${escapaAppleScript(corpo)}", visible:true}
-  tell nuovoMessaggio
-    ${listaDestinatari}
-    make new attachment with properties {file name:(POSIX file "${escapaAppleScript(percorsoFile)}")} at after the last paragraph
-  end tell
-  activate
-end tell`;
-  await eseguiOsascript(script);
+  await eseguiOsascriptFile(SCRIPT_MAIL_APP_MAC, [oggetto, corpo, percorsoFile, ...destinatari]);
 }
 
 // Salva il PDF nell'outbox locale e avvia il flusso di invio più adatto al sistema
