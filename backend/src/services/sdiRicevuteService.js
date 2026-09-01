@@ -169,7 +169,7 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
           const sottocartella = risolviSottocartella(tipo.codice, allegato.content);
           const cartellaDestinazione = path.join(percorsoArchivio, anno, sottocartella);
           await mkdir(cartellaDestinazione, { recursive: true });
-          const destinazione = path.join(cartellaDestinazione, allegato.filename);
+          const destinazione = path.join(cartellaDestinazione, path.basename(allegato.filename));
           await writeFile(destinazione, allegato.content);
           nuove += 1;
           await sdiLogger.info(`Archiviato ${allegato.filename} (${tipo.descrizione})`, { destinazione });

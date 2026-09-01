@@ -164,7 +164,7 @@ async function importaUnaFatturaXml(buffer, originalname, clienteIdRichiesto) {
   const percorsoArchivio = config.sdi.percorsoArchivio;
   let archiviato = null;
   if (percorsoArchivio) {
-    const destinazione = path.join(percorsoArchivio, originalname);
+    const destinazione = path.join(percorsoArchivio, path.basename(originalname));
     if (await fileEsiste(destinazione)) {
       logger.info(`File XML già presente in archivio, non sovrascritto: ${destinazione}`);
     } else {
