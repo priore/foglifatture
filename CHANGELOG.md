@@ -18,6 +18,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Fixed
 - Notifiche desktop (promemoria ore, esiti SDI, backup): su Windows/Linux non tentano più di lanciare un comando macOS-only, evitando errori silenziosi nei log.
+- Dashboard: se il recupero delle prossime scadenze fiscali fallisce (es. quota Gemini esaurita), ora viene mostrato il messaggio di errore invece di "Nessuna scadenza nota".
 - Impostazioni → Google → Gemini: il modello selezionato ora resta visibile nella select anche uscendo/rientrando dalla pagina o riavviando l'app.
 - Fattura Pro-Forma: il campo "Data fattura" non era più disabilitato dopo l'accettazione SDI (era possibile modificarlo pur non potendo rigenerare la fattura).
 

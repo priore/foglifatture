@@ -36,6 +36,7 @@ async function eseguiAggiornamento() {
 
 const fattureAperte = ref([]);
 const scadenzeFiscali = ref([]);
+const erroreScadenzeFiscali = ref('');
 
 async function carica() {
   errore.value = '';
@@ -51,8 +52,14 @@ async function caricaFattureAperte() {
 }
 
 async function caricaScadenzeFiscali() {
-  const risposta = await api.scadenzeFiscali().catch(() => null);
-  scadenzeFiscali.value = risposta?.scadenze ?? [];
+  erroreScadenzeFiscali.value = '';
+  try {
+    const risposta = await api.scadenzeFiscali();
+    scadenzeFiscali.value = risposta?.scadenze ?? [];
+  } catch (err) {
+    scadenzeFiscali.value = [];
+    erroreScadenzeFiscali.value = err.message;
+  }
 }
 
 onMounted(() => {
@@ -192,7 +199,8 @@ function esportaCommercialista() {
       <div class="card" style="margin-top:20px">
         <div class="card-head"><h2>Prossime scadenze fiscali</h2></div>
         <div class="card-body">
-          <p v-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota nei prossimi mesi.</p>
+          <p v-if="erroreScadenzeFiscali" class="note-legal">Impossibile recuperare le scadenze fiscali: {{ erroreScadenzeFiscali }}</p>
+          <p v-else-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota nei prossimi mesi.</p>
           <ul v-else class="lista-piatta">
             <li v-for="s in scadenzeFiscali" :key="`${s.data}-${s.tipo}`">
               <span>{{ formattaData(s.data) }} — {{ s.tipo }}<br><small class="note-legal">{{ s.descrizione }}</small></span>

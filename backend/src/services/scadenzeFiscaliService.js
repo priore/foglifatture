@@ -49,7 +49,13 @@ async function interrogaGemini() {
       }),
     },
   );
-  if (!risposta.ok) throw new Error(`Gemini API ha risposto ${risposta.status}: ${await risposta.text()}`);
+  if (!risposta.ok) {
+    const testoErrore = await risposta.text();
+    if (risposta.status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(testoErrore)) {
+      throw new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi.');
+    }
+    throw new Error(`Gemini API ha risposto ${risposta.status}`);
+  }
 
   const dati = await risposta.json();
   const testo = dati.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';
