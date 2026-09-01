@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").
+
 ### Added
 - Percorso della cartella dati configurabile da Impostazioni (es. cartella sincronizzata Dropbox/iCloud/OneDrive): sposta subito tutti i file esistenti senza perdita dati, senza riavvio del server.
 - Import storico multi-file: selezione di più file .xls/.xml o di un'intera cartella, non solo un file alla volta.

@@ -98,6 +98,42 @@ async function importaFattura() {
   }
 }
 
+const analizzandoPagamenti = ref(false);
+const erroreProposte = ref('');
+const propostePagamenti = ref([]);
+const confermatiPagamenti = ref(new Set());
+
+async function analizzaFilePagamenti(files) {
+  const file = files[0];
+  if (!file) return;
+  erroreProposte.value = '';
+  propostePagamenti.value = [];
+  confermatiPagamenti.value = new Set();
+  analizzandoPagamenti.value = true;
+  try {
+    const { proposte: trovate } = await api.analizzaCsvPagamenti(file);
+    propostePagamenti.value = trovate;
+  } catch (err) {
+    erroreProposte.value = err.message;
+  } finally {
+    analizzandoPagamenti.value = false;
+  }
+}
+
+async function confermaPagamento(proposta, indice) {
+  const { anno, mese, clienteId } = proposta.fattura;
+  try {
+    await api.confermaPagamentoFattura(anno, mese, clienteId, proposta.data);
+    confermatiPagamenti.value.add(indice);
+  } catch (err) {
+    erroreProposte.value = err.message;
+  }
+}
+
+function formattaEuro(valore) {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
+}
+
 async function esportaBackup() {
   if (!passwordEsporta.value) return;
   esportandoBackup.value = true;
@@ -227,6 +263,42 @@ async function ripristinaBackup() {
     </div>
 
     <div class="card" style="margin-top:16px" v-if="passoAttivo === 2">
+      <div class="card-head"><h2>Pagamenti fatture</h2></div>
+      <div class="card-body">
+        <p class="note-legal">Riconosce la data di incasso dai movimenti dell'home banking.</p>
+        <p v-if="erroreProposte" class="note-legal">Errore: {{ erroreProposte }}</p>
+        <p class="note-legal">
+          Del file caricato vengono inviati a Google Gemini <strong>solo i nomi delle colonne</strong>
+          (es. "Data operazione", "Importo") per riconoscere automaticamente la struttura — mai righe,
+          importi o causali reali. Il mapping viene salvato: lo stesso formato file non richiede una
+          seconda chiamata a Gemini.
+        </p>
+        <FileDrop accept=".csv" label="Trascina il CSV o clicca per sfogliare" style="margin-top:10px" :disabled="analizzandoPagamenti" @change="analizzaFilePagamenti" />
+        <p v-if="analizzandoPagamenti" class="note-legal">Analisi in corso…</p>
+
+        <table v-if="propostePagamenti.length" class="data-table" style="margin-top:16px">
+          <thead><tr><th>Data</th><th>Importo</th><th>Descrizione</th><th>Fattura</th><th></th></tr></thead>
+          <tbody>
+            <tr v-for="(p, i) in propostePagamenti" :key="i">
+              <td>{{ p.data }}</td>
+              <td>{{ formattaEuro(p.importo) }}</td>
+              <td>{{ p.descrizione }}</td>
+              <td>
+                <span v-if="confermatiPagamenti.has(i)">✓ Registrato</span>
+                <span v-else-if="p.fattura">N. {{ p.fattura.numero }} ({{ p.fattura.anno }}-{{ String(p.fattura.mese).padStart(2, '0') }})</span>
+                <span v-else-if="p.ambiguo" style="color:var(--muted)">Più fatture con lo stesso importo</span>
+                <span v-else style="color:var(--muted)">Nessuna fattura corrispondente</span>
+              </td>
+              <td>
+                <button v-if="p.fattura && !confermatiPagamenti.has(i)" type="button" class="btn btn-ok" @click="confermaPagamento(p, i)">Conferma</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 3">
       <div class="card-head"><h2>Esporta backup dati</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Archivio cifrato di tutti i dati (timesheet, fatture, configurazione). Conserva la password: senza non è possibile ripristinare.</p>
@@ -240,7 +312,7 @@ async function ripristinaBackup() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px" v-if="passoAttivo === 3">
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 4">
       <div class="card-head"><h2>Ripristina da backup</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Sovrascrive i dati esistenti su questa macchina con quelli del backup.</p>
