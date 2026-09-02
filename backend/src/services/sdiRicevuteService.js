@@ -12,6 +12,12 @@ import { sdiLogger } from '../lib/logger.js';
 import { notificaMac } from '../lib/macNotifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
 import { generaNomeFileXml } from './fatturaPaXmlGenerator.js';
+import { listMesiFatturati, getInvoice } from './invoiceService.js';
+
+// Finestra massima di attesa risposta SDI dopo un invio: passato questo tempo dall'ultimo
+// invio di una fattura, si considera l'esito "in ritardo" e non più motivo per continuare
+// il polling automatico (resta comunque disponibile il ping manuale in Impostazioni).
+const FINESTRA_ATTESA_RISPOSTA_MS = 72 * 60 * 60 * 1000;
 
 const MITTENTE_SDI_DOMINIO = '@pec.fatturapa.it';
 
@@ -287,6 +293,26 @@ async function listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile) {
   return ricevute.sort((a, b) => b.data.localeCompare(a.data));
 }
 
+// Vero se esiste almeno una fattura ancora "in-attesa" di risposta SDI il cui ultimo
+// invio è avvenuto entro la finestra di attesa: in tal caso vale la pena interrogare la
+// PEC. Fatture con invio più vecchio della finestra sono considerate "in ritardo" e non
+// giustificano più il polling automatico da sole (si presume risposta persa/da gestire
+// a mano). Invii ripetuti a distanza di minuti/ore sulla stessa fattura non fanno perdere
+// la finestra: conta solo il dataInvio più recente di ciascuna fattura.
+async function inAttesaRispostaRecente(config) {
+  const mesi = await listMesiFatturati();
+  const fatture = await Promise.all(mesi.map((m) => getInvoice(m.anno, m.mese, m.clienteId)));
+  const ora = Date.now();
+  for (const invoice of fatture) {
+    const ultimoInvio = invoice?.invii?.at(-1)?.dataInvio;
+    if (!ultimoInvio) continue;
+    if (ora - new Date(ultimoInvio).getTime() > FINESTRA_ATTESA_RISPOSTA_MS) continue;
+    const { stato } = await statoSdiFattura(invoice, config);
+    if (stato === 'in-attesa') return true;
+  }
+  return false;
+}
+
 let timerPolling = null;
 
 // Avvia il controllo periodico in background; richiamato all'avvio del server.
@@ -300,6 +326,7 @@ export function avviaPollingSdi(getConfig, minuti) {
   timerPolling = setInterval(async () => {
     const config = await getConfig();
     if (!config.sdi.pollingAbilitato) return;
+    if (!(await inAttesaRispostaRecente(config))) return;
     await controllaRicevuteSdi(config.pec, config.sdi.percorsoArchivio);
   }, intervalloMs);
 }
