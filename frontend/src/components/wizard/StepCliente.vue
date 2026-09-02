@@ -27,9 +27,9 @@ const codiceSdiOk = computed(() => codiceSdiValido(props.modelValue.codiceDestin
     <div class="field"><label>CAP</label><input v-model="modelValue.cap"></div>
     <div class="field"><label>Comune</label><input v-model="modelValue.comune"></div>
     <div class="field"><label>Provincia</label><input v-model="modelValue.provincia" maxlength="2" style="text-transform:uppercase"></div>
-    <div class="field"><label>Figura (header PDF timesheet)</label><input v-model="modelValue.figura"></div>
-    <div class="field"><label>Commessa (header PDF timesheet)</label><input v-model="modelValue.commessa"></div>
-    <div class="field"><label>Cliente (header PDF timesheet)</label><input v-model="modelValue.clientePdf"></div>
-    <div class="field"><label>Progetto (header PDF timesheet)</label><input v-model="modelValue.progetto"></div>
+    <div class="field"><label>Figura</label><input v-model="modelValue.figura"></div>
+    <div class="field"><label>Commessa</label><input v-model="modelValue.commessa"></div>
+    <div class="field"><label>Cliente</label><input v-model="modelValue.clientePdf"></div>
+    <div class="field"><label>Progetto</label><input v-model="modelValue.progetto"></div>
   </div>
 </template>

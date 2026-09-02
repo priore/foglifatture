@@ -4,6 +4,7 @@ import StepCliente from './StepCliente.vue';
 import TemplateGrid from './TemplateGrid.vue';
 
 const props = defineProps({ modelValue: { type: Array, required: true } });
+const emit = defineEmits(['salva-subito']);
 
 const ricerca = ref('');
 const clientiFiltrati = computed(() => {
@@ -84,11 +85,11 @@ function riattivaCliente(cliente) {
         <div style="display:flex;gap:20px;margin-top:12px">
           <div class="field" style="flex:1">
             <label>Template fattura</label>
-            <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" />
+            <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" @update:model-value="emit('salva-subito')" />
           </div>
           <div class="field" style="flex:1">
             <label>Template timesheet</label>
-            <TemplateGrid v-model="cliente.templateTimesheetId" tipo="timesheet" fallback-id="timesheet-default" />
+            <TemplateGrid v-model="cliente.templateTimesheetId" tipo="timesheet" fallback-id="timesheet-default" @update:model-value="emit('salva-subito')" />
           </div>
         </div>
       </div>

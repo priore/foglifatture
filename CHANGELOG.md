@@ -8,7 +8,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Added
 - Dashboard: pulsante "Aggiornamento disponibile" (visibile solo se c'è una nuova release), con popup di dettaglio versione/changelog e aggiornamento automatico (download, build, riavvio) con un click. Versione app corrente mostrata a piè di pagina.
-- Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia. Al momento disponibili i due template "As-Is" (replica del layout esistente).
+- Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia (10 template disponibili, tra cui i due "As-Is" identici al layout precedente). Scelta del template salvata subito, senza dover premere "Avanti".
 
 ### Changed
 - "Importa storico" spostata dal menu principale a sotto-voce di Impostazioni (tra "Percorso dati" e "Backup").
@@ -21,6 +21,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard forfettario: grafici a torta "Composizione compenso" e "Soglia forfettario" mostrano anche l'importo in euro accanto alla percentuale, non solo la percentuale.
 
 ### Fixed
+- Esportazione PDF Timesheet/Fattura: rimossa una seconda pagina bianca generata inutilmente nell'export.
+- Timesheet: con un mese pieno (31 giorni) il riepilogo non sconfina più su una seconda pagina.
 - Notifiche desktop (promemoria ore, esiti SDI, backup): su Windows/Linux non tentano più di lanciare un comando macOS-only, evitando errori silenziosi nei log.
 - Dashboard: se il recupero delle prossime scadenze fiscali fallisce (es. quota Gemini esaurita), ora viene mostrato il messaggio di errore invece di "Nessuna scadenza nota".
 - Impostazioni → Google → Gemini: il modello selezionato ora resta visibile nella select anche uscendo/rientrando dalla pagina o riavviando l'app.

@@ -1,0 +1,43 @@
+<div class="sheet">
+  <div class="head">
+    <h1>Timesheet — {{nomeMese}} {{anno}}</h1>
+    {{#if logoDataUrl}}
+      <img src="{{logoDataUrl}}" class="logo-img" alt="Logo">
+    {{else}}
+      <div class="tag">{{commessa}}</div>
+    {{/if}}
+  </div>
+
+  <table class="info">
+    <tr><td class="k">Consulente</td><td class="v">{{consulente}}</td><td class="k">Commessa</td><td class="v">{{commessa}}</td></tr>
+    <tr><td class="k">Cliente</td><td class="v">{{cliente}}</td><td class="k">Progetto</td><td class="v">{{progetto}}</td></tr>
+  </table>
+
+  <table class="grid">
+    <thead><tr><th>GG</th><th>Giorno</th><th>Entrata</th><th>Uscita</th><th>Entrata</th><th>Uscita</th><th>Tot.</th><th>Assenza</th><th>Note</th></tr></thead>
+    <tbody>
+      {{#each giorni}}
+      <tr class="{{#if wknd}}wknd{{/if}}">
+        <td class="day">{{giorno}}</td>
+        <td class="day">{{nomeGiorno}}</td>
+        <td>{{inizioMattina}}</td>
+        <td>{{fineMattina}}</td>
+        <td>{{inizioPomeriggio}}</td>
+        <td>{{finePomeriggio}}</td>
+        <td>{{oreGiornoFormattate}}</td>
+        <td class="{{#if assenzaVisibile}}absence{{/if}}">{{#if assenzaVisibile}}{{stato}}{{/if}}</td>
+        <td>{{note}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="total-strip"><span>Totale ore lavorate</span><span>{{totaleOreFormattato}}</span></div>
+
+  <div class="stats">
+    <div><div class="v">{{giorniLavorati}}</div><div class="l">Giorni lavorati</div></div>
+    <div><div class="v">{{totaleAssenze}}</div><div class="l">Giorni assenza</div></div>
+    <div><div class="v">{{totaleOreFormattato}}</div><div class="l">Ore ordinarie</div></div>
+    <div><div class="v">0:00</div><div class="l">Straordinario</div></div>
+  </div>
+</div>
