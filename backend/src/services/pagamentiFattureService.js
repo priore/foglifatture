@@ -1,17 +1,19 @@
 // Riconoscimento data di incasso fatture da un CSV esportato dall'home banking. Ogni banca
-// ha intestazioni colonna diverse: invece di un profilo per banca, si invia a Gemini SOLO
-// l'elenco dei nomi colonna (mai righe/importi/causali reali) per farsi dire quali indici
-// contengono data/importo/descrizione, poi il file viene parsato in locale col mapping
-// ottenuto. Il mapping è salvato su disco per intestazione (vedi createHash su nomi colonna
-// normalizzati): stesso export banca → stesso mapping riusato, Gemini richiamato solo se
-// l'elenco colonne non è mai stato visto prima (vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md).
+// ha intestazioni colonna diverse: invece di un profilo per banca, si invia a Gemini (con
+// fallback automatico su Groq se la quota Gemini è esaurita) SOLO l'elenco dei nomi colonna
+// (mai righe/importi/causali reali) per farsi dire quali indici contengono data/importo/
+// descrizione, poi il file viene parsato in locale col mapping ottenuto. Il mapping è salvato
+// su disco per intestazione (vedi createHash su nomi colonna normalizzati): stesso export
+// banca → stesso mapping riusato, AI richiamata solo se l'elenco colonne non è mai stato
+// visto prima (vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md).
 import { createHash } from 'node:crypto';
 import { readJson, writeJson } from '../lib/jsonStore.js';
-import { leggiGeminiApiKey, leggiGeminiModello } from './envService.js';
+import { leggiGeminiApiKey, leggiGeminiModello, leggiGroqApiKey, leggiGroqModello, salvaGroqModello } from './envService.js';
 import { listMesiFatturati, getInvoice, saveInvoice } from './invoiceService.js';
 
 const FILE_MAPPING = 'pagamentiMappingColonne.json';
 const MODELLO_DEFAULT = 'gemini-2.0-flash';
+const MODELLO_GROQ_DEFAULT = 'llama-3.3-70b-versatile';
 
 function firmaIntestazioni(intestazioni) {
   const normalizzate = intestazioni.map((i) => String(i).trim().toLowerCase()).join('|');
@@ -39,12 +41,8 @@ function parseCsv(testo) {
   return righe.map((riga) => riga.split(separatore).map((cella) => cella.trim().replace(/^"|"$/g, '')));
 }
 
-async function chiediMappingAGemini(intestazioni) {
-  const apiKey = await leggiGeminiApiKey();
-  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → Google → Gemini): necessaria per riconoscere automaticamente le colonne del file.');
-  const modello = (await leggiGeminiModello()) || MODELLO_DEFAULT;
-
-  const prompt = `Queste sono le intestazioni colonna di un file CSV esportato da un home banking italiano:
+function promptMapping(intestazioni) {
+  return `Queste sono le intestazioni colonna di un file CSV esportato da un home banking italiano:
 ${JSON.stringify(intestazioni)}
 
 Indica l'indice (0-based) della colonna data operazione, quella descrizione/causale, e quella
@@ -58,34 +56,108 @@ entrate/accrediti, e NON includere "colonnaImporto".
 Rispondi SOLO con un oggetto JSON valido (nessun testo, nessun markdown), uno di questi due formati:
 {"colonnaData": 0, "colonnaImporto": 2, "colonnaDescrizione": 1}
 {"colonnaData": 0, "colonnaEntrate": 3, "colonnaDescrizione": 4}`;
+}
+
+function estraiEValidaMapping(testo, fonte) {
+  const inizio = testo.indexOf('{');
+  const fine = testo.lastIndexOf('}');
+  if (inizio === -1 || fine === -1) throw new Error(`Risposta ${fonte} senza oggetto JSON riconoscibile`);
+  const mapping = JSON.parse(testo.slice(inizio, fine + 1));
+  const importoValido = Number.isInteger(mapping.colonnaImporto) || Number.isInteger(mapping.colonnaEntrate);
+  if (!Number.isInteger(mapping.colonnaData) || !Number.isInteger(mapping.colonnaDescrizione) || !importoValido) {
+    throw new Error(`Mapping colonne restituito da ${fonte} incompleto`);
+  }
+  return mapping;
+}
+
+async function chiediMappingAGemini(intestazioni) {
+  const apiKey = await leggiGeminiApiKey();
+  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → AI → Gemini AI): necessaria per riconoscere automaticamente le colonne del file.');
+  const modello = (await leggiGeminiModello()) || MODELLO_DEFAULT;
 
   const risposta = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: promptMapping(intestazioni) }] }] }),
     },
   );
   if (!risposta.ok) {
     const testoErrore = await risposta.text();
     if (risposta.status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(testoErrore)) {
-      throw new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi.');
+      const errore = new Error('Quota Gemini esaurita per oggi (free tier)');
+      errore.quotaEsaurita = true;
+      throw errore;
     }
     throw new Error(`Gemini API ha risposto ${risposta.status}`);
   }
 
   const dati = await risposta.json();
   const testo = dati.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';
-  const inizio = testo.indexOf('{');
-  const fine = testo.lastIndexOf('}');
-  if (inizio === -1 || fine === -1) throw new Error('Risposta Gemini senza oggetto JSON riconoscibile');
-  const mapping = JSON.parse(testo.slice(inizio, fine + 1));
-  const importoValido = Number.isInteger(mapping.colonnaImporto) || Number.isInteger(mapping.colonnaEntrate);
-  if (!Number.isInteger(mapping.colonnaData) || !Number.isInteger(mapping.colonnaDescrizione) || !importoValido) {
-    throw new Error('Mapping colonne restituito da Gemini incompleto');
+  return estraiEValidaMapping(testo, 'Gemini');
+}
+
+// Fallback quando la quota gratuita Gemini è esaurita: stesso compito (solo nomi colonna
+// in input, nessun dato bancario reale), via Groq (REST OpenAI-compatible, free tier più
+// ampio di Gemini e senza vincolo di uso non commerciale).
+async function chiediMappingAGroq(intestazioni) {
+  const apiKey = await leggiGroqApiKey();
+  if (!apiKey) throw new Error('Quota Gemini esaurita e GROQ_API_KEY non configurata (Impostazioni → AI → Groq AI) per il fallback.');
+  const modello = (await leggiGroqModello()) || MODELLO_GROQ_DEFAULT;
+
+  const risposta = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: modello,
+      messages: [{ role: 'user', content: promptMapping(intestazioni) }],
+    }),
+  });
+  if (!risposta.ok) {
+    throw new Error(`Groq API ha risposto ${risposta.status}: ${await risposta.text()}`);
   }
-  return mapping;
+
+  const dati = await risposta.json();
+  const testo = dati.choices?.[0]?.message?.content || '';
+  return estraiEValidaMapping(testo, 'Groq');
+}
+
+// La quota free di Gemini si resetta a mezzanotte Pacific Time: usata solo per dare
+// all'utente un orario indicativo di quando riprovare, se anche il fallback Groq fallisce.
+function prossimoResetQuotaGemini() {
+  const oraPacific = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const reset = new Date(oraPacific);
+  reset.setHours(24, 0, 0, 0);
+  const differenzaMs = reset.getTime() - oraPacific.getTime();
+  return new Date(Date.now() + differenzaMs);
+}
+
+// Verifica il modello Groq scelto dall'utente con una chiamata reale, e lo salva solo se funziona.
+export async function verificaESalvaModelloGroq(modello) {
+  const apiKey = await leggiGroqApiKey();
+  if (!apiKey) throw new Error('GROQ_API_KEY non configurata (Impostazioni → AI → Groq AI)');
+  const risposta = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: modello, messages: [{ role: 'user', content: 'Rispondi solo con: OK' }] }),
+  });
+  if (!risposta.ok) throw new Error(`Verifica fallita: Groq API ha risposto ${risposta.status}: ${await risposta.text()}`);
+  await salvaGroqModello(modello);
+}
+
+async function chiediMapping(intestazioni) {
+  try {
+    return await chiediMappingAGemini(intestazioni);
+  } catch (err) {
+    if (!err.quotaEsaurita) throw err;
+    try {
+      return await chiediMappingAGroq(intestazioni);
+    } catch (erroreGroq) {
+      const orario = prossimoResetQuotaGemini().toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+      throw new Error(`Quota Gemini esaurita e fallback Groq non disponibile (${erroreGroq.message}). Riprova manualmente dopo le ${orario}, quando la quota Gemini si rinnova.`);
+    }
+  }
 }
 
 // Riusa il mapping già salvato per la stessa intestazione; solo se mai vista chiama Gemini
@@ -95,7 +167,7 @@ export async function rilevaMappingColonne(intestazioni) {
   const salvati = await readJson(FILE_MAPPING, {});
   if (salvati[firma]) return salvati[firma];
 
-  const mapping = await chiediMappingAGemini(intestazioni);
+  const mapping = await chiediMapping(intestazioni);
   salvati[firma] = mapping;
   await writeJson(FILE_MAPPING, salvati);
   return mapping;

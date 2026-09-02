@@ -10,10 +10,11 @@ import path from 'node:path';
 import keytar from 'keytar';
 
 const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
-const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL'];
+const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL', 'GROQ_MODEL'];
 const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
 const KEYTAR_ACCOUNT_GOOGLE_SECRET = 'oauth.googleClientSecret';
 const KEYTAR_ACCOUNT_GEMINI_KEY = 'gemini.apiKey';
+const KEYTAR_ACCOUNT_GROQ_KEY = 'groq.apiKey';
 
 function parseEnv(contenuto) {
   const righe = contenuto.split('\n');
@@ -28,9 +29,10 @@ function parseEnv(contenuto) {
 export async function leggiCredenzialiOAuth() {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { valori } = parseEnv(contenuto);
-  const [googleClientSecret, geminiApiKey] = await Promise.all([
+  const [googleClientSecret, geminiApiKey, groqApiKey] = await Promise.all([
     keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET),
     keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GEMINI_KEY),
+    keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GROQ_KEY),
   ]);
   return {
     googleClientId: valori.GOOGLE_CLIENT_ID || '',
@@ -39,16 +41,18 @@ export async function leggiCredenzialiOAuth() {
     allowedEmail: valori.ALLOWED_EMAIL || '',
     geminiApiKeyImpostata: Boolean(geminiApiKey),
     geminiModello: valori.GEMINI_MODEL || '',
+    groqApiKeyImpostata: Boolean(groqApiKey),
+    groqModello: valori.GROQ_MODEL || '',
   };
 }
 
 // Aggiorna solo le righe delle chiavi gestite, preservando il resto del file (commenti, PORT, ecc.).
-export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey }) {
+export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey, groqApiKey }) {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
 
   const nuoviValori = { ...valori };
-  // Ogni chiamante (step Google, step Gemini) invia solo i propri campi: si aggiorna
+  // Ogni chiamante (step Google, step Gemini, step Groq) invia solo i propri campi: si aggiorna
   // solo quanto presente nel payload, il resto resta invariato.
   if (googleClientId !== undefined) nuoviValori.GOOGLE_CLIENT_ID = googleClientId;
   if (allowedEmail !== undefined) nuoviValori.ALLOWED_EMAIL = allowedEmail;
@@ -56,6 +60,7 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   // e vanno nel Keychain, mai nel file .env.
   if (googleClientSecret) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET, googleClientSecret);
   if (geminiApiKey) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GEMINI_KEY, geminiApiKey);
+  if (groqApiKey) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GROQ_KEY, groqApiKey);
 
   const righeAggiornate = [];
   const chiaviScritte = new Set();
@@ -92,10 +97,10 @@ export async function leggiGeminiModello() {
   return parseEnv(contenuto).valori.GEMINI_MODEL || '';
 }
 
-export async function salvaGeminiModello(modello) {
+async function salvaChiaveEnv(chiave, valore) {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
-  valori.GEMINI_MODEL = modello;
+  valori[chiave] = valore;
   const righeAggiornate = [];
   const chiaviScritte = new Set();
   for (const riga of righe) {
@@ -107,8 +112,26 @@ export async function salvaGeminiModello(modello) {
       righeAggiornate.push(riga);
     }
   }
-  for (const chiave of CHIAVI_GESTITE) {
-    if (!chiaviScritte.has(chiave)) righeAggiornate.push(`${chiave}=${valori[chiave] ?? ''}`);
+  for (const c of CHIAVI_GESTITE) {
+    if (!chiaviScritte.has(c)) righeAggiornate.push(`${c}=${valori[c] ?? ''}`);
   }
   await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
+}
+
+export async function salvaGeminiModello(modello) {
+  await salvaChiaveEnv('GEMINI_MODEL', modello);
+}
+
+// Fallback usato da pagamentiFattureService quando la quota Gemini free è esaurita (429).
+export async function leggiGroqApiKey() {
+  return (await keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GROQ_KEY)) || '';
+}
+
+export async function leggiGroqModello() {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  return parseEnv(contenuto).valori.GROQ_MODEL || '';
+}
+
+export async function salvaGroqModello(modello) {
+  await salvaChiaveEnv('GROQ_MODEL', modello);
 }

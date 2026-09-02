@@ -10,7 +10,9 @@ async function richiesta(percorso, opzioni = {}) {
   if (!risposta.ok) {
     const corpo = await risposta.json().catch(() => ({}));
     const messaggio = corpo.dettagli?.length ? `${corpo.errore}: ${corpo.dettagli.join('; ')}` : corpo.errore;
-    throw new Error(messaggio || `Errore HTTP ${risposta.status}`);
+    const errore = new Error(messaggio || `Errore HTTP ${risposta.status}`);
+    if (corpo.prossimoRetryIl) errore.prossimoRetryIl = corpo.prossimoRetryIl;
+    throw errore;
   }
   const tipo = risposta.headers.get('content-type') || '';
   return tipo.includes('application/json') ? risposta.json() : risposta.text();
@@ -125,6 +127,7 @@ export const api = {
   dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
   modelliGemini: () => richiesta('/forfettario/gemini/modelli'),
   verificaModelloGemini: (modello) => richiesta('/forfettario/gemini/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
+  verificaModelloGroq: (modello) => richiesta('/forfettario/groq/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
 
   // Versamenti F24 effettivi (imposta sostitutiva, INPS), inseriti a mano
   versamentiF24: (anno) => richiesta(`/forfettario/versamenti${anno ? `?anno=${anno}` : ''}`),

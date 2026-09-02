@@ -84,14 +84,30 @@ export async function prossimeScadenzeFiscali() {
     } catch (err) {
       // Non ririchiamare Gemini a ogni apertura dashboard mentre la quota è esaurita:
       // riprova dopo un'ora, non aspetta i 90g di validità della cache dati.
-      await writeJson(FILE, { ...cache, ultimoErroreIl: new Date().toISOString() });
-      if (!cache) throw err;
+      cache = { ...cache, ultimoErroreIl: new Date().toISOString() };
+      await writeJson(FILE, cache);
+      if (!cache.scadenze) {
+        err.prossimoRetryIl = new Date(Date.now() + ORE_RETRY_DOPO_ERRORE * 3_600_000).toISOString();
+        throw err;
+      }
     }
   }
 
+  if (!cache?.scadenze) {
+    const err = new Error('Nessuna scadenza fiscale in cache e quota Gemini esaurita: riprova più tardi.');
+    err.prossimoRetryIl = cache?.ultimoErroreIl
+      ? new Date(new Date(cache.ultimoErroreIl).getTime() + ORE_RETRY_DOPO_ERRORE * 3_600_000).toISOString()
+      : null;
+    throw err;
+  }
+
   const oggi = new Date().toISOString().slice(0, 10);
+  const prossimoRetryIl = cache.ultimoErroreIl
+    ? new Date(new Date(cache.ultimoErroreIl).getTime() + ORE_RETRY_DOPO_ERRORE * 3_600_000).toISOString()
+    : null;
   return {
     aggiornatoIl: cache.aggiornatoIl,
     scadenze: cache.scadenze.filter((s) => s.data >= oggi),
+    prossimoRetryIl: ritentareDopoErrore(cache) ? null : prossimoRetryIl,
   };
 }

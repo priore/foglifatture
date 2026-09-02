@@ -1,7 +1,7 @@
 <script setup>
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta,
 // grafico a torta stile Flat-Tax (netto / imposta / margine residuo alla soglia).
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
@@ -51,23 +51,52 @@ async function caricaFattureAperte() {
   fattureAperte.value = await api.fattureAperte().catch(() => []);
 }
 
+const prossimoRetryScadenzeFiscali = ref(null);
+let timerRetryScadenzeFiscali = null;
+
+function pianificaRetryScadenzeFiscali(prossimoRetryIl) {
+  clearTimeout(timerRetryScadenzeFiscali);
+  prossimoRetryScadenzeFiscali.value = prossimoRetryIl ?? null;
+  if (!prossimoRetryIl) return;
+  const attesa = new Date(prossimoRetryIl).getTime() - Date.now();
+  timerRetryScadenzeFiscali = setTimeout(caricaScadenzeFiscali, Math.max(attesa, 0) + 1000);
+}
+
 async function caricaScadenzeFiscali() {
   erroreScadenzeFiscali.value = '';
   try {
     const risposta = await api.scadenzeFiscali();
     scadenzeFiscali.value = risposta?.scadenze ?? [];
+    pianificaRetryScadenzeFiscali(risposta?.prossimoRetryIl);
   } catch (err) {
     scadenzeFiscali.value = [];
     erroreScadenzeFiscali.value = err.message;
+    pianificaRetryScadenzeFiscali(err.prossimoRetryIl);
   }
 }
+
+const oraCorrente = ref(Date.now());
+let timerOraCorrente = null;
 
 onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
+  timerOraCorrente = setInterval(() => { oraCorrente.value = Date.now(); }, 30_000);
+});
+onUnmounted(() => {
+  clearTimeout(timerRetryScadenzeFiscali);
+  clearInterval(timerOraCorrente);
 });
 watch(annoSelezionato, carica);
+
+const tempoAlRetryScadenzeFiscali = computed(() => {
+  if (!prossimoRetryScadenzeFiscali.value) return '';
+  const msRimanenti = new Date(prossimoRetryScadenzeFiscali.value).getTime() - oraCorrente.value;
+  if (msRimanenti <= 0) return '';
+  const minuti = Math.ceil(msRimanenti / 60_000);
+  return minuti < 60 ? `${minuti} min` : `${Math.floor(minuti / 60)}h ${minuti % 60}min`;
+});
 
 const barreRicaviMensili = computed(() => {
   if (!dashboard.value) return [];
@@ -212,13 +241,17 @@ function esportaCommercialista() {
       <div class="card" style="margin-top:20px">
         <div class="card-head"><h2>Prossime scadenze fiscali</h2></div>
         <div class="card-body">
-          <p v-if="erroreScadenzeFiscali" class="note-legal">Impossibile recuperare le scadenze fiscali: {{ erroreScadenzeFiscali }}</p>
+          <p v-if="erroreScadenzeFiscali" class="note-legal">
+            Impossibile recuperare le scadenze fiscali: {{ erroreScadenzeFiscali }}
+            <template v-if="tempoAlRetryScadenzeFiscali"><br>Nuovo tentativo automatico tra {{ tempoAlRetryScadenzeFiscali }}.</template>
+          </p>
           <p v-else-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota nei prossimi mesi.</p>
           <ul v-else class="lista-piatta">
             <li v-for="s in scadenzeFiscali" :key="`${s.data}-${s.tipo}`">
               <span>{{ formattaData(s.data) }} — {{ s.tipo }}<br><small class="note-legal">{{ s.descrizione }}</small></span>
             </li>
           </ul>
+          <p v-if="!erroreScadenzeFiscali && tempoAlRetryScadenzeFiscali" class="nota-piede">Date non aggiornabili (quota Gemini esaurita): nuovo tentativo automatico tra {{ tempoAlRetryScadenzeFiscali }}.</p>
         </div>
       </div>
     </template>

@@ -1,7 +1,7 @@
 <script setup>
-// Configurazione della API key Gemini (free tier), usata solo per aggiornare
-// l'elenco codici ATECO e i coefficienti di redditività forfettario.
-// Come "Google", questi dati vivono in backend/.env (non in config.json).
+// Configurazione della API key Gemini (free tier), usata per aggiornare l'elenco codici ATECO,
+// i coefficienti di redditività forfettario e le scadenze fiscali. Come "Google", questi dati
+// vivono in backend/.env (non in config.json).
 import { ref, onMounted } from 'vue';
 import { api } from '../../services/api.js';
 
@@ -69,11 +69,12 @@ async function salvaGemini() {
 
 <template>
   <div>
-    <h2>Gemini</h2>
     <p class="note-legal">
-      API key Gemini (free tier), usata solo per aggiornare l'elenco codici ATECO e i coefficienti
-      di redditività forfettario da Impostazioni → Forfettario (icona ⟳ accanto al campo Codice ATECO).
-      Non serve per il login: puoi lasciarla vuota se non usi quella funzione.
+      API key Gemini (free tier), usata per aggiornare l'elenco codici ATECO e i coefficienti
+      di redditività forfettario (Impostazioni → Forfettario, icona ⟳ accanto al campo Codice ATECO),
+      le scadenze fiscali in dashboard, e come sorgente primaria per il mapping colonne CSV pagamenti
+      (con fallback automatico su Groq se la quota è esaurita). Non serve per il login: puoi lasciarla
+      vuota se non usi queste funzioni.
     </p>
 
     <div class="form-grid" style="margin-top:16px">
@@ -93,7 +94,7 @@ async function salvaGemini() {
       <div class="card-body">
         <p class="note-legal">
           Scegli tra i modelli disponibili per la tua API key (elenco recuperato in tempo reale da Google)
-          e verificalo con una chiamata di prova prima di usarlo per l'aggiornamento codici ATECO.
+          e verificalo con una chiamata di prova prima di usarlo.
         </p>
         <div class="form-grid" style="margin-top:12px">
           <div class="field full" style="display:flex;align-items:center;gap:12px">

@@ -1,10 +1,10 @@
 // Etichette dei passi del wizard Impostazioni: condivise tra AppSidebar.vue (sotto-voci
 // verticali) e ImpostazioniView.vue (titolo passo corrente), per non duplicare l'elenco.
-export const PASSI_IMPOSTAZIONI = ['Fornitore', 'Clienti', 'Tariffa & fiscali', 'PEC', 'Percorso dati', 'Backup Automatico', 'Promemoria', 'Login', 'Gemini'];
+export const PASSI_IMPOSTAZIONI = ['Fornitore', 'Clienti', 'Tariffa & fiscali', 'PEC', 'Percorso dati', 'Backup Automatico', 'Promemoria', 'Login', 'AI'];
 
-// Gli step "Google" e "Gemini" gestiscono da sé il proprio salvataggio (scrivono su .env, non su config.json).
+// Gli step "Google" e "AI" gestiscono da sé il proprio salvataggio (scrivono su .env, non su config.json).
 // "Percorso dati" agisce subito tramite il proprio pulsante (spostaPercorsoDati), non tramite il salva generico.
-export const PASSI_AUTOSALVANTI = ['Google', 'Gemini', 'Percorso dati'];
+export const PASSI_AUTOSALVANTI = ['Google', 'AI', 'Percorso dati'];
 
 // Sottotitolo mostrato sotto "Impostazioni", specifico per ogni passo del wizard.
 export const DESCRIZIONI_PASSI = {
@@ -16,5 +16,5 @@ export const DESCRIZIONI_PASSI = {
   Backup: 'Backup automatico cifrato dei dati',
   Promemoria: 'Avviso fine mese per ore non registrate',
   Google: 'Credenziali OAuth per il login',
-  Gemini: 'API key per l\'aggiornamento assistito dei codici ATECO',
+  AI: 'API key Gemini e Groq per le funzioni assistite da AI',
 };

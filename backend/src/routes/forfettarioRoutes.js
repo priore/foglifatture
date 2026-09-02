@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { getConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
+import { verificaESalvaModelloGroq } from '../services/pagamentiFattureService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
 import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
@@ -53,6 +54,20 @@ forfettarioRoutes.post('/gemini/modelli/verifica', async (req, res) => {
   }
 });
 
+// Verifica con una chiamata reale il modello Groq scelto dall'utente e lo salva se funziona
+// (Impostazioni → AI → Groq AI). Nessuna ListModels: Groq non la espone, la select nel
+// frontend elenca i modelli correnti noti (console.groq.com/docs/models).
+forfettarioRoutes.post('/groq/modelli/verifica', async (req, res) => {
+  const { modello } = req.body;
+  if (!modello) return res.status(400).json({ errore: 'Modello mancante' });
+  try {
+    await verificaESalvaModelloGroq(modello);
+    res.json({ ok: true, messaggio: `Modello "${modello}" verificato e salvato.` });
+  } catch (err) {
+    res.status(502).json({ ok: false, errore: err.message });
+  }
+});
+
 forfettarioRoutes.get('/dashboard', async (req, res) => {
   const config = await getConfig();
   const anno = req.query.anno ? Number(req.query.anno) : undefined;
@@ -72,7 +87,7 @@ forfettarioRoutes.get('/scadenze-fiscali', async (req, res) => {
   try {
     res.json(await prossimeScadenzeFiscali());
   } catch (err) {
-    res.status(502).json({ errore: err.message });
+    res.status(502).json({ errore: err.message, prossimoRetryIl: err.prossimoRetryIl ?? null });
   }
 });
 

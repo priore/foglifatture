@@ -10,7 +10,7 @@ oauthConfigRoutes.get('/', async (req, res) => {
 });
 
 oauthConfigRoutes.put('/', async (req, res) => {
-  const { googleClientId, googleClientSecret, allowedEmail, geminiApiKey } = req.body;
+  const { googleClientId, googleClientSecret, allowedEmail } = req.body;
   await salvaCredenzialiOAuth(req.body);
   // Le credenziali Google (passport) si applicano solo al riavvio; la Gemini API key
   // viene invece riletta da file ad ogni chiamata (vedi envService.leggiGeminiApiKey), quindi vale subito.

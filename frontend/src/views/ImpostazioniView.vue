@@ -11,7 +11,7 @@ import StepBackup from '../components/wizard/StepBackup.vue';
 import StepPercorsoDati from '../components/wizard/StepPercorsoDati.vue';
 import StepPromemoria from '../components/wizard/StepPromemoria.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
-import StepGemini from '../components/wizard/StepGemini.vue';
+import StepAI from '../components/wizard/StepAI.vue';
 import { api } from '../services/api.js';
 import { PASSI_IMPOSTAZIONI as PASSI, PASSI_AUTOSALVANTI, DESCRIZIONI_PASSI } from '../wizardImpostazioniPassi.js';
 
@@ -93,7 +93,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
         <StepBackup v-else-if="passoAttivo === 5" v-model="config.backup" />
         <StepPromemoria v-else-if="passoAttivo === 6" v-model="config.reminder" />
         <StepGoogleAuth v-else-if="passoAttivo === 7" />
-        <StepGemini v-else />
+        <StepAI v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-ghost" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>
