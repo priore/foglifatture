@@ -11,6 +11,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia. Al momento disponibili i due template "As-Is" (replica del layout esistente).
 
 ### Changed
+- "Importa storico" spostata dal menu principale a sotto-voce di Impostazioni (tra "Percorso dati" e "Backup").
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").
 - Impostazioni → PEC: nota aggiornata sulla conservazione a norma delle fatture SDI, con link per attivare il servizio gratuito di Agenzia delle Entrate.
 - Dashboard forfettario spostata come prima voce di menu e schermata di apertura predefinita dell'app.

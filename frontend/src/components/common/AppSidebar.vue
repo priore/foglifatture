@@ -33,17 +33,8 @@ function toggleTheme() {
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
-      <router-link to="/importa-storico"><span class="dot"></span>Importa storico</router-link>
-      <div v-if="route.path === '/importa-storico'" class="nav-sub">
-        <router-link
-          v-for="(passo, i) in PASSI_IMPORTA_STORICO" :key="passo"
-          :to="{ path: '/importa-storico', query: { passo: i } }"
-          active-class="" exact-active-class=""
-          :class="{ 'router-link-active': Number(route.query.passo || 0) === i }"
-        >{{ passo }}</router-link>
-      </div>
-      <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') }"><span class="dot"></span>Impostazioni</router-link>
-      <div v-if="route.path.startsWith('/impostazioni')" class="nav-sub">
+      <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }"><span class="dot"></span>Impostazioni</router-link>
+      <div v-if="route.path.startsWith('/impostazioni') || route.path === '/importa-storico'" class="nav-sub">
         <template v-for="(passo, i) in PASSI_IMPOSTAZIONI" :key="passo">
           <router-link
             :to="{ path: '/impostazioni', query: { passo: i } }"
@@ -55,6 +46,21 @@ function toggleTheme() {
             active-class="" exact-active-class=""
             :class="{ 'router-link-active': route.path === '/impostazioni/pec-cronologia' }"
           >Cronologia</router-link>
+          <template v-if="passo === 'Percorso dati'">
+            <router-link
+              to="/importa-storico"
+              active-class="" exact-active-class=""
+              :class="{ 'router-link-active': route.path === '/importa-storico' }"
+            >Importa storico</router-link>
+            <template v-if="route.path === '/importa-storico'">
+              <router-link
+                v-for="(sotto, j) in PASSI_IMPORTA_STORICO" :key="sotto"
+                :to="{ path: '/importa-storico', query: { passo: j } }"
+                class="nav-sub-sub" active-class="" exact-active-class=""
+                :class="{ 'router-link-active': Number(route.query.passo || 0) === j }"
+              >{{ sotto }}</router-link>
+            </template>
+          </template>
         </template>
       </div>
     </nav>
