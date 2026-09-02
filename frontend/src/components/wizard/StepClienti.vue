@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import StepCliente from './StepCliente.vue';
+import TemplateGrid from './TemplateGrid.vue';
 
 const props = defineProps({ modelValue: { type: Array, required: true } });
 
@@ -79,6 +80,16 @@ function riattivaCliente(cliente) {
           <label>Email cliente</label>
           <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
           <small class="note-legal">Una o più email separate da virgola, usate per l'invio di timesheet e fattura via app di posta.</small>
+        </div>
+        <div style="display:flex;gap:20px;margin-top:12px">
+          <div class="field" style="flex:1">
+            <label>Template fattura</label>
+            <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" />
+          </div>
+          <div class="field" style="flex:1">
+            <label>Template timesheet</label>
+            <TemplateGrid v-model="cliente.templateTimesheetId" tipo="timesheet" fallback-id="timesheet-default" />
+          </div>
         </div>
       </div>
     </div>

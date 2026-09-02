@@ -8,6 +8,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Added
 - Dashboard: pulsante "Aggiornamento disponibile" (visibile solo se c'è una nuova release), con popup di dettaglio versione/changelog e aggiornamento automatico (download, build, riavvio) con un click. Versione app corrente mostrata a piè di pagina.
+- Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia. Al momento disponibili i due template "As-Is" (replica del layout esistente).
 
 ### Changed
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").

@@ -16,6 +16,7 @@
 .xls-topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 10pt; }
 .xls-title { flex: 1; text-align: center; font-size: 15pt; font-weight: bold; color: #008080; }
 .xls-code { font-size: 9pt; color: #000; align-self: flex-start; }
+.logo-img { height: 46px; max-width: 144px; object-fit: contain; }
 
 table.xls-info { width: 100%; border-collapse: collapse; border: 2px solid #000; margin-bottom: 10pt; font-size: 10.5pt; }
 table.xls-info td { border: 1px solid #000; padding: 3pt 6pt; }
@@ -46,7 +47,6 @@ table.xls-summary td .small { font-weight: normal; font-size: 8pt; }
 
 .doc-gap { height: 12pt; }
 
-/* Regole @media print: evitano di tagliare righe/tabelle a cavallo di pagina. */
 @media print {
   .xls-grid tr, .xls-summary tr, .xls-info tr { break-inside: avoid; }
   .xls-page { box-shadow: none; }

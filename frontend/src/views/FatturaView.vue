@@ -2,13 +2,13 @@
 // Schermata Fattura Pro-Forma: calcolo automatico da timesheet, generazione XML FatturaPA,
 // invio PEC. Il calcolo compenso è ricavato dal backend (unica fonte di verità sui totali).
 import { ref, computed, watch, onMounted } from 'vue';
-import '../assets/print-fattura.css';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
-import FatturaPrintPreview from '../components/fattura/FatturaPrintPreview.vue';
+import TemplateStampa from '../components/common/TemplateStampa.vue';
 import { api } from '../services/api.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
 import { inviaPdfEmail } from '../composables/useMailto.js';
+import { preparaDatiFattura } from '../composables/useTemplateData.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -68,6 +68,22 @@ const anteprimaEffettiva = computed(() => {
   const bolloApplicabile = imponibile > config.value.fatturazione.sogliaBolloVirtuale;
   const bollo = bolloApplicabile ? config.value.fatturazione.importoBollo : 0;
   return { imponibile, bolloApplicabile, bollo, nettoAPagare: imponibile };
+});
+
+const templateIdFattura = computed(() => clienteCorrente.value?.templateFatturaId || 'fattura-default');
+const datiFattura = computed(() => {
+  if (!config.value || !clienteCorrente.value || !anteprimaEffettiva.value) return null;
+  return preparaDatiFattura({
+    fornitore: config.value.fornitore,
+    cliente: clienteCorrente.value,
+    numero: fatturaGenerata.value?.numero ?? '—',
+    data: fatturaGenerata.value?.data ?? dataFattura.value,
+    descrizione: descrizioneVisualizzata.value,
+    imponibile: anteprimaEffettiva.value.imponibile,
+    bollo: anteprimaEffettiva.value.bollo,
+    bolloApplicabile: anteprimaEffettiva.value.bolloApplicabile,
+    nettoAPagare: anteprimaEffettiva.value.nettoAPagare,
+  });
 });
 
 async function caricaAnteprima() {
@@ -166,14 +182,14 @@ async function controllaSdi() {
 }
 
 async function esporta() {
-  await esportaPdf(anteprimaRef.value, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
+  await esportaPdf(anteprimaRef.value.contentDocument().body, `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
 async function inviaEmail() {
   inviandoEmail.value = true;
   esitoEmail.value = '';
   try {
-    const pdfBlob = await generaPdfBlob(anteprimaRef.value);
+    const pdfBlob = await generaPdfBlob(anteprimaRef.value.contentDocument().body);
     const nomeFile = `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
     const oggetto = `Fattura ${fatturaGenerata.value?.numero ?? ''} — ${String(mese.value).padStart(2, '0')}/${anno.value}`;
     const corpo = `Buongiorno,\n\nin allegato la fattura relativa al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
@@ -328,20 +344,8 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div style="overflow-x:auto">
-        <div ref="anteprimaRef">
-          <FatturaPrintPreview
-            :fornitore="config.fornitore"
-            :cliente="clienteCorrente"
-            :numero="fatturaGenerata?.numero ?? '—'"
-            :data="fatturaGenerata?.data ?? dataFattura"
-            :descrizione="descrizioneVisualizzata"
-            :imponibile="anteprimaEffettiva.imponibile"
-            :bollo="anteprimaEffettiva.bollo"
-            :bollo-applicabile="anteprimaEffettiva.bolloApplicabile"
-            :netto-a-pagare="anteprimaEffettiva.nettoAPagare"
-          />
-        </div>
+      <div style="min-width:0">
+        <TemplateStampa v-if="datiFattura" ref="anteprimaRef" :template-id="templateIdFattura" :dati="datiFattura" />
       </div>
     </div>
   </div>

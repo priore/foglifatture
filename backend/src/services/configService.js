@@ -112,6 +112,8 @@ const CLIENTE_VUOTO = {
   commessa: '', // campo header PDF timesheet
   clientePdf: '', // campo header PDF timesheet (etichetta "Cliente", distinta da denominazione)
   progetto: '', // campo header PDF timesheet
+  templateFatturaId: null, // null = usa il template fallback fattura-default
+  templateTimesheetId: null, // null = usa il template fallback timesheet-default
 };
 
 // Elenco clienti salvato: fonde ogni cliente coi campi di default (stesso motivo di

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "handlebars": "^4.7.9",
     "html2pdf.js": "^0.14.0",
     "vue": "^3.5.41",
     "vue-router": "^4.6.4"

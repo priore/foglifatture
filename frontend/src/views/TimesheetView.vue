@@ -1,15 +1,15 @@
 <script setup>
 // Schermata Timesheet: editor mensile + riepilogo + anteprima di stampa PDF.
 import { ref, computed, watch, onMounted } from 'vue';
-import '../assets/print-timesheet.css';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import TimesheetGrid from '../components/timesheet/TimesheetGrid.vue';
-import TimesheetPrintPreview from '../components/timesheet/TimesheetPrintPreview.vue';
+import TemplateStampa from '../components/common/TemplateStampa.vue';
 import { api } from '../services/api.js';
 import { calcolaTotaleMensile, calcolaOreGiorno, decimaleAHHmm, STATI_ASSENZA } from '../composables/useTimeCalculator.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
 import { inviaPdfEmail } from '../composables/useMailto.js';
+import { preparaDatiTimesheet } from '../composables/useTemplateData.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -30,6 +30,23 @@ const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === cl
 const totaleMensile = computed(() => calcolaTotaleMensile(giorni.value));
 const giorniLavorati = computed(() => giorni.value.filter(g => calcolaOreGiorno(g) > 0).length);
 const assenze = computed(() => giorni.value.filter(g => STATI_ASSENZA.includes(g.stato)).length);
+
+const templateIdTimesheet = computed(() => clienteCorrente.value?.templateTimesheetId || 'timesheet-default');
+const datiTimesheet = computed(() => {
+  if (!config.value || !clienteCorrente.value || !giorni.value.length) return null;
+  return preparaDatiTimesheet({
+    anno: anno.value,
+    mese: mese.value,
+    giorni: giorni.value,
+    consulente: config.value.fornitore.denominazione,
+    localita: config.value.fornitore.comune,
+    logoDataUrl: clienteCorrente.value.logoDataUrl,
+    figura: clienteCorrente.value.figura,
+    commessa: clienteCorrente.value.commessa,
+    cliente: clienteCorrente.value.clientePdf,
+    progetto: clienteCorrente.value.progetto,
+  });
+});
 
 async function caricaTimesheet() {
   if (!clienteId.value) return;
@@ -59,7 +76,7 @@ async function salvaTimesheet() {
 }
 
 async function esporta() {
-  await esportaPdf(anteprimaRef.value, `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
+  await esportaPdf(anteprimaRef.value.contentDocument().body, `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`);
 }
 
 function esportaVms() {
@@ -70,7 +87,7 @@ async function inviaEmail() {
   inviandoEmail.value = true;
   esitoEmail.value = '';
   try {
-    const pdfBlob = await generaPdfBlob(anteprimaRef.value);
+    const pdfBlob = await generaPdfBlob(anteprimaRef.value.contentDocument().body);
     const nomeFile = `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
     const oggetto = `Timesheet ${String(mese.value).padStart(2, '0')}/${anno.value}`;
     const corpo = `Buongiorno,\n\nin allegato il timesheet relativo al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
@@ -145,19 +162,8 @@ onMounted(async () => {
 
     <div class="card" v-if="config && clienteCorrente && giorni.length">
       <div class="card-head"><h2>Anteprima stampa PDF</h2><span class="badge-mono">replica foglio Excel aziendale</span></div>
-      <div class="card-body" style="overflow-x:auto">
-        <div ref="anteprimaRef">
-          <TimesheetPrintPreview
-            :anno="anno" :mese="mese" :giorni="giorni"
-            :consulente="config.fornitore.denominazione"
-            :localita="config.fornitore.comune"
-            :logo-data-url="clienteCorrente.logoDataUrl"
-            :figura="clienteCorrente.figura"
-            :commessa="clienteCorrente.commessa"
-            :cliente="clienteCorrente.clientePdf"
-            :progetto="clienteCorrente.progetto"
-          />
-        </div>
+      <div class="card-body" style="min-width:0">
+        <TemplateStampa v-if="datiTimesheet" ref="anteprimaRef" :template-id="templateIdTimesheet" :dati="datiTimesheet" />
       </div>
     </div>
   </div>

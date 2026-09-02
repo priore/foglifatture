@@ -151,6 +151,10 @@ export const api = {
   // Widget dashboard: fatture non incassate, prossime scadenze fiscali
   fattureAperte: () => richiesta('/forfettario/fatture-aperte'),
   scadenzeFiscali: () => richiesta('/forfettario/scadenze-fiscali'),
+
+  // Template di stampa (fattura/timesheet)
+  listTemplates: (tipo) => richiesta(`/templates${tipo ? `?tipo=${tipo}` : ''}`),
+  getTemplate: (id) => richiesta(`/templates/${id}`),
 };
 
 export const updateApi = {
