@@ -86,8 +86,8 @@ async function riavvia() {
         <input type="password" v-model="clientSecret" :placeholder="secretGiaImpostato ? '••••••••' : ''">
       </div>
       <div class="field full">
-        <label>Email autorizzata all'accesso</label>
-        <input v-model="allowedEmail" type="email" placeholder="tuonome@gmail.com">
+        <label>Email autorizzate all'accesso (separate da virgola)</label>
+        <input v-model="allowedEmail" type="email" multiple placeholder="tuonome@gmail.com, altro@gmail.com">
       </div>
     </div>
 

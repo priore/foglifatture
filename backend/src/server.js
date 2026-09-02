@@ -45,7 +45,7 @@ app.use(session({
   saveUninitialized: false,
 }));
 
-configuraPassport();
+await configuraPassport();
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -80,7 +80,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, async () => {
   logger.info(`Server avviato su http://localhost:${PORT}`);
-  logger.info(`Autenticazione Google: ${isAuthConfigurato() ? 'attiva' : 'disattivata (configurala in .env)'}`);
+  logger.info(`Autenticazione Google: ${await isAuthConfigurato() ? 'attiva' : 'disattivata (configurala in Impostazioni)'}`);
 
   await applicaPercorsoDatiAllAvvio();
   const config = await getConfig();

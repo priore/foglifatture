@@ -1,11 +1,19 @@
 // Lettura/scrittura mirata delle sole variabili OAuth nel file .env, per poterle
 // gestire da Impostazioni invece di dover editare il file a mano. Le credenziali
 // richiedono un riavvio del server per essere applicate (passport si configura all'avvio).
+// I segreti veri (client secret OAuth, Gemini API key) non finiscono mai nel file .env:
+// risiedono nel Keychain OS (keytar), stesso servizio già usato da configService per le
+// password PEC/backup. GOOGLE_CLIENT_ID/ALLOWED_EMAIL/GEMINI_MODEL non sono segreti
+// (identificatori, non credenziali) e restano in .env.
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import keytar from 'keytar';
 
 const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
-const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ALLOWED_EMAIL', 'GEMINI_API_KEY', 'GEMINI_MODEL'];
+const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL'];
+const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
+const KEYTAR_ACCOUNT_GOOGLE_SECRET = 'oauth.googleClientSecret';
+const KEYTAR_ACCOUNT_GEMINI_KEY = 'gemini.apiKey';
 
 function parseEnv(contenuto) {
   const righe = contenuto.split('\n');
@@ -20,12 +28,16 @@ function parseEnv(contenuto) {
 export async function leggiCredenzialiOAuth() {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { valori } = parseEnv(contenuto);
+  const [googleClientSecret, geminiApiKey] = await Promise.all([
+    keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET),
+    keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GEMINI_KEY),
+  ]);
   return {
     googleClientId: valori.GOOGLE_CLIENT_ID || '',
     // Il secret non viene mai restituito al frontend: solo se è impostato o meno.
-    googleClientSecretImpostato: Boolean(valori.GOOGLE_CLIENT_SECRET),
+    googleClientSecretImpostato: Boolean(googleClientSecret),
     allowedEmail: valori.ALLOWED_EMAIL || '',
-    geminiApiKeyImpostata: Boolean(valori.GEMINI_API_KEY),
+    geminiApiKeyImpostata: Boolean(geminiApiKey),
     geminiModello: valori.GEMINI_MODEL || '',
   };
 }
@@ -40,9 +52,10 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   // solo quanto presente nel payload, il resto resta invariato.
   if (googleClientId !== undefined) nuoviValori.GOOGLE_CLIENT_ID = googleClientId;
   if (allowedEmail !== undefined) nuoviValori.ALLOWED_EMAIL = allowedEmail;
-  // Il secret/la key si aggiornano solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare).
-  if (googleClientSecret) nuoviValori.GOOGLE_CLIENT_SECRET = googleClientSecret;
-  if (geminiApiKey) nuoviValori.GEMINI_API_KEY = geminiApiKey;
+  // Il secret/la key si aggiornano solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare),
+  // e vanno nel Keychain, mai nel file .env.
+  if (googleClientSecret) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET, googleClientSecret);
+  if (geminiApiKey) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GEMINI_KEY, geminiApiKey);
 
   const righeAggiornate = [];
   const chiaviScritte = new Set();
@@ -62,10 +75,14 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
 }
 
-// Letta a parte (non da process.env) così la key vale subito dopo il salvataggio, senza riavviare il server.
+// Letta dal Keychain (non da process.env) così la key vale subito dopo il salvataggio, senza riavviare il server.
 export async function leggiGeminiApiKey() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
-  return parseEnv(contenuto).valori.GEMINI_API_KEY || '';
+  return (await keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GEMINI_KEY)) || '';
+}
+
+// Usata da auth.js per configurare passport all'avvio (il secret non è mai in process.env).
+export async function leggiGoogleClientSecret() {
+  return (await keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET)) || '';
 }
 
 // Modello Gemini valido scoperto/verificato l'ultima volta (vedi geminiAtecoService):

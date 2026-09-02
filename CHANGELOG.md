@@ -11,6 +11,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia (10 template disponibili, tra cui i due "As-Is" identici al layout precedente). Scelta del template salvata subito, senza dover premere "Avanti".
 
 ### Changed
+- Sicurezza: il client secret Google OAuth e la API key Gemini non vengono più salvati nel file `.env` in chiaro, ma nel Keychain del sistema operativo (come già avveniva per le password PEC e backup).
+- Login Google: è ora possibile autorizzare più email separate da virgola, non solo una sola.
 - Ping automatico ricevute SDI: ora avviene solo se c'è una fattura inviata di recente ancora senza risposta (finestra 72h dall'ultimo invio), invece di interrogare sempre la PEC a intervalli fissi.
 - "Importa storico" spostata dal menu principale a sotto-voce di Impostazioni (tra "Percorso dati" e "Backup").
 - "Pagamenti fatture" spostata da voce di menu principale a sotto-sezione di "Importa storico" (tra "Fattura da XML" ed "Esporta backup").

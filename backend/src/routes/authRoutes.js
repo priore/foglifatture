@@ -4,21 +4,22 @@ import { isAuthConfigurato } from '../lib/auth.js';
 
 export const authRoutes = Router();
 
-authRoutes.get('/stato', (req, res) => {
+authRoutes.get('/stato', async (req, res) => {
+  const attiva = await isAuthConfigurato();
   res.json({
-    autenticazioneAttiva: isAuthConfigurato(),
-    autenticato: isAuthConfigurato() ? Boolean(req.isAuthenticated?.()) : true,
+    autenticazioneAttiva: attiva,
+    autenticato: attiva ? Boolean(req.isAuthenticated?.()) : true,
     utente: req.user ?? null,
   });
 });
 
-authRoutes.get('/google', (req, res, next) => {
-  if (!isAuthConfigurato()) return res.redirect('/');
+authRoutes.get('/google', async (req, res, next) => {
+  if (!(await isAuthConfigurato())) return res.redirect('/');
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
 
-authRoutes.get('/google/callback', (req, res, next) => {
-  if (!isAuthConfigurato()) return res.redirect('/');
+authRoutes.get('/google/callback', async (req, res, next) => {
+  if (!(await isAuthConfigurato())) return res.redirect('/');
   passport.authenticate('google', {
     successRedirect: '/',
     failureRedirect: '/?errore=email-non-autorizzata',

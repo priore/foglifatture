@@ -6,7 +6,7 @@ export const oauthConfigRoutes = Router();
 
 oauthConfigRoutes.get('/', async (req, res) => {
   const credenziali = await leggiCredenzialiOAuth();
-  res.json({ ...credenziali, autenticazioneAttiva: isAuthConfigurato() });
+  res.json({ ...credenziali, autenticazioneAttiva: await isAuthConfigurato() });
 });
 
 oauthConfigRoutes.put('/', async (req, res) => {

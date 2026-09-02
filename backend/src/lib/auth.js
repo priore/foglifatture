@@ -4,24 +4,30 @@
 // la primissima volta e inserire le credenziali senza restare fuori dall'app.
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { leggiGoogleClientSecret } from '../services/envService.js';
 
-export function isAuthConfigurato() {
-  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+// Il client secret vive nel Keychain (keytar), non in process.env: la verifica e la
+// configurazione di passport devono quindi essere async.
+export async function isAuthConfigurato() {
+  const secret = await leggiGoogleClientSecret();
+  return Boolean(process.env.GOOGLE_CLIENT_ID && secret);
 }
 
-export function configuraPassport() {
-  if (!isAuthConfigurato()) return;
+export async function configuraPassport() {
+  const secret = await leggiGoogleClientSecret();
+  if (!process.env.GOOGLE_CLIENT_ID || !secret) return;
 
   passport.use(new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientSecret: secret,
       callbackURL: `/auth/google/callback`,
     },
     (accessToken, refreshToken, profile, done) => {
       const email = profile.emails?.[0]?.value;
-      const emailAutorizzata = process.env.ALLOWED_EMAIL;
-      if (emailAutorizzata && email === emailAutorizzata) {
+      // Whitelist multi-email: ALLOWED_EMAIL può contenere più indirizzi separati da virgola.
+      const emailAutorizzate = (process.env.ALLOWED_EMAIL || '').split(',').map((e) => e.trim()).filter(Boolean);
+      if (email && emailAutorizzate.includes(email)) {
         return done(null, { email, nome: profile.displayName });
       }
       return done(null, false, { message: 'Email non autorizzata' });
@@ -33,8 +39,8 @@ export function configuraPassport() {
 }
 
 // Middleware che protegge le route API: lascia passare tutto se l'auth non è configurata.
-export function richiedeAutenticazione(req, res, next) {
-  if (!isAuthConfigurato()) return next();
+export async function richiedeAutenticazione(req, res, next) {
+  if (!(await isAuthConfigurato())) return next();
   if (req.isAuthenticated?.()) return next();
   return res.status(401).json({ errore: 'Non autenticato' });
 }
