@@ -21,6 +21,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard forfettario: grafici a torta "Composizione compenso" e "Soglia forfettario" mostrano anche l'importo in euro accanto alla percentuale, non solo la percentuale.
 
 ### Fixed
+- Dashboard: se il recupero delle scadenze fiscali fallisce per quota Gemini esaurita, ora si ritenta dopo un'ora invece di aspettare 90 giorni (ogni apertura della dashboard ririchiamava comunque Gemini fino a un nuovo errore).
 - Esportazione PDF Timesheet/Fattura: rimossa una seconda pagina bianca generata inutilmente nell'export.
 - Timesheet: con un mese pieno (31 giorni) il riepilogo non sconfina più su una seconda pagina.
 - Notifiche desktop (promemoria ore, esiti SDI, backup): su Windows/Linux non tentano più di lanciare un comando macOS-only, evitando errori silenziosi nei log.

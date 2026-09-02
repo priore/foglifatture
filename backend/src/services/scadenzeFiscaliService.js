@@ -10,6 +10,7 @@ import { leggiGeminiApiKey, leggiGeminiModello } from './envService.js';
 const FILE = 'scadenzeFiscali.json';
 const MODELLO_DEFAULT = 'gemini-2.0-flash';
 const GIORNI_VALIDITA_CACHE = 90;
+const ORE_RETRY_DOPO_ERRORE = 1;
 
 const PROMPT = `Elenca le scadenze fiscali ${new Date().getFullYear()} per un libero professionista italiano in
 regime forfettario (persona fisica, partita IVA, no dipendenti): versamento imposta sostitutiva
@@ -31,6 +32,12 @@ function cacheValida(cache) {
   if (!cache?.aggiornatoIl || !Array.isArray(cache.scadenze)) return false;
   const giorni = (Date.now() - new Date(cache.aggiornatoIl).getTime()) / 86_400_000;
   return giorni < GIORNI_VALIDITA_CACHE;
+}
+
+function ritentareDopoErrore(cache) {
+  if (!cache?.ultimoErroreIl) return true;
+  const ore = (Date.now() - new Date(cache.ultimoErroreIl).getTime()) / 3_600_000;
+  return ore >= ORE_RETRY_DOPO_ERRORE;
 }
 
 async function interrogaGemini() {
@@ -69,12 +76,15 @@ async function interrogaGemini() {
 // (meglio date vecchie che nessuna scadenza mostrata in dashboard).
 export async function prossimeScadenzeFiscali() {
   let cache = await readJson(FILE, null);
-  if (!cacheValida(cache)) {
+  if (!cacheValida(cache) && ritentareDopoErrore(cache)) {
     try {
       const scadenze = await interrogaGemini();
       cache = { aggiornatoIl: new Date().toISOString(), scadenze };
       await writeJson(FILE, cache);
     } catch (err) {
+      // Non ririchiamare Gemini a ogni apertura dashboard mentre la quota è esaurita:
+      // riprova dopo un'ora, non aspetta i 90g di validità della cache dati.
+      await writeJson(FILE, { ...cache, ultimoErroreIl: new Date().toISOString() });
       if (!cache) throw err;
     }
   }
