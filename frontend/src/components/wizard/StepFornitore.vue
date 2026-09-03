@@ -133,17 +133,17 @@ function selezionaCodice(c) {
 <style scoped>
 .btn-icon {
   border: 1px solid var(--line); background: var(--card); color: var(--ink);
-  border-radius: 6px; width: 24px; height: 24px; line-height: 1; cursor: pointer;
+  border-radius: var(--radius-sm); width: 24px; height: 24px; line-height: 1; cursor: pointer;
   font-size: .95rem;
 }
 .btn-icon:disabled { opacity: .5; cursor: default; }
 .ateco-risultati {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
-  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md);
   max-height: 260px; overflow-y: auto; list-style: none; margin: 4px 0 0; padding: 4px;
   box-shadow: var(--shadow);
 }
-.ateco-risultati li { padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: .85rem; color: var(--ink); }
+.ateco-risultati li { padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: .85rem; color: var(--ink); }
 .ateco-risultati li:hover { background: var(--ground); }
 .ateco-settore { display: block; font-size: .74rem; color: var(--muted); margin-top: 2px; }
 </style>
