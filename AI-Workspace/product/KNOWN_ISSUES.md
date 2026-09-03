@@ -8,10 +8,6 @@ Observed gaps and inconsistencies. Documentation only — nothing here is fixed 
 
 🟢 `frontend/src/components/wizard/StepCliente.vue` (singular, single-client form) is never imported anywhere in the app — superseded by `StepClienti.vue` (plural, multi-client list) but never deleted. See `COMPONENT_LIBRARY.md`.
 
-## Unused `cors` dependency
-
-🟢 `cors` is listed in `backend/package.json` but `cors()` middleware is never applied in `server.js`. The app is same-origin by design (Express serves the built frontend itself), making it currently unnecessary. See `ARCHITECTURE.md`.
-
 ## Minimal accessibility coverage
 
 🟢 Only 2 `alt=` attributes exist across the entire frontend; no `aria-*` or explicit `role=` attributes anywhere. All interactivity relies on native HTML semantics. Not a defect per se, but a gap if accessibility compliance becomes a requirement. See `UI_ANALYSIS.md`.
