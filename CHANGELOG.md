@@ -9,10 +9,12 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 ### Added
 - Dashboard: pulsante "Aggiornamento disponibile" (visibile solo se c'è una nuova release), con popup di dettaglio versione/changelog e aggiornamento automatico (download, build, riavvio) con un click. Versione app corrente mostrata a piè di pagina.
 - Template di stampa personalizzabili per Timesheet e Fattura Pro-Forma: selezione per singolo cliente in Impostazioni → Clienti, con anteprima a griglia (10 template disponibili, tra cui i due "As-Is" identici al layout precedente). Scelta del template salvata subito, senza dover premere "Avanti".
-- Riconoscimento colonne CSV pagamenti: se la quota gratuita Gemini è esaurita, tenta automaticamente un fallback su Groq (se configurato in Impostazioni → AI → Groq AI) prima di segnalare l'errore.
+- Riconoscimento colonne CSV pagamenti: se la quota gratuita Gemini è esaurita, tenta automaticamente un fallback in cascata su Claude poi Groq (se configurati in Impostazioni → AI) invece di segnalare subito l'errore.
+- Prossime scadenze fiscali in dashboard: se la quota gratuita Gemini è esaurita, tenta automaticamente un fallback su Claude con ricerca web (se configurato in Impostazioni → AI → Claude AI) invece di aspettare il reset giornaliero — nessun fallback senza ricerca web per queste date, per evitare stime non verificate su dati fiscali critici.
 
 ### Changed
-- Impostazioni: voce "Gemini" rinominata in "AI", con due sotto-schede Gemini AI e Groq AI.
+- Dashboard: le scadenze fiscali (imposta sostitutiva, INPS) ora sono sempre calcolate con le date ordinarie, senza dover attendere Gemini/Claude né mostrare errore se non configurati o con quota esaurita; Gemini/Claude vengono comunque interrogati una volta l'anno solo per rilevare eventuali proroghe o importi INPS aggiornati.
+- Impostazioni: voce "Gemini" rinominata in "AI", con tre sotto-schede Gemini AI, Claude AI e Groq AI.
 - Dashboard: quando le scadenze fiscali non sono aggiornabili per quota Gemini esaurita, viene mostrato il tempo mancante al prossimo tentativo automatico, che riparte da solo alla scadenza senza bisogno di ricaricare la pagina.
 - Sicurezza: il client secret Google OAuth e la API key Gemini non vengono più salvati nel file `.env` in chiaro, ma nel Keychain del sistema operativo (come già avveniva per le password PEC e backup).
 - Sicurezza: aggiornata la libreria di lettura file Excel per l'import storico, risolvendo due vulnerabilità note (denial of service e prototype pollution) senza cambiare il formato supportato (.xls/.xlsx).
@@ -28,7 +30,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard forfettario: grafici a torta "Composizione compenso" e "Soglia forfettario" mostrano anche l'importo in euro accanto alla percentuale, non solo la percentuale.
 
 ### Fixed
-- Dashboard: se il recupero delle scadenze fiscali fallisce per quota Gemini esaurita, ora si ritenta dopo un'ora invece di aspettare 90 giorni (ogni apertura della dashboard ririchiamava comunque Gemini fino a un nuovo errore).
+- Dashboard: se il recupero delle scadenze fiscali fallisce per quota Gemini esaurita, il tentativo automatico ora riparte al reset giornaliero reale della quota (mezzanotte Pacific) invece che dopo un'ora fissa, che restava bloccata sullo stesso errore fino al giorno dopo.
 - Esportazione PDF Timesheet/Fattura: rimossa una seconda pagina bianca generata inutilmente nell'export.
 - Timesheet: con un mese pieno (31 giorni) il riepilogo non sconfina più su una seconda pagina.
 - Notifiche desktop (promemoria ore, esiti SDI, backup): su Windows/Linux non tentano più di lanciare un comando macOS-only, evitando errori silenziosi nei log.

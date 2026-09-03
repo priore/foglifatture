@@ -1,7 +1,7 @@
 <script setup>
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta,
 // grafico a torta stile Flat-Tax (netto / imposta / margine residuo alla soglia).
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
@@ -36,7 +36,7 @@ async function eseguiAggiornamento() {
 
 const fattureAperte = ref([]);
 const scadenzeFiscali = ref([]);
-const erroreScadenzeFiscali = ref('');
+const fonteScadenzeFiscali = ref('base');
 
 async function carica() {
   errore.value = '';
@@ -51,52 +51,18 @@ async function caricaFattureAperte() {
   fattureAperte.value = await api.fattureAperte().catch(() => []);
 }
 
-const prossimoRetryScadenzeFiscali = ref(null);
-let timerRetryScadenzeFiscali = null;
-
-function pianificaRetryScadenzeFiscali(prossimoRetryIl) {
-  clearTimeout(timerRetryScadenzeFiscali);
-  prossimoRetryScadenzeFiscali.value = prossimoRetryIl ?? null;
-  if (!prossimoRetryIl) return;
-  const attesa = new Date(prossimoRetryIl).getTime() - Date.now();
-  timerRetryScadenzeFiscali = setTimeout(caricaScadenzeFiscali, Math.max(attesa, 0) + 1000);
-}
-
 async function caricaScadenzeFiscali() {
-  erroreScadenzeFiscali.value = '';
-  try {
-    const risposta = await api.scadenzeFiscali();
-    scadenzeFiscali.value = risposta?.scadenze ?? [];
-    pianificaRetryScadenzeFiscali(risposta?.prossimoRetryIl);
-  } catch (err) {
-    scadenzeFiscali.value = [];
-    erroreScadenzeFiscali.value = err.message;
-    pianificaRetryScadenzeFiscali(err.prossimoRetryIl);
-  }
+  const risposta = await api.scadenzeFiscali().catch(() => null);
+  scadenzeFiscali.value = risposta?.scadenze ?? [];
+  fonteScadenzeFiscali.value = risposta?.fonte ?? 'base';
 }
-
-const oraCorrente = ref(Date.now());
-let timerOraCorrente = null;
 
 onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
-  timerOraCorrente = setInterval(() => { oraCorrente.value = Date.now(); }, 30_000);
-});
-onUnmounted(() => {
-  clearTimeout(timerRetryScadenzeFiscali);
-  clearInterval(timerOraCorrente);
 });
 watch(annoSelezionato, carica);
-
-const tempoAlRetryScadenzeFiscali = computed(() => {
-  if (!prossimoRetryScadenzeFiscali.value) return '';
-  const msRimanenti = new Date(prossimoRetryScadenzeFiscali.value).getTime() - oraCorrente.value;
-  if (msRimanenti <= 0) return '';
-  const minuti = Math.ceil(msRimanenti / 60_000);
-  return minuti < 60 ? `${minuti} min` : `${Math.floor(minuti / 60)}h ${minuti % 60}min`;
-});
 
 const barreRicaviMensili = computed(() => {
   if (!dashboard.value) return [];
@@ -110,6 +76,25 @@ const barreRicaviMensili = computed(() => {
 function formattaData(valore) {
   return new Date(valore).toLocaleDateString('it-IT');
 }
+
+function formattaGiorno(valoreIso) {
+  return Number(valoreIso.slice(8, 10));
+}
+
+function formattaMeseBreve(valoreIso) {
+  return MESI_BREVI[Number(valoreIso.slice(5, 7)) - 1];
+}
+
+function scadenzaPassata(valoreIso) {
+  return valoreIso < oggiIso;
+}
+
+const scadenzeOrdinate = computed(() => [...scadenzeFiscali.value].sort((a, b) => b.data.localeCompare(a.data)));
+
+const prossimaScadenzaData = computed(() => {
+  const future = scadenzeFiscali.value.map((s) => s.data).filter((d) => d >= oggiIso);
+  return future.length ? future.reduce((min, d) => (d < min ? d : min)) : null;
+});
 
 const oggiIso = new Date().toISOString().slice(0, 10);
 function fatturaScaduta(f) {
@@ -239,19 +224,30 @@ function esportaCommercialista() {
       </div>
 
       <div class="card" style="margin-top:20px">
-        <div class="card-head"><h2>Prossime scadenze fiscali</h2></div>
+        <div class="card-head">
+          <h2>Scadenze fiscali</h2>
+          <span v-if="fonteScadenzeFiscali !== 'base'" class="badge-fonte" :title="`Proroghe/importi verificati via ${fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini'} con ricerca web`">verificato via {{ fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini' }}</span>
+        </div>
         <div class="card-body">
-          <p v-if="erroreScadenzeFiscali" class="note-legal">
-            Impossibile recuperare le scadenze fiscali: {{ erroreScadenzeFiscali }}
-            <template v-if="tempoAlRetryScadenzeFiscali"><br>Nuovo tentativo automatico tra {{ tempoAlRetryScadenzeFiscali }}.</template>
-          </p>
-          <p v-else-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota nei prossimi mesi.</p>
-          <ul v-else class="lista-piatta">
-            <li v-for="s in scadenzeFiscali" :key="`${s.data}-${s.tipo}`">
-              <span>{{ formattaData(s.data) }} — {{ s.tipo }}<br><small class="note-legal">{{ s.descrizione }}</small></span>
+          <p v-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota.</p>
+          <ul v-else class="lista-scadenze">
+            <li
+              v-for="s in scadenzeOrdinate" :key="`${s.data}-${s.tipo}`"
+              :class="{ passata: scadenzaPassata(s.data), prossima: s.data === prossimaScadenzaData }"
+            >
+              <div class="data-badge">
+                <span class="data-badge-giorno">{{ formattaGiorno(s.data) }}</span>
+                <span class="data-badge-mese">{{ formattaMeseBreve(s.data) }}</span>
+              </div>
+              <div class="scadenza-testo">
+                <span class="scadenza-tipo">{{ s.tipo }}<span v-if="s.prorogata" class="badge-fonte" style="margin-left:6px">prorogata</span></span>
+                <span class="scadenza-descrizione">{{ s.descrizione }}</span>
+              </div>
+              <strong v-if="s.importo != null">{{ formattaEuro(s.importo) }}</strong>
+              <span v-if="s.data === prossimaScadenzaData" class="badge-prossima">prossima</span>
             </li>
           </ul>
-          <p v-if="!erroreScadenzeFiscali && tempoAlRetryScadenzeFiscali" class="nota-piede">Date non aggiornabili (quota Gemini esaurita): nuovo tentativo automatico tra {{ tempoAlRetryScadenzeFiscali }}.</p>
+          <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
         </div>
       </div>
     </template>
@@ -277,6 +273,23 @@ function esportaCommercialista() {
 .lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .lista-piatta li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
 .nota-piede { margin-top: 10px; font-size: .68rem; color: var(--muted); }
+
+.lista-scadenze { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.lista-scadenze li { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 10px; background: var(--ground); border: 1px solid var(--line); transition: border-color .15s; }
+.lista-scadenze li:hover { border-color: var(--accent); }
+.lista-scadenze li.passata { opacity: .55; }
+.lista-scadenze li.prossima { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--ground)); }
+.data-badge { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 0; border-radius: 8px; background: var(--card); border: 1px solid var(--line); line-height: 1.1; }
+.lista-scadenze li.prossima .data-badge { background: var(--accent); border-color: var(--accent); }
+.lista-scadenze li.prossima .data-badge-giorno { color: var(--card); }
+.lista-scadenze li.prossima .data-badge-mese { color: var(--card); opacity: .85; }
+.data-badge-giorno { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+.data-badge-mese { font-size: .62rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
+.scadenza-testo { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.scadenza-tipo { font-size: .86rem; font-weight: 600; color: var(--ink); }
+.scadenza-descrizione { font-size: .76rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge-prossima { flex: none; font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius-pill); padding: 3px 9px; }
+.badge-fonte { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px 9px; cursor: help; }
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }

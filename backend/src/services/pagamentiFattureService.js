@@ -1,19 +1,24 @@
 // Riconoscimento data di incasso fatture da un CSV esportato dall'home banking. Ogni banca
 // ha intestazioni colonna diverse: invece di un profilo per banca, si invia a Gemini (con
-// fallback automatico su Groq se la quota Gemini è esaurita) SOLO l'elenco dei nomi colonna
-// (mai righe/importi/causali reali) per farsi dire quali indici contengono data/importo/
-// descrizione, poi il file viene parsato in locale col mapping ottenuto. Il mapping è salvato
-// su disco per intestazione (vedi createHash su nomi colonna normalizzati): stesso export
-// banca → stesso mapping riusato, AI richiamata solo se l'elenco colonne non è mai stato
-// visto prima (vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md).
+// fallback automatico in cascata su Claude poi Groq se la quota Gemini è esaurita) SOLO
+// l'elenco dei nomi colonna (mai righe/importi/causali reali) per farsi dire quali indici
+// contengono data/importo/descrizione, poi il file viene parsato in locale col mapping ottenuto.
+// Il mapping è salvato su disco per intestazione (vedi createHash su nomi colonna normalizzati):
+// stesso export banca → stesso mapping riusato, AI richiamata solo se l'elenco colonne non è
+// mai stato visto prima (vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md).
 import { createHash } from 'node:crypto';
 import { readJson, writeJson } from '../lib/jsonStore.js';
-import { leggiGeminiApiKey, leggiGeminiModello, leggiGroqApiKey, leggiGroqModello, salvaGroqModello } from './envService.js';
+import {
+  leggiGeminiApiKey, leggiGeminiModello,
+  leggiGroqApiKey, leggiGroqModello, salvaGroqModello,
+  leggiClaudeApiKey, leggiClaudeModello, salvaClaudeModello, leggiClaudeWorkspaceId,
+} from './envService.js';
 import { listMesiFatturati, getInvoice, saveInvoice } from './invoiceService.js';
 
 const FILE_MAPPING = 'pagamentiMappingColonne.json';
 const MODELLO_DEFAULT = 'gemini-2.0-flash';
-const MODELLO_GROQ_DEFAULT = 'llama-3.3-70b-versatile';
+const MODELLO_GROQ_DEFAULT = 'openai/gpt-oss-20b';
+const MODELLO_CLAUDE_DEFAULT = 'claude-haiku-4-5';
 
 function firmaIntestazioni(intestazioni) {
   const normalizzate = intestazioni.map((i) => String(i).trim().toLowerCase()).join('|');
@@ -58,6 +63,17 @@ Rispondi SOLO con un oggetto JSON valido (nessun testo, nessun markdown), uno di
 {"colonnaData": 0, "colonnaEntrate": 3, "colonnaDescrizione": 4}`;
 }
 
+// Le API Gemini/Claude/Groq restituiscono errori come JSON ({error:{message:"..."}})
+// o varianti simili: estrae solo il messaggio leggibile invece di mostrare il JSON grezzo.
+function estraiMessaggioErrore(testoErrore) {
+  try {
+    const dati = JSON.parse(testoErrore);
+    return dati.error?.message || testoErrore;
+  } catch {
+    return testoErrore;
+  }
+}
+
 function estraiEValidaMapping(testo, fonte) {
   const inizio = testo.indexOf('{');
   const fine = testo.lastIndexOf('}');
@@ -98,9 +114,40 @@ async function chiediMappingAGemini(intestazioni) {
   return estraiEValidaMapping(testo, 'Gemini');
 }
 
-// Fallback quando la quota gratuita Gemini è esaurita: stesso compito (solo nomi colonna
-// in input, nessun dato bancario reale), via Groq (REST OpenAI-compatible, free tier più
-// ampio di Gemini e senza vincolo di uso non commerciale).
+// Secondo fallback (dopo Gemini) quando la quota gratuita Gemini è esaurita: stesso compito
+// (solo nomi colonna in input, nessun dato bancario reale), via Claude — più affidabile di Groq.
+async function chiediMappingAClaude(intestazioni) {
+  const apiKey = await leggiClaudeApiKey();
+  if (!apiKey) throw new Error('Quota Gemini esaurita e CLAUDE_API_KEY non configurata (Impostazioni → AI → Claude AI) per il fallback.');
+  const modello = (await leggiClaudeModello()) || MODELLO_CLAUDE_DEFAULT;
+  const workspaceId = await leggiClaudeWorkspaceId();
+
+  const risposta = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {}),
+    },
+    body: JSON.stringify({
+      model: modello,
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: promptMapping(intestazioni) }],
+    }),
+  });
+  if (!risposta.ok) {
+    throw new Error(`Claude: ${estraiMessaggioErrore(await risposta.text())}`);
+  }
+
+  const dati = await risposta.json();
+  const testo = dati.content?.find((b) => b.type === 'text')?.text || '';
+  return estraiEValidaMapping(testo, 'Claude');
+}
+
+// Ultimo fallback (dopo Gemini e Claude) quando la quota gratuita Gemini è esaurita: stesso
+// compito (solo nomi colonna in input, nessun dato bancario reale), via Groq (REST
+// OpenAI-compatible, free tier più ampio di Gemini e senza vincolo di uso non commerciale).
 async function chiediMappingAGroq(intestazioni) {
   const apiKey = await leggiGroqApiKey();
   if (!apiKey) throw new Error('Quota Gemini esaurita e GROQ_API_KEY non configurata (Impostazioni → AI → Groq AI) per il fallback.');
@@ -111,11 +158,12 @@ async function chiediMappingAGroq(intestazioni) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: modello,
+      reasoning_effort: 'low',
       messages: [{ role: 'user', content: promptMapping(intestazioni) }],
     }),
   });
   if (!risposta.ok) {
-    throw new Error(`Groq API ha risposto ${risposta.status}: ${await risposta.text()}`);
+    throw new Error(`Groq: ${estraiMessaggioErrore(await risposta.text())}`);
   }
 
   const dati = await risposta.json();
@@ -142,8 +190,27 @@ export async function verificaESalvaModelloGroq(modello) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({ model: modello, messages: [{ role: 'user', content: 'Rispondi solo con: OK' }] }),
   });
-  if (!risposta.ok) throw new Error(`Verifica fallita: Groq API ha risposto ${risposta.status}: ${await risposta.text()}`);
+  if (!risposta.ok) throw new Error(`Verifica fallita: ${estraiMessaggioErrore(await risposta.text())}`);
   await salvaGroqModello(modello);
+}
+
+// Verifica il modello Claude scelto dall'utente con una chiamata reale, e lo salva solo se funziona.
+export async function verificaESalvaModelloClaude(modello) {
+  const apiKey = await leggiClaudeApiKey();
+  if (!apiKey) throw new Error('CLAUDE_API_KEY non configurata (Impostazioni → AI → Claude AI)');
+  const workspaceId = await leggiClaudeWorkspaceId();
+  const risposta = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {}),
+    },
+    body: JSON.stringify({ model: modello, max_tokens: 16, messages: [{ role: 'user', content: 'Rispondi solo con: OK' }] }),
+  });
+  if (!risposta.ok) throw new Error(`Verifica fallita: ${estraiMessaggioErrore(await risposta.text())}`);
+  await salvaClaudeModello(modello);
 }
 
 async function chiediMapping(intestazioni) {
@@ -152,10 +219,14 @@ async function chiediMapping(intestazioni) {
   } catch (err) {
     if (!err.quotaEsaurita) throw err;
     try {
-      return await chiediMappingAGroq(intestazioni);
-    } catch (erroreGroq) {
-      const orario = prossimoResetQuotaGemini().toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
-      throw new Error(`Quota Gemini esaurita e fallback Groq non disponibile (${erroreGroq.message}). Riprova manualmente dopo le ${orario}, quando la quota Gemini si rinnova.`);
+      return await chiediMappingAClaude(intestazioni);
+    } catch {
+      try {
+        return await chiediMappingAGroq(intestazioni);
+      } catch (erroreGroq) {
+        const orario = prossimoResetQuotaGemini().toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+        throw new Error(`Quota Gemini esaurita e fallback Claude/Groq non disponibili (${erroreGroq.message}). Riprova manualmente dopo le ${orario}, quando la quota Gemini si rinnova.`);
+      }
     }
   }
 }

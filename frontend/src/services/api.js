@@ -128,6 +128,7 @@ export const api = {
   modelliGemini: () => richiesta('/forfettario/gemini/modelli'),
   verificaModelloGemini: (modello) => richiesta('/forfettario/gemini/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
   verificaModelloGroq: (modello) => richiesta('/forfettario/groq/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
+  verificaModelloClaude: (modello) => richiesta('/forfettario/claude/modelli/verifica', { method: 'POST', body: JSON.stringify({ modello }) }),
 
   // Versamenti F24 effettivi (imposta sostitutiva, INPS), inseriti a mano
   versamentiF24: (anno) => richiesta(`/forfettario/versamenti${anno ? `?anno=${anno}` : ''}`),
