@@ -32,7 +32,7 @@ function rimuovi() {
   <div class="field">
     <label>{{ etichetta }}</label>
     <div style="display:flex;align-items:center;gap:12px">
-      <img v-if="modelValue" :src="modelValue" alt="Logo" style="height:48px;max-width:120px;object-fit:contain;border:1px solid var(--line);border-radius:6px;padding:4px;background:var(--card)">
+      <img v-if="modelValue" :src="modelValue" alt="Logo" class="logo-preview">
       <span v-else class="badge-mono">Nessun logo</span>
       <FileDrop
         accept="image/png,image/jpeg,image/svg+xml"
@@ -44,3 +44,10 @@ function rimuovi() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.logo-preview {
+  height: 48px; max-width: 120px; object-fit: contain;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px; background: var(--card);
+}
+</style>
