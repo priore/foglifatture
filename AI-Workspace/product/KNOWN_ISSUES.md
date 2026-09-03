@@ -8,10 +8,6 @@ Observed gaps and inconsistencies. Documentation only — nothing here is fixed 
 
 🟢 Only 2 `alt=` attributes exist across the entire frontend; no `aria-*` or explicit `role=` attributes anywhere. All interactivity relies on native HTML semantics. Not a defect per se, but a gap if accessibility compliance becomes a requirement. See `UI_ANALYSIS.md`.
 
-## Session store is in-memory (unscaled, acceptable for stated use)
-
-🟡 `express-session` has no explicit store configured, defaulting to `MemoryStore`. Not production-safe for multi-instance deployments, but consistent with the app's single-machine, single-operator deployment shape — flagged for awareness only, not as a defect given current scope.
-
 ## No formal design-token scale for spacing/radius/font-size
 
 🟡 Colors and shadows are tokenized as CSS custom properties; spacing, border-radius, and font sizes are hardcoded per rule with no `--space-*`/`--radius-*`/`--font-size-*` scale. See `DESIGN_TOKENS.md`.
