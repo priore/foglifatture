@@ -4,10 +4,6 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 Observed gaps and inconsistencies. Documentation only — nothing here is fixed by this workspace.
 
-## No formal design-token scale for spacing/radius/font-size
-
-🟡 Colors and shadows are tokenized as CSS custom properties; spacing, border-radius, and font sizes are hardcoded per rule with no `--space-*`/`--radius-*`/`--font-size-*` scale. See `DESIGN_TOKENS.md`.
-
 ## Sparse backend test coverage
 
 🟢 Only one test file exists (`backend/src/services/pecService.test.js`), using Node's built-in `--test` runner (see `code-quality.md`). Most `backend/src/services/*Service.js` have no tests. `.claude/rules/dev-workflow.md` now asks for a test on every non-trivial backend service change going forward, but existing services remain uncovered.
