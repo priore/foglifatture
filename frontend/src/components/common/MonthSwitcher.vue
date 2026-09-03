@@ -70,7 +70,13 @@ function alCambio(evento) {
 <template>
   <div class="actions">
     <button class="btn btn-ghost" :disabled="!puoIndietro" @click="vai(-1)">← {{ NOMI_MESI[(mese - 2 + 12) % 12] }}</button>
-    <span class="btn btn-ghost" style="cursor:pointer;position:relative" @click="apriSelettore" title="Vai a mese/anno...">
+    <span
+      class="btn btn-ghost" style="cursor:pointer;position:relative"
+      role="button" tabindex="0" title="Vai a mese/anno..." aria-label="Vai a mese/anno..."
+      @click="apriSelettore"
+      @keydown.enter="apriSelettore"
+      @keydown.space.prevent="apriSelettore"
+    >
       {{ NOMI_MESI[mese - 1] }} {{ anno }}
       <input
         ref="inputMese" type="month" :value="valoreInput" @change="alCambio"

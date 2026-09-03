@@ -66,7 +66,7 @@ function toggleTheme() {
     </nav>
     <div class="side-foot">
       <span>{{ nomeFornitore }}</span>
-      <button type="button" class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Tema chiaro' : 'Tema scuro'">
+      <button type="button" class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Tema chiaro' : 'Tema scuro'" :aria-label="isDark ? 'Tema chiaro' : 'Tema scuro'">
         {{ isDark ? '☀️' : '🌙' }}
       </button>
     </div>
