@@ -60,7 +60,7 @@ function riattivaCliente(cliente) {
       <input
         v-if="modelValue.filter(c => c.attivo).length > 1"
         type="search" v-model="ricerca" placeholder="Cerca cliente…"
-        style="flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:.86rem;background:var(--ground);color:var(--ink)"
+        class="clienti-cerca-input"
       >
     </div>
 
@@ -110,3 +110,10 @@ function riattivaCliente(cliente) {
     </details>
   </div>
 </template>
+
+<style scoped>
+.clienti-cerca-input {
+  flex: 1; border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 9px 11px; font-size: var(--font-size-base); background: var(--ground); color: var(--ink);
+}
+</style>
