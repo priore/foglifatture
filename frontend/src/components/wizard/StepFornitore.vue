@@ -98,6 +98,7 @@ function selezionaCodice(c) {
                 type="button"
                 class="btn-icon"
                 title="Aggiorna elenco codici ATECO e coefficienti da Gemini"
+                aria-label="Aggiorna elenco codici ATECO e coefficienti da Gemini"
                 :disabled="aggiornando"
                 @click="aggiornaElencoAteco"
               >{{ aggiornando ? '…' : '⟳' }}</button>
@@ -105,7 +106,13 @@ function selezionaCodice(c) {
             </label>
             <input type="text" v-model="ricerca" placeholder="Cerca per codice, descrizione o settore… (anche sotto-codici es. 62.20.10)" autocomplete="off">
             <ul v-if="risultati.length" class="ateco-risultati">
-              <li v-for="c in risultati" :key="c.codice" @click="selezionaCodice(c)">
+              <li
+                v-for="c in risultati" :key="c.codice"
+                role="button" tabindex="0"
+                @click="selezionaCodice(c)"
+                @keydown.enter="selezionaCodice(c)"
+                @keydown.space.prevent="selezionaCodice(c)"
+              >
                 <strong>{{ c.codice }}</strong> — {{ c.descrizione }}
                 <span class="ateco-settore">{{ c.settore }} · {{ c.coefficente }}%</span>
               </li>

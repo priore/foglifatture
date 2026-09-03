@@ -35,7 +35,10 @@ function daDrop(evento) {
   <div
     class="file-drop"
     :class="{ 'file-drop-over': trascinando, 'file-drop-disabled': disabled }"
+    role="button" tabindex="0" :aria-label="label"
     @click="apriSelettore"
+    @keydown.enter="apriSelettore"
+    @keydown.space.prevent="apriSelettore"
     @dragover.prevent="trascinando = true"
     @dragleave.prevent="trascinando = false"
     @drop.prevent="daDrop"

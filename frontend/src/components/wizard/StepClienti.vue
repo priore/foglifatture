@@ -67,7 +67,13 @@ function riattivaCliente(cliente) {
     <p v-if="ricerca && !clientiFiltrati.length" class="note-legal">Nessun cliente trovato.</p>
 
     <div v-for="cliente in clientiFiltrati" :key="cliente.id" class="card" style="margin-bottom:12px">
-      <div class="card-head" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" @click="toggleAperto(cliente.id)">
+      <div
+        class="card-head" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center"
+        role="button" tabindex="0" :aria-expanded="aperti.has(cliente.id)"
+        @click="toggleAperto(cliente.id)"
+        @keydown.enter="toggleAperto(cliente.id)"
+        @keydown.space.prevent="toggleAperto(cliente.id)"
+      >
         <h3 style="margin:0">{{ cliente.denominazione || 'Nuovo cliente' }}</h3>
         <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
       </div>
