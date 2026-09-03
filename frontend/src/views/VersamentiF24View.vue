@@ -139,7 +139,7 @@ function formattaEuro(valore) {
               <td>{{ v.data }}</td>
               <td>{{ v.tipo }}</td>
               <td>{{ formattaEuro(v.importo) }}</td>
-              <td><button class="btn-icon" @click="rimuoviVersamento(v.id)" title="Elimina">✕</button></td>
+              <td><button class="btn-icon" @click="rimuoviVersamento(v.id)" title="Elimina" aria-label="Elimina versamento">✕</button></td>
             </tr>
             <tr v-if="!versamentiFiltrati.length"><td colspan="4" class="note-legal">Nessun versamento.</td></tr>
           </tbody>
