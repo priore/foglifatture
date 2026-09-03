@@ -15,6 +15,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Impostazioni: voce "Gemini" rinominata in "AI", con due sotto-schede Gemini AI e Groq AI.
 - Dashboard: quando le scadenze fiscali non sono aggiornabili per quota Gemini esaurita, viene mostrato il tempo mancante al prossimo tentativo automatico, che riparte da solo alla scadenza senza bisogno di ricaricare la pagina.
 - Sicurezza: il client secret Google OAuth e la API key Gemini non vengono più salvati nel file `.env` in chiaro, ma nel Keychain del sistema operativo (come già avveniva per le password PEC e backup).
+- Sicurezza: aggiornata la libreria di lettura file Excel per l'import storico, risolvendo due vulnerabilità note (denial of service e prototype pollution) senza cambiare il formato supportato (.xls/.xlsx).
 - Login Google: è ora possibile autorizzare più email separate da virgola, non solo una sola.
 - Ping automatico ricevute SDI: ora avviene solo se c'è una fattura inviata di recente ancora senza risposta (finestra 72h dall'ultimo invio), invece di interrogare sempre la PEC a intervalli fissi.
 - "Importa storico" spostata dal menu principale a sotto-voce di Impostazioni (tra "Percorso dati" e "Backup").
