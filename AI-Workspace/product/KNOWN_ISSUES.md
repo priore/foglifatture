@@ -4,10 +4,6 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 Observed gaps and inconsistencies. Documentation only — nothing here is fixed by this workspace.
 
-## Minimal accessibility coverage
-
-🟢 Only 2 `alt=` attributes exist across the entire frontend; no `aria-*` or explicit `role=` attributes anywhere. All interactivity relies on native HTML semantics. Not a defect per se, but a gap if accessibility compliance becomes a requirement. See `UI_ANALYSIS.md`.
-
 ## No formal design-token scale for spacing/radius/font-size
 
 🟡 Colors and shadows are tokenized as CSS custom properties; spacing, border-radius, and font sizes are hardcoded per rule with no `--space-*`/`--radius-*`/`--font-size-*` scale. See `DESIGN_TOKENS.md`.
