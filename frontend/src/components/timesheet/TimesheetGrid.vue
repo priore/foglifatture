@@ -79,9 +79,9 @@ const totaleMensile = computed(() => calcolaTotaleMensile(props.giorni));
           </td>
           <td><input class="note" v-model="giorno.note" placeholder="Nota…"></td>
           <td style="white-space:nowrap">
-            <button type="button" class="btn btn-ghost" title="Copia giorno" style="padding:4px 8px" @click="copiaGiorno(giorno)">⧉</button>
-            <button type="button" class="btn btn-ghost" title="Incolla giorno" style="padding:4px 8px" :disabled="!appunti" @click="incollaGiorno(giorno)">📋</button>
-            <button type="button" class="btn btn-ghost" title="Svuota giorno" style="padding:4px 8px" @click="svuotaGiorno(giorno)">✕</button>
+            <button type="button" class="btn btn-ghost" title="Copia giorno" aria-label="Copia giorno" style="padding:4px 8px" @click="copiaGiorno(giorno)">⧉</button>
+            <button type="button" class="btn btn-ghost" title="Incolla giorno" aria-label="Incolla giorno" style="padding:4px 8px" :disabled="!appunti" @click="incollaGiorno(giorno)">📋</button>
+            <button type="button" class="btn btn-ghost" title="Svuota giorno" aria-label="Svuota giorno" style="padding:4px 8px" @click="svuotaGiorno(giorno)">✕</button>
           </td>
         </tr>
       </tbody>
