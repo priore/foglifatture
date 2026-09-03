@@ -8,14 +8,12 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 🟢 Typography: three font families loaded via Google Fonts `@import` — **Fraunces** (headings/brand, weights 500/600/700), **Inter** (body text, 400–700), **IBM Plex Mono** (numeric/monospace values, e.g. amounts and hours).
 
-## "Light glass" look — how it's actually built
+## Light surface look — how it's built
 
-🟡 The app describes its design as "light glass," but `style.css` contains **zero** `backdrop-filter`/`blur()` rules (grep-confirmed). The glass-like effect is approximated instead through:
+🟢 The visual style is translucency + soft shadow, not glassmorphism — `style.css` contains **zero** `backdrop-filter`/`blur()` rules (grep-confirmed). The effect comes from:
 - translucent overlays: `rgba(255,255,255,.08)` / `.06` on active/hover nav states;
 - `color-mix(in srgb, var(--line) 40%, transparent)` for subtle row tinting (weekend rows in the timesheet table);
 - a soft two-layer `--shadow` token for elevation instead of blur.
-
-This is a naming mismatch worth tracking: the design intent (glassmorphism) and the implementation (translucency + soft shadow, no blur) don't fully match. Flagged in Review Checklist and `KNOWN_ISSUES.md`.
 
 ## Dark mode
 
@@ -35,10 +33,10 @@ This is a naming mismatch worth tracking: the design intent (glassmorphism) and 
 
 ## Review Checklist
 
-- **Completeness:** visual language, glass mechanism, dark mode, accessibility, and componentization approach covered.
+- **Completeness:** visual language, light-surface mechanism, dark mode, accessibility, and componentization approach covered.
 - **Accuracy:** all claims read directly from `style.css` and repo-wide greps for `backdrop-filter`, `data-theme`, `<style`, `aria-`.
 - **Consistency:** aligns with `UI_ANALYSIS.md` (dark mode / a11y findings) and `DESIGN_TOKENS.md` (exact values).
 - **TODO:** none for this pass.
-- **Missing information:** no design-intent documentation exists in-repo explaining the "light glass" phrase's origin.
-- **Open questions:** is the glassmorphism gap (no blur) an intentional simplification or an unfinished feature? Recorded as an open question in `KNOWN_ISSUES.md`.
-- **Confidence level:** predominantly 🟢, two 🟡 inferences (glass-effect mismatch, dead dark-mode toggle path).
+- **Missing information:** none outstanding for this section.
+- **Open questions:** none outstanding for this section.
+- **Confidence level:** predominantly 🟢, one 🟡 inference (dead dark-mode toggle path).
