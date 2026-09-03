@@ -28,6 +28,10 @@ Observed gaps and inconsistencies. Documentation only — nothing here is fixed 
 
 🟡 The app describes its visual design as "light glass," but `style.css` has zero `backdrop-filter`/`blur()` rules. The effect is approximated via translucency and shadow only. Not necessarily a bug — may be an intentional simplification — but the gap between stated intent and implementation is worth a product decision. See `DESIGN_SYSTEM.md`.
 
+## Sparse backend test coverage
+
+🟢 Only one test file exists (`backend/src/services/pecService.test.js`), using Node's built-in `--test` runner (see `code-quality.md`). Most `backend/src/services/*Service.js` have no tests. `.claude/rules/dev-workflow.md` now asks for a test on every non-trivial backend service change going forward, but existing services remain uncovered.
+
 ---
 
 ## Review Checklist
