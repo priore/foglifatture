@@ -58,10 +58,10 @@ const spicchi = computed(() => {
 <style scoped>
 .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
 .donut-svg { width: 220px; height: 220px; flex-shrink: 0; }
-.donut-pct { font-family: 'IBM Plex Mono', monospace; font-size: 1.7rem; font-weight: 600; fill: var(--ink); }
-.donut-sub { font-size: .68rem; fill: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.donut-legend { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.donut-legend li { font-size: .88rem; color: var(--ink-soft); display: flex; align-items: flex-start; gap: 8px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-top: 5px; }
+.donut-pct { font-family: 'IBM Plex Mono', monospace; font-size: var(--font-size-xl); font-weight: 600; fill: var(--ink); }
+.donut-sub { font-size: var(--font-size-2xs); fill: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.donut-legend { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--gap-md); }
+.donut-legend li { font-size: .88rem; color: var(--ink-soft); display: flex; align-items: flex-start; gap: var(--gap-sm); }
+.dot { width: 10px; height: 10px; border-radius: var(--radius-circle); display: inline-block; flex-shrink: 0; margin-top: 5px; }
 .donut-legend-valore { color: var(--muted); font-size: .78rem; }
 </style>
