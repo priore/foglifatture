@@ -69,9 +69,10 @@ Requisiti minimi: Node.js ≥ 18 (installato automaticamente dallo script se ass
 ### Mac
 
 1. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
-2. Trascina la cartella del progetto nella finestra del Terminale per scriverne il percorso, poi premi Invio per entrarci:
+2. Scarica il progetto ed entra nella cartella:
    ```bash
-   cd /percorso/della/cartella/FogliFatture
+   git clone https://github.com/priore/foglifatture.git
+   cd foglifatture
    ```
 3. Lancia l'installazione:
    ```bash
@@ -91,9 +92,10 @@ scripts/uninstall.sh
 ### Windows
 
 1. Apri **PowerShell** (cerca "PowerShell" nel menu Start).
-2. Trascina la cartella del progetto nella finestra di PowerShell per scriverne il percorso, poi premi Invio per entrarci:
+2. Scarica il progetto ed entra nella cartella:
    ```powershell
-   cd C:\percorso\della\cartella\FogliFatture
+   git clone https://github.com/priore/foglifatture.git
+   cd foglifatture
    ```
 3. Lancia l'installazione:
    ```powershell

@@ -13,7 +13,7 @@ Nessun impegno a rilasciare fix retroattivi su versioni precedenti a quella corr
 
 **Non aprire una issue pubblica** per una vulnerabilità di sicurezza.
 
-Canale preferito: [GitHub Security Advisories](https://github.com/priore/timesheet/security/advisories/new) (privato finché non risolto).
+Canale preferito: [GitHub Security Advisories](https://github.com/priore/foglifatture/security/advisories/new) (privato finché non risolto).
 
 In alternativa, contattare direttamente l'autore via email (vedi profilo GitHub [@priore](https://github.com/priore)).
 
