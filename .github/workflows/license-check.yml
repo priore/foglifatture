@@ -7,6 +7,9 @@ on:
       - "frontend/package.json"
       - "frontend/package-lock.json"
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
