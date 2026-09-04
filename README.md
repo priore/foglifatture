@@ -1,4 +1,10 @@
-# Timesheet & Fatturazione
+# FogliFatture
+
+[![Licenza](https://img.shields.io/badge/licenza-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
+[![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows-lightgrey)]()
+[![Security Policy](https://img.shields.io/badge/security-policy-orange)](SECURITY.md)
+[![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
 
 App per chi lavora in regime forfettario, con due funzioni indipendenti:
 - **Timesheet mensile** — registra le ore lavorate giorno per giorno, per uno o più clienti.
@@ -6,16 +12,64 @@ App per chi lavora in regime forfettario, con due funzioni indipendenti:
 
 Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
+**Stato del progetto**: attivo, mantenuto da una sola persona nel tempo libero — nessuno SLA. Segnalazioni prese sul serio, vedi [SECURITY.md](SECURITY.md).
+
+## Indice
+
+- [Features](#features)
+- [Sicurezza](#sicurezza)
+- [Screenshot](#screenshot)
+- [Installazione](#installazione)
+- [Primo utilizzo](#primo-utilizzo)
+- [Domande frequenti](#domande-frequenti)
+- [Note per chi programma](#note-per-chi-programma)
+- [Licenza](#licenza)
+- [Support Development](#support-development)
+
+## Features
+
+- **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
+- **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, regime forfettario (`RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia), validato prima dell'invio.
+- **Invio PEC automatico** — fattura inviata al Sistema di Interscambio (SDI) direttamente dall'app, via la tua casella PEC.
+- **Ricezione ricevute SDI automatica** — polling della casella PEC via IMAP, riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...), notifica desktop.
+- **Fatturazione a importo libero** — anche senza passare dal timesheet, per fatture a corpo o extra.
+- **Dashboard regime forfettario** — totali e soglie del regime aggiornati in tempo reale.
+- **Numerazione fatture unica e progressiva** — condivisa correttamente tra tutti i clienti, come richiesto dalla normativa (legata alla partita IVA, non al singolo cliente).
+- **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
+- **Backup automatico ed esportazione cifrata** — copia periodica programmabile, esportazione manuale protetta da password.
+- **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
+- **Scadenze fiscali con AI** — calcolo locale delle scadenze del regime forfettario, con supporto AI (Gemini) solo per casi particolari come le proroghe.
+- **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
+- **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
+
+## Sicurezza
+
+- Nessuna credenziale hardcoded: chiavi API, secret OAuth e dati PEC vivono solo in `backend/.env` locale, mai versionato né distribuito.
+- La chiave API Gemini non viene mai esposta al frontend né scritta nei log — usata server-side solo per la chiamata a `generativelanguage.googleapis.com`.
+- Avvio path-indipendente: l'app funziona da qualsiasi cartella, su Mac e Windows.
+- Repository sotto scansione automatica continua: secret scanning (gitleaks), analisi statica del codice (CodeQL), controllo licenze delle dipendenze, controllo comportamento delle dipendenze (Socket.dev), monitoraggio CVE note (Dependabot).
+- Dettagli completi e canale di segnalazione responsabile: [SECURITY.md](SECURITY.md).
+
+**Trasparenza dati verso servizi AI esterni**: la funzione di lookup codice ATECO e il calcolo di alcune scadenze fiscali con proroga usano l'API Gemini (Google). Solo i dati strettamente necessari a quella specifica elaborazione (es. descrizione attività, date di scadenza) vengono inviati a Google — mai l'intero storico fatture/timesheet. La funzione è opzionale e disattivabile.
+
+## Screenshot
+
+<!-- TODO: screenshot in arrivo a scaglioni (limite 3 immagini/giorno rielaborazione grafica, vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
+
+*In arrivo.*
+
 ## Installazione
 
 Serve solo la prima volta. Lo script fa tutto da solo: installa Node.js se manca, scarica le librerie necessarie, prepara la configurazione, avvia l'app come servizio permanente e apre il browser sulla pagina iniziale.
+
+Requisiti minimi: Node.js ≥ 18 (installato automaticamente dallo script se assente), macOS o Windows 10/11.
 
 ### Mac
 
 1. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
 2. Trascina la cartella del progetto nella finestra del Terminale per scriverne il percorso, poi premi Invio per entrarci:
    ```bash
-   cd /percorso/della/cartella/Timesheet
+   cd /percorso/della/cartella/FogliFatture
    ```
 3. Lancia l'installazione:
    ```bash
@@ -37,7 +91,7 @@ scripts/uninstall.sh
 1. Apri **PowerShell** (cerca "PowerShell" nel menu Start).
 2. Trascina la cartella del progetto nella finestra di PowerShell per scriverne il percorso, poi premi Invio per entrarci:
    ```powershell
-   cd C:\percorso\della\cartella\Timesheet
+   cd C:\percorso\della\cartella\FogliFatture
    ```
 3. Lancia l'installazione:
    ```powershell
@@ -104,6 +158,10 @@ launchctl list | grep com.prioregroup.fatturazione   # Mac
 Get-ScheduledTask -TaskName PrioreGroupFatturazione   # Windows
 ```
 
+### L'app sostituisce il mio commercialista?
+
+**No. FogliFatture è uno strumento di supporto operativo per la gestione di timesheet e fatturazione elettronica: non sostituisce la consulenza di un commercialista o consulente fiscale.** La correttezza dei dati fiscali inviati e conservati resta responsabilità di chi usa l'app.
+
 ## Note per chi programma
 
 - `backend/` — API Express, generatore/validatore XML FatturaPA, invio PEC, storage su file JSON, login Google OAuth opzionale.
@@ -129,3 +187,22 @@ Test:
 cd backend
 npm test
 ```
+
+Vuoi contribuire? Leggi [CONTRIBUTING.md](CONTRIBUTING.md) e il [Codice di Condotta](CODE_OF_CONDUCT.md).
+
+## Licenza
+
+Distribuito sotto [PolyForm Noncommercial 1.0.0](LICENSE). Uso libero per scopi non commerciali (visione, uso, modifica). Qualsiasi uso commerciale — inclusi rivendita e offerta come servizio SaaS — richiede un accordo preventivo separato con l'autore: contatta [@priore](https://github.com/priore) su GitHub.
+
+***Nessuna garanzia***: il software è fornito così com'è, senza garanzie esplicite o implicite. Vedi [LICENSE](LICENSE) e [SECURITY.md](SECURITY.md).
+
+## Support Development
+
+Se questo progetto ti è stato utile, considera una piccola donazione. Ogni contributo aiuta a finanziare nuove funzionalità e mantenere il progetto attivo.
+
+Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo.
+
+|Donate with BTC (Bitcoin)|
+|:------------:|
+|![](https://www.prioregroup.com/images/priore_btc_segwit_binance.jpg)|
+|`BTC Address (SegWit) : bc1q6rjOuuwu9k2fvs5n5elmqy9v4ljazhexejykjm`|
