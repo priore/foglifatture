@@ -54,9 +54,11 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Screenshot
 
-<!-- TODO: screenshot in arrivo a scaglioni (limite 3 immagini/giorno rielaborazione grafica, vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
+**Timesheet mensile** — ore giornaliere per cliente, replica la struttura di un foglio ore aziendale.
 
-*In arrivo.*
+![Timesheet mensile](docs/screenshots/timesheet-mensile.png)
+
+<!-- TODO: altri screenshot in arrivo a scaglioni (limite rielaborazione grafica giornaliera, vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
 
 ## Installazione
 
