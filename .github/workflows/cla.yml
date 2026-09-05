@@ -24,4 +24,4 @@ jobs:
           path-to-signatures: ".github/cla-signatures.json"
           path-to-document: "https://github.com/priore/foglifatture/blob/main/CLA.md"
           branch: "main"
-          allowlist: priore
+          allowlist: priore,dependabot[bot]
