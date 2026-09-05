@@ -63,12 +63,12 @@ Clicca su uno screenshot per ingrandirlo.
 <p>Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.</p>
 </td>
 <td width="50%" valign="top">
-<a href="./docs/screenshots/dashboard.png"><img src="./docs/screenshots/dashboard.png" width="320" alt="Dashboard forfettario"></a>
+<a href="/danilo/Timesheet/raw/branch/develop/docs/screenshots/dashboard.png"><img src="/danilo/Timesheet/raw/branch/develop/docs/screenshots/dashboard.png" width="320" alt="Dashboard forfettario"></a>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="./docs/screenshots/fattura-proforma.png"><img src="./docs/screenshots/fattura-proforma.png" width="320" alt="Fattura Pro-Forma"></a>
+<a href="/danilo/Timesheet/raw/branch/develop/docs/screenshots/fattura-proforma.png"><img src="/danilo/Timesheet/raw/branch/develop/docs/screenshots/fattura-proforma.png" width="320" alt="Fattura Pro-Forma"></a>
 </td>
 <td width="50%" valign="top">
 <h3>Dalle ore lavorate alla fattura, senza calcolatrice</h3>
@@ -81,7 +81,7 @@ Clicca su uno screenshot per ingrandirlo.
 <p>Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.</p>
 </td>
 <td width="50%" valign="top">
-<a href="./docs/screenshots/timesheet-mensile.png"><img src="./docs/screenshots/timesheet-mensile.png" width="320" alt="Timesheet mensile"></a>
+<a href="/danilo/Timesheet/raw/branch/develop/docs/screenshots/timesheet-mensile.png"><img src="/danilo/Timesheet/raw/branch/develop/docs/screenshots/timesheet-mensile.png" width="320" alt="Timesheet mensile"></a>
 </td>
 </tr>
 </table>
