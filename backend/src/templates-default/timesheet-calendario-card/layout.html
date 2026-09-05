@@ -1,0 +1,39 @@
+<div class="sheet">
+  <div class="head">
+    <div><h1>Timesheet</h1><div class="sub">{{consulente}} — {{figura}}</div></div>
+    <div class="period">{{nomeMese}} {{anno}}</div>
+  </div>
+
+  <div class="infobar">
+    <div class="item"><span>Cliente</span><strong>{{cliente}}</strong></div>
+    <div class="item"><span>Commessa</span><strong>{{commessa}}</strong></div>
+    <div class="item"><span>Progetto</span><strong>{{progetto}}</strong></div>
+    <div class="item"><span>Localit&agrave;</span><strong>{{localita}}</strong></div>
+  </div>
+
+  <div class="days">
+    {{#each giorni}}
+    <div class="day {{#if wknd}}wknd{{/if}}">
+      <div class="n">{{giorno}}</div>
+      <div class="lbl">{{nomeGiorno}}</div>
+      {{#if assenzaVisibile}}
+        <div class="abs">{{stato}}</div>
+      {{else}}
+        {{#if oreGiornoFormattate}}<div class="hrs">{{oreGiornoFormattate}}</div>{{/if}}
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="summary-row">
+    <div class="stat"><div class="v">{{totaleOreFormattato}}</div><div class="l">Ore totali</div></div>
+    <div class="stat"><div class="v">{{giorniLavorati}}</div><div class="l">Giorni lavorati</div></div>
+    <div class="stat"><div class="v">{{totaleAssenze}}</div><div class="l">Giorni assenza</div></div>
+  </div>
+
+  <table class="legend">
+    {{#each conteggioAssenze}}
+    <tr><td>{{stato}}</td><td>{{conteggio}} giorni</td></tr>
+    {{/each}}
+  </table>
+</div>

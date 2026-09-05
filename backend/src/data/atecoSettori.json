@@ -1,0 +1,3122 @@
+[
+  {
+    "codice": "13.91.00",
+    "descrizione": "Fabbricazione di tessuti a maglia",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.92.10",
+    "descrizione": "Confezionamento di biancheria da letto, da tavola e per l’arredamento",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.92.20",
+    "descrizione": "Fabbricazione di articoli in materie tessili nca",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.93.00",
+    "descrizione": "Fabbricazione di tappeti e moquette",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.94.00",
+    "descrizione": "Fabbricazione di spago, corde, funi e reti",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.95.00",
+    "descrizione": "Fabbricazione di tessuti non tessuti e di articoli in tali materie, esclusi gli articoli di abbigliamento",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.96.10",
+    "descrizione": "Fabbricazione di nastri, etichette e passamanerie di fibre tessili",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.96.20",
+    "descrizione": "Fabbricazione di altri articoli tessili tecnici ed industriali",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.99.10",
+    "descrizione": "Fabbricazione di ricami",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.99.20",
+    "descrizione": "Fabbricazione di tulle, pizzi e merletti",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "13.99.90",
+    "descrizione": "Fabbricazione di feltro e articoli tessili diversi",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.11.00",
+    "descrizione": "Confezione di abbigliamento in pelle e similpelle",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.12.00",
+    "descrizione": "Confezione di camici, divise ed altri indumenti da lavoro",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.13.10",
+    "descrizione": "Confezione in serie di abbigliamento esterno",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.13.20",
+    "descrizione": "Sartoria e confezione su misura di abbigliamento esterno",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.14.00",
+    "descrizione": "Confezione di camice, T-shirt, corsetteria e altra biancheria intima",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.19.10",
+    "descrizione": "Confezioni varie e accessori per l’abbigliamento",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.19.21",
+    "descrizione": "Fabbricazione di calzature realizzate in materiale tessile senza suole applicate",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.19.29",
+    "descrizione": "Confezioni di abbigliamento sportivo o di altri indumenti particolari",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.20.00",
+    "descrizione": "Confezione di articoli in pelliccia",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.31.00",
+    "descrizione": "Fabbricazione di articoli di calzetteria in maglia",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "14.39.00",
+    "descrizione": "Fabbricazione di pullover, cardigan ed altri articoli simili a maglia",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "15.12.01",
+    "descrizione": "Fabbricazione di frustini e scudisci per equitazione",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "15.12.09",
+    "descrizione": "Fabbricazione di altri articoli da viaggio, borse e simili, pelletteria e selleria",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "15.20.10",
+    "descrizione": "Fabbricazione di calzature",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "15.20.20",
+    "descrizione": "Fabbricazione di parti in cuoio per calzature",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.10.00",
+    "descrizione": "Taglio e piallatura del legno",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.21.00",
+    "descrizione": "Fabbricazione di fogli da impiallacciatura e di pannelli a base di legno",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.22.00",
+    "descrizione": "Fabbricazione di pavimenti in parquet assemblato",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.23.10",
+    "descrizione": "Fabbricazione di porte e finestre in legno (escluse porte blindate)",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.23.20",
+    "descrizione": "Fabbricazione di altri elementi in legno e di falegnameria per l’edilizia",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.24.00",
+    "descrizione": "Fabbricazione di imballaggi in legno",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.11",
+    "descrizione": "Fabbricazione di parti in legno per calzature",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.12",
+    "descrizione": "Fabbricazione di manici di ombrelli, bastoni e simile",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.19",
+    "descrizione": "Fabbricazione di altri prodotti vari in legno (esclusi i mobili)",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.20",
+    "descrizione": "Fabbricazione dei prodotti della lavorazione del sughero",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.30",
+    "descrizione": "Fabbricazione di articoli in paglia e materiali da intreccio",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "16.29.40",
+    "descrizione": "Laboratori di corniciai",
+    "settore": "Legno e derivati",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.11.00",
+    "descrizione": "Fabbricazione di pasta-carta",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.12.00",
+    "descrizione": "Fabbricazione di carta e cartone",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.21.00",
+    "descrizione": "Fabbricazione di carta e cartone ondulato e di imballaggi di carta e cartone (esclusi quelli in carta pressata)",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.22.00",
+    "descrizione": "Fabbricazione di prodotti igienico-sanitari e per uso domestico in carta e ovatta di cellulosa",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.23.01",
+    "descrizione": "Fabbricazione di prodotti cartotecnici scolastici e commerciali quando l’attività di stampa non è la principale caratteristica",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.23.09",
+    "descrizione": "Fabbricazione di altri prodotti cartotecnici",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.24.00",
+    "descrizione": "Fabbricazione di carta da parati",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "17.29.00",
+    "descrizione": "Fabbricazione di altri articoli di carta e cartone",
+    "settore": "Carta e cartone",
+    "coefficente": 67
+  },
+  {
+    "codice": "18.11.00",
+    "descrizione": "Stampa di giornali",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "18.12.00",
+    "descrizione": "Altra stampa",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "18.13.00",
+    "descrizione": "Lavorazioni preliminari alla stampa e ai media",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "18.14.00",
+    "descrizione": "Legatoria e servizi connessi",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "18.20.00",
+    "descrizione": "Riproduzione di supporti registrati",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "20.41.10",
+    "descrizione": "Fabbricazione di saponi, detergenti e di agenti organici tensioattivi, esclusi i prodotti per toletta",
+    "settore": "Cosmetici e prodotti per la pulizia",
+    "coefficente": 67
+  },
+  {
+    "codice": "20.41.20",
+    "descrizione": "Fabbricazione di specialità chimiche per uso domestico e per manutenzione",
+    "settore": "Cosmetici e prodotti per la pulizia",
+    "coefficente": 67
+  },
+  {
+    "codice": "20.42.00",
+    "descrizione": "Fabbricazione di prodotti per toletta: profumi, cosmetici, saponi e simili",
+    "settore": "Cosmetici e prodotti per la pulizia",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.31.00",
+    "descrizione": "Fabbricazione di piastrelle in ceramica per pavimenti e rivestimenti",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.32.00",
+    "descrizione": "Fabbricazione di mattoni, tegole ed altri prodotti per l’edilizia in terracotta",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.41.00",
+    "descrizione": "Fabbricazione di prodotti in ceramica per usi domestici e ornamentali",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.42.00",
+    "descrizione": "Fabbricazione di articoli sanitari in ceramica",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.43.00",
+    "descrizione": "Fabbricazione di isolatori e di pezzi isolanti in ceramica",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.44.00",
+    "descrizione": "Fabbricazione di altri prodotti in ceramica per uso tecnico e industriale",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.49.00",
+    "descrizione": "Fabbricazione di altri prodotti in ceramica",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.70.10",
+    "descrizione": "Segagione e lavorazione delle pietre e del marmo",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.70.20",
+    "descrizione": "Lavorazione artistica del marmo e di altre pietre affini, lavori in mosaico",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "23.70.30",
+    "descrizione": "Frantumazione di pietre e minerali vari fuori della cava",
+    "settore": "Terracotta porcellana ceramica pietre e marmi",
+    "coefficente": 67
+  },
+  {
+    "codice": "3.11.20",
+    "descrizione": "Gestione di piscine",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "3.21.01",
+    "descrizione": "Installazione di impianti elettrici in edifici o in altre opere di costruzione (compresa manutenzione e riparazione)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "32.12.10",
+    "descrizione": "Fabbricazione di oggetti di gioielleria ed oreficeria in metalli preziosi o rivestiti di metalli preziosi",
+    "settore": "Gioielli e bigiotterie",
+    "coefficente": 67
+  },
+  {
+    "codice": "32.12.20",
+    "descrizione": "Lavorazione di pietre preziose e semipreziose per gioielleria e per uso industriale",
+    "settore": "Gioielli e bigiotterie",
+    "coefficente": 67
+  },
+  {
+    "codice": "32.13.01",
+    "descrizione": "Fabbricazione di cinturini metallici per orologi, esclusi quelli in metalli preziosi",
+    "settore": "Gioielli e bigiotterie",
+    "coefficente": 67
+  },
+  {
+    "codice": "32.13.09",
+    "descrizione": "Fabbricazione di bigiotteria e articoli simili nca",
+    "settore": "Gioielli e bigiotterie",
+    "coefficente": 67
+  },
+  {
+    "codice": "32.40.10",
+    "descrizione": "Fabbricazione di giochi, compresi i giochi elettronici",
+    "settore": "Giochi",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.01",
+    "descrizione": "Riparazione e manutenzione di stampi, portastampi, sagome, forme per macchine",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.02",
+    "descrizione": "Riparazione e manutenzione di utensileria ad azionamento manuale",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.04",
+    "descrizione": "Riparazione e manutenzione di casseforti, forzieri, porte metalliche blindate",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.05",
+    "descrizione": "Riparazione e manutenzione di armi bianche",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.06",
+    "descrizione": "Riparazione e manutenzione di container",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.07",
+    "descrizione": "Riparazione e manutenzione di carrelli per la spesa",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.11.09",
+    "descrizione": "Riparazione e manutenzione di altri prodotti in metallo",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.10",
+    "descrizione": "Riparazione e manutenzione di macchine di impiego generale",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.20",
+    "descrizione": "Riparazione e manutenzione di forni, fornaci e bruciatori",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.30",
+    "descrizione": "Riparazione e manutenzione di macchine e apparecchi di sollevamento e movimentazione, esclusi ascensori",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.40",
+    "descrizione": "Riparazione e manutenzione di attrezzature di uso non domestico per la refrigerazione e la ventilazione",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.51",
+    "descrizione": "Riparazione e manutenzione di macchine ed attrezzature per ufficio (esclusi computer, periferiche, fax)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.52",
+    "descrizione": "Riparazione e manutenzione di bilance e macchine automatiche per la vendita e la distribuzione",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.53",
+    "descrizione": "Riparazione e manutenzione di macchine per le industrie chimiche, petrolchimiche e petrolifere",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.54",
+    "descrizione": "Riparazione e manutenzione di macchine per la dosatura, la confezione e l’imballaggio",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.55",
+    "descrizione": "Riparazione e manutenzione di estintori, compresa la ricarica",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.59",
+    "descrizione": "Riparazione e manutenzione di altre macchine di impiego generale nca",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.60",
+    "descrizione": "Riparazione e manutenzione di trattori agricoli",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.70",
+    "descrizione": "Riparazione e manutenzione di altre macchine per l’agricoltura, la silvicoltura e la zootecnia",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.91",
+    "descrizione": "Riparazione e manutenzione di parti intercambiabili per macchine utensili",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.12.99",
+    "descrizione": "Riparazione e manutenzione di altre macchine per impieghi speciali nca (comprese le macchine utensili)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.13.01",
+    "descrizione": "Riparazione e manutenzione di apparecchiature ottiche e fotocinematografiche (escluse macchine fotografiche e videocamere)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.13.02",
+    "descrizione": "Riparazione e manutenzione di apparecchiature elettriche",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.13.03",
+    "descrizione": "Riparazione e manutenzione di apparecchi medicali per diagnosi, di materiale medico chirurgico e veterinario, di apparecchi e strumenti per odontoiatria",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.13.04",
+    "descrizione": "Riparazione di apparati di distillazione per laboratori, di centrifughe per laboratori e di macchinari per pulizia ad ultrasuoni per laboratori",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.13.09",
+    "descrizione": "Riparazione e manutenzione di altre apparecchiature elettroniche (escluse quelle per le telecomunicazioni ed i computer)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.14.01",
+    "descrizione": "Riparazione e manutenzione di attrezzature elettriche professionali",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.14.09",
+    "descrizione": "Riparazione e manutenzione di altre apparecchiature elettriche (esclusi gli elettrodomestici)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.15.00",
+    "descrizione": "Riparazione e manutenzione di navi commerciali e imbarcazioni da diporto (esclusi i loro motori)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.16.00",
+    "descrizione": "Riparazione e manutenzione di aeromobili e di veicoli spaziali",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.17.00",
+    "descrizione": "Riparazione e manutenzione di materiale rotabile ferroviario, tranviario, filoviario e per metropolitane (esclusi i loro motori)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.19.01",
+    "descrizione": "Riparazioni di pallets e contenitori in legno per trasporto",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.19.02",
+    "descrizione": "Riparazione di prodotti in gomma",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.19.03",
+    "descrizione": "Riparazione di articoli in vetro",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.19.04",
+    "descrizione": "Riparazioni di altri prodotti in legno nca",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.19.09",
+    "descrizione": "Riparazione di altre apparecchiature nca",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.01",
+    "descrizione": "Installazione di motori, generatori e trasformatori elettrici; di apparecchiature per la distribuzione e il controllo dell’elettricità (esclusa l’installazione all’interno degli edifici)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.02",
+    "descrizione": "Installazione di apparecchi elettrici ed elettronici per telecomunicazioni, di apparecchi trasmittenti radiotelevisivi, di impianti di apparecchiature elettriche ed elettroniche (esclusa l’installazione all’interno degli edifici)",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.03",
+    "descrizione": "Installazione di strumenti ed apparecchi di misurazione, controllo, prova, navigazione e simili, comprese le apparecchiature di controllo dei processi industriali",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.04",
+    "descrizione": "Installazione di cisterne, serbatoi e contenitori in metallo",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.05",
+    "descrizione": "Installazione di generatori di vapore, escluse le caldaie per il riscaldamento centrale ad acqua calda",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.06",
+    "descrizione": "Installazione di macchine per ufficio, di mainframe e computer simili",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.07",
+    "descrizione": "Installazione di apparecchi medicali per diagnosi, di apparecchi e strumenti per odontoiatria",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.08",
+    "descrizione": "Installazione di apparecchi elettromedicali",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "33.20.09",
+    "descrizione": "Installazione di altre macchine ed apparecchiature industriali",
+    "settore": "Macchinari",
+    "coefficente": 67
+  },
+  {
+    "codice": "43.21.02",
+    "descrizione": "Installazione di impianti elettronici (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.21.03",
+    "descrizione": "Installazione impianti di illuminazione stradale e dispositivi elettrici di segnalazione, illuminazione delle piste degli aeroporti (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.22.01",
+    "descrizione": "Installazione di impianti idraulici, di riscaldamento e di condizionamento dell’aria (compresa manutenzione e riparazione) in edifici o in altre opere di costruzione",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.22.02",
+    "descrizione": "Installazione di impianti per la distribuzione del gas (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.22.03",
+    "descrizione": "Installazione di impianti di spegnimento antincendio, compresi quelli integrati (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.22.04",
+    "descrizione": "Installazione di impianti di depurazione per piscine (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.22.05",
+    "descrizione": "Installazione di impianti di irrigazione per giardini (compresa manutenzione e riparazione)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.29.01",
+    "descrizione": "Installazione, riparazione e manutenzione di ascensori e scale mobili",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.29.02",
+    "descrizione": "Lavori di isolamento termico, acustico o antivibrazioni",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.29.09",
+    "descrizione": "Altri lavori di costruzione e installazione nca",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.31.00",
+    "descrizione": "Intonacatura e stuccatura",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.32.01",
+    "descrizione": "Posa in opera di casseforti, forzieri, porte blindate",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.32.02",
+    "descrizione": "Posa in opera di infissi, arredi, controsoffitti, pareti mobili e simili",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.33.00",
+    "descrizione": "Rivestimento di pavimenti e di muri",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.34.00",
+    "descrizione": "Tinteggiatura e posa in opera di vetri",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.39.01",
+    "descrizione": "Attività non specializzate di lavori edili (muratori)",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "43.39.09",
+    "descrizione": "Altri lavori di completamento e di finitura degli edifici nca",
+    "settore": "Edilizia e ristrutturazioni",
+    "coefficente": 86
+  },
+  {
+    "codice": "45.11.02",
+    "descrizione": "Intermediari del commercio di autovetture e di autoveicoli leggeri, comprese le agenzie di compravendita",
+    "settore": "Intermediari del commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "45.19.02",
+    "descrizione": "Intermediari del commercio di altri autoveicoli, comprese le agenzie di compravendita",
+    "settore": "Intermediari del commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "45.20.10",
+    "descrizione": "Riparazioni meccaniche di autoveicoli 45.20.20 Riparazione di carrozzerie di autoveicoli 45.20.30 Riparazione di impianti elettrici e di alimentazione per autoveicoli 45.20.40 Riparazione e sostituzione di pneumatici per autoveicoli 45.20.91 Lavaggio auto 45.20.99 Altre attività di manutenzione e di riparazione di autoveicoli",
+    "settore": "Auto e moto",
+    "coefficente": 40
+  },
+  {
+    "codice": "45.31.02",
+    "descrizione": "Intermediari del commercio di parti ed accessori di autoveicoli",
+    "settore": "Intermediari del commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "45.40.12",
+    "descrizione": "Intermediari del commercio di motocicli e ciclomotori",
+    "settore": "Intermediari del commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "45.40.22",
+    "descrizione": "Intermediari del commercio di parti ed accessori di motocicli e ciclomotori",
+    "settore": "Intermediari del commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "46.11.01",
+    "descrizione": "Agenti e rappresentanti di materie prime agricole",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.02",
+    "descrizione": "Agenti e rappresentanti di fiori e piante",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.03",
+    "descrizione": "Agenti e rappresentanti di animali vivi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.04",
+    "descrizione": "Agenti e rappresentanti di fibre tessili gregge e semilavorate, cuoio e pelli",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.05",
+    "descrizione": "Procacciatori d’affari di materie prime agricole, animali vivi, materie prime e semilavorati tessili; pelli grezze",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.06",
+    "descrizione": "Mediatori in materie prime agricole, materie prime e semilavorati tessili; pelli grezze",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.11.07",
+    "descrizione": "Mediatori in animali vivi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.01",
+    "descrizione": "Agenti e rappresentanti di carburanti, gpl, gas in bombole e simili; lubrificanti",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.02",
+    "descrizione": "Agenti e rappresentanti di combustibili solidi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.03",
+    "descrizione": "Agenti e rappresentanti di minerali, metalli e prodotti semilavorati, esclusi i metalli preziosi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.04",
+    "descrizione": "Agenti e rappresentanti di prodotti chimici per l’industria",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.05",
+    "descrizione": "Agenti e rappresentanti di prodotti chimici per l’agricoltura, compresi i fertilizzanti",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.06",
+    "descrizione": "Procacciatori d’affari di combustibili, minerali, metalli (esclusi i metalli preziosi) e prodotti chimici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.12.07",
+    "descrizione": "Mediatori in combustibili, minerali, metalli (esclusi i metalli preziosi) e prodotti chimici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.13.01",
+    "descrizione": "Agenti e rappresentanti di legname, semilavorati in legno e legno artificiale",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.13.02",
+    "descrizione": "Agenti e rappresentanti di materiale da costruzione, compresi gli infissi e gli articoli igienico-sanitari; vetro piano",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.13.03",
+    "descrizione": "Agenti e rappresentanti di apparecchi idraulico-sanitari, apparecchi ed accessori per riscaldamento e condizionamento e altri prodotti similari, esclusi i condizionatori per uso domestico",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.13.04",
+    "descrizione": "Procacciatori d’affari di legname e materiali da costruzione",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.13.05",
+    "descrizione": "Mediatori in legname e materiali da costruzione",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.01",
+    "descrizione": "Agenti e rappresentanti di macchine, attrezzature ed impianti per l’industria ed il commercio; materiale e apparecchi elettrici ed elettronici per uso non domestico",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.02",
+    "descrizione": "Agenti e rappresentanti di macchine per costruzioni edili e stradali",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.03",
+    "descrizione": "Agenti e rappresentanti di macchine ed attrezzature per ufficio",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.04",
+    "descrizione": "Agenti e rappresentanti di macchine ed attrezzature per uso agricolo, compresi i trattori",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.05",
+    "descrizione": "Agenti e rappresentanti di navi, aeromobili e altri veicoli, esclusi autoveicoli, motocicli, ciclomotori e biciclette",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.06",
+    "descrizione": "Procacciatori d’affari di macchinari, impianti industriali, navi e aeromobili, macchine agricole, macchine per ufficio e computer",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.14.07",
+    "descrizione": "Mediatori in macchinari, impianti industriali, navi e aeromobili, macchine agricole, macchine per ufficio e computer",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.01",
+    "descrizione": "Agenti e rappresentanti di mobili in legno, metallo e materie plastiche",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.02",
+    "descrizione": "Agenti e rappresentanti di articoli di ferramenta e di bricolage",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.03",
+    "descrizione": "Agenti e rappresentanti di articoli casalinghi, porcellane, articoli in vetro, ecc.",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.04",
+    "descrizione": "Agenti e rappresentanti di vernici, carte da parati, stucchi e cornici decorativi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.05",
+    "descrizione": "Agenti e rappresentanti di mobili e oggetti di arredamento per la casa in canna, vimini, giunco, sughero, paglia; scope, spazzole, cesti e simili",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.06",
+    "descrizione": "Procacciatori d’affari di mobili, articoli per la casa e ferramenta",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.15.07",
+    "descrizione": "Mediatori in mobili, articoli per la casa e ferramenta",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.01",
+    "descrizione": "Agenti e rappresentanti di vestiario ed accessori di abbigliamento",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.02",
+    "descrizione": "Agenti e rappresentanti di pellicce",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.03",
+    "descrizione": "Agenti e rappresentanti di tessuti per abbigliamento ed arredamento, comprese merceria e passamaneria",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.04",
+    "descrizione": "Agenti e rappresentanti di camicie, biancheria e maglieria intima",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.05",
+    "descrizione": "Agenti e rappresentanti di calzature ed accessori",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.06",
+    "descrizione": "Agenti e rappresentanti di pelletteria, valige ed articoli da viaggio",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.07",
+    "descrizione": "Agenti e rappresentanti di articoli tessili per la casa, tappeti, stuoie e materassi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.08",
+    "descrizione": "Procacciatori d’affari di prodotti tessili, abbigliamento, pellicce, calzature e articoli in pelle",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.16.09",
+    "descrizione": "Mediatori in prodotti tessili, abbigliamento, pellicce, calzature e articoli in pelle",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.01",
+    "descrizione": "Agenti e rappresentanti di prodotti ortofrutticoli freschi, congelati e surgelati",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.02",
+    "descrizione": "Agenti e rappresentanti di carni fresche, congelate, surgelate, conservate e secche; salumi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.03",
+    "descrizione": "Agenti e rappresentanti di latte, burro e formaggi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.04",
+    "descrizione": "Agenti e rappresentanti di oli e grassi alimentari: olio d’oliva e di semi, margarina ed altri prodotti similari",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.05",
+    "descrizione": "Agenti e rappresentanti di bevande e prodotti similari",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.06",
+    "descrizione": "Agenti e rappresentanti di prodotti ittici freschi, congelati, surgelati e conservati e secchi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.07",
+    "descrizione": "Agenti e rappresentanti di altri prodotti alimentari, compresi le uova e gli alimenti per gli animali domestici; tabacco",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.08",
+    "descrizione": "Procacciatori d’affari di prodotti alimentari, bevande e tabacco",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.17.09",
+    "descrizione": "Mediatori in prodotti alimentari, bevande e tabacco",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.11",
+    "descrizione": "Agenti e rappresentanti di carta e cartone, esclusi gli imballaggi; articoli di cartoleria e cancelleria",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.12",
+    "descrizione": "Agenti e rappresentanti di libri e altre pubblicazioni, compresi i relativi abbonamenti",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.13",
+    "descrizione": "Procacciatori d’affari di prodotti di carta, cancelleria, libri",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.14",
+    "descrizione": "Mediatori in prodotti di carta, cancelleria, libri",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.21",
+    "descrizione": "Agenti e rappresentanti di computer, periferiche, attrezzature per le telecomunicazioni, elettronica di consumo audio e video, materiale elettrico per uso domestico",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.22",
+    "descrizione": "Agenti e rappresentanti di apparecchi elettrodomestici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.23",
+    "descrizione": "Procacciatori d’affari di prodotti di elettronica",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.24",
+    "descrizione": "Mediatori in prodotti di elettronica",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.31",
+    "descrizione": "Agenti e rappresentanti di prodotti farmaceutici; prodotti di erboristeria per uso medico",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.32",
+    "descrizione": "Agenti e rappresentanti di prodotti sanitari ed apparecchi medicali, chirurgici e ortopedici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.33",
+    "descrizione": "Agenti e rappresentanti di prodotti di profumeria e di cosmetica, compresi articoli per parrucchieri; prodotti di erboristeria per uso cosmetico",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.34",
+    "descrizione": "Procacciatori d’affari di prodotti farmaceutici e di cosmetici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.35",
+    "descrizione": "Mediatori in prodotti farmaceutici e cosmetici",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.91",
+    "descrizione": "Agenti e rappresentanti di attrezzature sportive; biciclette",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.92",
+    "descrizione": "Agenti e rappresentanti di orologi, oggetti e metalli preziosi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.93",
+    "descrizione": "Agenti e rappresentanti di articoli fotografici, ottici e prodotti simili; strumenti scientifici e per laboratori di analisi",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.94",
+    "descrizione": "Agenti e rappresentanti di saponi, detersivi, candele e prodotti simili",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.95",
+    "descrizione": "Agenti e rappresentanti di giocattoli",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.96",
+    "descrizione": "Agenti e rappresentanti di chincaglieria e bigiotteria",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.97",
+    "descrizione": "Agenti e rappresentanti di altri prodotti non alimentari nca, compresi gli imballaggi e gli articoli antinfortunistici, antincendio e pubblicitari",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.98",
+    "descrizione": "Procacciatori d’affari di attrezzature sportive, biciclette e altri prodotti nca",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.18.99",
+    "descrizione": "Mediatori in attrezzature sportive, biciclette e altri prodotti nca",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.19.01",
+    "descrizione": "Agenti e rappresentanti di vari prodotti senza prevalenza di alcuno",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.19.02",
+    "descrizione": "Procacciatori d’affari di vari prodotti senza prevalenza di alcuno",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.19.03",
+    "descrizione": "Mediatori in vari prodotti senza prevalenza di alcuno",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "46.19.04",
+    "descrizione": "Gruppi di acquisto; mandatari agli acquisti; buyer",
+    "settore": "Agenti e rappresentanti",
+    "coefficente": 62
+  },
+  {
+    "codice": "47.21.01",
+    "descrizione": "Commercio al dettaglio di frutta e verdura fresca",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.21.02",
+    "descrizione": "Commercio al dettaglio di frutta e verdura preparata e conservata",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.22.00",
+    "descrizione": "Commercio al dettaglio di carni e di prodotti a base di carne",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.23.00",
+    "descrizione": "Commercio al dettaglio di pesci, crostacei e molluschi",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.24.10",
+    "descrizione": "Commercio al dettaglio di pane",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.24.20",
+    "descrizione": "Commercio al dettaglio di torte, dolciumi, confetteria",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.25.00",
+    "descrizione": "Commercio al dettaglio di bevande",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.29.10",
+    "descrizione": "Commercio al dettaglio di latte e di prodotti lattiero-caseari",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.29.20",
+    "descrizione": "Commercio al dettaglio di caffè torrefatto",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.29.30",
+    "descrizione": "Commercio al dettaglio di prodotti macrobiotici e dietetici",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.29.90",
+    "descrizione": "Commercio al dettaglio di altri prodotti alimentari in esercizi specializzati nca",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.41.00",
+    "descrizione": "Commercio al dettaglio di computer, unità periferiche, software e attrezzature per ufficio in esercizi specializzati",
+    "settore": "Commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.42.00",
+    "descrizione": "Commercio al dettaglio di apparecchiature per le telecomunicazioni e la telefonia in esercizi specializzati",
+    "settore": "Commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.43.00",
+    "descrizione": "Commercio al dettaglio di apparecchi audio e video in esercizi specializzati",
+    "settore": "Commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.51.10",
+    "descrizione": "Commercio al dettaglio di tessuti per l’abbigliamento, l’arredamento e di biancheria per la casa",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.51.20",
+    "descrizione": "Commercio al dettaglio di filati per maglieria e merceria",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.52.10",
+    "descrizione": "Commercio al dettaglio di ferramenta, vernici, vetro piano e materiale elettrico e termoidraulico",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.52.20",
+    "descrizione": "Commercio al dettaglio di articoli igienico-sanitari",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.52.30",
+    "descrizione": "Commercio al dettaglio di materiali da costruzione, ceramiche e piastrelle",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.52.40",
+    "descrizione": "Commercio al dettaglio di macchine, attrezzature e prodotti per l’agricoltura; macchine e attrezzature per il giardinaggio",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.53.11",
+    "descrizione": "Commercio al dettaglio di tende e tendine",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.53.12",
+    "descrizione": "Commercio al dettaglio di tappeti",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.53.20",
+    "descrizione": "Commercio al dettaglio di carta da parati e rivestimenti per pavimenti (moquette e linoleum)",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.54.00",
+    "descrizione": "Commercio al dettaglio di elettrodomestici in esercizi specializzati",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.10",
+    "descrizione": "Commercio al dettaglio di mobili per la casa",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.20",
+    "descrizione": "Commercio al dettaglio di utensili per la casa, di cristallerie e vasellame",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.30",
+    "descrizione": "Commercio al dettaglio di articoli per l’illuminazione",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.40",
+    "descrizione": "Commercio al dettaglio di macchine per cucire e per maglieria per uso domestico",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.50",
+    "descrizione": "Commercio al dettaglio di sistemi di sicurezza",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.60",
+    "descrizione": "Commercio al dettaglio di strumenti musicali e spartiti",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.91",
+    "descrizione": "Commercio al dettaglio di articoli in legno, sughero, vimini e articoli in plastica per uso domestico",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.59.99",
+    "descrizione": "Commercio al dettaglio di altri articoli per uso domestico nca",
+    "settore": "Prodotti per uso domestico",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.61.00",
+    "descrizione": "Commercio al dettaglio di libri nuovi in esercizi specializzati",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.62.10",
+    "descrizione": "Commercio al dettaglio di giornali, riviste e periodici",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.62.20",
+    "descrizione": "Commercio al dettaglio di articoli di cartoleria e forniture per ufficio",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.63.00",
+    "descrizione": "Commercio al dettaglio di registrazioni musicali e video in esercizi specializzati",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.64.10",
+    "descrizione": "Commercio al dettaglio di articoli sportivi, biciclette e articoli per il tempo libero",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.64.20",
+    "descrizione": "Commercio al dettaglio di natanti e accessori",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.65.00",
+    "descrizione": "Commercio al dettaglio di giochi e giocattoli, compresi quelli elettronici",
+    "settore": "Articoli culturali e ricreativi",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.71.10",
+    "descrizione": "Commercio al dettaglio di confezioni per adulti",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.71.20",
+    "descrizione": "Commercio al dettaglio di confezioni per bambini e neonati",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.71.30",
+    "descrizione": "Commercio al dettaglio di biancheria personale, maglieria, camicie",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.71.40",
+    "descrizione": "Commercio al dettaglio di pellicce e di abbigliamento in pelle",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.71.50",
+    "descrizione": "Commercio al dettaglio di cappelli, ombrelli, guanti e cravatte",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.72.10",
+    "descrizione": "Commercio al dettaglio di calzature e accessori",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.72.20",
+    "descrizione": "Commercio al dettaglio di articoli di pelletteria e da viaggio",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.73.20",
+    "descrizione": "Commercio al dettaglio in altri esercizi specializzati di medicinali non soggetti a prescrizione medica",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.74.00",
+    "descrizione": "Commercio al dettaglio di articoli medicali e ortopedici in esercizi specializzati",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.75.10",
+    "descrizione": "Commercio al dettaglio di articoli di profumeria, prodotti per toletta e per l’igiene personale",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.75.20",
+    "descrizione": "Erboristerie",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.76.10",
+    "descrizione": "Commercio al dettaglio di fiori e piante",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.76.20",
+    "descrizione": "Commercio al dettaglio di piccoli animali domestici",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.77.00",
+    "descrizione": "Commercio al dettaglio di orologi, articoli di gioielleria e argenteria",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.10",
+    "descrizione": "Commercio al dettaglio di mobili per ufficio",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.20",
+    "descrizione": "Commercio al dettaglio di materiale per ottica e fotografia",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.31",
+    "descrizione": "Commercio al dettaglio di oggetti d’arte, comprese le gallerie d’arte",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.32",
+    "descrizione": "Commercio al dettaglio di oggetti d’artigianato",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.33",
+    "descrizione": "Commercio al dettaglio di arredi sacri ed articoli religiosi",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.34",
+    "descrizione": "Commercio al dettaglio di articoli da regalo e per fumatori",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.35",
+    "descrizione": "Commercio al dettaglio di bomboniere",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.36",
+    "descrizione": "Commercio al dettaglio di chincaglieria e bigiotteria, compresi gli oggetti ricordo e gli articoli di promozione pubblicitaria",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.37",
+    "descrizione": "Commercio al dettaglio di articoli per le belle arti",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.40",
+    "descrizione": "Commercio al dettaglio di combustibile per uso domestico e per riscaldamento",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.50",
+    "descrizione": "Commercio al dettaglio di armi e munizioni, articoli militari",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.60",
+    "descrizione": "Commercio al dettaglio di saponi, detersivi, prodotti per la lucidatura e affini",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.91",
+    "descrizione": "Commercio al dettaglio di filatelia, numismatica e articoli da collezionismo",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.92",
+    "descrizione": "Commercio al dettaglio di spaghi, cordami, tele e sacchi di juta e prodotti per l’imballaggio (esclusi quelli in carta e cartone)",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.93",
+    "descrizione": "Commercio al dettaglio di articoli funerari e cimiteriali",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.94",
+    "descrizione": "Commercio al dettaglio di articoli per adulti (sexy shop)",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.78.99",
+    "descrizione": "Commercio al dettaglio di altri prodotti non alimentari nca",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.79.10",
+    "descrizione": "Commercio al dettaglio di libri di seconda mano",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.79.20",
+    "descrizione": "Commercio al dettaglio di mobili usati e oggetti di antiquariato",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.79.30",
+    "descrizione": "Commercio al dettaglio di indumenti e altri oggetti usati",
+    "settore": "Altri articoli nuovo e usato",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.81.01",
+    "descrizione": "Commercio al dettaglio ambulante di prodotti ortofrutticoli",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.81.02",
+    "descrizione": "Commercio al dettaglio ambulante di prodotti ittici",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.81.03",
+    "descrizione": "Commercio al dettaglio ambulante di carne",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.81.09",
+    "descrizione": "Commercio al dettaglio ambulante di altri prodotti alimentari e bevande nca",
+    "settore": "Alimentari e bevande",
+    "coefficente": 40
+  },
+  {
+    "codice": "47.82.01",
+    "descrizione": "Commercio al dettaglio ambulante di tessuti, articoli tessili per la casa, articoli di abbigliamento",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.82.02",
+    "descrizione": "Commercio al dettaglio ambulante a posteggio fisso di calzature e pelletterie",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.01",
+    "descrizione": "Commercio al dettaglio ambulante di fiori, piante, bulbi, semi e fertilizzanti",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.02",
+    "descrizione": "Commercio al dettaglio ambulante di macchine, attrezzature e prodotti per l’agricoltura; attrezzature per il giardinaggio",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.03",
+    "descrizione": "Commercio al dettaglio ambulante di profumi e cosmetici; saponi, detersivi ed altri detergenti per qualsiasi uso",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.04",
+    "descrizione": "Commercio al dettaglio ambulante di chincaglieria e bigiotteria",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.05",
+    "descrizione": "Commercio al dettaglio ambulante di arredamenti per giardino; mobili; tappeti e stuoie; articoli casalinghi; elettrodomestici; materiale elettrico",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.89.09",
+    "descrizione": "Commercio al dettaglio ambulante di altri prodotti nca",
+    "settore": "Altri Ambulanti",
+    "coefficente": 54
+  },
+  {
+    "codice": "47.91.10",
+    "descrizione": "Commercio al dettaglio di qualsiasi tipo di prodotto effettuato via Internet",
+    "settore": "Commercio",
+    "coefficente": 40
+  },
+  {
+    "codice": "49.32.10",
+    "descrizione": "Trasporto con taxi",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "49.32.20",
+    "descrizione": "Trasporto mediante noleggio di autovetture da rimessa con conducente",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "49.41.00",
+    "descrizione": "Trasporto di merci su strada",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "49.42.00",
+    "descrizione": "Servizi di trascloco",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "5.11.00",
+    "descrizione": "Preparazione e concia del cuoio e pelle; preparazione e tintura di pellicce",
+    "settore": "Abbigliamento e accessori tessile casa e persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.10.10",
+    "descrizione": "Magazzini di custodia e deposito per conto terzi",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.10.20",
+    "descrizione": "Magazzini frigoriferi per conto terzi",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.21.50",
+    "descrizione": "Gestione di parcheggi e autorimesse",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.21.60",
+    "descrizione": "Attività di traino e soccorso stradale",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.29.21",
+    "descrizione": "Intermediari dei trasporti",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "52.29.22",
+    "descrizione": "Servizi logistici relativi alla distribuzione delle merci",
+    "settore": "Logistica Trasporti e Magazzino",
+    "coefficente": 67
+  },
+  {
+    "codice": "55.10.00",
+    "descrizione": "Alberghi",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.10",
+    "descrizione": "Villaggi turistici",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.20",
+    "descrizione": "Ostelli della gioventù",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.30",
+    "descrizione": "Rifugi di montagna",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.40",
+    "descrizione": "Colonie marine e montane",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.51",
+    "descrizione": "Affittacamere per brevi soggiorni, case ed appartamenti per vacanze, bed and breakfast, residence",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.20.52",
+    "descrizione": "Attività di alloggio connesse alle aziende agricole",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.30.00",
+    "descrizione": "Aree di campeggio e aree attrezzate per camper e roulotte",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.90.10",
+    "descrizione": "Gestione di vagoni letto",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "55.90.20",
+    "descrizione": "Alloggi per studenti e lavoratori con servizi accessori di tipo alberghiero",
+    "settore": "Alloggi",
+    "coefficente": 40
+  },
+  {
+    "codice": "56.10.11",
+    "descrizione": "Ristorazione con somministrazione",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.12",
+    "descrizione": "Attività di ristorazione connesse alle aziende agricole",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.20",
+    "descrizione": "Ristorazione senza somministrazione con preparazione di cibi da asporto",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.30",
+    "descrizione": "Gelaterie e pasticcerie",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.41",
+    "descrizione": "Gelaterie e pasticcerie ambulanti",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.42",
+    "descrizione": "Ristorazione ambulante",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.10.50",
+    "descrizione": "Ristorazione su treni e navi",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.21.00",
+    "descrizione": "Catering per eventi, banqueting",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.29.10",
+    "descrizione": "Mense",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.29.20",
+    "descrizione": "Catering continuativo su base contrattuale",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "56.30.00",
+    "descrizione": "Bar e altri esercizi simili senza cucina",
+    "settore": "Ristorazione e bar",
+    "coefficente": 86
+  },
+  {
+    "codice": "59.11.00",
+    "descrizione": "Attività di produzione cinematografica, di video e di programmi televisivi",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.12.00",
+    "descrizione": "Attività di post-produzione cinematografica, di video e di programmi televisivi",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.13.00",
+    "descrizione": "Attività di distribuzione cinematografica, di video e di programmi televisivi",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.14.00",
+    "descrizione": "Attività di proiezione cinematografica",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.20.10",
+    "descrizione": "Edizione di registrazioni sonore",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.20.20",
+    "descrizione": "Edizione di musica stampata",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "59.20.30",
+    "descrizione": "Studi di registrazione sonora",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "60.10.00",
+    "descrizione": "Trasmissioni radiofoniche",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "60.20.00",
+    "descrizione": "Programmazione e trasmissioni televisive",
+    "settore": "Audio e video",
+    "coefficente": 67
+  },
+  {
+    "codice": "62.01.00",
+    "descrizione": "Produzione di software non connesso all’edizione",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "62.02.00",
+    "descrizione": "Consulenza nel settore delle tecnologie dell’informatica",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "62.03.00",
+    "descrizione": "Gestione di strutture e apparecchiature informatiche hardware (housing), esclusa la riparazione",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "62.09.01",
+    "descrizione": "Configurazione di personal computer",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "62.09.09",
+    "descrizione": "Altre attività dei servizi connessi alle tecnologie dell’informatica nca",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.11.11",
+    "descrizione": "Elaborazione elettronica di dati contabili, esclusi i Centri di assistenza fiscale (CAF)",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.11.19",
+    "descrizione": "Altre elaborazioni elettroniche di dati",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.11.20",
+    "descrizione": "Gestione database (attività delle banche dati)",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.11.30",
+    "descrizione": "Hosting e fornitura di servizi applicativi (ASP)",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.12.00",
+    "descrizione": "Portali web",
+    "settore": "Informatica e Web",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.91.00",
+    "descrizione": "Attività delle agenzie di stampa",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "63.99.00",
+    "descrizione": "Altre attività dei servizi di informazione nca",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "66.11.00",
+    "descrizione": "Amministrazione di mercati finanziari",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.12.00",
+    "descrizione": "Attività di negoziazione di contratti relativi a titoli e merci",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.10",
+    "descrizione": "Attività di gestione ed elaborazione di pagamenti tramite carta di credito",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.21",
+    "descrizione": "Promotori finanziari",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.22",
+    "descrizione": "Agenti, mediatori e procacciatori in prodotti finanziari",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.30",
+    "descrizione": "Attività delle società fiduciarie di amministrazione",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.40",
+    "descrizione": "Attività di Bancoposta",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.19.50",
+    "descrizione": "Servizi di trasferimento di denaro (money transfer)",
+    "settore": "Consulenti finanziari",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.21.00",
+    "descrizione": "Attività dei periti e liquidatori indipendenti delle assicurazioni",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.22.01",
+    "descrizione": "Broker di assicurazioni",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.22.02",
+    "descrizione": "Agenti di assicurazioni",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.22.03",
+    "descrizione": "Sub-agenti di assicurazioni",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.22.04",
+    "descrizione": "Produttori, procacciatori ed altri intermediari delle assicurazioni",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.29.01",
+    "descrizione": "Autorità centrali di vigilanza su assicurazioni e fondi pensione",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "66.29.09",
+    "descrizione": "Altre attività ausiliarie delle assicurazioni e dei fondi pensione",
+    "settore": "Consulenti assicurativi",
+    "coefficente": 78
+  },
+  {
+    "codice": "68.20.01",
+    "descrizione": "Locazione immobiliare di beni propri",
+    "settore": "Immobiliare",
+    "coefficente": 67
+  },
+  {
+    "codice": "68.31.00",
+    "descrizione": "Attività di mediazione immobiliare",
+    "settore": "Immobiliare",
+    "coefficente": 67
+  },
+  {
+    "codice": "68.32.00",
+    "descrizione": "Amministrazione di condomini e gestione di beni immobili per conto terzi",
+    "settore": "Immobiliare",
+    "coefficente": 67
+  },
+  {
+    "codice": "69.10.10",
+    "descrizione": "Attività degli studi legali",
+    "settore": "Consulenze legali/notarili",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.10.20",
+    "descrizione": "Attività degli studi notarili",
+    "settore": "Consulenze legali/notarili",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.11",
+    "descrizione": "Servizi forniti da dottori commercialisti",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.12",
+    "descrizione": "Servizi forniti da ragionieri e periti commerciali",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.13",
+    "descrizione": "Servizi forniti da revisori contabili, periti, consulenti ed altri soggetti che svolgono attività in materia di amministrazione, contabilità e tributi",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.14",
+    "descrizione": "Attività svolta dai Centri di assistenza fiscale (C.A.F.)",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.15",
+    "descrizione": "Gestione ed amministrazione del personale per conto terzi",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.20",
+    "descrizione": "Attività delle società di revisione e certificazione di bilanci",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "69.20.30",
+    "descrizione": "Attività dei consulenti del lavoro",
+    "settore": "Consulenti fiscali e del lavoro",
+    "coefficente": 78
+  },
+  {
+    "codice": "70.21.00",
+    "descrizione": "Pubbliche relazioni e comunicazione",
+    "settore": "Consulenti gestione impresa",
+    "coefficente": 78
+  },
+  {
+    "codice": "70.22.01",
+    "descrizione": "Attività di consulenza per la gestione della logistica aziendale",
+    "settore": "Consulenti gestione impresa",
+    "coefficente": 78
+  },
+  {
+    "codice": "70.22.09",
+    "descrizione": "Altre attività di consulenza imprenditoriale e altra consulenza amministrativo-gestionale e pianificazione aziendale",
+    "settore": "Consulenti gestione impresa",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.11.00",
+    "descrizione": "Attività degli studi di architettura",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.12.10",
+    "descrizione": "Attività degli studi di ingegneria",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.12.20",
+    "descrizione": "Servizi di progettazione di ingegneria integrata",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.12.30",
+    "descrizione": "Attività tecniche svolte da geometri",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.12.40",
+    "descrizione": "Attività di cartografia e aerofotogrammetria",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "71.12.50",
+    "descrizione": "Attività di studio geologico e di prospezione geognostica e mineraria",
+    "settore": "Architetti ingegneri e geometri",
+    "coefficente": 78
+  },
+  {
+    "codice": "73.11.01",
+    "descrizione": "Ideazione di campagne pubblicitarie",
+    "settore": "Web/Pubblicità",
+    "coefficente": 78
+  },
+  {
+    "codice": "73.11.02",
+    "descrizione": "Conduzione di campagne di marketing e altri servizi pubblicitari",
+    "settore": "Web/Pubblicità",
+    "coefficente": 78
+  },
+  {
+    "codice": "73.12.00",
+    "descrizione": "Attività delle concessionarie pubblicitarie",
+    "settore": "Web/Pubblicità",
+    "coefficente": 78
+  },
+  {
+    "codice": "73.20.00",
+    "descrizione": "Ricerche di mercato e sondaggi di opinione",
+    "settore": "Web/Pubblicità",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.10.10",
+    "descrizione": "Attività di design di moda e design industriale",
+    "settore": "Design",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.10.21",
+    "descrizione": "Attività dei disegnatori grafici di pagine web",
+    "settore": "Design",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.10.29",
+    "descrizione": "Altre attività dei disegnatori grafici",
+    "settore": "Design",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.10.30",
+    "descrizione": "Attività dei disegnatori tecnici",
+    "settore": "Design",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.10.90",
+    "descrizione": "Altre attività di design",
+    "settore": "Design",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.20.11",
+    "descrizione": "Attività di fotoreporter",
+    "settore": "Fotografia",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.20.12",
+    "descrizione": "Attività di riprese aeree nel campo della fotografia",
+    "settore": "Fotografia",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.20.19",
+    "descrizione": "Altre attività di riprese fotografiche",
+    "settore": "Fotografia",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.20.20",
+    "descrizione": "Laboratori fotografici per lo sviluppo e la stampa",
+    "settore": "Fotografia",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.30.00",
+    "descrizione": "Traduzione e interpretariato",
+    "settore": "Web/Pubblicità",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.11",
+    "descrizione": "Consulenza agraria fornita da agronomi",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.12",
+    "descrizione": "Consulenza agraria fornita da agrotecnici e periti agrari",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.21",
+    "descrizione": "Consulenza sulla sicurezza ed igiene dei posti di lavoro",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.29",
+    "descrizione": "Altra attività di consulenza in materia di sicurezza",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.91",
+    "descrizione": "Attività tecniche svolte da periti industriali",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.92",
+    "descrizione": "Attività riguardanti le previsioni metereologiche",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.93",
+    "descrizione": "Altre attività di consulenza tecnica nca",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.94",
+    "descrizione": "Agenzie ed agenti o procuratori per lo spettacolo e lo sport",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "74.90.99",
+    "descrizione": "Altre attività professionali nca",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "75.00.00",
+    "descrizione": "Servizi veterinari",
+    "settore": "Altre consulenze",
+    "coefficente": 78
+  },
+  {
+    "codice": "77.11.00",
+    "descrizione": "Noleggio di autovetture ed autoveicoli leggeri",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.12.00",
+    "descrizione": "Noleggio di autocarri e di altri veicoli pesanti",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.21.01",
+    "descrizione": "Noleggio di biciclette",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.21.02",
+    "descrizione": "Noleggio senza equipaggio di imbarcazioni da diporto, compresi i pedalò",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.21.09",
+    "descrizione": "Noleggio di altre attrezzature sportive e ricreative",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.22.00",
+    "descrizione": "Noleggio di videocassette, CD, DVD e dischi contenenti audiovisivi o videogame",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.29.10",
+    "descrizione": "Noleggio di biancheria da tavola, da letto, da bagno e di articoli di vestiario",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.29.90",
+    "descrizione": "Noleggio di altri beni per uso personale e domestico nca (escluse le attrezzature sportive e ricreative)",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.32.00",
+    "descrizione": "Noleggio di macchine e attrezzature per lavori edili e di genio civile",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.33.00",
+    "descrizione": "Noleggio di macchine e attrezzature per ufficio (inclusi i computer)",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.39.93",
+    "descrizione": "Noleggio senza operatore di attrezzature di sollevamento e movimentazione merci: carrelli elevatori, pallet, ecc.",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.39.94",
+    "descrizione": "Noleggio di strutture ed attrezzature per manifestazioni e spettacoli: impianti luce ed audio senza operatore, palchi, stand ed addobbi luminosi",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "77.39.99",
+    "descrizione": "Noleggio senza operatore di altre macchine ed attrezzature nca",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "78.10.00",
+    "descrizione": "Servizi di ricerca, selezione, collocamento e supporto per il ricollocamento di personale",
+    "settore": "Lavoro",
+    "coefficente": 67
+  },
+  {
+    "codice": "78.20.00",
+    "descrizione": "Attività delle agenzie di fornitura di lavoro temporaneo (interinale)",
+    "settore": "Lavoro",
+    "coefficente": 67
+  },
+  {
+    "codice": "79.90.19",
+    "descrizione": "Altri servizi di prenotazione e altre attività di assistenza turistica non svolte dalle agenzie di viaggio nca",
+    "settore": "Turismo",
+    "coefficente": 67
+  },
+  {
+    "codice": "79.90.20",
+    "descrizione": "Attività delle guide e degli accompagnatori turistici",
+    "settore": "Turismo",
+    "coefficente": 67
+  },
+  {
+    "codice": "80.10.00",
+    "descrizione": "Servizi di vigilanza privata",
+    "settore": "Sicurezza",
+    "coefficente": 67
+  },
+  {
+    "codice": "80.20.00",
+    "descrizione": "Servizi connessi ai sistemi di vigilanza",
+    "settore": "Sicurezza",
+    "coefficente": 67
+  },
+  {
+    "codice": "80.30.00",
+    "descrizione": "Servizi di investigazione privata",
+    "settore": "Sicurezza",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.21.00",
+    "descrizione": "Pulizia generale (non specializzata) di edifici",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.22.01",
+    "descrizione": "Attività di sterilizzazione di attrezzature medico sanitarie",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.22.02",
+    "descrizione": "Altre attività di pulizia specializzata di edifici e di impianti e macchinari industriali",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.29.10",
+    "descrizione": "Servizi di disinfestazione",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.29.91",
+    "descrizione": "Pulizia e lavaggio di aree pubbliche, rimozione di neve e ghiaccio",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.29.99",
+    "descrizione": "Altre attività di pulizia nca",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "81.30.00",
+    "descrizione": "Cura e manutenzione del paesaggio compresi parchi, giardini e aiuole",
+    "settore": "Pulizia giardinaggio e disinfestazione",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.11.01",
+    "descrizione": "Servizi integrati di supporto per le funzioni d’ufficio",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.11.02",
+    "descrizione": "Gestione di uffici temporanei, uffici residence",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.19.01",
+    "descrizione": "Spedizione di materiale propagandistico, compilazione e gestione di indirizzi",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.19.09",
+    "descrizione": "Servizi di fotocopiatura, preparazione di documenti e altre attività di supporto specializzate per le funzioni d’ufficio",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.20.00",
+    "descrizione": "Attività dei call center",
+    "settore": "Call center e organizzazione di eventi",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.30.00",
+    "descrizione": "Organizzazione di convegni e fiere",
+    "settore": "Call center e organizzazione di eventi",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.91.10",
+    "descrizione": "Attività di agenzie di recupero crediti",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.91.20",
+    "descrizione": "Agenzie di informazioni commerciali",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.92.10",
+    "descrizione": "Imballaggio e confezionamento di generi alimentari",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.92.20",
+    "descrizione": "Confezionamento di generi non alimentari",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.10",
+    "descrizione": "Imprese di gestione esattoriale",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.20",
+    "descrizione": "Agenzie di distribuzione di libri, giornali e riviste",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.30",
+    "descrizione": "Servizi di gestione di pubblici mercati e pese pubbliche",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.40",
+    "descrizione": "Richiesta certificati e disbrigo pratiche",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.91",
+    "descrizione": "Servizi di stenotipia",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "82.99.99",
+    "descrizione": "Altri servizi di supporto alle imprese nca",
+    "settore": "Per l’ufficio ed imprese",
+    "coefficente": 67
+  },
+  {
+    "codice": "85.51.00",
+    "descrizione": "Corsi sportivi e ricreativi",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.52.01",
+    "descrizione": "Corsi di danza",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.52.09",
+    "descrizione": "Altra formazione culturale",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.53.00",
+    "descrizione": "Autoscuole, scuole di pilotaggio e nautiche",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.59.10",
+    "descrizione": "Università popolare",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.59.20",
+    "descrizione": "Corsi di formazione e corsi di aggiornamento professionale",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.59.30",
+    "descrizione": "Scuole e corsi di lingua",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.59.90",
+    "descrizione": "Altri servizi di istruzione nca",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.60.01",
+    "descrizione": "Consulenza scolastica e servizi di orientamento scolastico",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "85.60.09",
+    "descrizione": "Altre attività di supporto all’istruzione",
+    "settore": "Scuola e Corsi",
+    "coefficente": 78
+  },
+  {
+    "codice": "88.10.00",
+    "descrizione": "Assistenza sociale non residenziale per anziani e disabili",
+    "settore": "Assistenza",
+    "coefficente": 78
+  },
+  {
+    "codice": "88.91.00",
+    "descrizione": "Servizi di asili nido e assistenza diurna per minori disabili",
+    "settore": "Assistenza",
+    "coefficente": 78
+  },
+  {
+    "codice": "88.99.00",
+    "descrizione": "Altre attività di assistenza sociale non residenziale nca",
+    "settore": "Assistenza",
+    "coefficente": 78
+  },
+  {
+    "codice": "90.01.01",
+    "descrizione": "Attività nel campo della recitazione",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.01.09",
+    "descrizione": "Altre rappresentazioni artistiche",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.02.01",
+    "descrizione": "Noleggio con operatore di strutture ed attrezzature per manifestazioni e spettacoli",
+    "settore": "Noleggio",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.02.02",
+    "descrizione": "Attività nel campo della regia",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.02.09",
+    "descrizione": "Altre attività di supporto alle rappresentazioni artistiche",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.03.01",
+    "descrizione": "Attività dei giornalisti indipendenti",
+    "settore": "Stampa",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.03.02",
+    "descrizione": "Attività di conservazione e restauro di opere d’arte",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.03.09",
+    "descrizione": "Altre creazioni artistiche e letterarie",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "90.04.00",
+    "descrizione": "Gestione di teatri, sale da concerto e altre strutture artistiche",
+    "settore": "Artistico Culturale",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.11.30",
+    "descrizione": "Gestione di impianti sportivi polivalenti",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.11.90",
+    "descrizione": "Gestione di altri impianti sportivi nca",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.12.00",
+    "descrizione": "Attività di club sportivi",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.13.00",
+    "descrizione": "Gestione di palestre",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.19.10",
+    "descrizione": "Enti e organizzazioni sportive, promozione di eventi sportivi",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.19.91",
+    "descrizione": "Ricarica di bombole per attività subacquee",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.19.92",
+    "descrizione": "Attività delle guide alpine",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.19.99",
+    "descrizione": "Altre attività sportive nca",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.21.00",
+    "descrizione": "Parchi di divertimento e parchi tematici",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.29.10",
+    "descrizione": "Discoteche, sale da ballo night-club e simili",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.29.20",
+    "descrizione": "Gestione di stabilimenti balneari: marittimi, lacuali e fluviali",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.29.30",
+    "descrizione": "Sale giochi e biliardi",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "93.29.90",
+    "descrizione": "Altre attività di intrattenimento e di divertimento nca",
+    "settore": "Sport e Tempo libero",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.11.00",
+    "descrizione": "Riparazione e manutenzione di computer e periferiche",
+    "settore": "Informatica",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.12.01",
+    "descrizione": "Riparazione e manutenzione di telefoni fissi, cordless e cellulari",
+    "settore": "Informatica",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.12.09",
+    "descrizione": "Riparazione e manutenzione di altre apparecchiature per le comunicazioni",
+    "settore": "Informatica",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.21.00",
+    "descrizione": "Riparazione di prodotti elettronici di consumo audio e video",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.22.01",
+    "descrizione": "Riparazione di elettrodomestici e di articoli per la casa",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.22.02",
+    "descrizione": "Riparazione di articoli per il giardinaggio",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.23.00",
+    "descrizione": "Riparazione di calzature e articoli da viaggio in pelle, cuoio o in altri materiali simili",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.24.01",
+    "descrizione": "Riparazione di mobili e di oggetti di arredamento",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.24.02",
+    "descrizione": "Laboratori di tappezzeria",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.25.00",
+    "descrizione": "Riparazione di orologi e di gioielli",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.29.01",
+    "descrizione": "Riparazione di strumenti musicali",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.29.02",
+    "descrizione": "Riparazione di articoli sportivi (escluse le armi sportive) e attrezzature da campeggio, comprese le biciclette",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.29.03",
+    "descrizione": "Modifica e riparazione di articoli di vestiario non effettuate dalle sartorie",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.29.04",
+    "descrizione": "Servizi di riparazioni rapide, duplicazione chiavi, affilatura coltelli, stampa immediata su articoli tessili, incisioni rapide su metallo non prezioso",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "95.29.09",
+    "descrizione": "Riparazione di altri beni di consumo per uso personale e per la casa nca",
+    "settore": "Abbigliamento uso personale e casa",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.01.20",
+    "descrizione": "Altre lavanderie, tintorie",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.02.01",
+    "descrizione": "Servizi dei saloni di barbiere e parrucchiere",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.02.02",
+    "descrizione": "Servizi degli istituti di bellezza",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.02.03",
+    "descrizione": "Servizi di manicure e pedicure",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.03.00",
+    "descrizione": "Servizi di pompe funebri e attività connesse",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.04.10",
+    "descrizione": "Servizi di centri per il benessere fisico (esclusi gli stabilimenti termali)",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.04.20",
+    "descrizione": "Stabilimenti termali",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.09.01",
+    "descrizione": "Attività di sgombero di cantine, solai e garage",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.09.02",
+    "descrizione": "Attività di tatuaggio e piercing",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.09.03",
+    "descrizione": "Agenzie matrimoniali e d’incontro",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.09.04",
+    "descrizione": "Servizi di cura degli animali da compagnia, esclusi i servizi veterinari",
+    "settore": "Alla persona",
+    "coefficente": 67
+  },
+  {
+    "codice": "96.09.09",
+    "descrizione": "Altre attività di servizi per la persona nca",
+    "settore": "Alla persona",
+    "coefficente": 67
+  }
+]

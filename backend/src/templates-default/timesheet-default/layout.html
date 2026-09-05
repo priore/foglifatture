@@ -1,0 +1,70 @@
+<div class="xls-page">
+  <div class="xls-topbar">
+    {{#if logoDataUrl}}
+      <img src="{{logoDataUrl}}" class="logo-img" alt="Logo">
+    {{else}}
+      <svg width="90" height="46" viewBox="0 0 150 90" class="logo-slot">
+        <path d="M4 34 C40 4, 90 4, 148 38" stroke="#7fa8d9" stroke-width="9" fill="none" />
+        <path d="M4 56 C40 26, 90 26, 132 56" stroke="#4472a8" stroke-width="9" fill="none" />
+        <text x="6" y="78" font-family="Georgia, serif" font-size="14" fill="#3a3a3a" letter-spacing="1">LOREM IPSUM</text>
+      </svg>
+    {{/if}}
+    <div class="xls-title">MRO - PIANIFICAZIONE MENSILE</div>
+    <div class="xls-code">MRO/TN</div>
+  </div>
+
+  <table class="xls-info">
+    <tr><td class="k">Consulente:</td><td class="v">{{consulente}}</td><td class="k">Commessa:</td><td class="v">{{commessa}}</td></tr>
+    <tr><td class="k">Figura:</td><td class="v">{{figura}}</td><td class="k">Cliente:</td><td class="v">{{cliente}}</td></tr>
+    <tr><td class="k">Mese:</td><td class="v">{{nomeMese}}</td><td class="k">Localit&agrave;:</td><td class="v">{{localita}}</td></tr>
+    <tr><td class="k">Anno:</td><td class="v">{{anno}}</td><td class="k">Progetto:</td><td class="v">{{progetto}}</td></tr>
+  </table>
+  <div class="doc-gap"></div>
+
+  <table class="xls-grid">
+    <thead>
+      <tr><th>GG</th><th>Giorno</th><th>Entrata</th><th>Uscita</th><th>Entrata</th><th>Uscita</th><th>Totale<br>Giorn.</th><th>Motivo<br>Assenza</th><th>NOTE</th></tr>
+    </thead>
+    <tbody>
+      {{#each giorni}}
+      <tr class="{{#if wknd}}wknd{{/if}}">
+        <td class="num">{{giorno}}</td>
+        <td class="day">{{nomeGiorno}}</td>
+        <td>{{inizioMattina}}</td>
+        <td>{{fineMattina}}</td>
+        <td>{{inizioPomeriggio}}</td>
+        <td>{{finePomeriggio}}</td>
+        <td>{{oreGiornoFormattate}}</td>
+        <td class="{{#if assenzaVisibile}}absence{{/if}}">{{#if assenzaVisibile}}{{stato}}{{/if}}</td>
+        <td>{{note}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="xls-total-row">
+    <table class="xls-total"><tr><td class="lbl">TOTALE ORE LAVORATE</td><td class="val">{{totaleOreFormattato}}</td></tr></table>
+  </div>
+  <div class="doc-gap"></div>
+
+  <table class="xls-summary">
+    <tr><td class="hdr" colspan="6">RIEPILOGO DATI MENSILI</td></tr>
+    <tr><td class="sub" colspan="2">Giorni</td><td class="sub" colspan="4">Ore</td></tr>
+    <tr><td class="col">Lavor.</td><td class="col">Assenze</td><td class="col">Ordin.</td><td class="col">Straord.</td><td class="col">Perm.</td><td class="col">Totale</td></tr>
+    <tr>
+      <td>{{giorniLavorati}}</td><td>{{totaleAssenze}}</td>
+      <td>{{totaleOreFormattato}}</td><td>0,00</td><td>0,00</td>
+      <td>{{totaleOreFormattato}}</td>
+    </tr>
+    <tr><td class="rowhdr" colspan="6">Monitoraggi</td></tr>
+    <tr><td class="italic-lbl" colspan="2">effettivi</td><td colspan="4"></td></tr>
+    <tr><td class="italic-lbl" colspan="2">previsti</td><td colspan="4"></td></tr>
+    <tr><td class="rowhdr" colspan="6">Monitoraggi<br><span class="small">(Limiti di accettabilit&agrave;)</span></td></tr>
+    <tr><td class="sub" colspan="6">Giustificazione Assenze</td></tr>
+    <tr><td class="col" colspan="4">descrizione</td><td class="col" colspan="2">giorni</td></tr>
+    {{#each conteggioAssenze}}
+    <tr><td colspan="4">{{stato}}</td><td colspan="2">{{conteggio}}</td></tr>
+    {{/each}}
+    <tr><td class="col" colspan="2">Note:</td><td colspan="4"></td></tr>
+  </table>
+</div>

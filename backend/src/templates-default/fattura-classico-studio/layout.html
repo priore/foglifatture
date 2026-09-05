@@ -1,0 +1,50 @@
+<div class="sheet">
+  <div class="topbar">
+    <div class="brand">
+      {{#if fornitore.logoDataUrl}}
+        <img src="{{fornitore.logoDataUrl}}" class="logo-img" alt="Logo">
+      {{else}}
+        <svg width="44" height="44" viewBox="0 0 150 90" class="logo-slot">
+          <path d="M4 34 C40 4, 90 4, 148 38" stroke="#7fa8d9" stroke-width="9" fill="none" />
+          <path d="M4 56 C40 26, 90 26, 132 56" stroke="#4472a8" stroke-width="9" fill="none" />
+          <text x="6" y="78" font-family="Georgia, serif" font-size="14" fill="#3a3a3a" letter-spacing="1">LOREM IPSUM</text>
+        </svg>
+      {{/if}}
+      <div>
+        <div class="brandname">{{fornitore.denominazione}}</div>
+        <div class="brandname" style="opacity:.7">Consulenza IT</div>
+      </div>
+    </div>
+    <div class="sender">
+      <strong>{{fornitore.denominazione}}</strong>
+      {{fornitore.indirizzo}} {{fornitore.numeroCivico}}, {{fornitore.cap}} {{fornitore.comune}} ({{fornitore.provincia}})<br>
+      P.IVA {{fornitore.partitaIva}} &middot; CF {{fornitore.codiceFiscale}}
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="party">
+      <div class="party-label">Fattura a</div>
+      <p><strong>{{cliente.denominazione}}</strong></p>
+      <p>{{cliente.indirizzo}}, {{cliente.cap}} {{cliente.comune}} ({{cliente.provincia}})</p>
+      <p>P.IVA {{cliente.partitaIva}}</p>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div><span>Numero</span><strong>{{numero}}</strong></div>
+    <div><span>Data</span><strong>{{dataFormattata}}</strong></div>
+  </div>
+
+  <div class="desc">{{descrizione}}</div>
+
+  <table class="amounts">
+    <tr><td>Compenso professionale</td><td>&euro; {{imponibileFormattato}}</td></tr>
+    <tr class="total"><td>Netto a pagare</td><td>&euro; {{nettoAPagareFormattato}}</td></tr>
+  </table>
+
+  <p class="legal">Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 — Regime forfetario. Operazione non soggetta a ritenuta d'acconto.</p>
+  {{#if bolloApplicabile}}
+    <p class="legal">Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</p>
+  {{/if}}
+</div>

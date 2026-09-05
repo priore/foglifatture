@@ -1,0 +1,49 @@
+<div class="a4">
+  <div class="header-row">
+    {{#if fornitore.logoDataUrl}}
+      <img src="{{fornitore.logoDataUrl}}" class="logo-img" alt="Logo">
+    {{else}}
+      <svg width="100" height="50" viewBox="0 0 150 90" class="logo-slot">
+        <path d="M4 34 C40 4, 90 4, 148 38" stroke="#7fa8d9" stroke-width="9" fill="none" />
+        <path d="M4 56 C40 26, 90 26, 132 56" stroke="#4472a8" stroke-width="9" fill="none" />
+        <text x="6" y="78" font-family="Georgia, serif" font-size="14" fill="#3a3a3a" letter-spacing="1">LOREM IPSUM</text>
+      </svg>
+    {{/if}}
+    <div class="sender-frame">
+      <p class="doc-line sender-title">{{fornitore.denominazione}}</p>
+      <p class="doc-line">{{fornitore.indirizzo}} {{fornitore.numeroCivico}}, {{fornitore.cap}} {{fornitore.comune}} ({{fornitore.provincia}})</p>
+      <p class="doc-line">P.IVA {{fornitore.partitaIva}}</p>
+      <p class="doc-line">CF {{fornitore.codiceFiscale}}</p>
+    </div>
+  </div>
+
+  <p class="doc-line">{{cliente.denominazione}}</p>
+  <p class="doc-line">{{cliente.indirizzo}}, {{cliente.cap}} {{cliente.comune}} ({{cliente.provincia}})</p>
+  <p class="doc-line">P.IVA {{cliente.partitaIva}}</p>
+  <div class="doc-gap-lg"></div>
+
+  <table class="doc-table">
+    <thead><tr>
+      <td class="col-num">Fattura&nbsp;&nbsp;n.</td>
+      <td class="col-data">Data</td>
+      <td class="col-oggetto">Oggetto</td>
+    </tr></thead>
+    <tbody><tr>
+      <td class="col-num">{{numero}}</td>
+      <td class="col-data">{{dataFormattata}}</td>
+      <td class="col-oggetto">{{descrizione}}</td>
+    </tr></tbody>
+  </table>
+  <div class="doc-gap-lg"></div>
+
+  <table class="doc-table compenso">
+    <tr><td>Compenso professionale</td><td>{{imponibileFormattato}} &euro;</td></tr>
+    <tr><td>NETTO A PAGARE</td><td>{{nettoAPagareFormattato}} &euro;</td></tr>
+  </table>
+  <div class="doc-gap-lg"></div>
+
+  <p class="legal-note">Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario; operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</p>
+  {{#if bolloApplicabile}}
+    <p class="legal-note">Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</p>
+  {{/if}}
+</div>

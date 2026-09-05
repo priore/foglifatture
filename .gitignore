@@ -1,0 +1,31 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# env / secrets
+.env
+!.env.example
+
+# runtime data & logs
+logs/
+*.log
+backend/data/
+backend/logs/
+backend/src/data/atecoSettori.json.bak
+
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea
+.vscode/*
+!.vscode/extensions.json
+.playwright-mcp/
+
+# piani di analisi locali, non pubblicati
+AI-Workspace/Plans/
+# output locali (es. export CSV bancari usati per debug), possono contenere dati sensibili
+AI-Workspace/Output/
