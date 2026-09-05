@@ -54,11 +54,54 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Screenshot
 
-**Timesheet mensile** — ore giornaliere per cliente, replica la struttura di un foglio ore aziendale.
+Clicca su uno screenshot per ingrandirlo.
 
-![Timesheet mensile](docs/screenshots/timesheet-mensile.png)
+<table>
+<tr>
+<td width="50%" valign="top">
 
-<!-- TODO: altri screenshot in arrivo a scaglioni (limite rielaborazione grafica giornaliera, vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
+### Tieni sotto controllo il regime forfettario
+
+Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.
+
+</td>
+<td width="50%" valign="top">
+
+<a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" width="320"></a>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+<a href="docs/screenshots/fattura-proforma.png"><img src="docs/screenshots/fattura-proforma.png" width="320"></a>
+
+</td>
+<td width="50%" valign="top">
+
+### Dalle ore lavorate alla fattura, senza calcolatrice
+
+Scegli il mese, l'app somma le ore dal timesheet e calcola il compenso in automatico — bollo virtuale incluso quando serve. Anteprima della fattura pronta a fianco, generazione definitiva con un click.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Un foglio ore che conosci già
+
+Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.
+
+</td>
+<td width="50%" valign="top">
+
+<a href="docs/screenshots/timesheet-mensile.png"><img src="docs/screenshots/timesheet-mensile.png" width="320"></a>
+
+</td>
+</tr>
+</table>
+
+<!-- TODO: altri screenshot in arrivo a scaglioni (wizard clienti, vista mobile/dark mode — vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
 
 ## Installazione
 
