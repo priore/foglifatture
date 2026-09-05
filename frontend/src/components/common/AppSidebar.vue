@@ -33,7 +33,7 @@ function toggleTheme() {
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
-      <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }"><span class="dot"></span>Impostazioni</router-link>
+      <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }"><span class="dot"></span>Impostazioni<svg class="accordion-caret" :class="{ open: route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></router-link>
       <div v-if="route.path.startsWith('/impostazioni') || route.path === '/importa-storico'" class="nav-sub">
         <template v-for="(passo, i) in PASSI_IMPOSTAZIONI" :key="passo">
           <router-link
@@ -51,7 +51,7 @@ function toggleTheme() {
               to="/importa-storico"
               active-class="" exact-active-class=""
               :class="{ 'router-link-active': route.path === '/importa-storico' }"
-            >Importa storico</router-link>
+            >Importa storico<svg class="accordion-caret" :class="{ open: route.path === '/importa-storico' }" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></router-link>
             <template v-if="route.path === '/importa-storico'">
               <router-link
                 v-for="(sotto, j) in PASSI_IMPORTA_STORICO" :key="sotto"

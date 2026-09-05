@@ -79,6 +79,8 @@ body {
 .nav a:hover { background: rgba(255,255,255,.06); }
 .nav .dot { width: 6px; height: 6px; border-radius: var(--radius-circle); background: var(--accent); opacity: 0; transition: opacity .15s; }
 .nav a.router-link-active .dot { opacity: 1; }
+.nav .accordion-caret, .nav-sub .accordion-caret { margin-left: auto; font-size: var(--font-size-sm); opacity: .6; transition: transform .15s; }
+.nav .accordion-caret.open, .nav-sub .accordion-caret.open { transform: rotate(90deg); }
 .nav-sub { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 4px 22px; }
 .nav-sub a { padding: 6px 10px; font-size: var(--font-size-sm); font-weight: 500; border-radius: 7px; }
 .nav-sub a.router-link-active { background: rgba(255,255,255,.08); color: #fff; }

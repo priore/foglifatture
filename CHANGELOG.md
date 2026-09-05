@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Sidebar: icona a freccia per le voci di menu con sottovoci apribili (Impostazioni, Importa storico).
+
 ## [1.0.0] - 2026-09-04
 
 Prima release pubblica.
