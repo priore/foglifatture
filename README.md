@@ -1,4 +1,4 @@
-# FogliFatture
+# Fogli & Fatture
 
 [![Licenza](https://img.shields.io/badge/licenza-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
@@ -218,9 +218,11 @@ Distribuito sotto [PolyForm Noncommercial 1.0.0](LICENSE). Uso libero per scopi 
 
 Se questo progetto ti è stato utile, considera una piccola donazione. Ogni contributo aiuta a finanziare nuove funzionalità e mantenere il progetto attivo.
 
-Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo.
+Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo. In alternativa puoi donare via PayPal.
 
 |Donate with BTC (Bitcoin)|
 |:------------:|
 |![](https://www.prioregroup.com/images/priore_btc_segwit_binance.jpg)|
 |`BTC Address (SegWit) : bc1q6rjOuuwu9k2fvs5n5elmqy9v4ljazhexejykjm`|
+
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
