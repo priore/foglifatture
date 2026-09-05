@@ -42,6 +42,16 @@ Repo locale (`/Users/danilo/Documents/Prioregroup/Timesheet`, branch `develop`, 
 
 6. Solo dopo conferma: commit con messaggio approvato, poi chiedi separatamente conferma per il push (due conferme distinte: commit locale al repo pubblico è meno rischioso, push lo rende visibile online).
 
+7. **Dopo il push, verifica l'esito reale dei workflow** con `gh` CLI invece di aspettare le email di notifica (troncate, poco utili per debug):
+   ```bash
+   gh run list --repo priore/foglifatture --limit 10 --json databaseId,name,status,conclusion,headBranch,createdAt
+   ```
+   Per ogni run con `"conclusion":"failure"`, recupera il motivo:
+   ```bash
+   gh run view <databaseId> --repo priore/foglifatture --log-failed
+   ```
+   Segnala all'utente eventuali fallimenti reali (non i soliti PR-Dependabot già gestiti) prima di considerare il sync concluso.
+
 ## Nota: rendering README, Gogs (locale) vs GitHub (pubblico)
 
 Il motore Git del repo locale è **Gogs**, non Gitea/GitHub — sanifica aggressivamente markup HTML nel markdown: `style=`, `border=`, `align=`/`float` sugli `<img>` vengono spogliati (mostra sempre stack verticale, mai affiancato), e un `<img src="/percorso/assoluto">` dentro un tag HTML puro (non dentro `![]()` markdown) viene doppiato dal resolver di path. Per questo il README usa path relativi semplici (`docs/screenshots/...`, niente slash iniziale) e markup HTML standard (`align`, `width`, link `<a>` di ingrandimento) che su Gogs appare solo verticale ma è valido e viene reso correttamente affiancato una volta su GitHub — nessuna riscrittura di path richiesta in fase di sync verso il repo pubblico.

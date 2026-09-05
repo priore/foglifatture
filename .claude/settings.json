@@ -10,10 +10,22 @@
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_take_screenshot",
-      "mcp__playwright__browser_resize"
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_run_code_unsafe"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "actions_msg=$(gh run list --repo priore/foglifatture --limit 20 --json name,conclusion,createdAt,headBranch 2>/dev/null | jq -r '[.[] | select(.headBranch==\"main\" and .conclusion==\"failure\")] as $f | if ($f | length) > 0 then \"GitHub Actions: \" + (($f | length) | tostring) + \" workflow fallito/i su foglifatture (main): \" + ([$f[].name] | unique | join(\", \")) + \". Controlla con: gh run list --repo priore/foglifatture\" else empty end' 2>/dev/null); pr_msg=$(gh pr list --repo priore/foglifatture --json number,title --limit 30 2>/dev/null | jq -r 'if (length) > 0 then \"PR aperte su foglifatture (\" + (length | tostring) + \"): \" + ([.[] | \"#\\(.number) \" + .title] | join(\"; \")) else empty end' 2>/dev/null); msg=\"\"; if [ -n \"$actions_msg\" ]; then msg=\"$actions_msg\"; fi; if [ -n \"$pr_msg\" ]; then if [ -n \"$msg\" ]; then msg=\"$msg\n$pr_msg\"; else msg=\"$pr_msg\"; fi; fi; if [ -n \"$msg\" ]; then jq -n --arg m \"$msg\" '{systemMessage: $m}'; fi; exit 0",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
