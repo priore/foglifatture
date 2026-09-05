@@ -1,0 +1,49 @@
+.sheet{
+  --blue:#0B4F6C;
+  --blue-deep:#083a51;
+  --ink:#132b33;
+  --paper:#f4f8fa;
+  --panel:#ffffff;
+  --rule:#c7d8de;
+  --muted:#5b7480;
+  width:21cm;
+  min-height:29.6cm;
+  background:#ffffff;
+  color:var(--ink);
+  font-family:'IBM Plex Sans',Arial,sans-serif;
+  border:1px solid var(--rule);
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  box-sizing:border-box;
+}
+.sheet .band{background:var(--blue);color:#fff;padding:22px 30px;display:flex;justify-content:space-between;align-items:center;}
+.sheet .band h1{margin:0;font-size:16px;font-weight:600;letter-spacing:.04em;}
+.sheet .band .code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--blue-deep);padding:5px 10px;border-radius:3px;}
+.sheet .body{padding:30px;}
+.sheet .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:26px;border:1px solid var(--rule);}
+.sheet .grid2>div{padding:16px 18px;}
+.sheet .grid2>div:first-child{border-right:1px solid var(--rule);}
+.sheet .logo-img{height:40px;max-width:130px;object-fit:contain;margin-bottom:8px;}
+.sheet .logo-slot{margin-bottom:8px;}
+.sheet .cell-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:7px;}
+.sheet .grid2 p{margin:0 0 2px;font-size:13.5px;line-height:1.5;}
+.sheet .grid2 p.name{font-weight:600;font-size:14.5px;color:var(--ink);}
+.sheet table.meta{width:100%;border-collapse:collapse;margin-bottom:22px;}
+.sheet table.meta td{border:1px solid var(--rule);padding:10px 14px;font-size:13px;}
+.sheet table.meta td.k{background:var(--paper);color:var(--muted);width:110px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;}
+.sheet table.meta td.v{font-family:'JetBrains Mono',monospace;font-weight:600;}
+.sheet .desc{border:1px solid var(--rule);padding:16px 18px;margin-bottom:22px;font-size:13.5px;line-height:1.6;}
+.sheet .desc .cell-label{margin-bottom:8px;}
+.sheet table.amounts{width:100%;border-collapse:collapse;border:1px solid var(--rule);}
+.sheet table.amounts td{padding:13px 16px;border-bottom:1px solid var(--rule);font-size:13.5px;}
+.sheet table.amounts tr:last-child td{border-bottom:none;}
+.sheet table.amounts td:last-child{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
+.sheet table.amounts tr.total{background:var(--blue);color:#fff;}
+.sheet table.amounts tr.total td{font-size:16px;font-weight:700;}
+.sheet .legal{font-size:10.5px;line-height:1.6;color:var(--muted);margin-top:18px;}
+.sheet .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--rule);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;}
+
+@media print {
+  .sheet table.amounts tr { break-inside: avoid; }
+  .sheet .desc { break-inside: avoid; }
+  .sheet { box-shadow: none; }
+}

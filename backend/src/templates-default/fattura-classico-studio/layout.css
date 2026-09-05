@@ -1,0 +1,42 @@
+.sheet{
+  --bordeaux:#7A2E2E;
+  --bordeaux-soft:#a8615f;
+  --ink:#241f1c;
+  --paper:#fbf9f6;
+  --rule:#ddd3ca;
+  --muted:#6b6058;
+  width:21cm;
+  min-height:29.6cm;
+  background:#ffffff;
+  color:var(--ink);
+  font-family:'Source Serif 4',Georgia,serif;
+  padding:30px;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  box-sizing:border-box;
+}
+.sheet .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:28px;}
+.sheet .brand{display:flex;align-items:center;gap:14px;}
+.sheet .logo-img{height:44px;max-width:140px;object-fit:contain;}
+.sheet .logo-slot{flex:none;opacity:.95;}
+.sheet .brandname{font-family:'IBM Plex Sans',Arial,sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.sheet .sender{text-align:right;font-family:'IBM Plex Sans',Arial,sans-serif;font-size:12.5px;line-height:1.6;color:var(--muted);}
+.sheet .sender strong{color:var(--ink);font-size:13.5px;display:block;margin-bottom:2px;}
+.sheet .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;}
+.sheet .party-label{font-family:'IBM Plex Sans',Arial,sans-serif;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bordeaux);margin-bottom:6px;}
+.sheet .party p{margin:0 0 3px;font-size:14px;line-height:1.5;}
+.sheet .meta{display:flex;gap:40px;margin-bottom:30px;font-family:'IBM Plex Sans',Arial,sans-serif;}
+.sheet .meta div span{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.sheet .meta div strong{font-size:16px;font-weight:600;color:var(--ink);}
+.sheet .desc{font-size:14.5px;line-height:1.7;margin-bottom:28px;padding:16px 18px;background:color-mix(in srgb, var(--bordeaux) 6%, transparent);border-left:2px solid var(--bordeaux);}
+.sheet table.amounts{width:100%;border-collapse:collapse;margin-bottom:26px;font-family:'IBM Plex Sans',Arial,sans-serif;}
+.sheet table.amounts td{padding:12px 4px;border-bottom:1px solid var(--rule);font-size:14px;}
+.sheet table.amounts td:last-child{text-align:right;font-variant-numeric:tabular-nums;}
+.sheet table.amounts tr.total td{border-bottom:none;border-top:2px solid var(--bordeaux);padding-top:16px;font-size:19px;font-weight:600;font-family:'Source Serif 4',Georgia,serif;}
+.sheet .legal{font-size:11.5px;line-height:1.6;color:var(--muted);font-style:italic;margin:6px 0;}
+.sheet .foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--rule);font-family:'IBM Plex Sans',Arial,sans-serif;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;}
+
+@media print {
+  .sheet table.amounts tr { break-inside: avoid; }
+  .sheet .legal { break-inside: avoid; }
+  .sheet { box-shadow: none; }
+}
