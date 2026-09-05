@@ -1,4 +1,4 @@
-# FogliFatture
+# Fogli & Fatture
 
 [![Licenza](https://img.shields.io/badge/licenza-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
@@ -47,7 +47,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - Nessuna credenziale hardcoded: chiavi API, secret OAuth e dati PEC vivono solo in `backend/.env` locale, mai versionato né distribuito.
 - La chiave API Gemini non viene mai esposta al frontend né scritta nei log — usata server-side solo per la chiamata a `generativelanguage.googleapis.com`.
 - Avvio path-indipendente: l'app funziona da qualsiasi cartella, su Mac e Windows.
-- Repository sotto scansione automatica continua: secret scanning (gitleaks), analisi statica del codice (CodeQL), controllo licenze delle dipendenze, controllo comportamento delle dipendenze (Socket.dev), monitoraggio CVE note (Dependabot).
+- Repository sotto scansione automatica continua: secret scanning (gitleaks), analisi statica del codice (CodeQL), controllo licenze delle dipendenze, monitoraggio CVE note (Dependabot).
 - Dettagli completi e canale di segnalazione responsabile: [SECURITY.md](SECURITY.md).
 
 **Trasparenza dati verso servizi AI esterni**: la funzione di lookup codice ATECO e il calcolo di alcune scadenze fiscali con proroga usano l'API Gemini (Google). Solo i dati strettamente necessari a quella specifica elaborazione (es. descrizione attività, date di scadenza) vengono inviati a Google — mai l'intero storico fatture/timesheet. La funzione è opzionale e disattivabile.
@@ -218,9 +218,11 @@ Distribuito sotto [PolyForm Noncommercial 1.0.0](LICENSE). Uso libero per scopi 
 
 Se questo progetto ti è stato utile, considera una piccola donazione. Ogni contributo aiuta a finanziare nuove funzionalità e mantenere il progetto attivo.
 
-Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo.
+Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo. In alternativa puoi donare via PayPal.
 
 |Donate with BTC (Bitcoin)|
 |:------------:|
 |![](https://www.prioregroup.com/images/priore_btc_segwit_binance.jpg)|
 |`BTC Address (SegWit) : bc1q6rjOuuwu9k2fvs5n5elmqy9v4ljazhexejykjm`|
+
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
