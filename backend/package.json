@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --experimental-test-module-mocks --test src/**/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "fast-xml-parser": "^5.11.1",
+    "imapflow": "^1.7.6",
+    "keytar": "^7.9.0",
+    "mailparser": "^3.9.17",
+    "multer": "^2.3.0",
+    "nodemailer": "^9.0.6",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

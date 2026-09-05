@@ -1,0 +1,38 @@
+<div class="sheet">
+  <div class="top row">
+    <h1>Fattura</h1>
+    <span class="num">N. {{numero}} — {{dataFormattata}}</span>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="label">Da</div>
+      {{#if fornitore.logoDataUrl}}
+        <img src="{{fornitore.logoDataUrl}}" class="logo-img" alt="Logo">
+      {{else}}
+        <svg width="90" height="46" viewBox="0 0 150 90" class="logo-slot">
+          <path d="M4 34 C40 4, 90 4, 148 38" stroke="#7fa8d9" stroke-width="9" fill="none" />
+          <path d="M4 56 C40 26, 90 26, 132 56" stroke="#4472a8" stroke-width="9" fill="none" />
+          <text x="6" y="78" font-family="Georgia, serif" font-size="14" fill="#3a3a3a" letter-spacing="1">LOREM IPSUM</text>
+        </svg>
+      {{/if}}
+      <p class="name">{{fornitore.denominazione}}</p>
+      <p>{{fornitore.indirizzo}} {{fornitore.numeroCivico}}, {{fornitore.cap}} {{fornitore.comune}} ({{fornitore.provincia}})</p>
+      <p>P.IVA {{fornitore.partitaIva}}</p>
+    </div>
+    <div>
+      <div class="label">A</div>
+      <p class="name">{{cliente.denominazione}}</p>
+      <p>{{cliente.indirizzo}}, {{cliente.cap}} {{cliente.comune}} ({{cliente.provincia}})</p>
+      <p>P.IVA {{cliente.partitaIva}}</p>
+    </div>
+  </div>
+
+  <p class="desc">{{descrizione}}</p>
+
+  <div class="amount-row"><span>Compenso professionale</span><span>&euro; {{imponibileFormattato}}</span></div>
+  <div class="amount-row total"><span>Netto a pagare</span><span>&euro; {{nettoAPagareFormattato}}</span></div>
+
+  <p class="legal">Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 — Regime forfetario. Non soggetta a ritenuta d'acconto.
+  {{#if bolloApplicabile}}Imposta di bollo assolta in modo virtuale ove applicabile.{{/if}}</p>
+</div>

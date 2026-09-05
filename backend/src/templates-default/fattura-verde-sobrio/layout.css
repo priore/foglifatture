@@ -1,0 +1,41 @@
+.sheet{
+  --sage:#3E5641;
+  --sage-deep:#2c3f2f;
+  --ink:#232821;
+  --paper:#f7f6f1;
+  --rule:#d7d3c4;
+  --muted:#6f7566;
+  --gold:#a8863f;
+  width:21cm;
+  min-height:29.6cm;
+  background:#ffffff;
+  color:var(--ink);
+  font-family:'Lora',Georgia,serif;
+  padding:34px;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  box-sizing:border-box;
+}
+.sheet .crest{text-align:center;margin-bottom:26px;}
+.sheet .logo-img{height:46px;max-width:144px;object-fit:contain;margin:0 auto 10px;display:block;}
+.sheet .logo-slot{margin:0 auto 10px;display:block;}
+.sheet .crest .studio{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+.sheet hr.orn{border:none;border-top:1px solid var(--rule);width:120px;margin:20px auto 30px;}
+.sheet .parties{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-bottom:30px;text-align:center;}
+.sheet .party-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.sheet .party p{margin:0 0 3px;font-size:13.5px;line-height:1.55;color:var(--muted);}
+.sheet .party p.name{font-weight:600;font-size:15.5px;color:var(--ink);font-family:'Lora',Georgia,serif;}
+.sheet .meta{text-align:center;margin-bottom:30px;font-size:13px;color:var(--muted);}
+.sheet .meta strong{color:var(--ink);font-weight:600;}
+.sheet .meta .sep{margin:0 10px;color:var(--rule);}
+.sheet .desc{text-align:center;font-size:14.5px;line-height:1.75;max-width:56ch;margin:0 auto 34px;font-style:italic;color:var(--ink);}
+.sheet table.amounts{width:100%;max-width:420px;margin:0 auto 30px;border-collapse:collapse;}
+.sheet table.amounts td{padding:11px 6px;border-bottom:1px solid var(--rule);font-size:14px;}
+.sheet table.amounts td:last-child{text-align:right;font-variant-numeric:tabular-nums;}
+.sheet table.amounts tr.total td{border-bottom:none;border-top:1px solid var(--sage);padding-top:16px;font-size:19px;font-weight:600;color:var(--sage-deep);}
+.sheet .legal{text-align:center;font-size:11px;line-height:1.7;color:var(--muted);max-width:52ch;margin:0 auto;}
+.sheet .foot{text-align:center;margin-top:34px;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--rule);}
+
+@media print {
+  .sheet table.amounts tr { break-inside: avoid; }
+  .sheet { box-shadow: none; }
+}

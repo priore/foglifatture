@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_find",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_select_option",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_resize"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' | { read -r cmd; if echo \"$cmd\" | grep -qE '\\bgit\\s+(commit|push)\\b'; then hit=$( (git ls-files; git diff --cached --name-only) | grep -E '(^|/)(config\\.json|\\.env|[^/]*\\.key|[^/]*\\.pem)$' ); if [ -n \"$hit\" ]; then printf '{\"decision\":\"block\",\"reason\":\"Sensitive file(s) staged/tracked, blocking commit/push:\\n%s\"}' \"$hit\"; exit 0; fi; fi; exit 0; }",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

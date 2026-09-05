@@ -1,0 +1,46 @@
+/* Replica esatta di FATT08_2026.doc: A4, margini 2/2.5/2/2 cm, Times New Roman 12pt
+   nero/grigio (#1D2129), bordi tabella grigio chiaro #D9D9D9, intestazione tabella
+   fattura mattone #A65355 (colore di sfondo w:shd letto dal file .doc originale). */
+
+.a4 {
+  width: 21cm;
+  min-height: 29.6cm;
+  background: #fff;
+  color: #1D2129;
+  padding: 2.5cm 2cm 2cm 2cm;
+  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 12pt;
+  line-height: 1.4;
+}
+
+.a4 .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding-bottom: 14pt; border-bottom: 1px solid #d9d9d9; margin-bottom: 20pt; }
+.a4 .logo-img { height: 50px; max-width: 160px; object-fit: contain; }
+.a4 .logo-slot { flex: 0 0 auto; opacity: .95; }
+.a4 .sender-frame { text-align: right; font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #1D2129; }
+.a4 .sender-frame .sender-title { font-weight: bold; margin-bottom: 3pt; }
+
+.a4 .doc-line { margin: 0 0 2pt; color: #1D2129; }
+.a4 .doc-gap { height: 12pt; }
+.a4 .doc-gap-lg { height: 24pt; }
+
+.a4 table.doc-table { width: 100%; max-width: 100%; border-collapse: collapse; font-size: 12pt; table-layout: fixed; color: #1D2129; }
+.a4 table.doc-table td, .a4 table.doc-table th { border: 1px solid #d9d9d9; padding: 8pt 10pt; vertical-align: top; overflow-wrap: break-word; word-break: break-word; white-space: normal; }
+.a4 table.doc-table thead td { background: #A65355; color: #fff; font-style: italic; font-weight: bold; border-color: #A65355; }
+.a4 table.doc-table tbody td { font-style: italic; }
+.a4 table.doc-table tbody td:first-child { font-weight: bold; }
+.a4 .col-num { width: 18%; white-space: nowrap; }
+.a4 .col-data { width: 16%; }
+.a4 .col-oggetto { width: 66%; }
+
+.a4 table.doc-table.compenso td:first-child { width: 64.2%; font-style: italic; text-align: right; }
+.a4 table.doc-table.compenso td:last-child { text-align: right; }
+.a4 table.doc-table.compenso tr:last-child td { font-weight: bold; font-size: 13pt; }
+.a4 table.doc-table.compenso tr:last-child td:first-child { font-style: italic; }
+
+.a4 .legal-note { font-size: 10pt; font-style: italic; margin: 0 0 10pt; color: #1D2129; }
+
+@media print {
+  .a4 table.doc-table tr { break-inside: avoid; }
+  .a4 .legal-note { break-inside: avoid; }
+  .a4 { box-shadow: none; }
+}

@@ -1,0 +1,45 @@
+.sheet{
+  --ink:#20232a;
+  --paper:#f6f5f2;
+  --card:#ffffff;
+  --accent:#d9772c;
+  --rule:#e2ded6;
+  --muted:#8a8378;
+  --wknd:#efece5;
+  width:21cm;
+  min-height:29.6cm;
+  background:#ffffff;
+  color:var(--ink);
+  font-family:'Manrope',Arial,sans-serif;
+  padding:28px;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  box-sizing:border-box;
+}
+.sheet .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;}
+.sheet .head h1{margin:0;font-size:22px;font-weight:800;}
+.sheet .head .sub{font-size:12.5px;color:var(--muted);margin-top:4px;}
+.sheet .head .period{text-align:right;font-size:13px;color:var(--accent);font-weight:700;}
+.sheet .infobar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;}
+.sheet .infobar .item{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;}
+.sheet .infobar .item span{display:block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.sheet .infobar .item strong{font-size:13px;}
+.sheet .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:22px;}
+.sheet .day{background:var(--card);border:1px solid var(--rule);border-radius:7px;padding:8px 6px;font-size:10.5px;min-height:64px;}
+.sheet .day.wknd{background:var(--wknd);}
+.sheet .day .n{font-weight:800;font-size:12px;margin-bottom:2px;}
+.sheet .day .lbl{color:var(--muted);font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.sheet .day .hrs{font-weight:700;color:var(--accent);}
+.sheet .day .abs{font-style:italic;color:var(--muted);font-size:9px;}
+.sheet .summary-row{display:flex;gap:12px;margin-bottom:22px;}
+.sheet .stat{flex:1;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;text-align:center;}
+.sheet .stat .v{font-size:22px;font-weight:800;color:var(--accent);}
+.sheet .stat .l{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.sheet table.legend{width:100%;border-collapse:collapse;font-size:11px;}
+.sheet table.legend td{padding:6px 10px;border-bottom:1px solid var(--rule);}
+.sheet table.legend td:last-child{text-align:right;font-weight:700;}
+
+@media print {
+  .sheet .day { break-inside: avoid; }
+  .sheet table.legend tr { break-inside: avoid; }
+  .sheet { box-shadow: none; }
+}

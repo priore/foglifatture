@@ -1,0 +1,48 @@
+<div class="sheet">
+  <div class="topbar">
+    {{#if logoDataUrl}}
+      <img src="{{logoDataUrl}}" class="logo-img" alt="Logo">
+    {{else}}
+      <div class="mark">DP</div>
+    {{/if}}
+    <div class="title">MRO — PIANIFICAZIONE MENSILE</div>
+    <div class="code">MRO/TN</div>
+  </div>
+
+  <table class="info">
+    <tr><td class="k">Consulente</td><td class="v">{{consulente}}</td><td class="k">Commessa</td><td class="v">{{commessa}}</td></tr>
+    <tr><td class="k">Figura</td><td class="v">{{figura}}</td><td class="k">Cliente</td><td class="v">{{cliente}}</td></tr>
+    <tr><td class="k">Mese</td><td class="v">{{nomeMese}}</td><td class="k">Localit&agrave;</td><td class="v">{{localita}}</td></tr>
+    <tr><td class="k">Anno</td><td class="v">{{anno}}</td><td class="k">Progetto</td><td class="v">{{progetto}}</td></tr>
+  </table>
+
+  <table class="grid">
+    <thead><tr><th>GG</th><th>Giorno</th><th>Entrata</th><th>Uscita</th><th>Entrata</th><th>Uscita</th><th>Tot. Giorn.</th><th>Motivo Assenza</th><th>Note</th></tr></thead>
+    <tbody>
+      {{#each giorni}}
+      <tr class="{{#if wknd}}wknd{{/if}}">
+        <td class="day">{{giorno}}</td>
+        <td class="day">{{nomeGiorno}}</td>
+        <td>{{inizioMattina}}</td>
+        <td>{{fineMattina}}</td>
+        <td>{{inizioPomeriggio}}</td>
+        <td>{{finePomeriggio}}</td>
+        <td>{{oreGiornoFormattate}}</td>
+        <td class="{{#if assenzaVisibile}}absence{{/if}}">{{#if assenzaVisibile}}{{stato}}{{/if}}</td>
+        <td>{{note}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="total-row">
+    <table class="total"><tr><td class="lbl">Totale ore lavorate</td><td>{{totaleOreFormattato}}</td></tr></table>
+  </div>
+
+  <table class="summary">
+    <tr><td class="hdr" colspan="6">Riepilogo dati mensili</td></tr>
+    <tr><td class="sub" colspan="3">Giorni</td><td class="sub" colspan="3">Ore</td></tr>
+    <tr><td class="col">Lavor.</td><td class="col">Assenze</td><td class="col">Totale</td><td class="col">Ordin.</td><td class="col">Straord.</td><td class="col">Totale</td></tr>
+    <tr><td>{{giorniLavorati}}</td><td>{{totaleAssenze}}</td><td>{{giorniLavorati}}</td><td>{{totaleOreFormattato}}</td><td>0:00</td><td>{{totaleOreFormattato}}</td></tr>
+  </table>
+</div>
