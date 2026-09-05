@@ -56,35 +56,29 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 Clicca su uno screenshot per ingrandirlo.
 
-<table border="0" cellspacing="0" cellpadding="8">
-<tr>
-<td width="50%" valign="top">
+<p>
+<img src="/danilo/Timesheet/raw/develop/docs/screenshots/dashboard.png" width="320" align="right" alt="Dashboard forfettario">
 <h3>Tieni sotto controllo il regime forfettario</h3>
-<p>Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.</p>
-</td>
-<td width="50%" valign="top">
-<a href="/danilo/Timesheet/raw/develop/docs/screenshots/dashboard.png"><img src="/danilo/Timesheet/raw/develop/docs/screenshots/dashboard.png" width="320" alt="Dashboard forfettario"></a>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<a href="/danilo/Timesheet/raw/develop/docs/screenshots/fattura-proforma.png"><img src="/danilo/Timesheet/raw/develop/docs/screenshots/fattura-proforma.png" width="320" alt="Fattura Pro-Forma"></a>
-</td>
-<td width="50%" valign="top">
+Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.
+</p>
+
+<br clear="right">
+
+<p>
+<img src="/danilo/Timesheet/raw/develop/docs/screenshots/fattura-proforma.png" width="320" align="left" alt="Fattura Pro-Forma">
 <h3>Dalle ore lavorate alla fattura, senza calcolatrice</h3>
-<p>Scegli il mese, l'app somma le ore dal timesheet e calcola il compenso in automatico — bollo virtuale incluso quando serve. Anteprima della fattura pronta a fianco, generazione definitiva con un click.</p>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+Scegli il mese, l'app somma le ore dal timesheet e calcola il compenso in automatico — bollo virtuale incluso quando serve. Anteprima della fattura pronta a fianco, generazione definitiva con un click.
+</p>
+
+<br clear="left">
+
+<p>
+<img src="/danilo/Timesheet/raw/develop/docs/screenshots/timesheet-mensile.png" width="320" align="right" alt="Timesheet mensile">
 <h3>Un foglio ore che conosci già</h3>
-<p>Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.</p>
-</td>
-<td width="50%" valign="top">
-<a href="/danilo/Timesheet/raw/develop/docs/screenshots/timesheet-mensile.png"><img src="/danilo/Timesheet/raw/develop/docs/screenshots/timesheet-mensile.png" width="320" alt="Timesheet mensile"></a>
-</td>
-</tr>
-</table>
+Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.
+</p>
+
+<br clear="right">
 
 <!-- TODO: altri screenshot in arrivo a scaglioni (wizard clienti, vista mobile/dark mode — vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
 
