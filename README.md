@@ -54,25 +54,23 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Screenshot
 
-Clicca su uno screenshot per ingrandirlo.
-
 ### Tieni sotto controllo il regime forfettario
 
 Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.
 
-<a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" width="720" alt="Dashboard forfettario"></a>
+![Dashboard forfettario](docs/screenshots/dashboard.png)
 
 ### Dalle ore lavorate alla fattura, senza calcolatrice
 
 Scegli il mese, l'app somma le ore dal timesheet e calcola il compenso in automatico — bollo virtuale incluso quando serve. Anteprima della fattura pronta a fianco, generazione definitiva con un click.
 
-<a href="docs/screenshots/fattura-proforma.png"><img src="docs/screenshots/fattura-proforma.png" width="720" alt="Fattura Pro-Forma"></a>
+![Fattura Pro-Forma](docs/screenshots/fattura-proforma.png)
 
 ### Un foglio ore che conosci già
 
 Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.
 
-<a href="docs/screenshots/timesheet-mensile.png"><img src="docs/screenshots/timesheet-mensile.png" width="720" alt="Timesheet mensile"></a>
+![Timesheet mensile](docs/screenshots/timesheet-mensile.png)
 
 <!-- TODO: altri screenshot in arrivo a scaglioni (wizard clienti, vista mobile/dark mode — vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
 
