@@ -7,6 +7,7 @@
 [![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
 [![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
 [![Donate with BITCOIN](https://img.shields.io/badge/BITCOIN-donate-green?logo=bitcoin)](https://github.com/priore/foglifatture#support-development)
+[![Star History](https://img.shields.io/badge/⭐-Star%20History-blue)](https://star-history.com/#priore/foglifatture&Date)
 
 
 App per chi lavora in regime forfettario, con due funzioni indipendenti:
