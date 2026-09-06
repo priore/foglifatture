@@ -5,6 +5,9 @@
 ![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows-lightgrey)
 [![Security Policy](https://img.shields.io/badge/security-policy-orange)](SECURITY.md)
 [![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
+[![Donate with BITCOIN](https://img.shields.io/badge/BITCOIN-donate-green?logo=bitcoin)](https://github.com/priore/foglifatture#support-development)
+
 
 App per chi lavora in regime forfettario, con due funzioni indipendenti:
 - **Timesheet mensile** — registra le ore lavorate giorno per giorno, per uno o più clienti.
@@ -218,11 +221,9 @@ Distribuito sotto [PolyForm Noncommercial 1.0.0](LICENSE). Uso libero per scopi 
 
 Se questo progetto ti è stato utile, considera una piccola donazione. Ogni contributo aiuta a finanziare nuove funzionalità e mantenere il progetto attivo.
 
-Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo. In alternativa puoi donare via PayPal.
+Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo. In alternativa puoi donare via [PayPal](https://paypal.me/prioregroup).
 
 |Donate with BTC (Bitcoin)|
 |:------------:|
 |![](https://www.prioregroup.com/images/priore_btc_segwit_binance.jpg)|
 |`BTC Address (SegWit) : bc1q6rjOuuwu9k2fvs5n5elmqy9v4ljazhexejykjm`|
-
-[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
