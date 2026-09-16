@@ -257,7 +257,10 @@ function esportaCommercialista() {
         </div>
 
         <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head"><h2>Fatture da incassare</h2></div>
+          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+            <h2>Fatture da incassare</h2>
+            <router-link to="/importa-storico?passo=2" class="btn btn-ghost">Importa CSV pagamenti</router-link>
+          </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
             <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
             <ul v-else class="lista-piatta lista-scroll">
