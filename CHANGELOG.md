@@ -4,8 +4,6 @@ Tutte le modifiche rilevanti al progetto sono documentate in questo file.
 
 Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
-## [Unreleased]
-
 ## [1.1.0] - 2026-09-16
 
 ### Added
