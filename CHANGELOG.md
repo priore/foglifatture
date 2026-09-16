@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-16
+
 ### Added
 - Dashboard forfettario: calcolo fatturato/soglia/imposta stimata anche per principio di cassa (anno di incasso, non di emissione), con avviso fatture a cavallo d'anno e inserimento manuale della data di incasso.
 - Export CSV per il commercialista: elenco fatture e riepilogo aggiornati per riportare anche il criterio di cassa (fatture incassate nell'anno, ricavi/imposta/soglia per cassa), oltre a quello per competenza già presente.
