@@ -26,6 +26,40 @@ async function ricaviAnno(anno) {
   return { fatture: risolteValide.map((r) => r.invoice), mesiFatturati: mesiDistinti.size, risolteValide };
 }
 
+export async function tutteLeFattureRisolte() {
+  const chiavi = await listMesiFatturati();
+  const fatture = await Promise.all(chiavi.map((c) => getInvoice(c.anno, c.mese, c.clienteId)));
+  return fatture.filter(Boolean);
+}
+
+// Principio di cassa (regime forfettario, art. 1 commi 54-89 L. 190/2014): una fattura fa
+// cumulo nell'anno di INCASSO (dataPagamento), non nell'anno di emissione. Cerca su tutte
+// le fatture di ogni anno, non solo quelle emesse nell'anno richiesto — una fattura emessa
+// nel 2026 e incassata nel 2027 conta per il fatturato-cassa 2027, non 2026.
+export async function ricaviAnnoCassa(anno, tutte) {
+  const incassateAnno = tutte.filter((f) => f.dataPagamento && f.dataPagamento.slice(0, 4) === String(anno));
+  const ricaviCumulati = Number(incassateAnno.reduce((tot, f) => tot + f.imponibile, 0).toFixed(2));
+
+  // Fatture emesse nell'anno ma non ancora incassate (a nessuna data): rischiano di slittare
+  // sul fatturato-cassa dell'anno successivo — utili per l'avviso "a cavallo d'anno".
+  const nonIncassateEmesseAnno = tutte.filter((f) => f.anno === anno && !f.dataPagamento);
+
+  return { ricaviCumulati, incassateAnno, nonIncassateEmesseAnno };
+}
+
+// Fatture emesse in un anno e incassate in un altro (sempre successivo, essendo l'incasso
+// posteriore all'emissione): segnala la parte già chiusa, per far capire quanto del
+// fatturato "per competenza" dell'anno emissione è in realtà slittato su un altro anno-cassa.
+function fattureACavalloAnno(tutte) {
+  return tutte
+    .filter((f) => f.dataPagamento && f.dataPagamento.slice(0, 4) !== String(f.anno))
+    .map((f) => ({
+      anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero,
+      annoIncasso: Number(f.dataPagamento.slice(0, 4)),
+      nettoAPagare: f.nettoAPagare,
+    }));
+}
+
 // Ricavi (imponibile) aggregati per mese civile, per il grafico andamento mensile in dashboard.
 function ricaviPerMese(risolteValide) {
   const perMese = new Map();
@@ -69,6 +103,29 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
   const redditoImponibileProiettato = Number((ricaviProiettati * coefficenteRedditivita / 100).toFixed(2));
   const accontoStimato = Number((redditoImponibileProiettato * aliquota / 100).toFixed(2));
 
+  // Fatturato/imposta per cassa (regola fiscale reale del forfettario): affiancato al
+  // calcolo per competenza sopra, mai in sua sostituzione — la numerazione/FatturaPA restano
+  // per competenza, solo soglia/imposta rilevanti ai fini fiscali seguono l'incasso.
+  const tutte = await tutteLeFattureRisolte();
+  const { ricaviCumulati: ricaviCumulatiCassa, nonIncassateEmesseAnno } = await ricaviAnnoCassa(anno, tutte);
+  const redditoImponibileCassa = Number((ricaviCumulatiCassa * coefficenteRedditivita / 100).toFixed(2));
+  const impostaStimataCassa = Number((redditoImponibileCassa * aliquota / 100).toFixed(2));
+  const percentualeSogliaCassa = sogliaAnnua > 0 ? Number((ricaviCumulatiCassa / sogliaAnnua * 100).toFixed(1)) : 0;
+
+  const cassa = {
+    ricaviCumulati: ricaviCumulatiCassa,
+    redditoImponibile: redditoImponibileCassa,
+    impostaStimata: impostaStimataCassa,
+    percentualeSoglia: percentualeSogliaCassa,
+    superamentoSoglia: ricaviCumulatiCassa > sogliaAnnua,
+    // Fatture emesse quest'anno ma ancora da incassare: rischiano di pesare sulla soglia
+    // dell'anno prossimo se incassate dopo il 31/12, o su quella corrente se incassate entro.
+    nonIncassateEmesseAnno: nonIncassateEmesseAnno.map((f) => ({
+      anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, nettoAPagare: f.nettoAPagare,
+    })),
+    fattureACavalloAnno: fattureACavalloAnno(tutte).filter((f) => f.anno === anno || f.annoIncasso === anno),
+  };
+
   return {
     anno,
     sogliaAnnua,
@@ -86,5 +143,6 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     percentualeSogliaProiettata,
     superamentoSoglia: ricaviCumulati > sogliaAnnua,
     superamentoSogliaProiettato: ricaviProiettati > sogliaAnnua,
+    cassa,
   };
 }
