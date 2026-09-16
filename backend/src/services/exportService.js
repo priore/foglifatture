@@ -3,7 +3,7 @@
 // calcolaDashboardForfettario esistenti — nessun nuovo dato persistito, tutto calcolato
 // on-the-fly (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
 import { listMesiFatturati, getInvoice } from './invoiceService.js';
-import { calcolaDashboardForfettario } from './forfettarioService.js';
+import { calcolaDashboardForfettario, tutteLeFattureRisolte, ricaviAnnoCassa } from './forfettarioService.js';
 
 function escapiCsv(valore) {
   const testo = String(valore ?? '');
@@ -16,15 +16,24 @@ async function fattureAnno(anno) {
   return risolte.filter(Boolean).sort((a, b) => a.data.localeCompare(b.data));
 }
 
+// Elenco fatture rilevanti ai fini fiscali per l'anno richiesto: quelle INCASSATE
+// nell'anno (principio di cassa del forfettario), non quelle emesse — una fattura
+// emessa nel 2026 e incassata nel 2027 compare nell'export 2027, non nel 2026.
+async function fattureIncassateAnno(anno) {
+  const tutte = await tutteLeFattureRisolte();
+  const { incassateAnno } = await ricaviAnnoCassa(anno, tutte);
+  return incassateAnno.sort((a, b) => a.dataPagamento.localeCompare(b.dataPagamento));
+}
+
 export async function esportaReportCommercialistaCsv(config, anno) {
-  const fatture = await fattureAnno(anno);
+  const fattureEmesse = await fattureAnno(anno);
+  const fattureCassa = await fattureIncassateAnno(anno);
   const dashboard = await calcolaDashboardForfettario(config, { anno });
   const clientiPerId = new Map(config.clienti.map((c) => [c.id, c]));
 
-  const righe = ['Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento'];
-  for (const f of fatture) {
+  const rigaFattura = (f) => {
     const cliente = clientiPerId.get(f.clienteId);
-    righe.push([
+    return [
       f.numero,
       f.data,
       escapiCsv(cliente?.denominazione ?? f.clienteId),
@@ -33,11 +42,21 @@ export async function esportaReportCommercialistaCsv(config, anno) {
       f.bollo.toFixed(2),
       f.nettoAPagare.toFixed(2),
       f.dataPagamento ?? '',
-    ].join(','));
-  }
+    ].join(',');
+  };
+
+  const righe = [
+    `Fatture emesse nel ${anno} (competenza)`,
+    'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento',
+    ...fattureEmesse.map(rigaFattura),
+    '',
+    `Fatture incassate nel ${anno} (cassa — rilevanti ai fini fiscali per il forfettario)`,
+    'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento',
+    ...fattureCassa.map(rigaFattura),
+  ];
 
   const riepilogo = [
-    ['Riepilogo regime forfettario', ''],
+    ['Riepilogo regime forfettario — competenza (anno emissione)', ''],
     ['Ricavi cumulati', dashboard.ricaviCumulati.toFixed(2)],
     ['Reddito imponibile', dashboard.redditoImponibile.toFixed(2)],
     ['Aliquota imposta sostitutiva', `${dashboard.aliquota}%`],
@@ -45,6 +64,14 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     ['Netto stimato', dashboard.nettoStimato.toFixed(2)],
     ['Soglia regime forfettario', dashboard.sogliaAnnua.toFixed(2)],
     ['% soglia raggiunta', `${dashboard.percentualeSoglia}%`],
+    ['', ''],
+    ['Riepilogo regime forfettario — cassa (anno incasso, rilevante ai fini fiscali)', ''],
+    ['Ricavi cumulati', dashboard.cassa.ricaviCumulati.toFixed(2)],
+    ['Reddito imponibile', dashboard.cassa.redditoImponibile.toFixed(2)],
+    ['Aliquota imposta sostitutiva', `${dashboard.aliquota}%`],
+    ['Imposta stimata', dashboard.cassa.impostaStimata.toFixed(2)],
+    ['Soglia regime forfettario', dashboard.sogliaAnnua.toFixed(2)],
+    ['% soglia raggiunta', `${dashboard.cassa.percentualeSoglia}%`],
   ];
   righe.push(`,,,,,,,`);
   for (const [etichetta, valore] of riepilogo) {

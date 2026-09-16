@@ -51,6 +51,21 @@ async function caricaFattureAperte() {
   fattureAperte.value = await api.fattureAperte().catch(() => []);
 }
 
+const salvandoIncasso = ref(null);
+async function salvaDataIncasso(f, dataPagamento) {
+  if (!dataPagamento) return;
+  salvandoIncasso.value = `${f.anno}-${f.mese}-${f.clienteId}`;
+  try {
+    await api.confermaPagamentoFattura(f.anno, f.mese, f.clienteId, dataPagamento);
+    await caricaFattureAperte();
+    await carica();
+  } catch (err) {
+    errore.value = err.message;
+  } finally {
+    salvandoIncasso.value = null;
+  }
+}
+
 async function caricaScadenzeFiscali() {
   const risposta = await api.scadenzeFiscali().catch(() => null);
   scadenzeFiscali.value = risposta?.scadenze ?? [];
@@ -123,6 +138,19 @@ const fetteSoglia = computed(() => {
   ];
 });
 
+// Soglia per cassa: come fetteSoglia ma sui ricavi effettivamente incassati nell'anno
+// (dataPagamento), non su quelli emessi — è il calcolo rilevante ai fini fiscali reali.
+const fetteSogliaCassa = computed(() => {
+  if (!dashboard.value) return [];
+  const { sogliaAnnua } = dashboard.value;
+  const { ricaviCumulati } = dashboard.value.cassa;
+  const margineResiduo = Math.max(sogliaAnnua - ricaviCumulati, 0);
+  return [
+    { etichetta: 'Incassato', valore: ricaviCumulati, colore: dashboard.value.cassa.superamentoSoglia ? 'var(--warn)' : 'var(--accent)', valoreTesto: formattaEuro(ricaviCumulati) },
+    { etichetta: 'Margine alla soglia', valore: margineResiduo, colore: 'var(--line)', valoreTesto: formattaEuro(margineResiduo) },
+  ];
+});
+
 function formattaEuro(valore) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
 }
@@ -173,18 +201,31 @@ function esportaCommercialista() {
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div class="card">
-          <div class="card-head"><h2>Composizione compenso</h2></div>
+          <div class="card-head">
+            <h2>Soglia forfettario (cassa)</h2>
+            <span class="badge-fonte" title="Fatturato/imposta calcolati sulla data di incasso, non di emissione: è il criterio che vale davvero per il regime forfettario">fa fede per le tasse</span>
+          </div>
           <div class="card-body">
-            <DonutChart :fette="fetteComposizione" />
-            <p class="note-legal" style="margin-top:20px">
-              Settore coefficiente {{ dashboard.coefficenteRedditivita }}% · aliquota {{ dashboard.aliquota }}% ·
-              {{ dashboard.mesiFatturati }} mesi fatturati nel {{ dashboard.anno }}.
+            <DonutChart :fette="fetteSogliaCassa" :centro-valore="`${dashboard.cassa.percentualeSoglia}%`" centro-label="soglia" />
+            <div class="mini-stat-row">
+              <div class="mini-stat"><span class="mini-stat-label">Incassato</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.ricaviCumulati) }}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">Imposta stimata</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.impostaStimata) }}</span></div>
+            </div>
+            <p v-if="dashboard.cassa.superamentoSoglia" class="avviso-riga avviso-warn">Soglia già superata (per cassa).</p>
+            <p v-if="dashboard.cassa.fattureACavalloAnno.length" class="avviso-riga avviso-warn">
+              {{ dashboard.cassa.fattureACavalloAnno.length }} fattura/e a cavallo d'anno — emesse in un anno, incassate in un altro.
+            </p>
+            <p v-if="dashboard.cassa.nonIncassateEmesseAnno.length" class="avviso-riga avviso-info">
+              {{ dashboard.cassa.nonIncassateEmesseAnno.length }} fattura/e {{ dashboard.anno }} non ancora incassate — se incassate dopo il 31/12 pesano sulla soglia {{ dashboard.anno + 1 }}.
+            </p>
+            <p class="note-legal" style="margin-top:12px">
+              Il regime forfettario applica il principio di cassa: fatturato e imposta rilevanti ai fini fiscali sono quelli di questa card, non quelli per competenza — verificare sempre con il commercialista.
             </p>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><h2>Soglia forfettario</h2></div>
+          <div class="card-head"><h2>Soglia forfettario (competenza)</h2></div>
           <div class="card-body">
             <DonutChart :fette="fetteSoglia" :centro-valore="`${dashboard.percentualeSoglia}%`" centro-label="soglia" />
             <p class="note-legal" style="margin-top:20px">
@@ -198,6 +239,17 @@ function esportaCommercialista() {
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
         <div class="card">
+          <div class="card-head"><h2>Composizione compenso</h2></div>
+          <div class="card-body">
+            <DonutChart :fette="fetteComposizione" />
+            <p class="note-legal" style="margin-top:20px">
+              Settore coefficiente {{ dashboard.coefficenteRedditivita }}% · aliquota {{ dashboard.aliquota }}% ·
+              {{ dashboard.mesiFatturati }} mesi fatturati nel {{ dashboard.anno }}.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-head"><h2>Andamento mensile ricavi</h2></div>
           <div class="card-body">
             <BarChart :barre="barreRicaviMensili" />
@@ -210,44 +262,53 @@ function esportaCommercialista() {
             <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
             <ul v-else class="lista-piatta lista-scroll">
               <li v-for="f in fattureAperte" :key="`${f.anno}-${f.mese}-${f.clienteId}-${f.numero}`">
-                <span>
-                  <span class="dot-scaduta" :class="{ visibile: fatturaScaduta(f) }" :title="fatturaScaduta(f) ? `Scaduta il ${formattaData(f.dataScadenzaPagamento)}` : ''"></span>
-                  Fattura {{ f.numero }} — {{ formattaData(f.data) }}
-                  <template v-if="f.dataScadenzaPagamento">· scadenza {{ formattaData(f.dataScadenzaPagamento) }}</template>
+                <span class="riga-fattura-aperta">
+                  <span>
+                    <span class="dot-scaduta" :class="{ visibile: fatturaScaduta(f) }" :title="fatturaScaduta(f) ? `Scaduta il ${formattaData(f.dataScadenzaPagamento)}` : ''"></span>
+                    Fattura {{ f.numero }} — {{ formattaData(f.data) }}
+                  </span>
+                  <span v-if="f.dataScadenzaPagamento" class="scadenza-sotto">scadenza {{ formattaData(f.dataScadenzaPagamento) }}</span>
                 </span>
-                <strong>{{ formattaEuro(f.nettoAPagare) }}</strong>
+                <span style="display:flex;align-items:center;gap:8px">
+                  <strong>{{ formattaEuro(f.nettoAPagare) }}</strong>
+                  <input
+                    type="date" class="input-incasso" title="Segna come incassata il..."
+                    :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
+                    @change="salvaDataIncasso(f, $event.target.value)"
+                  />
+                </span>
               </li>
             </ul>
-            <p class="nota-piede">Incasso rilevato solo da import CSV home banking (Importa storico → Pagamenti fatture): senza import risultano sempre non incassate.</p>
+            <p class="nota-piede">Incasso rilevato da import CSV home banking (Importa storico → Pagamenti fatture), o inserito a mano qui sopra.</p>
           </div>
         </div>
-      </div>
 
-      <div class="card" style="margin-top:20px">
-        <div class="card-head">
-          <h2>Scadenze fiscali</h2>
-          <span v-if="fonteScadenzeFiscali !== 'base'" class="badge-fonte" :title="`Proroghe/importi verificati via ${fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini'} con ricerca web`">verificato via {{ fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini' }}</span>
-        </div>
-        <div class="card-body">
-          <p v-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota.</p>
-          <ul v-else class="lista-scadenze">
-            <li
-              v-for="s in scadenzeOrdinate" :key="`${s.data}-${s.tipo}`"
-              :class="{ passata: scadenzaPassata(s.data), prossima: s.data === prossimaScadenzaData }"
-            >
-              <div class="data-badge">
-                <span class="data-badge-giorno">{{ formattaGiorno(s.data) }}</span>
-                <span class="data-badge-mese">{{ formattaMeseBreve(s.data) }}</span>
-              </div>
-              <div class="scadenza-testo">
-                <span class="scadenza-tipo">{{ s.tipo }}<span v-if="s.prorogata" class="badge-fonte" style="margin-left:6px">prorogata</span></span>
-                <span class="scadenza-descrizione">{{ s.descrizione }}</span>
-              </div>
-              <strong v-if="s.importo != null">{{ formattaEuro(s.importo) }}</strong>
-              <span v-if="s.data === prossimaScadenzaData" class="badge-prossima">prossima</span>
-            </li>
-          </ul>
-          <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
+        <div class="card" style="display:flex;flex-direction:column">
+          <div class="card-head">
+            <h2>Scadenze fiscali</h2>
+            <span v-if="fonteScadenzeFiscali !== 'base'" class="badge-fonte" :title="`Proroghe/importi verificati via ${fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini'} con ricerca web`">verificato via {{ fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini' }}</span>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;flex:1">
+            <p v-if="!scadenzeFiscali.length" class="note-legal">Nessuna scadenza nota.</p>
+            <ul v-else class="lista-scadenze">
+              <li
+                v-for="s in scadenzeOrdinate" :key="`${s.data}-${s.tipo}`"
+                :class="{ passata: scadenzaPassata(s.data), prossima: s.data === prossimaScadenzaData }"
+              >
+                <div class="data-badge">
+                  <span class="data-badge-giorno">{{ formattaGiorno(s.data) }}</span>
+                  <span class="data-badge-mese">{{ formattaMeseBreve(s.data) }}</span>
+                </div>
+                <div class="scadenza-testo">
+                  <span class="scadenza-tipo">{{ s.tipo }}<span v-if="s.prorogata" class="badge-fonte" style="margin-left:6px">prorogata</span></span>
+                  <span class="scadenza-descrizione">{{ s.descrizione }}</span>
+                </div>
+                <strong v-if="s.importo != null">{{ formattaEuro(s.importo) }}</strong>
+                <span v-if="s.data === prossimaScadenzaData" class="badge-prossima">prossima</span>
+              </li>
+            </ul>
+            <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
+          </div>
         </div>
       </div>
     </template>
@@ -271,8 +332,19 @@ function esportaCommercialista() {
 .stat-gruppo-riga .stat { background: none; border: none; box-shadow: none; padding: 0; }
 .nota-stima { font-size: .68rem; color: var(--muted); margin-top: 14px; line-height: 1.3; border-top: 1px solid var(--line); padding-top: 10px; }
 .lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
-.lista-piatta li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
+.lista-piatta li { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
+.riga-fattura-aperta { display: flex; flex-direction: column; gap: 2px; }
+.scadenza-sotto { padding-left: 14px; font-size: .74rem; color: var(--muted); }
 .nota-piede { margin-top: 10px; font-size: .68rem; color: var(--muted); }
+.input-incasso { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px 8px; font-size: .78rem; background: var(--ground); color: var(--ink); font-family: inherit; }
+
+.mini-stat-row { display: flex; gap: 12px; margin-top: 16px; }
+.mini-stat { flex: 1; background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+.mini-stat-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.mini-stat-value { font-size: .92rem; font-weight: 700; color: var(--ink); }
+.avviso-riga { margin-top: 8px; font-size: .74rem; padding: 6px 10px; border-radius: var(--radius-sm); }
+.avviso-warn { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.avviso-info { background: var(--ground); border: 1px solid var(--line); color: var(--ink-soft); }
 
 .lista-scadenze { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .lista-scadenze li { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 10px; background: var(--ground); border: 1px solid var(--line); transition: border-color .15s; }
