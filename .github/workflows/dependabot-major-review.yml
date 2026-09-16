@@ -1,0 +1,44 @@
+name: Dependabot major review
+
+on:
+  schedule:
+    - cron: "0 6 * * 2"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    if: github.repository == 'priore/foglifatture'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Claude triage major-version Dependabot PRs
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Triage delle pull request Dependabot aperte su questo repository.
+
+            Per ogni PR aperta da dependabot[bot] con update-type major
+            (semver-major, o comunque non gia' auto-mergiata dal workflow
+            dependabot-auto-merge.yml che copre solo patch/minor):
+
+            1. Leggi il changelog/breaking changes della nuova versione.
+            2. Grep nel codice (backend/src, frontend/src) per verificare se
+               le API usate dal progetto sono tra quelle toccate dai
+               breaking change.
+            3. Se nessun uso reale e' impattato: abilita l'auto-merge
+               (`gh pr merge --auto --squash <url>`).
+            4. Se l'uso reale e' impattato o non riesci a verificarlo con
+               certezza: lascia la PR aperta e aggiungi un commento che
+               riassume il rischio, per revisione manuale.
+            5. Se trovi PR duplicate/superate da un merge gia' avvenuto in
+               questo stesso run, chiudile con un commento che spiega perche'.
+
+            Non modificare altro codice, non toccare PR non Dependabot.
+          claude_args: |
+            --allowedTools "Bash(gh pr:*),Bash(git:*),Bash(grep:*),Bash(rg:*),Read,Grep,Glob"
