@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Rigenerando una fattura (es. dopo modifica ore/importo) la scadenza di pagamento impostata in precedenza non viene più persa.
+
 ### Changed
 - Pagamenti fatture: l'abbinamento CSV↔fattura è sempre un suggerimento da confermare a mano scegliendo fattura e cliente da un menu, mai un'associazione automatica — evita di assegnare per errore la data di incasso alla fattura sbagliata quando più fatture hanno lo stesso importo.
 
