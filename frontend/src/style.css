@@ -146,7 +146,7 @@ body {
 
 table.data-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-base); }
 table.data-table thead th { text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-table.data-table tbody td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+table.data-table tbody td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
 table.data-table tbody tr.weekend { background: color-mix(in srgb, var(--line) 40%, transparent); }
 table.data-table tfoot td { padding: 12px 10px; font-weight: 700; border-top: 2px solid var(--ink); font-family: 'IBM Plex Mono', monospace; }
 

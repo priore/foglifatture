@@ -148,8 +148,10 @@ export const api = {
         return r.json();
       });
   },
-  confermaPagamentoFattura: (anno, mese, clienteId, dataPagamento) =>
-    richiesta('/forfettario/pagamenti/conferma', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento }) }),
+  confermaPagamentoFattura: (anno, mese, clienteId, dataPagamento, importo) =>
+    richiesta('/forfettario/pagamenti/conferma', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento, importo }) }),
+  eliminaPagamentoFattura: (anno, mese, clienteId, indice) =>
+    richiesta(`/forfettario/pagamenti/${anno}/${mese}/${clienteId}/${indice}`, { method: 'DELETE' }),
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 
   // Widget dashboard: fatture non incassate, prossime scadenze fiscali
