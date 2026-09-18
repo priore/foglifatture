@@ -23,6 +23,7 @@ Confidence levels used throughout the workspace: 🟢 confirmed by code · 🟡 
 | KNOWN_ISSUES | [product/KNOWN_ISSUES.md](AI-Workspace/product/KNOWN_ISSUES.md) | Observed bugs, gaps, tech debt — documented only, never fixed here | ARCHITECTURE, UI_ANALYSIS | 🟢 complete | Medium | Any |
 | CHANGELOG | [product/CHANGELOG.md](AI-Workspace/product/CHANGELOG.md) | Running log of what changed in the codebase over time | PROJECT_ANALYSIS | 🟢 complete (baseline entry only — no git history) | Low | Any |
 | GLOSSARY | [product/GLOSSARY.md](AI-Workspace/product/GLOSSARY.md) | Domain and codebase terms (invoicing terminology, internal naming) | PROJECT_CONTEXT | 🟢 complete | Low | Any |
+| FEATURE_PROPOSALS | [product/FEATURE_PROPOSALS.md](AI-Workspace/product/FEATURE_PROPOSALS.md) | Numbered backlog of proposed features, status-tracked to implementation | ARCHITECTURE, KNOWN_ISSUES | 🟡 draft | High | Any |
 | DESIGN_PATTERNS_AS_IS | [documentation/DESIGN_PATTERNS_AS_IS.md](AI-Workspace/documentation/DESIGN_PATTERNS_AS_IS.md) | Factual architectural/design pattern inventory (backend + frontend) | PROJECT_ANALYSIS | 🟢 complete | Medium | Claude Sonnet |
 
 Support directories (no fixed document set, populated incrementally as work happens):
@@ -56,6 +57,8 @@ Phase 6  DESIGN_TOKENS
 Phase 7  COMPONENT_LIBRARY
    ↓
 Phase 8  ROADMAP, DECISIONS, KNOWN_ISSUES, GLOSSARY (parallel, any order)
+   ↓
+Phase 8b FEATURE_PROPOSALS (depends on ARCHITECTURE + KNOWN_ISSUES, not parallel with Phase 8)
    ↓
 Phase 9  CHANGELOG (ongoing, updated after each phase)
 ```
