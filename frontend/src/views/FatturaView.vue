@@ -125,6 +125,19 @@ async function salvaScadenzaPagamento() {
   }
 }
 
+function formattaEuro(valore) {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
+}
+
+function formattaData(valore) {
+  return new Date(valore).toLocaleDateString('it-IT');
+}
+
+async function eliminaPagamento(indice) {
+  await api.eliminaPagamentoFattura(fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId, indice);
+  fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
+}
+
 async function scaricaXml() {
   window.open(api.urlDownloadXml(anno.value, mese.value, clienteId.value), '_blank');
 }
@@ -288,9 +301,14 @@ onMounted(async () => {
               <input type="date" v-model="dataScadenzaPagamento" :disabled="salvandoScadenza" @change="salvaScadenzaPagamento" />
               <small class="note-legal">Termine commerciale, non fiscale: modificabile anche a fattura già emessa.</small>
             </div>
-            <div class="field" v-if="fatturaGenerata?.dataPagamento">
-              <label>Data incasso</label>
-              <input type="date" :value="fatturaGenerata.dataPagamento" disabled />
+            <div class="field" v-if="fatturaGenerata?.pagamenti?.length">
+              <label>Pagamenti registrati {{ fatturaGenerata.residuo > 0 ? `(residuo ${formattaEuro(fatturaGenerata.residuo)})` : '(saldata)' }}</label>
+              <ul class="lista-piatta">
+                <li v-for="(p, i) in fatturaGenerata.pagamenti" :key="i" style="display:flex;justify-content:space-between;align-items:center">
+                  <span>{{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}</span>
+                  <button class="btn btn-ghost" @click="eliminaPagamento(i)">Elimina</button>
+                </li>
+              </ul>
             </div>
             <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
@@ -350,3 +368,7 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+</style>

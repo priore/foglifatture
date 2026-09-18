@@ -1,5 +1,5 @@
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta/INPS.
-import { listMesiFatturati, getInvoice } from './invoiceService.js';
+import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 
 // Aliquota agevolata 5% nei primi 5 anni solari di attività (anno di inizio incluso),
 // 15% dal sesto anno in poi. Nessuna rivalsa INPS separata: l'imposta sostitutiva
@@ -36,28 +36,46 @@ export async function tutteLeFattureRisolte() {
 // cumulo nell'anno di INCASSO (dataPagamento), non nell'anno di emissione. Cerca su tutte
 // le fatture di ogni anno, non solo quelle emesse nell'anno richiesto — una fattura emessa
 // nel 2026 e incassata nel 2027 conta per il fatturato-cassa 2027, non 2026.
+// `tutte` deve arrivare già arricchita (arricchisciStatoPagamento applicato dal
+// chiamante, vedi calcolaDashboardForfettario) — ogni f ha già .pagamenti/.residuo.
 export async function ricaviAnnoCassa(anno, tutte) {
-  const incassateAnno = tutte.filter((f) => f.dataPagamento && f.dataPagamento.slice(0, 4) === String(anno));
-  const ricaviCumulati = Number(incassateAnno.reduce((tot, f) => tot + f.imponibile, 0).toFixed(2));
+  // Ogni rata di ogni fattura pesa per l'anno della PROPRIA data, non dell'ultima rata:
+  // una fattura con rata gennaio-2026 e rata marzo-2027 contribuisce a entrambi gli anni.
+  const rateAnno = [];
+  for (const f of tutte) {
+    for (const p of f.pagamenti) {
+      if (p.data.slice(0, 4) === String(anno)) rateAnno.push({ fattura: f, pagamento: p });
+    }
+  }
+  const ricaviCumulati = Number(rateAnno.reduce((tot, r) => tot + r.pagamento.importo, 0).toFixed(2));
+  // incassateAnno: usato da exportService per la sezione CSV "incassate" — un elenco di
+  // RATE (una entry per rata), non di fatture. Ogni entry porta i dati fattura necessari
+  // per la riga CSV più data/importo della singola rata.
+  const incassateAnno = rateAnno.map((r) => ({ ...r.fattura, dataPagamento: r.pagamento.data, nettoAPagare: r.pagamento.importo }));
 
-  // Fatture emesse nell'anno ma non ancora incassate (a nessuna data): rischiano di slittare
+  // Fatture emesse nell'anno con residuo ancora da incassare: rischiano di slittare
   // sul fatturato-cassa dell'anno successivo — utili per l'avviso "a cavallo d'anno".
-  const nonIncassateEmesseAnno = tutte.filter((f) => f.anno === anno && !f.dataPagamento);
+  const nonIncassateEmesseAnno = tutte.filter((f) => f.anno === anno && f.residuo > 0);
 
   return { ricaviCumulati, incassateAnno, nonIncassateEmesseAnno };
 }
 
-// Fatture emesse in un anno e incassate in un altro (sempre successivo, essendo l'incasso
-// posteriore all'emissione): segnala la parte già chiusa, per far capire quanto del
-// fatturato "per competenza" dell'anno emissione è in realtà slittato su un altro anno-cassa.
+// Fatture emesse in un anno e incassate (in tutto o in parte) in un altro (sempre
+// successivo, essendo l'incasso posteriore all'emissione): segnala la parte già chiusa,
+// un record per rata (non per fattura), per far capire quanto del fatturato "per
+// competenza" dell'anno emissione è in realtà slittato su un altro anno-cassa.
+// Richiede `tutte` arricchita (stessa precondizione di ricaviAnnoCassa).
 function fattureACavalloAnno(tutte) {
-  return tutte
-    .filter((f) => f.dataPagamento && f.dataPagamento.slice(0, 4) !== String(f.anno))
-    .map((f) => ({
-      anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero,
-      annoIncasso: Number(f.dataPagamento.slice(0, 4)),
-      nettoAPagare: f.nettoAPagare,
-    }));
+  const righe = [];
+  for (const f of tutte) {
+    for (const p of f.pagamenti) {
+      const annoIncasso = Number(p.data.slice(0, 4));
+      if (annoIncasso !== f.anno) {
+        righe.push({ anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, annoIncasso, nettoAPagare: p.importo });
+      }
+    }
+  }
+  return righe;
 }
 
 // Ricavi (imponibile) aggregati per mese civile, per il grafico andamento mensile in dashboard.
@@ -106,7 +124,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
   // Fatturato/imposta per cassa (regola fiscale reale del forfettario): affiancato al
   // calcolo per competenza sopra, mai in sua sostituzione — la numerazione/FatturaPA restano
   // per competenza, solo soglia/imposta rilevanti ai fini fiscali seguono l'incasso.
-  const tutte = await tutteLeFattureRisolte();
+  const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
   const { ricaviCumulati: ricaviCumulatiCassa, nonIncassateEmesseAnno } = await ricaviAnnoCassa(anno, tutte);
   const redditoImponibileCassa = Number((ricaviCumulatiCassa * coefficenteRedditivita / 100).toFixed(2));
   const impostaStimataCassa = Number((redditoImponibileCassa * aliquota / 100).toFixed(2));
@@ -121,7 +139,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     // Fatture emesse quest'anno ma ancora da incassare: rischiano di pesare sulla soglia
     // dell'anno prossimo se incassate dopo il 31/12, o su quella corrente se incassate entro.
     nonIncassateEmesseAnno: nonIncassateEmesseAnno.map((f) => ({
-      anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, nettoAPagare: f.nettoAPagare,
+      anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, nettoAPagare: f.nettoAPagare, residuo: f.residuo,
     })),
     fattureACavalloAnno: fattureACavalloAnno(tutte).filter((f) => f.anno === anno || f.annoIncasso === anno),
   };

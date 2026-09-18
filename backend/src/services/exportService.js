@@ -2,7 +2,7 @@
 // (ricavi, imposta stimata, soglia). Riusa listMesiFatturati/getInvoice e
 // calcolaDashboardForfettario esistenti — nessun nuovo dato persistito, tutto calcolato
 // on-the-fly (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
-import { listMesiFatturati, getInvoice } from './invoiceService.js';
+import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 import { calcolaDashboardForfettario, tutteLeFattureRisolte, ricaviAnnoCassa } from './forfettarioService.js';
 
 function escapiCsv(valore) {
@@ -20,7 +20,7 @@ async function fattureAnno(anno) {
 // nell'anno (principio di cassa del forfettario), non quelle emesse — una fattura
 // emessa nel 2026 e incassata nel 2027 compare nell'export 2027, non nel 2026.
 async function fattureIncassateAnno(anno) {
-  const tutte = await tutteLeFattureRisolte();
+  const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
   const { incassateAnno } = await ricaviAnnoCassa(anno, tutte);
   return incassateAnno.sort((a, b) => a.dataPagamento.localeCompare(b.dataPagamento));
 }
@@ -45,6 +45,23 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     ].join(',');
   };
 
+  // Sezione cassa: una riga per RATA (fattureCassa già rimappata a rata da
+  // ricaviAnnoCassa), imponibile della riga = importo della singola rata — evita
+  // il doppio conteggio fiscale di una fattura con rate a cavallo di più anni.
+  const rigaFatturaCassa = (f) => {
+    const cliente = clientiPerId.get(f.clienteId);
+    return [
+      f.numero,
+      f.data,
+      escapiCsv(cliente?.denominazione ?? f.clienteId),
+      cliente?.partitaIva ?? '',
+      f.nettoAPagare.toFixed(2),
+      f.bollo.toFixed(2),
+      f.nettoAPagare.toFixed(2),
+      f.dataPagamento ?? '',
+    ].join(',');
+  };
+
   const righe = [
     `Fatture emesse nel ${anno} (competenza)`,
     'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento',
@@ -52,7 +69,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     '',
     `Fatture incassate nel ${anno} (cassa — rilevanti ai fini fiscali per il forfettario)`,
     'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento',
-    ...fattureCassa.map(rigaFattura),
+    ...fattureCassa.map(rigaFatturaCassa),
   ];
 
   const riepilogo = [

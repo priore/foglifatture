@@ -104,6 +104,28 @@ const analizzandoPagamenti = ref(false);
 const erroreProposte = ref('');
 const propostePagamenti = ref([]);
 const confermatiPagamenti = ref(new Set());
+const fattureApertePagamenti = ref([]);
+// Chiave "anno-mese-clienteId" scelta per riga proposta i: preselezionata dal suggerimento
+// (match per importo), ma sempre modificabile — mai salvata senza conferma esplicita.
+const scelteFatturaPagamenti = ref({});
+
+function chiaveFattura(f) {
+  return `${f.anno}-${f.mese}-${f.clienteId}`;
+}
+
+function nomeCliente(clienteId) {
+  return clienti.value.find(c => c.id === clienteId)?.denominazione || clienteId;
+}
+
+// Se il backend ha segnalato ambiguità, usa i candidati già ordinati per vicinanza
+// |residuo - importo| (proponiAbbinamenti in pagamentiFattureService.js) invece
+// dell'ordine grezzo di caricamento — così l'opzione più plausibile è la prima in lista.
+function fatturePerImporto(importo, proposta) {
+  if (proposta?.candidati) {
+    return proposta.candidati.map(c => fattureApertePagamenti.value.find(f => chiaveFattura(f) === chiaveFattura(c))).filter(Boolean);
+  }
+  return fattureApertePagamenti.value.filter(f => importo <= f.residuo + 0.01);
+}
 
 async function analizzaFilePagamenti(files) {
   const file = files[0];
@@ -111,10 +133,18 @@ async function analizzaFilePagamenti(files) {
   erroreProposte.value = '';
   propostePagamenti.value = [];
   confermatiPagamenti.value = new Set();
+  scelteFatturaPagamenti.value = {};
   analizzandoPagamenti.value = true;
   try {
-    const { proposte: trovate } = await api.analizzaCsvPagamenti(file);
+    const [{ proposte: trovate }, aperte] = await Promise.all([
+      api.analizzaCsvPagamenti(file),
+      api.fattureAperte(),
+    ]);
     propostePagamenti.value = trovate;
+    fattureApertePagamenti.value = aperte;
+    trovate.forEach((p, i) => {
+      scelteFatturaPagamenti.value[i] = p.fattura ? chiaveFattura(p.fattura) : '';
+    });
   } catch (err) {
     erroreProposte.value = err.message;
   } finally {
@@ -123,10 +153,21 @@ async function analizzaFilePagamenti(files) {
 }
 
 async function confermaPagamento(proposta, indice) {
-  const { anno, mese, clienteId } = proposta.fattura;
+  const chiave = scelteFatturaPagamenti.value[indice];
+  const fattura = fattureApertePagamenti.value.find(f => chiaveFattura(f) === chiave);
+  if (!fattura) return;
   try {
-    await api.confermaPagamentoFattura(anno, mese, clienteId, proposta.data);
+    const { fattura: fatturaAggiornata } = await api.confermaPagamentoFattura(fattura.anno, fattura.mese, fattura.clienteId, proposta.data, proposta.importo);
     confermatiPagamenti.value.add(indice);
+    if (fatturaAggiornata.residuo > 0) {
+      // Fattura ancora aperta (pagamento parziale): aggiorna il residuo in lista invece di
+      // rimuoverla, così resta selezionabile per abbinare eventuali movimenti CSV successivi.
+      fattureApertePagamenti.value = fattureApertePagamenti.value.map(f =>
+        chiaveFattura(f) === chiave ? { ...f, residuo: fatturaAggiornata.residuo } : f
+      );
+    } else {
+      fattureApertePagamenti.value = fattureApertePagamenti.value.filter(f => chiaveFattura(f) !== chiave);
+    }
   } catch (err) {
     erroreProposte.value = err.message;
   }
@@ -291,6 +332,11 @@ async function riavvia() {
         </p>
         <FileDrop accept=".csv" label="Trascina il CSV o clicca per sfogliare" style="margin-top:10px" :disabled="analizzandoPagamenti" @change="analizzaFilePagamenti" />
         <p v-if="analizzandoPagamenti" class="note-legal">Analisi in corso…</p>
+        <p v-if="propostePagamenti.length" class="note-legal" style="margin-top:12px">
+          Ogni movimento viene proposto per fatture con residuo sufficiente a coprirlo (anche pagamenti
+          parziali/acconti). Se più fatture corrispondono, la prima in elenco è quella più plausibile,
+          ma la scelta finale è sempre manuale: nessun abbinamento viene registrato senza conferma esplicita.
+        </p>
 
         <table v-if="propostePagamenti.length" class="data-table" style="margin-top:16px">
           <thead><tr><th>Data</th><th>Importo</th><th>Descrizione</th><th>Fattura</th><th></th></tr></thead>
@@ -298,15 +344,19 @@ async function riavvia() {
             <tr v-for="(p, i) in propostePagamenti" :key="i">
               <td>{{ p.data }}</td>
               <td>{{ formattaEuro(p.importo) }}</td>
-              <td>{{ p.descrizione }}</td>
+              <td class="cella-descrizione">{{ p.descrizione }}</td>
               <td>
                 <span v-if="confermatiPagamenti.has(i)">✓ Registrato</span>
-                <span v-else-if="p.fattura">N. {{ p.fattura.numero }} ({{ p.fattura.anno }}-{{ String(p.fattura.mese).padStart(2, '0') }})</span>
-                <span v-else-if="p.ambiguo" style="color:var(--muted)">Più fatture con lo stesso importo</span>
+                <select v-else-if="p.fattura || p.ambiguo" v-model="scelteFatturaPagamenti[i]" class="status">
+                  <option value="">— seleziona fattura —</option>
+                  <option v-for="f in fatturePerImporto(p.importo, p)" :key="chiaveFattura(f)" :value="chiaveFattura(f)">
+                    N. {{ f.numero }} ({{ f.anno }}-{{ String(f.mese).padStart(2, '0') }}) — {{ nomeCliente(f.clienteId) }}
+                  </option>
+                </select>
                 <span v-else style="color:var(--muted)">Nessuna fattura corrispondente</span>
               </td>
               <td>
-                <button v-if="p.fattura && !confermatiPagamenti.has(i)" type="button" class="btn btn-ok" @click="confermaPagamento(p, i)">Conferma</button>
+                <button v-if="!confermatiPagamenti.has(i) && (p.fattura || p.ambiguo)" type="button" class="btn btn-ok" :disabled="!scelteFatturaPagamenti[i]" @click="confermaPagamento(p, i)">Conferma</button>
               </td>
             </tr>
           </tbody>
@@ -351,3 +401,7 @@ async function riavvia() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.cella-descrizione { max-width: 260px; white-space: normal; word-break: break-word; }
+</style>

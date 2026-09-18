@@ -4,6 +4,20 @@ Tutte le modifiche rilevanti al progetto sono documentate in questo file.
 
 Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
+## [Unreleased]
+
+## [1.2.0] - 2026-09-18
+
+### Added
+- Pagamenti parziali/a rate: una fattura può essere incassata in più rate con date e importi diversi. Residuo, stato (aperta/parziale/pagata) e storico pagamenti visibili in dashboard e nella fattura, con possibilità di eliminare un pagamento registrato. L'export per il commercialista e il calcolo cassa forfettario tengono conto della singola rata, non solo dell'ultimo incasso.
+
+### Fixed
+- Rigenerando una fattura (es. dopo modifica ore/importo) la scadenza di pagamento impostata in precedenza non viene più persa.
+- Colonna data spezzata su più righe nelle tabelle (es. importazione storico pagamenti da CSV bancario).
+
+### Changed
+- Pagamenti fatture: l'abbinamento CSV↔fattura è sempre un suggerimento da confermare a mano scegliendo fattura e cliente da un menu, mai un'associazione automatica — evita di assegnare per errore la data di incasso alla fattura sbagliata quando più fatture hanno lo stesso importo.
+
 ## [1.1.0] - 2026-09-16
 
 ### Added

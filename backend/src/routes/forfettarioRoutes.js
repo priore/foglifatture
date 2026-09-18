@@ -7,7 +7,7 @@ import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModell
 import { verificaESalvaModelloGroq, verificaESalvaModelloClaude } from '../services/pagamentiFattureService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
-import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
+import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
 import { prossimeScadenzeFiscali } from '../services/scadenzeFiscaliService.js';
 
 export const forfettarioRoutes = Router();
@@ -183,11 +183,21 @@ forfettarioRoutes.post('/pagamenti/analizza-csv', uploadCsv.single('file'), asyn
 });
 
 forfettarioRoutes.post('/pagamenti/conferma', async (req, res) => {
-  const { anno, mese, clienteId, dataPagamento } = req.body;
-  if (!anno || !mese || !clienteId || !dataPagamento) return res.status(400).json({ errore: 'Dati mancanti' });
+  const { anno, mese, clienteId, dataPagamento, importo } = req.body;
+  if (!anno || !mese || !clienteId || !dataPagamento || !importo) return res.status(400).json({ errore: 'Dati mancanti' });
   try {
-    await confermaPagamento(Number(anno), Number(mese), clienteId, dataPagamento);
-    res.json({ ok: true });
+    const fattura = await confermaPagamento(Number(anno), Number(mese), clienteId, dataPagamento, Number(importo));
+    res.json({ ok: true, fattura });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.delete('/pagamenti/:anno/:mese/:clienteId/:indice', async (req, res) => {
+  const { anno, mese, clienteId, indice } = req.params;
+  try {
+    const fattura = await eliminaPagamento(Number(anno), Number(mese), clienteId, Number(indice));
+    res.json({ ok: true, fattura });
   } catch (err) {
     res.status(400).json({ errore: err.message });
   }
