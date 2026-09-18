@@ -13,7 +13,7 @@ import {
   leggiGroqApiKey, leggiGroqModello, salvaGroqModello,
   leggiClaudeApiKey, leggiClaudeModello, salvaClaudeModello, leggiClaudeWorkspaceId,
 } from './envService.js';
-import { listMesiFatturati, getInvoice, saveInvoice } from './invoiceService.js';
+import { listMesiFatturati, getInvoice, saveInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 
 const FILE_MAPPING = 'pagamentiMappingColonne.json';
 const MODELLO_DEFAULT = 'gemini-2.0-flash';
@@ -274,34 +274,56 @@ export function estraiMovimentiDaCsv(testoCsv, mapping) {
   return movimenti;
 }
 
-// Fatture emesse ancora senza data di pagamento registrata.
+// Fatture emesse con residuo da incassare (parziale o totale).
 export async function fattureAperte() {
   const chiavi = await listMesiFatturati();
   const fatture = await Promise.all(chiavi.map((c) => getInvoice(c.anno, c.mese, c.clienteId)));
-  return fatture.filter((f) => f && !f.dataPagamento);
+  return fatture.filter(Boolean).map(arricchisciStatoPagamento).filter((f) => f.residuo > 0);
 }
 
-// Abbina ogni movimento a una fattura aperta con lo stesso importo esatto (nettoAPagare).
-// Ambiguità (più fatture stesso importo) o nessun match restano senza proposta: la conferma
-// è sempre esplicita dell'utente, nessun abbinamento viene salvato automaticamente.
+// Abbina ogni movimento a una fattura aperta con importo <= residuo. Ambiguità (più
+// fatture con residuo sufficiente) restano senza auto-selezione: i candidati sono
+// ordinati per vicinanza |residuo - importo| (il più plausibile primo), la conferma
+// resta sempre esplicita dell'utente, nessun abbinamento viene salvato automaticamente.
 export async function proponiAbbinamenti(movimenti) {
-  const aperte = await fattureAperte();
+  const aperte = await fattureAperte(); // già arricchite con .residuo
   return movimenti.map((m) => {
-    const corrispondenti = aperte.filter((f) => f.nettoAPagare === m.importo);
+    const corrispondenti = aperte
+      .filter((f) => m.importo <= f.residuo + 0.01) // +0.01: tolleranza floating point, non un margine di business
+      .sort((a, b) => Math.abs(a.residuo - m.importo) - Math.abs(b.residuo - m.importo));
     return {
       ...m,
       fattura: corrispondenti.length === 1
         ? { anno: corrispondenti[0].anno, mese: corrispondenti[0].mese, clienteId: corrispondenti[0].clienteId, numero: corrispondenti[0].numero }
         : null,
       ambiguo: corrispondenti.length > 1,
+      candidati: corrispondenti.length > 1
+        ? corrispondenti.map((f) => ({ anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, residuo: f.residuo }))
+        : undefined,
     };
   });
 }
 
-export async function confermaPagamento(anno, mese, clienteId, dataPagamento) {
+// Registra un incasso (parziale o totale) in append a pagamenti[] — mai sovrascrittura.
+// dataPagamento sul disco resta il valore grezzo precedente: viene ricalcolato come
+// derivato (ultima rata) solo in lettura via arricchisciStatoPagamento.
+export async function confermaPagamento(anno, mese, clienteId, dataPagamento, importo) {
   const fattura = await getInvoice(anno, mese, clienteId);
   if (!fattura) throw new Error('Fattura non trovata');
-  fattura.dataPagamento = dataPagamento;
+  if (!Number.isFinite(importo) || importo <= 0) throw new Error('Importo pagamento non valido');
+  const arricchita = arricchisciStatoPagamento(fattura);
+  fattura.pagamenti = [...arricchita.pagamenti, { data: dataPagamento, importo }];
   await saveInvoice(anno, mese, clienteId, fattura);
-  return fattura;
+  return arricchisciStatoPagamento(fattura);
+}
+
+// Elimina un pagamento registrato (solo cancellazione, non editing — vedi piano §7).
+export async function eliminaPagamento(anno, mese, clienteId, indice) {
+  const fattura = await getInvoice(anno, mese, clienteId);
+  if (!fattura) throw new Error('Fattura non trovata');
+  const arricchita = arricchisciStatoPagamento(fattura);
+  if (indice < 0 || indice >= arricchita.pagamenti.length) throw new Error('Pagamento non trovato');
+  fattura.pagamenti = arricchita.pagamenti.filter((_, i) => i !== indice);
+  await saveInvoice(anno, mese, clienteId, fattura);
+  return arricchisciStatoPagamento(fattura);
 }

@@ -34,6 +34,33 @@ export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale,
   return calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo);
 }
 
+// Arricchisce una fattura letta da disco con lo stato pagamento derivato da pagamenti[].
+// Va chiamata da ogni funzione che legge una fattura per uso relativo al pagamento
+// (fattureAperte, ricaviAnnoCassa, dashboard, export) — non serve per letture che
+// riguardano solo dati fiscali/anagrafici (es. verificaIntegritaNumerazione).
+export function arricchisciStatoPagamento(fattura) {
+  if (!fattura) return fattura;
+  // ponytail: migrazione one-time in lettura, mai scritta su disco automaticamente —
+  // il file JSON passa al nuovo formato solo alla prossima scrittura naturale
+  // (nuovo pagamento via confermaPagamento, o rigenerazione fattura).
+  const pagamenti = fattura.pagamenti ?? (
+    fattura.dataPagamento
+      ? [{ data: fattura.dataPagamento, importo: fattura.nettoAPagare }]
+      : []
+  );
+  const totalePagato = Number(pagamenti.reduce((s, p) => s + p.importo, 0).toFixed(2));
+  const residuo = Number((fattura.nettoAPagare - totalePagato).toFixed(2));
+  const dataPagamento = pagamenti.length ? pagamenti.at(-1).data : null;
+  return {
+    ...fattura,
+    pagamenti,
+    dataPagamento,
+    totalePagato,
+    residuo,
+    stato: residuo <= 0 ? 'pagata' : (totalePagato > 0 ? 'parziale' : 'aperta'),
+  };
+}
+
 export async function getInvoice(anno, mese, clienteId) {
   return readJson(percorsoFile(anno, mese, clienteId), null);
 }

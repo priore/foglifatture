@@ -1,8 +1,10 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { arricchisciStatoPagamento } from './invoiceService.js';
 
 mock.module('./invoiceService.js', {
   exports: {
+    arricchisciStatoPagamento,
     listMesiFatturati: async () => [
       { chiave: '2026-01-cliA', anno: 2026, mese: 1, clienteId: 'cliA' },
       { chiave: '2026-01-cliB', anno: 2026, mese: 1, clienteId: 'cliB' },
