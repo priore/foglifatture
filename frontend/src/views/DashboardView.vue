@@ -52,11 +52,12 @@ async function caricaFattureAperte() {
 }
 
 const salvandoIncasso = ref(null);
-async function salvaDataIncasso(f, dataPagamento) {
-  if (!dataPagamento) return;
+const importiIncasso = ref({});
+async function salvaDataIncasso(f, dataPagamento, importo) {
+  if (!dataPagamento || !importo) return;
   salvandoIncasso.value = `${f.anno}-${f.mese}-${f.clienteId}`;
   try {
-    await api.confermaPagamentoFattura(f.anno, f.mese, f.clienteId, dataPagamento);
+    await api.confermaPagamentoFattura(f.anno, f.mese, f.clienteId, dataPagamento, importo);
     await caricaFattureAperte();
     await carica();
   } catch (err) {
@@ -257,29 +258,48 @@ function esportaCommercialista() {
         </div>
 
         <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head"><h2>Fatture da incassare</h2></div>
+          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+            <h2>Fatture da incassare</h2>
+            <router-link to="/importa-storico?passo=2" class="btn btn-ghost">Importa CSV pagamenti</router-link>
+          </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
             <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
-            <ul v-else class="lista-piatta lista-scroll">
-              <li v-for="f in fattureAperte" :key="`${f.anno}-${f.mese}-${f.clienteId}-${f.numero}`">
-                <span class="riga-fattura-aperta">
-                  <span>
-                    <span class="dot-scaduta" :class="{ visibile: fatturaScaduta(f) }" :title="fatturaScaduta(f) ? `Scaduta il ${formattaData(f.dataScadenzaPagamento)}` : ''"></span>
-                    Fattura {{ f.numero }} — {{ formattaData(f.data) }}
-                  </span>
-                  <span v-if="f.dataScadenzaPagamento" class="scadenza-sotto">scadenza {{ formattaData(f.dataScadenzaPagamento) }}</span>
-                </span>
-                <span style="display:flex;align-items:center;gap:8px">
-                  <strong>{{ formattaEuro(f.nettoAPagare) }}</strong>
-                  <input
-                    type="date" class="input-incasso" title="Segna come incassata il..."
-                    :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
-                    @change="salvaDataIncasso(f, $event.target.value)"
-                  />
-                </span>
-              </li>
-            </ul>
-            <p class="nota-piede">Incasso rilevato da import CSV home banking (Importa storico → Pagamenti fatture), o inserito a mano qui sopra.</p>
+            <table v-else class="data-table tabella-incasso lista-scroll">
+              <thead>
+                <tr><th>Fattura</th><th>Importo da incassare</th><th>Data incasso</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="f in fattureAperte" :key="`${f.anno}-${f.mese}-${f.clienteId}-${f.numero}`">
+                  <td>
+                    <span class="riga-fattura-aperta">
+                      <span>
+                        <span class="dot-scaduta" :class="{ visibile: fatturaScaduta(f) }" :title="fatturaScaduta(f) ? `Scaduta il ${formattaData(f.dataScadenzaPagamento)}` : ''"></span>
+                        Fattura {{ f.numero }}
+                        <span v-if="f.stato === 'parziale'" class="badge-parziale">parziale, residuo {{ formattaEuro(f.residuo) }}</span>
+                      </span>
+                      <span class="scadenza-sotto">emissione {{ formattaData(f.data) }}</span>
+                      <span v-if="f.dataScadenzaPagamento" class="scadenza-sotto">scadenza {{ formattaData(f.dataScadenzaPagamento) }}</span>
+                    </span>
+                  </td>
+                  <td>
+                    <input
+                      type="number" step="0.01" class="input-importo-incasso" title="Importo incassato"
+                      :value="f.residuo"
+                      @input="importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] = $event.target.value"
+                      :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="date" class="input-incasso" title="Segna come incassata il..."
+                      :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
+                      @change="salvaDataIncasso(f, $event.target.value, Number(importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo))"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="nota-piede">Incasso rilevato da import CSV home banking (Importa storico → Pagamenti fatture), o inserito a mano qui sopra. L'importo è precompilato col residuo: confermalo così com'è per un incasso totale, oppure modificalo per registrare un acconto — la fattura resta "da incassare" finché il residuo non arriva a zero.</p>
           </div>
         </div>
 
@@ -335,8 +355,11 @@ function esportaCommercialista() {
 .lista-piatta li { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
 .riga-fattura-aperta { display: flex; flex-direction: column; gap: 2px; }
 .scadenza-sotto { padding-left: 14px; font-size: .74rem; color: var(--muted); }
-.nota-piede { margin-top: 10px; font-size: .68rem; color: var(--muted); }
+.nota-piede { margin-top: auto; padding-top: 10px; font-size: .68rem; color: var(--muted); }
 .input-incasso { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px 8px; font-size: .78rem; background: var(--ground); color: var(--ink); font-family: inherit; }
+.input-importo-incasso { width: 90px; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px 8px; font-size: .78rem; background: var(--ground); color: var(--ink); font-family: inherit; }
+.tabella-incasso td:first-child { white-space: normal; }
+.badge-parziale { margin-left: 8px; font-size: .68rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: var(--radius-pill); padding: 2px 8px; }
 
 .mini-stat-row { display: flex; gap: 12px; margin-top: 16px; }
 .mini-stat { flex: 1; background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
@@ -365,5 +388,4 @@ function esportaCommercialista() {
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }
-.nota-piede { margin-top: auto; position: sticky; bottom: 0; background: var(--card); padding-top: 6px; }
 </style>

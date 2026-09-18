@@ -146,6 +146,8 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     ...compenso,
     invii: esistente?.invii ?? [],
     dataPagamento: esistente?.dataPagamento ?? null,
+    pagamenti: esistente?.pagamenti ?? [],
+    dataScadenzaPagamento: esistente?.dataScadenzaPagamento ?? null,
   };
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);

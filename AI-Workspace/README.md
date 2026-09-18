@@ -27,6 +27,7 @@ product/
   KNOWN_ISSUES.md              — gaps and inconsistencies found during analysis
   CHANGELOG.md                 — ongoing log (baseline: 2026-08-29, no prior git history)
   GLOSSARY.md                  — domain and codebase terminology
+  FEATURE_PROPOSALS.md         — numbered backlog of proposed features
 documentation/
   DESIGN_PATTERNS_AS_IS.md     — factual pattern inventory (backend + frontend)
 prompts/  templates/  workflows/  reviews/  tasks/  — support material, populated as work happens

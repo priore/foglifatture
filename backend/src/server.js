@@ -43,6 +43,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'segreto-di-sviluppo',
   resave: false,
   saveUninitialized: false,
+  cookie: { httpOnly: true, sameSite: 'lax' },
 }));
 
 await configuraPassport();
