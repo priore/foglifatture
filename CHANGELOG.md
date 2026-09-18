@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-18
+
 ### Added
 - Pagamenti parziali/a rate: una fattura può essere incassata in più rate con date e importi diversi. Residuo, stato (aperta/parziale/pagata) e storico pagamenti visibili in dashboard e nella fattura, con possibilità di eliminare un pagamento registrato. L'export per il commercialista e il calcolo cassa forfettario tengono conto della singola rata, non solo dell'ultimo incasso.
 
