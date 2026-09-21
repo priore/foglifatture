@@ -134,6 +134,12 @@ Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 .\scripts\uninstall.ps1
 ```
 
+### Server / cloud
+
+Vuoi che l'app sia raggiungibile da più dispositivi, con dominio proprio e HTTPS,
+invece che solo su `localhost`? Vedi [docs/DEPLOYMENT_CLOUD.md](docs/DEPLOYMENT_CLOUD.md)
+(Docker, reverse proxy, certificato automatico).
+
 ## Primo utilizzo
 
 1. Apri il browser su `http://localhost:1969`.
