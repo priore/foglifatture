@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Deployment su server/cloud: Dockerfile e docker-compose per far girare l'app con dominio proprio e HTTPS automatico (Let's Encrypt), in alternativa all'uso locale. Guida in `docs/DEPLOYMENT_CLOUD.md`.
+
 ## [1.2.0] - 2026-09-18
 
 ### Added
