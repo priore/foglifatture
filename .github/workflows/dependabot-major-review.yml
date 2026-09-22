@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'priore/foglifatture'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Claude triage major-version Dependabot PRs
         uses: anthropics/claude-code-action@v1
