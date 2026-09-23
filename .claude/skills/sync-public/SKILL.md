@@ -16,12 +16,11 @@ Repo locale (`/Users/danilo/Documents/Prioregroup/Timesheet`, branch `develop`, 
    ```
    Verifica che non compaiano `backend/data/`, `backend/logs/`, `.env`, `*.key`, `*.pem`, `config.json` — se compaiono, FERMATI e segnala prima di procedere (non sincronizzare mai dati potenzialmente sensibili).
 
-2. **Copia** (rsync, solo file tracciati, cancella nel target ciò che non è più tracciato nel locale ma preserva `.git/` del repo pubblico), **escludendo sempre** `.claude/skills/sync-public/` (questa skill è tooling privato, non deve mai finire nel repo pubblico — `.gitignore` del locale non basta perché sono due repository separati):
+2. **Copia** (rsync, solo file tracciati, cancella nel target ciò che non è più tracciato nel locale ma preserva `.git/` del repo pubblico), **escludendo sempre** `.claude/skills/sync-public/` e `AI-Workspace/Plans/` (tooling privato e note di pianificazione interne: entrambi tracciati su Gogs locale — `AI-Workspace/Plans/` non è più in `.gitignore` da quando serve anche lì — ma non devono mai finire nel repo pubblico; l'esclusione qui è l'unica barriera, dato che sono due repository separati):
    ```bash
    cd /Users/danilo/Documents/Prioregroup/Timesheet
-   git ls-files -z | rsync -av --files-from=- --from0 --exclude='.claude/skills/sync-public/' . /Users/danilo/Documents/GitHub/foglifatture/
+   git ls-files -z | rsync -av --files-from=- --from0 --exclude='.claude/skills/sync-public/' --exclude='AI-Workspace/Plans/' . /Users/danilo/Documents/GitHub/foglifatture/
    ```
-   Non copiare `AI-Workspace/Plans/` (già escluso da `.gitignore`, contiene note di pianificazione interne non destinate al repo pubblico).
 
 3. **Mostra diff** nel repo pubblico:
    ```bash
