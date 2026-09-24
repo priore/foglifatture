@@ -9,6 +9,8 @@ Repo locale (`/Users/danilo/Documents/Prioregroup/Timesheet`, branch `develop`, 
 
 ## Passi
 
+0. **Check pre-pubblicazione**: esegui la skill `pre-publish-check` (gitleaks, license-check, test backend, build frontend) e fixa in locale finché non è tutto verde. Non procedere al passo 1 finché il ciclo di fix non è concluso.
+
 1. **Elenca i file tracciati nel locale**, esclusi quelli sensibili anche se per errore finissero tracciati:
    ```bash
    cd /Users/danilo/Documents/Prioregroup/Timesheet
