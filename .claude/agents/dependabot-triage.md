@@ -36,6 +36,8 @@ Sei responsabile del triage delle Pull Request aperte da Dependabot su `priore/f
    ```
    Se il fallimento è un vero problema del bump (es. lint/test rotti dal nuovo pacchetto), NON chiudere: segnala all'utente con il log reale, lascia la PR aperta.
 
+   If the `cla` check still fails after `update-branch` even though the author is in the allowlist, post a `recheck` comment on the PR and wait for the outcome.
+
 4. Merge le PR patch/minor con CI verde:
    ```
    gh pr merge <numero> --repo priore/foglifatture --squash --delete-branch --admin
