@@ -159,6 +159,11 @@ export const api = {
     if (!r.ok) throw new Error(`mempool.space ha risposto ${r.status}`);
     return r.json();
   }),
+  // F4: elenco transazioni ricevute su un indirizzo — usato quando manca il TXID ma l'indirizzo è noto. Avviso privacy: indirizzo e IP inviati a mempool.space
+  txPerIndirizzo: (indirizzo) => fetch(`https://mempool.space/api/address/${indirizzo}/txs`).then(async (r) => {
+    if (!r.ok) throw new Error(`mempool.space ha risposto ${r.status}`);
+    return r.json();
+  }),
   // F5: cambio storico EUR/BTC da CoinGecko (data in formato DD-MM-YYYY, come richiesto dall'API)
   cambioStoricoBtc: (dataIso) => {
     const [anno, mese, giorno] = dataIso.split('-');
