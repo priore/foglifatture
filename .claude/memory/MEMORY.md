@@ -9,3 +9,4 @@ Index of project-specific rules kept in the repo so a checkout on any machine ca
 - [GitHub Actions log check](github_actions_log_check.md) — after a public-repo push, use `gh run list`/`gh run view --log-failed` to check real workflow outcomes instead of relying on truncated notification emails
 - [No commit without explicit OK](no_commit_without_explicit_ok.md) — never auto-commit after a green step, wait for explicit user go-ahead
 - [Local first, push last](local_first_push_last.md) — reproduce and verify CI fixes locally (matching Node/tool version) before pushing, never iterate via remote pushes
+- [Changelog readable format](changelog_readable_format.md) — multi-aspect CHANGELOG/Release entries: bold title + bullet sub-list, not one long paragraph
