@@ -8,3 +8,4 @@ Index of project-specific rules kept in the repo so a checkout on any machine ca
 - [Confirm publish separately](publish_confirm_separately.md) — pre-push confirmation always its own question, never bundled with the final verification step
 - [GitHub Actions log check](github_actions_log_check.md) — after a public-repo push, use `gh run list`/`gh run view --log-failed` to check real workflow outcomes instead of relying on truncated notification emails
 - [No commit without explicit OK](no_commit_without_explicit_ok.md) — never auto-commit after a green step, wait for explicit user go-ahead
+- [Local first, push last](local_first_push_last.md) — reproduce and verify CI fixes locally (matching Node/tool version) before pushing, never iterate via remote pushes
