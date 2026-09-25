@@ -26,8 +26,11 @@ function formattaImporto(numero) {
  */
 export function generaXmlFatturaPA(dati) {
   const { fornitore, cliente, fattura } = dati;
-  const causaleBtc = cliente?.pagamentoBtc && cliente?.causaleBtc
-    ? `\n        <Causale>${escapeXml(cliente.causaleBtc)}</Causale>`
+  // Letto da fattura (congelato al momento di "Genera fattura" in invoiceRoutes.js),
+  // mai da cliente: la clausola BTC è pattuita all'emissione e non deve cambiare
+  // retroattivamente se il flag cliente viene modificato dopo (vedi PAGAMENTI_BTC.md, F3).
+  const causaleBtc = fattura.pagamentoBtc && fattura.causaleBtc
+    ? `\n        <Causale>${escapeXml(fattura.causaleBtc)}</Causale>`
     : '';
 
   const datiBollo = fattura.bolloApplicabile

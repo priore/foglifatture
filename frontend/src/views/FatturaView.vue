@@ -83,6 +83,10 @@ const datiFattura = computed(() => {
     bollo: anteprimaEffettiva.value.bollo,
     bolloApplicabile: anteprimaEffettiva.value.bolloApplicabile,
     nettoAPagare: anteprimaEffettiva.value.nettoAPagare,
+    // Se già generata, usa i valori congelati in fattura (immutabili dopo l'emissione,
+    // vedi PAGAMENTI_BTC.md F3): altrimenti mostra un'anteprima dal cliente corrente.
+    pagamentoBtc: fatturaGenerata.value?.pagamentoBtc ?? clienteCorrente.value.pagamentoBtc,
+    causaleBtc: fatturaGenerata.value?.causaleBtc ?? clienteCorrente.value.causaleBtc,
   });
 });
 
