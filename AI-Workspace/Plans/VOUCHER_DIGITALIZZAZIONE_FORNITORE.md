@@ -7,27 +7,40 @@ Analisi del bando **Voucher Digitalizzazione PMI** (Lazio Innova, FESR Lazio
 Documento di analisi e strategia commerciale — nessuna modifica al codice discende
 da qui.
 
-**Fonte primaria**: Avviso II edizione 2025, DD G13041 del 10/10/2025, BUR Lazio
-n. 85 del 14/10/2025 — Appendici 1-5. 🟢
-L'Avviso 2026 non risulta pubblicato alla data del 21/09/2026 (apertura domande
-annunciata per il 29/09/2026): **tutte le citazioni dell'Appendice 4 sono da
-riconfermare** sul testo definitivo. 🟡
+**Fonte primaria**: Avviso Voucher Digitalizzazione PMI 2026, pubblicato il
+18/09/2026 (Determinazione G12616), BUR Lazio n. 77 Ordinario del 24/09/2026 —
+Appendici 1-5 e Allegato 2 Modulistica. 🟢 **Verificato riga per riga il
+25/09/2026: tutte le clausole tecniche riportate in questo documento come
+"ereditate dal 2025" sono confermate testualmente identiche nell'Avviso 2026**,
+salvo dove indicato diversamente (vedi novità sull'intervento D più sotto).
+
+**Calendario reale**: modulo disponibile online dal 25/09/2026, finestra di
+presentazione domande **30/09/2026 – 29/10/2026** (12:00–17:00). Non più gli
+8 giorni ipotizzati nella stesura iniziale di questo documento: c'è un mese.
+
+**Numerazione articoli cambiata rispetto al 2025**: i "Beneficiari" sono ora
+**Articolo 4** (non più Articolo 2). Il vecchio "Modello 3 — conflitti
+d'interesse" è ora **Modello 4**, e nel 2026 riguarda esclusivamente eventuali
+rapporti di parentela/affinità con dirigenti o funzionari della Direzione
+Regionale o di Lazio Innova — **non ha alcun nesso con il rapporto
+fornitore-cliente**, il timore riportato più sotto nella sezione
+"Qualificazione di un cliente" non si applica.
 
 ---
 
 ## Sintesi
 
-🟢 Come **beneficiario** il voucher non è accessibile: l'art. 2 dell'Avviso richiede
-l'iscrizione al Registro delle Imprese Italiano e una sede operativa nel Lazio
-risultante dal medesimo Registro. Il profilo di riferimento è un professionista con
-sola partita IVA (ATECO 62.02.00), non iscritto. Vedi *Fuori scope* per il calcolo
-di convenienza sull'iscrizione.
+🟢 Come **beneficiario** il voucher non è accessibile: l'art. 4 dell'Avviso 2026
+richiede l'iscrizione al Registro delle Imprese Italiano e una sede operativa nel
+Lazio risultante dal medesimo Registro. Il profilo di riferimento è un
+professionista con sola partita IVA (ATECO 62.02.00), non iscritto. Vedi *Fuori
+scope* per il calcolo di convenienza sull'iscrizione.
 
-🟡 Come **fornitore ICT**, l'Avviso 2025 non imponeva requisiti di qualificazione
-analoghi a quelli previsti per Innovation Manager/Cyber Security; tuttavia questo
-punto, così come le altre condizioni tecniche dell'Appendice 4, **deve essere
-riconfermato sull'Avviso 2026 definitivo**. La PMI incassa il contributo; il
-fornitore presta e fattura i servizi professionali ICT previsti dall'intervento.
+🟢 Come **fornitore ICT**, l'Avviso 2026 (verificato) non impone requisiti di
+qualificazione analoghi a quelli previsti per Innovation Manager/Cyber Security —
+nessuna occorrenza di "fornitore ICT" con requisiti propri nel testo. La PMI
+incassa il contributo; il fornitore presta e fattura i servizi professionali ICT
+previsti dall'intervento.
 
 🟡 Il valore pratico dipende interamente dall'acquisizione clienti: alla stesura non
 esistono prospect. L'obiettivo è arrivare alla prossima apertura con offerta pronta
@@ -42,7 +55,7 @@ Fogli & Fatture è il caso d'uso e la baseline tecnologica; non è il bene da fi
 
 ## Perché il ruolo di fornitore è praticabile
 
-### Nessun requisito di qualificazione nel 2025 — da riconfermare 🟡
+### Nessun requisito di qualificazione — confermato sull'Avviso 2026 🟢
 
 L'Avviso impone requisiti stringenti **solo all'Innovation Manager** che redige la
 Diagnosi Digitale (intervento A): certificazione UNI 11814 via organismo accreditato
@@ -50,12 +63,12 @@ ACCREDIA, o iscrizione all'Albo MIMIT settore 8 (Informatica e Telecomunicazioni
 più indipendenza ex art. 10 D.Lgs. 39/2010. Per la Cyber Security serve un esperto
 CISSP/CISA/CISM/SSCP.
 
-Nel testo 2025 al fornitore ICT non erano richiesti questi requisiti di
-qualificazione. Tra gli obblighi rilevanti vi era la sottoscrizione della sezione
-ex post della documentazione tecnica. **Non trattare però questa conclusione come
-regola 2026 finché l'Avviso definitivo e gli allegati non saranno pubblicati.**
+Al fornitore ICT non sono richiesti questi requisiti di qualificazione — verificato
+sul testo 2026 pubblicato (nessuna occorrenza di "fornitore ICT" associata a un
+requisito soggettivo). Tra gli obblighi rilevanti vi è la sottoscrizione della
+sezione ex post della documentazione tecnica.
 
-### La clausola dell'unico fornitore nel 2025 — da riconfermare 🟡
+### La clausola dell'unico fornitore — confermata sull'Avviso 2026 🟢
 
 Appendice 4, interventi B e C:
 
@@ -71,7 +84,7 @@ discende che l'auto-attestazione del fornitore sul proprio lavoro è il meccanis
 previsto, non una zona grigia: per le Micro manca la figura terza dell'Innovation
 Manager.
 
-### Target: Micro Imprese 🟢 (strategia commerciale, subordinata al testo 2026)
+### Target: Micro Imprese 🟢
 
 Segmento dove il fornitore unico è imposto dal bando e dove A non è ammissibile,
 quindi non serve l'Innovation Manager. Aggredibile senza partnership.
@@ -89,12 +102,21 @@ pubblicati:
 
 Massimale Micro: 50.000 €.
 
-### Cosa si fattura 🟡 — struttura 2025 da riconfermare
+### Cosa si fattura 🟢 — confermato sull'Avviso 2026
 
 Le somme forfettarie remunerano, per ciascun intervento: progettazione tecnica,
 configurazione e personalizzazione, verifica di funzionamento (una tantum), e
 amministrazione e supporto specialistico per 36 mesi. Su un progetto Micro la quota
 di servizi professionali ICT è la componente principale del forfait.
+
+Novità 2026 sull'intervento **D**: la lettera a) elenca ora esplicitamente **6
+servizi cloud obbligatori** (calcolo, archiviazione/database, gestione risorse,
+rete, identità/sicurezza, strumenti di sviluppo/test — non tutti nel 2025), e la
+lettera b) ammette ora espressamente anche **software in licenza o servizi cloud
+SaaS** per la gestione/amministrazione, oltre ai canoni IaaS/PaaS di cui alla
+lettera a). Resta fermo, come causa di non riconoscibilità, che la migrazione non
+può riguardare applicazioni **già erogate in SaaS/IaaS/PaaS**: deve restare una
+migrazione reale da server locale (on-premises).
 
 ---
 
@@ -266,7 +288,7 @@ cloud pubblico di applicazioni già in uso on-premise dal cliente:
 Vantaggio: non richiede di convertire il prodotto. Serve solo packaging per il
 deployment cloud (Docker, reverse proxy TLS), non una riscrittura.
 
-### Multi-tenant in abbonamento squalifica su C nel 2025 — da riconfermare 🟡
+### Multi-tenant in abbonamento squalifica su C — confermato sull'Avviso 2026 🟢
 
 Convertire Fogli & Fatture in servizio multi-cliente in abbonamento lo renderebbe
 **SaaS**, causa espressa di non riconoscibilità sull'intervento C:
@@ -274,13 +296,15 @@ Convertire Fogli & Fatture in servizio multi-cliente in abbonamento lo renderebb
 > acquisizione delle piattaforme, con modalità **IaaS/PaaS** (**sono escluse
 > soluzioni basate su un pacchetto software erogato in modalità SaaS**)
 
-Ciò che funziona è l'opposto: un'istanza per cliente, su infrastruttura IaaS/PaaS
-intestata al cliente, con dominio e SSL suoi. Il fornitore la installa, configura e
-amministra.
+Testo verbatim identico al 2025. Ciò che funziona è l'opposto: un'istanza per
+cliente, su infrastruttura IaaS/PaaS intestata al cliente, con dominio e SSL suoi.
+Il fornitore la installa, configura e amministra.
 
-🟡 Nota: nel 2025 l'intervento **B ammetteva esplicitamente il SaaS** ("quali quelli acquistati
-in modalità SaaS, IaaS o PaaS"). Il divieto era specifico di C. **Da riconfermare
-sull'Appendice 4 del 2026.**
+🟢 Nota confermata: l'intervento **B ammette esplicitamente il SaaS** ("quali quelli
+acquistati in modalità SaaS, IaaS o PaaS"). Il divieto resta specifico di C.
+Sull'intervento **D**, invece, il 2026 ammette ora SaaS alla lettera b) per la parte
+di software di gestione/amministrazione (vedi sezione precedente) — distinzione da
+tenere ferma tra i tre interventi.
 
 ### Il finanziamento non passa dal fornitore 🟢
 
@@ -299,7 +323,7 @@ presentano domanda.
 |---|---|---|
 | **Deployment cloud** di Fogli & Fatture: Docker + reverse proxy TLS | Oggi gira su `localhost:1969` in HTTP. Serve per D.1 e per C. | 🟢 |
 | **Dominio + certificato SSL** intestati al cliente | C lett. b) lo richiede; l'assenza di SSL è causa espressa di non riconoscibilità | 🟢 |
-| **Contratto 36 mesi** di amministrazione e supporto | Regola dell'Avviso 2025; verificare la durata richiesta nel 2026 | 🟡 |
+| **Contratto 36 mesi** di amministrazione e supporto | Confermato identico sull'Avviso 2026 | 🟢 |
 | **Eccezione scritta alla licenza** PolyForm Noncommercial | La licenza vieta l'uso commerciale senza accordo separato con l'autore. Va documentato il titolo con cui il fornitore distribuisce il software e il diritto del cliente di usarlo. | 🟢 |
 
 🟡 **Nota fiscale sull'eccezione di licenza**: vendere *licenze* è ricavo d'impresa e
@@ -314,28 +338,24 @@ commercialista.**
 Il bando non valuta il fornitore, ma il cliente sì: deve affidarsi a chi sottoscrive
 un'attestazione di conformità e si impegna a 36 mesi di supporto.
 
+**Le app iPhone proprie (Transistor Handbook, SuperStar Lotto) sono escluse come
+credenziali**, su decisione esplicita — non vanno citate nell'offerta né come
+riferimento generico né in forma anonimizzata. Cadono con loro le credenziali che
+ne derivavano (API proprie in produzione, integrazione con operatore terzo,
+elaborazione statistica): non ci sono altre app pubbliche a sostenerle.
+
 | Asset | Cosa dimostra |
 |---|---|
-| **Transistor Handbook** e **SuperStar Lotto**, app iPhone proprie su App Store | Ciclo di pubblicazione completo, review Apple superata: controllo esterno con date verificabili |
-| API proprie in produzione su dominio Aruba | Esercizio continuativo di infrastruttura pubblica — i 36 mesi di supporto non sono una promessa |
-| Integrazione con API di operatore terzo | C lett. a): *"integrazione con piattaforme di terze parti"* |
-| Elaborazione statistica su dataset storici | C lett. a): *"piattaforme di Analytics"* |
 | **Fogli & Fatture** — FatturaPA, PEC/SdI, backup cifrato | Adempimenti digitali e gestione documentale (B lett. c-d) |
 
-Come citarle:
-- Sono prodotti **propri**, non commesse: "applicazioni proprie pubblicate su App
-  Store, con API di produzione in esercizio continuativo".
-- **SuperStar Lotto: citare la competenza, non il dominio applicativo.** L'app fa
-  statistica su estrazioni, senza acquisto né gioco — nessun profilo di
-  inammissibilità, ma il settore gioco è sensibile su fondi FESR (principio DNSH) e
-  alcuni codici etici lo escludono a prescindere. In offerta: *"elaborazione
-  statistica di dataset e integrazione con API di operatori terzi"*. Se un cliente
-  chiede i nomi si danno. **Transistor Handbook in primo piano.**
-- **Capacità mobile**: C ammette *"piattaforme di supporto e gestione clienti
-  personalizzate via Web, Mobile App, Social"* 🟢. Pochi fornitori locali la coprono.
+**Capacità mobile**: C ammette *"piattaforme di supporto e gestione clienti
+personalizzate via Web, Mobile App, Social"* 🟢. Resta un intervento valido da
+offrire, ma senza referenze proprie da citare — va costruita caso per caso sul
+progetto del cliente, non presentata come track record pregresso.
 
-Da verificare: titolarità dell'account sviluppatore Apple — irrilevante per il
-bando, rilevante se le app vengono citate in contratti.
+Il set di credenziali commerciali risulta oggi ridotto: va rafforzato prima di
+costruire un'offerta convincente per il segmento Micro Imprese (vedi Fase 3 del
+piano operativo).
 
 ---
 
@@ -344,26 +364,82 @@ bando, rilevante se le app vengono citate in contratti.
 Griglia da applicare a ogni prospect, in quest'ordine.
 
 ### 1. Ammissibilità e dimensione 🟢
+
 - Sede operativa nel Lazio **risultante dal Registro delle Imprese** (visura)
-- **Dimensione consolidata**: con soci persone giuridiche o partecipazioni
-  rilevanti, la dimensione include imprese collegate e associate (Modello 5, non
-  Modello 4). Una società apparentemente Micro può risultare Piccola o uscire dal
-  perimetro PMI — nel 2025 ci sono state esclusioni per questo motivo.
 - Nessun contributo già ottenuto sulle **stesse tipologie** di intervento in
   edizioni precedenti del Voucher
+- Impresa **non pubblica**: se il 25%+ di capitale o diritti di voto è controllato
+  da uno o più enti pubblici, l'impresa non è una PMI a prescindere da occupati e
+  fatturato — verificare se non ovvio dalla compagine sociale
+
+**Soglie dimensionali** (Avviso 2026, definizione «PMI», rinvio all'Allegato I RGE
+e Racc. 2003/361/CE) — basta superare una sola delle due soglie economiche insieme
+a quella occupazionale per classificare l'impresa:
+
+| Dimensione | Occupati (ULA) | Fatturato annuo | Totale attivo di bilancio |
+|---|---|---|---|
+| Micro | < 10 | ≤ 2 Mln € | ≤ 2 Mln € |
+| Piccola | 10-49 | 2-10 Mln € | 2-10 Mln € |
+| Media | 50-249 | 10-50 Mln € | 10-43 Mln € |
+
+- **Dati di riferimento**: ultimo bilancio approvato, o in mancanza ultima
+  dichiarazione dei redditi.
+- **Persistenza**: un cambio di categoria (perdita/acquisizione qualifica PMI o
+  passaggio Micro/Piccola/Media) rileva solo se lo sforamento delle soglie avviene
+  per **due anni consecutivi** — un singolo anno anomalo non basta a far cambiare
+  classe.
+- **Dimensione consolidata**: per le imprese **non Autonome**, le soglie si
+  calcolano consolidando i dati delle **Imprese Collegate** (100%) e, pro quota,
+  delle **Imprese Associate** — quelle esistenti al momento della dichiarazione e,
+  successivamente, al momento della verifica. Con soci persone giuridiche o
+  partecipazioni rilevanti la dimensione reale può differire da quella che sembra
+  dai soli numeri della singola società (Modello 5, non Modello 4 — quest'ultimo è
+  la dichiarazione sui conflitti di interesse, vedi punto 2). Una società
+  apparentemente Micro può risultare Piccola o uscire dal perimetro PMI — nel 2025
+  ci sono state esclusioni per questo motivo.
 
 Se risulta **Piccola** anziché Micro: A diventa obbligatoria (serve Innovation
 Manager certificato) e il fornitore unico non è più imposto. Segmento aggredibile
 solo in partnership — fuori scope.
 
-### 2. Conflitto di interesse 🟢
-Da escludere: cariche sociali o quote nella società cliente, parentela con i soci.
-Esclusi quelli, un rapporto di consulenza continuativo non è ostativo: i requisiti
-di indipendenza ex art. 10 D.Lgs. 39/2010 valgono solo per l'Innovation Manager e
-l'esperto Cyber Security.
-- Leggere il **Modello 3** 2026 per verificare cosa dichiari e se nomini i fornitori
+#### Screening preliminare: IT-CONNECT S.R.L. (cliente della Fase 1/2) 🟡
 
-### 3. Esiste un intervento reale? 🟡 — dettagli tecnici 2025 da riconfermare
+Dati trovati in anagrafica interna (`backend/data/config.json`) incrociati con
+fonti pubbliche aggregatrici (ufficiocamerale.it, reportaziende.it) il
+25/09/2026 — **non la fonte primaria**, da riconfermare col bilancio depositato
+reale prima di costruire la proposta formale.
+
+- P.IVA **08364111008**, sede Via Pio VIII 5/A, 00165 Roma (RM) — Lazio ✅
+- S.r.l., iscritta dal 2005 — coerente col requisito Registro Imprese ✅
+- Dipendenti: **8** (dato 2024, non ULA — approssimazione da fonte terza)
+- Fatturato: **~875,1 mila €** (dato 2025)
+
+| Parametro | IT-CONNECT | Soglia Micro | Esito |
+|---|---|---|---|
+| Occupati | 8 | < 10 | sotto soglia, margine stretto (1 unità) |
+| Fatturato | ~875 k€ | ≤ 2 Mln € | ampiamente sotto soglia |
+
+**Risulta Micro Impresa sui dati disponibili**, ma il margine sugli occupati è
+stretto (8 su soglia 10) — un solo nuovo assunto o un conteggio ULA più
+accurato (part-time, contratti nell'anno) potrebbe spostarla a Piccola. Da
+verificare con l'ultimo bilancio/dichiarazione reale prima di procedere, non
+solo per conformarsi al requisito formale ma perché **cambia lo scenario**
+dell'intera proposta (fornitore unico imposto solo per le Micro).
+
+Non verificato in questo passaggio: soci/partecipazioni (serve visura con
+assetti societari per escludere consolidamento con Imprese Collegate/Associate).
+
+### 2. Conflitto di interesse 🟢 — verificato, non è un tema per il fornitore
+Il **Modello 4** 2026 (ex Modello 3 nel 2025 — numerazione slittata) riguarda
+esclusivamente eventuali rapporti di parentela, affinità entro il secondo grado o
+coniugio tra il Legale Rappresentante della PMI e dirigenti/funzionari della
+Direzione Regionale o di Lazio Innova. **Non nomina né riguarda il fornitore ICT.**
+Il rapporto di consulenza continuativo tra fornitore e cliente non è ostativo in
+nessuna forma: i requisiti di indipendenza ex art. 10 D.Lgs. 39/2010 valgono solo
+per l'Innovation Manager e l'esperto Cyber Security, soggetti diversi dal fornitore
+generico. Nessuna azione richiesta su questo punto.
+
+### 3. Esiste un intervento reale? 🟢 — confermato sull'Avviso 2026
 - **D (Cloud)** — ha applicazioni proprie su server locali? Se è già tutto su cloud
   pubblico, D non si applica: manca la migrazione da on-premise.
 - **C (Digital Commerce)** — se ha un canale digitale realizzato da **meno di 3
@@ -376,30 +452,29 @@ l'esperto Cyber Security.
   le altre vanno coperte da prodotti di terzi, con il fornitore come integratore.
 - Il progetto raggiunge i **14.000 €** di contributo?
 
-### 4. Da comunicare sempre 🟡 — vincoli 2025 da riconfermare
+### 4. Da comunicare sempre 🟢 — confermato sull'Avviso 2026
 Gli interventi **non possono essere avviati prima della Data della Domanda**
 (eccetto la Diagnosi Digitale). Preventivi e progettazione sì; ordini, attivazioni e
 contratti operativi no. L'avvio anticipato è causa di non riconoscibilità.
 
-Selezione **a graduatoria**, non a sportello. Criteri 2025: valore aggiunto per
-addetto (35 pt), numero addetti (20 pt), articolazione del progetto (15 pt), parità
-di genere (10 pt), impresa giovanile (10 pt), sostenibilità ambientale (10 pt).
-Documentazione mancante su un criterio = zero punti non sanabili. L'articolazione
-del progetto è la leva su cui il fornitore incide direttamente.
+Selezione a graduatoria, non a sportello (criteri di punteggio non riverificati in
+dettaglio in questo passaggio — vedi griglia punteggi 2026 scaricabile dalla pagina
+del bando). Nel 2025 la documentazione mancante su un criterio comportava zero
+punti non sanabili. L'articolazione del progetto è la leva su cui il fornitore
+incide direttamente.
 
 ---
 
 ## Piano operativo
 
-### Fase 1 — Acquisire il testo 2026
-Monitorare `lazioinnova.it/bandi/voucher-digitalizzazione-pmi-2026/` e il BUR Lazio.
-Appena pubblicato, leggere: Appendice 4 (caratteristiche tecniche → conferma dei
-vincoli SaaS / 36 mesi / nuova adozione / unico fornitore), Appendice 5 e griglia
-punteggi, art. 2 e Modello 3.
-
-Cercare nel testo: `SaaS`, `IaaS`, `PaaS`, `36 mesi`, `nuova adozione`,
-`unico soggetto`, `fornitore`, `produttività individuale`, `Intelligenza Artificiale`,
-`AI`, `licenza`, `canone`, `API`, `cloud`.
+### Fase 1 — Acquisire il testo 2026 ✅ completata il 25/09/2026
+Avviso pubblicato il 18/09/2026, verificato riga per riga. Esito: tutte le
+assunzioni ereditate dal 2025 confermate (vedi tag 🟢 in tutto il documento).
+Uniche differenze reali: numerazione articoli (Beneficiari ora art. 4), Modello
+conflitti d'interesse ora numerato 4 e non riguarda il fornitore, intervento D con
+6 servizi cloud dettagliati e SaaS ammesso alla lettera b. Non ancora verificati
+in dettaglio: criteri di punteggio (griglia scaricabile separatamente), contenuto
+completo del Modello 2 (Relazione sulla Digitalizzazione).
 
 ### Fase 2 — Email di quesito a Lazio Innova
 Non aspetta la Fase 1. Bozza in appendice.
@@ -442,6 +517,13 @@ applicativo non va toccato per il bando.**
 ---
 
 ## Appendice — Bozza email a Lazio Innova
+
+**Nota 25/09/2026**: i punti 1, 2, 3 e 5 sotto sono ormai **verificati
+direttamente sul testo pubblicato** (vedi tag 🟢 nelle sezioni corrispondenti) e
+non richiedono più risposta di Lazio Innova. Restano aperti solo i punti 4
+(trattamento delle licenze AI nell'intervento B) e 6 (già superato: il calendario
+è ora noto — domande 30/09-29/10/2026). Se si invia comunque, mantenere solo il
+punto 4, riformulato senza riferimento al testo 2025.
 
 > Oggetto: Voucher Digitalizzazione PMI — quesito sui requisiti del fornitore ICT e
 > sulle modalità di erogazione ammesse
@@ -523,162 +605,148 @@ va redatta in Fase 3, dopo la conferma delle caratteristiche sull'Avviso 2026.
   software, e il contributo non passa dal fornitore 🟢.
 - **Segmento Piccole e Medie Imprese**: richiede Innovation Manager certificato e,
   per E, esperto Cyber Security certificato 🟢. Solo in partnership.
-- **Finestra 2026** (apertura 29/09/2026): nessun cliente, tempi incompatibili 🟡.
+- **Finestra 2026** (domande dal 30/09/2026 al 29/10/2026): un mese di finestra
+  reale, più ampio di quanto stimato inizialmente, ma nessun cliente qualificato
+  disponibile alla data di verifica 🟢.
 
 
 ---
 
-## Proposta commerciale per PMI — "AI Digital Workplace, chiavi in mano"
+## Proposta per il cliente S.r.l. — Fogli & Fatture multi-utente + migrazione D.1
 
-### Obiettivo commerciale
+Non un'offerta pubblicitaria: una proposta a un cliente già esistente, con cui il
+rapporto di fiducia è dato. Due fasi **volutamente separate**, perché hanno natura
+diversa e vanno presentate come tali.
 
-L'offerta deve essere semplice da capire in meno di un minuto:
+### Fase 1 — Installazione multi-utente on-premise (ora, accordo diretto)
 
-> **Porta la tua PMI nel lavoro quotidiano con l'AI, senza costruire tutto da zero.**
-> Valutiamo gratuitamente la compatibilità con il Voucher Digitalizzazione, progettiamo il Digital Workplace, configuriamo gli strumenti professionali e restiamo al tuo fianco per il supporto specialistico previsto dal progetto.
+Oggetto: Fogli & Fatture installato presso la S.r.l., **accesso multi-utente con
+permessi per gli abilitati**, sui server/infrastruttura del cliente. Rapporto
+commerciale ordinario, **slegato dal voucher** — nessuna promessa di finanziamento
+in questa fase, nessun riferimento al bando nella proposta.
 
-Il messaggio non deve promettere l'ottenimento del contributo. Deve invece vendere tre vantaggi concreti: **progetto già strutturato, un unico referente tecnico, adozione guidata dell'AI**.
+Vantaggi reali per il cliente, da presentare così:
 
-### Proposta "zero-frizione"
+- **Timesheet e fatturazione elettronica centralizzati**: chi è abilitato accede
+  alla stessa base dati, niente file sparsi o versioni disallineate tra colleghi.
+- **FatturaPA con invio diretto allo SdI**, ricezione automatica delle ricevute:
+  meno lavoro manuale sull'adempimento fiscale.
+- **Dati che restano dell'azienda**: nessun abbonamento SaaS di terzi, nessun dato
+  che esce verso un fornitore esterno — gira su infrastruttura loro.
+- **Un unico referente per tutto**: installazione, configurazione permessi,
+  assistenza — stesso rapporto che hanno già con te, esteso a un nuovo strumento.
 
-**Fase 0 — Check gratuito**
+Questa fase richiede lavoro reale sul prodotto, non presente oggi nel codice:
+gestione utenti con permessi differenziati (oggi l'app è pensata per un solo
+operatore, vedi `.claude/rules/code-quality.md` sul modello "single-user auth,
+multi-client data" — qui servirebbe multi-user vero, non solo multi-cliente). Va
+scoperto e scoping-ato **prima** di proporlo, non durante.
 
-Prima di qualsiasi impegno operativo:
+### Fase 2 — Migrazione su VM cloud (condizionata, prossima finestra utile)
 
-- verifica preliminare della posizione dell'impresa;
-- verifica della dimensione Micro/Piccola/Media;
-- verifica delle condizioni tecniche compatibili con B/C/D;
-- controllo dei precedenti Voucher;
-- stima preliminare del contributo potenziale;
-- individuazione delle componenti AI realmente utili.
+Solo dopo che la Fase 1 è attiva da un periodo congruo (l'app deve risultare
+**già in uso on-premise prima della Data della Domanda**, condizione tassativa
+dell'intervento D). Qui, e solo qui, entra il voucher — e va presentato al
+cliente con questi paletti chiari, non come certezza:
 
-Questa fase deve essere presentata come **gratuita e senza obbligo di acquisto**, salvo diversa scelta commerciale.
+- **Cosa ottiene**: contributo a fondo perduto — 17.683,20 € se D.1 Application
+  Server da solo, di più se combinato con altre Virtual Machine (vedi tabella
+  importi più sopra in questo documento). Supera da solo la soglia minima di
+  14.000 €.
+- **Cosa cambia tecnicamente**: la stessa installazione migra da server locale a
+  una VM su cloud pubblico, accesso sempre riservato agli abilitati. Non è un
+  servizio SaaS in abbonamento — è la loro istanza, sul loro account cloud.
+- **Cosa NON è garantito**, da dire esplicitamente al cliente: il contributo è
+  a graduatoria, non automatico; dipende dal punteggio ottenuto e dai fondi
+  disponibili; la domanda va presentata nella finestra ufficiale (30/09–29/10/2026
+  per l'edizione corrente, verificare quella successiva); gli interventi non
+  possono essere avviati prima della Data della Domanda — quindi l'ordine delle
+  fasi (prima on-premise, poi domanda, poi migrazione) non è negoziabile, è un
+  requisito del bando.
+- **Ruolo del fornitore**: in questa fase tu sei il fornitore ICT che progetta,
+  configura, verifica e fornisce 36 mesi di supporto — è il rapporto già in
+  essere con la S.r.l., reso esplicito e formalizzato per l'occasione.
 
-**Fase 1 — Progetto**
+### Prerequisiti prima di proporre la Fase 2 al cliente
 
-Per il cliente viene costruito un pacchetto tecnico coerente con l'Avviso 2026:
+- [ ] Verificare la dimensione della S.r.l. sulla griglia di qualificazione (sopra
+      in questo documento) — se risulta Piccola anziché Micro cambia tutto
+      (Diagnosi Digitale obbligatoria, fornitore non più unico imposto)
+- [ ] Fogli & Fatture pacchettizzato per deployment cloud (Docker + reverse proxy
+      TLS, dominio proprio — vedi `docs/DEPLOYMENT_CLOUD.md`)
+- [ ] Verificare col commercialista l'inquadramento della Fase 1 come servizio
+      professionale (non vendita di licenza) — vedi nota fiscale più sopra
 
-- architettura del Digital Workplace;
-- scelta delle piattaforme professionali;
-- mappatura delle licenze/postazioni;
-- configurazione prevista;
-- piano di adozione AI;
-- documentazione tecnica necessaria;
-- assistenza alla preparazione della parte tecnica della domanda, senza sostituirsi agli adempimenti che competono al beneficiario o al professionista incaricato.
+### Email a IT-CONNECT (Curzio) — inviata il 25/09/2026
 
-**Fase 2 — Attivazione dopo la Data della Domanda**
+Testo effettivamente mandato, riportato tale e quale. Guida prima verso
+un'eventuale applicazione già esistente da migrare (il candidato più diretto per
+l'intervento D, nessuna presunzione su cosa giri oggi nei loro sistemi), Fogli &
+Fatture multi-utente resta l'alternativa se non c'è nulla di adatto. Per la
+dimensione, delega al cliente stesso la lettura della tabella soglie invece di
+chiedere i due numeri grezzi — più semplice da rispondere in un'email. Non
+promette il contributo, non nomina cifre del voucher come certe.
 
-Le componenti finanziabili vengono ordinate, attivate e implementate esclusivamente nel rispetto delle tempistiche e delle condizioni dell'Avviso 2026.
-
-**Fase 3 — Implementazione**
-
-Il fornitore realizza l'ambiente concordato, configura gli account aziendali, integra i servizi, verifica il funzionamento e consegna la documentazione tecnica prevista.
-
-**Fase 4 — Supporto**
-
-Il cliente dispone di un unico referente per il supporto specialistico e per la gestione tecnica dell'ambiente durante il periodo contrattuale previsto dall'Avviso.
-
-### Cosa compra realmente il cliente
-
-Non "tre abbonamenti AI".
-
-Compra un **ambiente di lavoro digitale pronto all'uso**, nel quale le piattaforme AI diventano strumenti ordinari dell'attività aziendale.
-
-Esempio di configurazione, da riconfermare sull'Appendice 4 2026:
-
-| Area | Funzione | Esempi di strumenti |
-|---|---|---|
-| AI Productivity | scrittura, analisi, ricerca, sintesi | ChatGPT Business / Gemini / Claude |
-| AI Development | coding, refactoring, test, review | Claude Code / GitHub Copilot |
-| Collaboration | comunicazione e lavoro condiviso | piattaforma professionale ammessa |
-| Documents | condivisione e gestione documenti | piattaforma cloud ammessa |
-| Firma/archiviazione | firma e conservazione | servizio professionale ammesso |
-| ICT Service | progetto, configurazione, integrazione, verifica | fornitore ICT |
-
-La scelta dei marchi deve restare subordinata alla compatibilità con l'Avviso 2026.
-
-### Il caso d'uso che rende concreta l'offerta
-
-Per imprese che sviluppano software, il progetto può essere dimostrato attraverso un caso operativo reale.
-
-**Fogli & Fatture** viene utilizzato come esempio di prodotto sul quale il nuovo Digital Workplace può aumentare la produttività del ciclo di sviluppo:
-
-- analisi dei requisiti;
-- progettazione;
-- sviluppo assistito dall'AI;
-- refactoring;
-- testing;
-- documentazione tecnica;
-- gestione delle issue;
-- ricerca tecnica;
-- manutenzione evolutiva.
-
-Il prodotto non viene presentato come bene da finanziare con il Voucher e lo sviluppo del software non viene imputato al contributo.
-
-### Perché l'offerta è attraente per una Micro Impresa
-
-La promessa commerciale deve essere:
-
-> **"Tu non devi diventare esperto di AI o di bandi: noi trasformiamo una misura complessa in un progetto digitale utilizzabile ogni giorno."**
-
-Elementi di differenziazione:
-
-- **un solo referente tecnico**;
-- progetto costruito sulle attività reali dell'impresa;
-- scelta degli strumenti AI in base al lavoro, non alla moda del momento;
-- configurazione iniziale e verifica funzionale;
-- supporto specialistico continuativo;
-- possibilità di utilizzare un prodotto software reale come caso d'uso;
-- approccio locale e diretto, senza passare da una grande società di consulenza.
-
-### Formula commerciale consigliata
-
-La formula deve ridurre il rischio percepito senza promettere il finanziamento:
-
-**CHECK GRATUITO → PROGETTO → DOMANDA → ATTIVAZIONE → SUPPORTO**
-
-La fase preliminare è gratuita. Le componenti finanziabili vengono attivate solo quando ciò è consentito dall'Avviso e secondo il contratto concordato con il cliente.
-
-Il preventivo commerciale deve essere costruito in modo trasparente, distinguendo sempre:
-
-1. componenti ricomprese nel forfait dell'intervento;
-2. servizi professionali ICT;
-3. eventuali componenti non finanziabili o eccedenti, sempre opzionali e previamente approvate dal cliente.
-
-**Non usare mai claim come "voucher garantito", "AI gratis" o "contributo sicuro".** Il messaggio corretto è: **"ti aiutiamo a costruire un progetto conforme e a presentarlo; l'ammissione dipende dalla procedura e dalla graduatoria"**.
-
-### Messaggio commerciale breve
-
-> **AI Digital Workplace per la tua PMI.**
+> Ciao Curzio,
 >
-> Hai già sentito parlare del Voucher Digitalizzazione ma non sai da dove partire?
+> ti scrivo perché ho visto una cosa che secondo me potrebbe essere interessante.
 >
-> Partiamo noi: analizziamo gratuitamente la tua situazione, individuiamo gli interventi compatibili, progettiamo il tuo Digital Workplace e integriamo strumenti professionali di AI per produttività, sviluppo e automazione.
+> La Regione Lazio ha aperto il **Voucher Digitalizzazione PMI 2026**, un
+> contributo a fondo perduto con domande dal 30 settembre al 29 ottobre. Tra gli
+> interventi finanziabili c'è anche la **migrazione verso il cloud di
+> applicazioni e sistemi già presenti e utilizzati sui propri server**.
 >
-> **Un progetto. Un referente. Un ambiente digitale pronto per lavorare meglio.**
+> La prima cosa che mi è venuta in mente è: **hai già qualcosa in azienda che
+> prima o poi dovresti portare sul cloud?**
 >
-> ChatGPT, Claude, Gemini e gli strumenti AI per lo sviluppo possono diventare parte di un ecosistema aziendale strutturato, non semplici abbonamenti isolati.
+> Potrebbe essere un gestionale, un database, un'applicazione interna o
+> comunque un sistema che oggi gira "in casa" e che avrebbe senso migrare.
 >
-> La verifica preliminare è gratuita e senza obbligo di acquisto. L'attivazione delle componenti finanziabili avviene nel rispetto delle regole e delle tempistiche del Voucher.
+> Se c'è qualcosa del genere, secondo me vale la pena capire se può rientrare
+> nel voucher: in quel caso potrei occuparmi io della parte tecnica della
+> migrazione.
+>
+> Se invece non hai nulla di adatto da migrare, si può valutare un'altra
+> strada: **Fogli & Fatture**. Sto lavorando a una versione multi-utente che
+> potrebbe essere installata direttamente sui tuoi sistemi, con una base dati
+> condivisa, gestione dei timesheet e fatturazione elettronica FatturaPA con
+> invio diretto allo SdI e ricezione automatica delle ricevute, con la
+> possibilità di notificare le ricevute anche a te.
+>
+> In questo caso, successivamente, si potrebbe anche valutare la migrazione sul
+> cloud e far rientrare l'intervento nel voucher.
+>
+> Prima di tutto, però, si deve verificare che IT-CONNECT rientri nei parametri
+> del bando.
+>
+> Puoi semplicemente individuare tu la **classe dimensionale** nella tabella
+> qui sotto, in base al numero di dipendenti e al fatturato (oppure al totale
+> dell'attivo):
+>
+> | Dimensione  | Occupati (ULA) | Fatturato annuo | Totale attivo di bilancio |
+> | ----------- | -------------: | ---------------: | --------------------------: |
+> | **Micro**   |           < 10 |        ≤ 2 Mln € |                    ≤ 2 Mln € |
+> | **Piccola** |          10–49 |       2–10 Mln € |                   2–10 Mln € |
+> | **Media**   |         50–249 |      10–50 Mln € |                  10–43 Mln € |
+>
+> A me basta sapere, ad esempio, **"siamo nella fascia Micro"** e posso
+> verificare il resto dei requisiti.
+>
+> Insomma, la cosa che mi interessa soprattutto capire è se hai già qualcosa
+> che vorresti portare sul cloud. **Se sì, partiamo da quello; altrimenti
+> valutiamo F&F come possibile soluzione.**
+>
+> Quando hai tempo, sentiamoci o prendiamoci un caffè e ne parliamo.
+>
+> A presto,
+> Danilo
 
-### Versione più "giovane" per landing page / WhatsApp / LinkedIn
+### Nota
 
-> 🚀 **La tua PMI può lavorare con l'AI senza inventarsi tutto da zero.**
->
-> Stiamo costruendo un servizio **AI Digital Workplace** pensato per le PMI del Lazio: strumenti professionali di AI + collaborazione + documenti + configurazione + supporto.
->
-> **Prima facciamo un check gratuito.**
-> Poi, se il progetto è compatibile con il Voucher, prepariamo l'architettura e il pacchetto tecnico.
->
-> L'obiettivo non è riempirti di software: è darti gli strumenti che servono davvero per lavorare più velocemente, sviluppare, documentare, automatizzare e collaborare.
->
-> **AI utile. Un solo referente. Zero complicazioni inutili.**
-
-### Nota legale/commerciale
-
-Questa proposta è un **modello commerciale da adattare all'Avviso 2026 definitivo**. Non deve essere utilizzata per dichiarare come certe l'ammissibilità di una specifica piattaforma AI, la concessione del contributo o l'importo effettivamente riconosciuto.
-
-Prima di pubblicare prezzi, marchi, durata, formule di pagamento o claim di ammissibilità, verificare l'Avviso 2026 e i relativi allegati.
+Questa proposta è per **un** cliente già qualificato per relazione, non un
+modello da replicare come materiale pubblicitario generico. Se in futuro serve
+adattarla ad altri clienti, ripartire dalla griglia di qualificazione (sopra),
+non da questo testo.
 
 ---
 
@@ -686,34 +754,43 @@ Prima di pubblicare prezzi, marchi, durata, formule di pagamento o claim di ammi
 
 - **Completeness:** coperti requisiti soggettivi, ruolo fornitore, importi e soglie,
   caratteristiche tecniche degli interventi B/C/D, gap del prodotto, qualificazione
-  cliente, strategia AI, piano operativo e quesiti da sottoporre a Lazio Innova. Non
-  coperti in dettaglio: intervento E (Cyber Security) e Diagnosi Digitale, entrambi
-  non centrali per il segmento Micro target.
-- **Accuracy:** le citazioni tecniche dell'Avviso sono riferite all'Appendice 4 e agli
-  artt. 2-3 del testo 2025 (DD G13041); gli importi e la struttura generale riportati
-  per il 2026 sono quelli pubblicati, mentre le caratteristiche tecniche dettagliate
-  ereditate dal 2025 sono marcate come da riconfermare.
-- **Consistency:** terminologia allineata all'Avviso (Intervento, Data della Domanda,
-  Micro/Piccola/Media Impresa, forfait). Nomi di prodotto invariati. AI trattata come
-  possibile componente del Digital Workplace, non come intervento autonomo.
-- **TODO prioritario:** alla pubblicazione dell'Avviso 2026 verificare e marcare come
-  confermate/smentite almeno: requisiti del fornitore, clausola dell'unico fornitore
-  per le Micro, tutte le categorie obbligatorie di B, trattamento SaaS in B e C, durata
-  dei contratti, nuova adozione, soglia di 14.000 €, trattamento delle licenze AI,
-  AI coding e API a consumo.
-- **Missing information:** contenuto del Modello 3 (conflitti di interesse) non
-  esaminato; trattamento del regime forfettario nel criterio "valore aggiunto per
-  addetto" non approfondito (rilevante solo per clienti, non per il fornitore);
-  nessun dato su prospect reali; nessun chiarimento ufficiale ancora acquisito
-  sull'ammissibilità di ChatGPT/Claude/Gemini/AI coding/API nel B.
-- **Open questions:** un professionista non iscritto al Registro delle Imprese è
-  ammesso come fornitore ICT? Le licenze SaaS AI professionali rientrano nella
-  produttività individuale del Digital Workplace? Sono ammissibili AI coding assistant?
-  E le API a consumo? Come va gestita la nuova adozione di servizi AI già eventualmente
-  usati dal cliente? Inquadramento fiscale della concessione d'uso del software da
-  confermare col commercialista.
-- **Confidence level:** 🟢 per le previsioni dell'Avviso 2025 citate testualmente e per
-  gli importi 2026 già pubblicati; 🟡 per la persistenza delle caratteristiche 2025
-  nell'edizione 2026 e per la strategia AI; 🔴 per ogni affermazione che tratti una
-  specifica piattaforma AI o un consumo API come spesa ammissibile senza conferma
-  2026.
+  cliente, strategia AI (sezione a parte, non perseguita come proposta), proposta
+  concreta per il cliente S.r.l. esistente (Fase 1 on-premise + Fase 2 migrazione
+  D.1), piano operativo e quesiti residui da sottoporre a Lazio Innova. Non coperti
+  in dettaglio: intervento E (Cyber Security) e Diagnosi Digitale, entrambi non
+  centrali per il segmento Micro target.
+- **Accuracy:** le citazioni tecniche sono ora riferite all'**Avviso 2026
+  pubblicato il 18/09/2026** (BUR Lazio n. 77 Ordinario del 24/09/2026),
+  verificato riga per riga il 25/09/2026 contro tutte le assunzioni ereditate
+  dal testo 2025 usato nella stesura iniziale. Discrepanze reali trovate e
+  corrette: numerazione articoli (Beneficiari → art. 4), Modello conflitti
+  d'interesse (→ Modello 4, non riguarda il fornitore), intervento D (6 servizi
+  cloud dettagliati, SaaS ammesso alla lettera b).
+- **Consistency:** terminologia allineata all'Avviso 2026 (Intervento, Data della
+  Domanda, Micro/Piccola/Media Impresa, forfait, numerazione articoli corrente).
+  Nomi di prodotto invariati. AI trattata come possibile componente del Digital
+  Workplace, non come intervento autonomo.
+- **TODO prioritario:** verificare la griglia punteggi 2026 (scaricabile a parte,
+  non ancora confrontata voce per voce con quella 2025 citata in questo
+  documento); leggere il contenuto completo del Modello 2 (Relazione sulla
+  Digitalizzazione) prima di costruire il pacchetto commerciale; ottenere
+  chiarimento su licenze AI/AI coding/API a consumo nell'intervento B (unico
+  punto ancora aperto, non deducibile dal testo).
+- **Missing information:** trattamento del regime forfettario nel criterio
+  "valore aggiunto per addetto" non approfondito (rilevante solo per clienti, non
+  per il fornitore); nessun dato su prospect reali; nessun chiarimento ufficiale
+  ancora acquisito sull'ammissibilità di ChatGPT/Claude/Gemini/AI coding/API nel
+  B — unico punto della sezione AI non risolvibile da lettura diretta del testo.
+- **Open questions:** le licenze SaaS AI professionali rientrano nella
+  produttività individuale del Digital Workplace? Sono ammissibili AI coding
+  assistant? E le API a consumo? Come va gestita la nuova adozione di servizi AI
+  già eventualmente usati dal cliente? Inquadramento fiscale della concessione
+  d'uso del software da confermare col commercialista. (Il quesito
+  sull'ammissibilità del fornitore non iscritto al Registro Imprese, aperto nella
+  stesura iniziale, è ora chiuso: nessun requisito soggettivo per il fornitore
+  nel testo pubblicato.)
+- **Confidence level:** 🟢 per la quasi totalità del documento, verificata
+  direttamente sull'Avviso 2026 pubblicato; 🟡 residuo solo sulla strategia AI
+  (sezioni dedicate, non ritoccate su richiesta esplicita); 🔴 per ogni
+  affermazione che tratti una specifica piattaforma AI o un consumo API come
+  spesa ammissibile senza conferma di Lazio Innova.
