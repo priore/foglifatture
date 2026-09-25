@@ -92,9 +92,9 @@ Indice avanzamento (aggiornato ad ogni step concluso):
 - [x] Step 1 — `confermaPagamentoBtc` + route + test (2026-09-25)
 - [x] Step 2 — `configService.js`: `walletBtc` + `clienti[].pagamentoBtc` (2026-09-25)
 - [x] Step 3 — Causale condizionale XML + PDF (F3) (2026-09-25)
-- [ ] Step 4 — Frontend `FatturaView.vue` + `api.js` (F1 UI)
-- [ ] Step 5 — F4: pulsante "Leggi da blockchain" (mempool.space) + avviso privacy
-- [ ] Step 6 — F5: pulsante "Recupera cambio" (API storica) + avviso privacy
+- [x] Step 4 — Frontend `FatturaView.vue` + `api.js` (F1 UI) (2026-09-25)
+- [x] Step 5 — F4: pulsante "Leggi da blockchain" (mempool.space) + avviso privacy (2026-09-25)
+- [x] Step 6 — F5: pulsante "Recupera cambio" (API storica) + avviso privacy (2026-09-25)
 - [ ] Step 7 — `exportService.js`: colonne F6 + test
 - [ ] Step 8 — `CHANGELOG.md` + `FEATURE_PROPOSALS.md` (FP-011 ✅)
 

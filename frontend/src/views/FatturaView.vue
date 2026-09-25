@@ -138,6 +138,81 @@ async function eliminaPagamento(indice) {
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
 }
 
+// Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
+// backend, mai inviato dal client — qui solo i dati grezzi della transazione/cambio.
+const mostraFormBtc = ref(false);
+const btcForm = ref({ txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: '' });
+const registrandoBtc = ref(false);
+const erroreBtc = ref('');
+const caricandoTx = ref(false);
+const caricandoCambio = ref(false);
+
+function resetFormBtc() {
+  btcForm.value = { txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: config.value?.walletBtc?.[0]?.indirizzo || '' };
+  erroreBtc.value = '';
+}
+
+// F4: legge TXID/orario/satoshi dalla blockchain pubblica invece dell'inserimento manuale.
+async function leggiDaBlockchain() {
+  if (!btcForm.value.txid) return;
+  caricandoTx.value = true;
+  erroreBtc.value = '';
+  try {
+    const tx = await api.txBlockchain(btcForm.value.txid);
+    if (tx.status?.block_time) btcForm.value.dataOraCambio = new Date(tx.status.block_time * 1000).toISOString();
+    const indirizzo = btcForm.value.indirizzoDestinatario;
+    const output = tx.vout?.find((o) => !indirizzo || o.scriptpubkey_address === indirizzo);
+    if (output) {
+      btcForm.value.satoshi = output.value;
+      if (!btcForm.value.indirizzoDestinatario) btcForm.value.indirizzoDestinatario = output.scriptpubkey_address;
+    }
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    caricandoTx.value = false;
+  }
+}
+
+// F5: cambio storico EUR/BTC da CoinGecko alla data del pagamento (resta modificabile a mano).
+async function recuperaCambio() {
+  if (!dataFattura.value) return;
+  caricandoCambio.value = true;
+  erroreBtc.value = '';
+  try {
+    const dati = await api.cambioStoricoBtc(dataFattura.value);
+    const eur = dati.market_data?.current_price?.eur;
+    if (eur) {
+      btcForm.value.cambioEurBtc = eur;
+      btcForm.value.fonteCambio = 'CoinGecko';
+      if (!btcForm.value.dataOraCambio) btcForm.value.dataOraCambio = dataFattura.value;
+    } else {
+      erroreBtc.value = 'CoinGecko: nessun dato di cambio per questa data';
+    }
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    caricandoCambio.value = false;
+  }
+}
+
+async function registraPagamentoBtc() {
+  registrandoBtc.value = true;
+  erroreBtc.value = '';
+  try {
+    const risultato = await api.confermaPagamentoBtcFattura(
+      fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId,
+      new Date().toISOString().slice(0, 10), btcForm.value,
+    );
+    fatturaGenerata.value = risultato.fattura;
+    mostraFormBtc.value = false;
+    resetFormBtc();
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    registrandoBtc.value = false;
+  }
+}
+
 async function scaricaXml() {
   window.open(api.urlDownloadXml(anno.value, mese.value, clienteId.value), '_blank');
 }
@@ -305,10 +380,55 @@ onMounted(async () => {
               <label>Pagamenti registrati {{ fatturaGenerata.residuo > 0 ? `(residuo ${formattaEuro(fatturaGenerata.residuo)})` : '(saldata)' }}</label>
               <ul class="lista-piatta">
                 <li v-for="(p, i) in fatturaGenerata.pagamenti" :key="i" style="display:flex;justify-content:space-between;align-items:center">
-                  <span>{{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}</span>
+                  <span>
+                    {{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}
+                    <template v-if="p.btc">
+                      — ₿ <a :href="`https://mempool.space/tx/${p.btc.txid}`" target="_blank" rel="noopener">{{ p.btc.txid.slice(0, 10) }}…</a>
+                    </template>
+                  </span>
                   <button class="btn btn-ghost" @click="eliminaPagamento(i)">Elimina</button>
                 </li>
               </ul>
+            </div>
+            <div class="field" v-if="fatturaGenerata && fatturaGenerata.residuo > 0">
+              <button v-if="!mostraFormBtc" class="btn btn-ghost" @click="mostraFormBtc = true; resetFormBtc()">₿ Registra incasso in BTC</button>
+              <div v-else style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+                <label>TXID</label>
+                <div style="display:flex;gap:6px">
+                  <input v-model="btcForm.txid" placeholder="64 caratteri esadecimali" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="!btcForm.txid || caricandoTx" @click="leggiDaBlockchain">{{ caricandoTx ? '…' : 'Leggi da blockchain' }}</button>
+                </div>
+                <small class="note-legal">Invia il TXID e il tuo IP a mempool.space (servizio esterno).</small>
+
+                <label>Indirizzo di destinazione</label>
+                <input v-model="btcForm.indirizzoDestinatario" />
+
+                <label>Satoshi ricevuti</label>
+                <input v-model.number="btcForm.satoshi" type="number" min="1" step="1" />
+
+                <label>Cambio EUR/BTC</label>
+                <div style="display:flex;gap:6px">
+                  <input v-model.number="btcForm.cambioEurBtc" type="number" min="0" step="0.01" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="caricandoCambio" @click="recuperaCambio">{{ caricandoCambio ? '…' : 'Recupera cambio' }}</button>
+                </div>
+                <small class="note-legal">Invia solo la data al servizio esterno (CoinGecko). Il valore resta modificabile: prevale il criterio concordato col cliente.</small>
+
+                <label>Fonte cambio</label>
+                <input v-model="btcForm.fonteCambio" placeholder="es. Kraken, CoinGecko" />
+
+                <label>Data/ora cambio</label>
+                <input v-model="btcForm.dataOraCambio" placeholder="ISO 8601" />
+
+                <span v-if="btcForm.satoshi && btcForm.cambioEurBtc" class="badge-mono">
+                  ≈ {{ formattaEuro((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc) }}
+                </span>
+                <span v-if="erroreBtc" class="note-legal" style="color:var(--warn)">{{ erroreBtc }}</span>
+
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-primary" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra incasso' }}</button>
+                  <button class="btn btn-ghost" @click="mostraFormBtc = false">Annulla</button>
+                </div>
+              </div>
             </div>
             <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
