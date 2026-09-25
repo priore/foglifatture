@@ -141,6 +141,7 @@ async function eliminaPagamento(indice) {
 // Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
 // backend, mai inviato dal client — qui solo i dati grezzi della transazione/cambio.
 const mostraFormBtc = ref(false);
+const avvisoModale = ref('');
 const motivoBtcDisabilitato = computed(() => {
   if (!fatturaGenerata.value) return 'Genera prima la fattura per poter registrare un incasso.';
   if (fatturaGenerata.value.residuo <= 0) return 'Fattura già saldata: nessun residuo da incassare.';
@@ -153,7 +154,7 @@ const caricandoTx = ref(false);
 const caricandoCambio = ref(false);
 
 function apriFormBtc() {
-  if (motivoBtcDisabilitato.value) { alert(motivoBtcDisabilitato.value); return; }
+  if (motivoBtcDisabilitato.value) { avvisoModale.value = motivoBtcDisabilitato.value; return; }
   mostraFormBtc.value = true;
   resetFormBtc();
 }
@@ -496,6 +497,16 @@ onMounted(async () => {
 
       <div style="min-width:0">
         <TemplateStampa v-if="datiFattura" ref="anteprimaRef" :template-id="templateIdFattura" :dati="datiFattura" />
+      </div>
+    </div>
+
+    <div v-if="avvisoModale" class="modal-overlay" @click.self="avvisoModale = ''">
+      <div class="modal-box">
+        <h2>₿ Incasso in BTC</h2>
+        <p>{{ avvisoModale }}</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" @click="avvisoModale = ''">Ho capito</button>
+        </div>
       </div>
     </div>
   </div>
