@@ -51,3 +51,31 @@ test('escapa caratteri speciali XML nella denominazione', () => {
 test('nome file conforme allo standard IT<P.IVA>_<PROGRESSIVO>.xml (progressivo alfanumerico libero)', () => {
   assert.equal(generaNomeFileXml(fornitore, 'a1b2c3d4e5'), 'IT11111111111_a1b2c3d4e5.xml');
 });
+
+test('fattura senza pagamentoBtc: XML identico, nessuna Causale BTC aggiunta (retro-compatibilità)', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore, cliente,
+    fattura: { numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 },
+  });
+  assert.doesNotMatch(xml, /Bitcoin/);
+});
+
+test('fattura con pagamentoBtc congelato: aggiunge la Causale, escapata (letta da fattura, non da cliente)', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore, cliente,
+    fattura: {
+      numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1,
+      pagamentoBtc: true, causaleBtc: 'Pagamento ammesso in Bitcoin & simili',
+    },
+  });
+  assert.match(xml, /<Causale>Pagamento ammesso in Bitcoin &amp; simili<\/Causale>/);
+});
+
+test('cliente con pagamentoBtc attivo ma fattura congelata senza: nessuna Causale (il flag cliente cambiato dopo non altera fatture già emesse)', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore,
+    cliente: { ...cliente, pagamentoBtc: true, causaleBtc: 'Pagamento ammesso in Bitcoin' },
+    fattura: { numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1, pagamentoBtc: false },
+  });
+  assert.doesNotMatch(xml, /Bitcoin/);
+});

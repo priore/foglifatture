@@ -88,6 +88,17 @@ function riattivaCliente(cliente) {
           <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
           <small class="note-legal">Una o più email separate da virgola, usate per l'invio di timesheet e fattura via app di posta.</small>
         </div>
+        <div class="field" style="margin-top:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <input :id="`btc-abilitato-${cliente.id}`" type="checkbox" v-model="cliente.pagamentoBtc" class="checkbox-app">
+            <label :for="`btc-abilitato-${cliente.id}`" style="margin:0">₿ Ammetti pagamento in Bitcoin</label>
+          </div>
+          <small class="note-legal">Aggiunge la dicitura sotto in fattura e XML FatturaPA, alla generazione. Non obbliga il cliente: resta comunque possibile pagare a bonifico.</small>
+        </div>
+        <div class="field" v-if="cliente.pagamentoBtc" style="margin-top:8px">
+          <label>Testo della clausola</label>
+          <textarea v-model="cliente.causaleBtc" rows="2" placeholder="Criterio di cambio da concordare col cliente" style="resize:vertical;font-family:inherit"></textarea>
+        </div>
         <div style="display:flex;gap:20px;margin-top:12px">
           <div class="field" style="flex:1">
             <label>Template fattura</label>
@@ -115,5 +126,17 @@ function riattivaCliente(cliente) {
 .clienti-cerca-input {
   flex: 1; border: 1px solid var(--line); border-radius: var(--radius-md);
   padding: 9px 11px; font-size: var(--font-size-base); background: var(--ground); color: var(--ink);
+}
+.checkbox-app {
+  appearance: none; width: 18px; height: 18px; margin: 0;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: transparent;
+  cursor: pointer; position: relative; flex-shrink: 0;
+}
+.checkbox-app:checked { background: var(--accent); border-color: var(--accent); }
+.checkbox-app:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.checkbox-app:checked::after {
+  content: ''; position: absolute; left: 50%; top: 45%; width: 5px; height: 9px;
+  border: solid var(--accent-ink); border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 </style>

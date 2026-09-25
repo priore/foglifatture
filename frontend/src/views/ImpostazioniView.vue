@@ -85,7 +85,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
     <div class="card">
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
-        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" />
+        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :wallet-btc="config.walletBtc" @salva-subito="salva" />
         <StepClienti v-else-if="passoAttivo === 1" v-model="config.clienti" @salva-subito="salva" />
         <StepFatturazione v-else-if="passoAttivo === 2" v-model="config.fatturazione" />
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />

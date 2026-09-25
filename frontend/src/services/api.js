@@ -150,8 +150,28 @@ export const api = {
   },
   confermaPagamentoFattura: (anno, mese, clienteId, dataPagamento, importo) =>
     richiesta('/forfettario/pagamenti/conferma', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento, importo }) }),
+  confermaPagamentoBtcFattura: (anno, mese, clienteId, dataPagamento, datiBtc) =>
+    richiesta('/forfettario/pagamenti/conferma-btc', { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento, ...datiBtc }) }),
   eliminaPagamentoFattura: (anno, mese, clienteId, indice) =>
     richiesta(`/forfettario/pagamenti/${anno}/${mese}/${clienteId}/${indice}`, { method: 'DELETE' }),
+  // F4: recupero dati transazione da mempool.space (TXID, ora blocco, satoshi ricevuti) — avviso privacy: TXID e IP inviati a servizio esterno
+  txBlockchain: (txid) => fetch(`https://mempool.space/api/tx/${txid}`).then(async (r) => {
+    if (!r.ok) throw new Error(`mempool.space ha risposto ${r.status}`);
+    return r.json();
+  }),
+  // F4: elenco transazioni ricevute su un indirizzo — usato quando manca il TXID ma l'indirizzo è noto. Avviso privacy: indirizzo e IP inviati a mempool.space
+  txPerIndirizzo: (indirizzo) => fetch(`https://mempool.space/api/address/${indirizzo}/txs`).then(async (r) => {
+    if (!r.ok) throw new Error(`mempool.space ha risposto ${r.status}`);
+    return r.json();
+  }),
+  // F5: cambio storico EUR/BTC da CoinGecko (data in formato DD-MM-YYYY, come richiesto dall'API)
+  cambioStoricoBtc: (dataIso) => {
+    const [anno, mese, giorno] = dataIso.split('-');
+    return fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/history?date=${giorno}-${mese}-${anno}`).then(async (r) => {
+      if (!r.ok) throw new Error(`CoinGecko ha risposto ${r.status}`);
+      return r.json();
+    });
+  },
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 
   // Widget dashboard: fatture non incassate, prossime scadenze fiscali

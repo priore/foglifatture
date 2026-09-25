@@ -23,7 +23,7 @@ mock.module('./invoiceService.js', {
   },
 });
 
-const { fattureAperte, proponiAbbinamenti, confermaPagamento, eliminaPagamento } = await import('./pagamentiFattureService.js');
+const { fattureAperte, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, eliminaPagamento } = await import('./pagamentiFattureService.js');
 
 function reset(fixture) {
   fatture.clear();
@@ -78,6 +78,74 @@ test('eliminaPagamento ricalcola il residuo', async () => {
   const aggiornata = await eliminaPagamento(2026, 1, 'z', 1);
   assert.equal(aggiornata.pagamenti.length, 1);
   assert.equal(aggiornata.residuo, 200);
+});
+
+const TXID_VALIDO = 'a'.repeat(64);
+
+test('confermaPagamentoBtc calcola importo EUR da satoshi e cambio, arrotondato', async () => {
+  reset([
+    { anno: 2026, mese: 1, clienteId: 'btc1', numero: '1', nettoAPagare: 500, pagamenti: [] },
+  ]);
+  const aggiornata = await confermaPagamentoBtc(2026, 1, 'btc1', '2026-01-05', {
+    txid: TXID_VALIDO, satoshi: 500000, cambioEurBtc: 100000, fonteCambio: 'Kraken', dataOraCambio: '2026-01-05T10:00:00Z', indirizzoDestinatario: 'bc1qxyz',
+  });
+  assert.equal(aggiornata.pagamenti.length, 1);
+  assert.equal(aggiornata.pagamenti[0].importo, 500);
+  assert.equal(aggiornata.pagamenti[0].btc.txid, TXID_VALIDO);
+  assert.equal(aggiornata.stato, 'pagata');
+});
+
+test('confermaPagamentoBtc rifiuta TXID non valido', async () => {
+  reset([{ anno: 2026, mese: 1, clienteId: 'btc2', numero: '1', nettoAPagare: 100, pagamenti: [] }]);
+  await assert.rejects(
+    () => confermaPagamentoBtc(2026, 1, 'btc2', '2026-01-05', { txid: 'non-esadecimale', satoshi: 100000, cambioEurBtc: 100000, indirizzoDestinatario: 'bc1qxyz' }),
+    /TXID non valido/,
+  );
+});
+
+test('confermaPagamentoBtc rifiuta satoshi a 0', async () => {
+  reset([{ anno: 2026, mese: 1, clienteId: 'btc3', numero: '1', nettoAPagare: 100, pagamenti: [] }]);
+  await assert.rejects(
+    () => confermaPagamentoBtc(2026, 1, 'btc3', '2026-01-05', { txid: TXID_VALIDO, satoshi: 0, cambioEurBtc: 100000, indirizzoDestinatario: 'bc1qxyz' }),
+    /Satoshi non valido/,
+  );
+});
+
+test('confermaPagamentoBtc: rata BTC dopo rata bonifico chiude il residuo', async () => {
+  reset([
+    { anno: 2026, mese: 1, clienteId: 'btc4', numero: '1', nettoAPagare: 600, pagamenti: [{ data: '2026-01-01', importo: 400 }] },
+  ]);
+  const aggiornata = await confermaPagamentoBtc(2026, 1, 'btc4', '2026-01-10', {
+    txid: TXID_VALIDO, satoshi: 200000, cambioEurBtc: 100000, indirizzoDestinatario: 'bc1qxyz',
+  });
+  assert.equal(aggiornata.pagamenti.length, 2);
+  assert.equal(aggiornata.residuo, 0);
+  assert.equal(aggiornata.stato, 'pagata');
+});
+
+test('retro-compatibilità: fattura col vecchio formato (solo dataPagamento) riceve rata BTC senza perdere lo storico', async () => {
+  reset([
+    { anno: 2026, mese: 1, clienteId: 'btc5', numero: '1', nettoAPagare: 300, dataPagamento: '2026-01-01' },
+  ]);
+  // vecchio formato: nettoAPagare interamente "pagato" dalla migrazione in lettura (dataPagamento → pagamenti[0])
+  const aggiornata = await confermaPagamentoBtc(2026, 1, 'btc5', '2026-01-10', {
+    txid: TXID_VALIDO, satoshi: 100000, cambioEurBtc: 50000, indirizzoDestinatario: 'bc1qxyz',
+  });
+  assert.equal(aggiornata.pagamenti.length, 2);
+  assert.equal(aggiornata.pagamenti[0].data, '2026-01-01');
+  assert.equal(aggiornata.pagamenti[1].btc.txid, TXID_VALIDO);
+});
+
+test('eliminaPagamento conserva il campo btc delle rate rimanenti', async () => {
+  reset([
+    { anno: 2026, mese: 1, clienteId: 'btc6', numero: '1', nettoAPagare: 300, pagamenti: [{ data: '2026-01-01', importo: 100 }] },
+  ]);
+  await confermaPagamentoBtc(2026, 1, 'btc6', '2026-01-05', {
+    txid: TXID_VALIDO, satoshi: 200000, cambioEurBtc: 100000, indirizzoDestinatario: 'bc1qxyz',
+  });
+  const aggiornata = await eliminaPagamento(2026, 1, 'btc6', 0);
+  assert.equal(aggiornata.pagamenti.length, 1);
+  assert.equal(aggiornata.pagamenti[0].btc.txid, TXID_VALIDO);
 });
 
 test('eliminaPagamento su indice fuori range lancia errore', async () => {

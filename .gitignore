@@ -25,7 +25,5 @@ backend/src/data/atecoSettori.json.bak
 !.vscode/extensions.json
 .playwright-mcp/
 
-# piani di analisi locali, non pubblicati
-AI-Workspace/Plans/
 # output locali (es. export CSV bancari usati per debug), possono contenere dati sensibili
 AI-Workspace/Output/

@@ -8,6 +8,7 @@ mock.module('./invoiceService.js', {
     listMesiFatturati: async () => [
       { chiave: '2026-01-cliA', anno: 2026, mese: 1, clienteId: 'cliA' },
       { chiave: '2026-06-cliA', anno: 2026, mese: 6, clienteId: 'cliA' },
+      { chiave: '2026-09-cliA', anno: 2026, mese: 9, clienteId: 'cliA' },
     ],
     getInvoice: async (anno, mese, clienteId) => {
       const chiave = `${anno}-${String(mese).padStart(2, '0')}-${clienteId}`;
@@ -16,6 +17,10 @@ mock.module('./invoiceService.js', {
         '2026-01-cliA': { anno: 2026, mese: 1, clienteId: 'cliA', numero: 1, data: '2026-01-31', imponibile: 1000, bollo: 2, nettoAPagare: 1000, dataPagamento: '2027-01-10' },
         // Emessa e incassata nel 2026: rilevante per entrambi i criteri.
         '2026-06-cliA': { anno: 2026, mese: 6, clienteId: 'cliA', numero: 2, data: '2026-06-30', imponibile: 500, bollo: 2, nettoAPagare: 500, dataPagamento: '2026-07-05' },
+        '2026-09-cliA': {
+          anno: 2026, mese: 9, clienteId: 'cliA', numero: 3, data: '2026-09-01', imponibile: 300, bollo: 0, nettoAPagare: 300,
+          pagamenti: [{ data: '2026-09-05', importo: 300, btc: { txid: 'a'.repeat(64), satoshi: 300000, cambioEurBtc: 100000, fonteCambio: 'Kraken' } }],
+        },
       };
       return store[chiave] ?? null;
     },
@@ -38,15 +43,25 @@ test('export 2026: elenco emesse include entrambe, elenco cassa solo quella inca
   assert.doesNotMatch(sezioneCassa.split('\n\n')[0] ?? sezioneCassa, /^1,/m);
 });
 
-test('riepilogo cassa 2026 conta solo il ricavo incassato nel 2026 (500), non quello emesso (1500)', async () => {
+test('riepilogo cassa 2026 conta solo il ricavo incassato nel 2026 (800 = 500 bonifico + 300 BTC), non quello emesso (1800)', async () => {
   const csv = await esportaReportCommercialistaCsv(configBase, 2026);
   const righe = csv.split('\n');
-  const rigaCassa = righe.find((r) => r.startsWith('Ricavi cumulati,500.00'));
-  assert.ok(rigaCassa, 'atteso "Ricavi cumulati,500.00" nel riepilogo cassa');
+  const rigaCassa = righe.find((r) => r.startsWith('Ricavi cumulati,800.00'));
+  assert.ok(rigaCassa, 'atteso "Ricavi cumulati,800.00" nel riepilogo cassa');
+});
+
+test('rata BTC (F6): colonna Metodo=BTC, TXID, satoshi in BTC, cambio e fonte popolate', async () => {
+  const csv = await esportaReportCommercialistaCsv(configBase, 2026);
+  assert.match(csv, /,BTC,a{64},0\.00300000,100000\.00,Kraken/);
 });
 
 test('export 2027: la fattura emessa nel 2026 ma incassata nel 2027 compare nell\'elenco cassa 2027', async () => {
   const csv = await esportaReportCommercialistaCsv(configBase, 2027);
   const sezioneCassa = csv.split('Fatture incassate nel 2027')[1];
   assert.match(sezioneCassa, /^1,/m);
+});
+
+test('rata a bonifico (senza btc) ha colonna Metodo=bonifico e colonne BTC vuote', async () => {
+  const csv = await esportaReportCommercialistaCsv(configBase, 2026);
+  assert.match(csv, /,bonifico,,,,/);
 });
