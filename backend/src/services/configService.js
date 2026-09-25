@@ -86,6 +86,9 @@ const DEFAULT_CONFIG = {
     // per avere timesheet e fatture su più macchine. Vuoto = default (data/ nel progetto).
     percorso: '',
   },
+  // Indirizzi BTC dell'operatore proposti come destinazione incasso (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2).
+  // Un indirizzo è pubblico ma collegato all'identità fiscale: resta solo in config.json (gitignored).
+  walletBtc: [],
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -114,6 +117,8 @@ const CLIENTE_VUOTO = {
   progetto: '', // campo header PDF timesheet
   templateFatturaId: null, // null = usa il template fallback fattura-default
   templateTimesheetId: null, // null = usa il template fallback timesheet-default
+  pagamentoBtc: false, // se true, aggiunge la Causale di ammissione pagamento BTC in fattura (F3)
+  causaleBtc: "Pagamento ammesso anche in Bitcoin (datio in solutum, art. 1197 c.c.) al controvalore dell'importo in EUR, cambio concordato alla data/ora di invio.", // testo configurabile: il criterio di cambio va concordato col cliente
 };
 
 // Elenco clienti salvato: fonde ogni cliente coi campi di default (stesso motivo di

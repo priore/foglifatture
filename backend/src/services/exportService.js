@@ -48,6 +48,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
   // Sezione cassa: una riga per RATA (fattureCassa già rimappata a rata da
   // ricaviAnnoCassa), imponibile della riga = importo della singola rata — evita
   // il doppio conteggio fiscale di una fattura con rate a cavallo di più anni.
+  // Colonne BTC (F6, AI-Workspace/Plans/PAGAMENTI_BTC.md) in coda, vuote sulle rate non BTC.
   const rigaFatturaCassa = (f) => {
     const cliente = clientiPerId.get(f.clienteId);
     return [
@@ -59,6 +60,11 @@ export async function esportaReportCommercialistaCsv(config, anno) {
       f.bollo.toFixed(2),
       f.nettoAPagare.toFixed(2),
       f.dataPagamento ?? '',
+      f.btc ? 'BTC' : 'bonifico',
+      f.btc?.txid ?? '',
+      f.btc ? (f.btc.satoshi / 1e8).toFixed(8) : '',
+      f.btc?.cambioEurBtc?.toFixed(2) ?? '',
+      escapiCsv(f.btc?.fonteCambio ?? ''),
     ].join(',');
   };
 
@@ -68,7 +74,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     ...fattureEmesse.map(rigaFattura),
     '',
     `Fatture incassate nel ${anno} (cassa — rilevanti ai fini fiscali per il forfettario)`,
-    'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento',
+    'Numero,Data,Cliente,Partita IVA,Imponibile,Bollo,Netto a pagare,Data Pagamento,Metodo,TXID,BTC,Cambio EUR/BTC,Fonte cambio',
     ...fattureCassa.map(rigaFatturaCassa),
   ];
 

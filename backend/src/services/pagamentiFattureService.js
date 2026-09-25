@@ -317,6 +317,31 @@ export async function confermaPagamento(anno, mese, clienteId, dataPagamento, im
   return arricchisciStatoPagamento(fattura);
 }
 
+// Registra un incasso in BTC come rata: l'importo EUR è SEMPRE calcolato qui dal cambio
+// dichiarato, mai accettato dal client, così il prospetto di cambio e l'EUR registrato
+// non possono divergere (vedi AI-Workspace/Plans/PAGAMENTI_BTC.md, F1).
+export async function confermaPagamentoBtc(anno, mese, clienteId, dataPagamento, datiBtc) {
+  const { txid, satoshi, cambioEurBtc, fonteCambio, dataOraCambio, indirizzoDestinatario } = datiBtc || {};
+  if (!/^[0-9a-fA-F]{64}$/.test(txid || '')) throw new Error('TXID non valido (attesi 64 caratteri esadecimali)');
+  if (!Number.isInteger(satoshi) || satoshi <= 0) throw new Error('Satoshi non valido');
+  if (!Number.isFinite(cambioEurBtc) || cambioEurBtc <= 0) throw new Error('Cambio EUR/BTC non valido');
+  if (!indirizzoDestinatario) throw new Error('Indirizzo di destinazione mancante');
+
+  const fattura = await getInvoice(anno, mese, clienteId);
+  if (!fattura) throw new Error('Fattura non trovata');
+  const importo = Number(((satoshi / 1e8) * cambioEurBtc).toFixed(2));
+  if (importo <= 0) throw new Error('Importo calcolato non valido');
+
+  const arricchita = arricchisciStatoPagamento(fattura);
+  fattura.pagamenti = [...arricchita.pagamenti, {
+    data: dataPagamento,
+    importo,
+    btc: { txid, satoshi, cambioEurBtc, fonteCambio, dataOraCambio, indirizzoDestinatario },
+  }];
+  await saveInvoice(anno, mese, clienteId, fattura);
+  return arricchisciStatoPagamento(fattura);
+}
+
 // Elimina un pagamento registrato (solo cancellazione, non editing — vedi piano §7).
 export async function eliminaPagamento(anno, mese, clienteId, indice) {
   const fattura = await getInvoice(anno, mese, clienteId);

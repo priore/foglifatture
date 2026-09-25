@@ -6,7 +6,7 @@ Backlog numerato delle proposte di funzionalità. Il numero è stabile e non si 
 Quando una proposta viene implementata, aggiornare la voce in place
 (✅ implementato, data, commit) — regola in `.claude/rules/dev-workflow.md`.
 
-Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · ✅ implementato · ❌ scartato
+Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in corso · ✅ implementato · ❌ scartato
 
 ---
 
@@ -23,7 +23,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 **Attenzione**: l'aliquota cambia ogni anno. Va versionata per anno con la fonte (circolare INPS) accanto al valore, mai hardcoded a un numero solo — altrimenti a gennaio il dato è silenziosamente sbagliato. Vedi FP-006.
 
 **Riferimenti:** `backend/src/services/forfettarioService.js:93-166`, `scadenzeFiscaliService.js:68-99`, `configService.js`, `frontend/src/components/wizard/StepFornitore.vue`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -36,7 +36,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 🟡 Una costante e un ramo: da booleano a tre stati (sotto soglia / uscita l'anno prossimo / uscita immediata), applicato a entrambi i rami. Costo minimo, rischio segnalato alto.
 
 **Riferimenti:** `backend/src/services/forfettarioService.js:110-115, 131-163`, `frontend/src/views/DashboardView.vue`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -49,7 +49,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 🟡 Collegare i due servizi: acconto e saldo mostrano quanto resta davvero da pagare, verificato contro i versamenti reali e non contro la memoria dell'utente. Dipende da FP-001 per la parte contributiva: stessa PR o subito dopo.
 
 **Riferimenti:** `backend/src/services/forfettarioService.js:117-122`, `versamentiF24Service.js`, `frontend/src/views/VersamentiF24View.vue`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -64,7 +64,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 **Collocazione UI — decisa: dentro `FatturaView.vue`.** Il contesto della fattura da stornare è già tutto lì (numero, data, cliente, importi, quindi `DatiFattureCollegate` si compila da sé) e validazione e invio sono già cablati nella stessa vista. Niente screen separata: duplicherebbe quel blocco senza aggiungere nulla. Resta il vincolo: azione umana con conferma esplicita, mai innescabile da un automatismo o da un agente (vedi FP-008).
 
 **Riferimenti:** `backend/src/services/fatturaPaXmlGenerator.js:101`, `backend/src/routes/invoiceRoutes.js:134-140`, `frontend/src/views/FatturaView.vue:313-317`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -79,7 +79,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 **Il test va scritto prima della UI**: è una funzione che produce numeri su cui l'utente prende decisioni fiscali, e un errore qui è silenzioso. Pattern `node --test` come `forfettarioService.test.js`.
 
 **Riferimenti:** `backend/src/services/forfettarioService.js:93-166`, `forfettarioService.test.js`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -94,7 +94,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano in `Plans/`) · 🚧 in corso · 
 Utile anche come difesa dall'allucinazione: un dato AI senza fonte verificabile non dovrebbe essere mostrato come certo.
 
 **Riferimenti:** `backend/src/services/scadenzeFiscaliService.js:93-106`, `frontend/src/views/DashboardView.vue`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -111,7 +111,7 @@ Utile anche come difesa dall'allucinazione: un dato AI senza fonte verificabile 
 **Perché non è urgente**: l'utente corrente è in gestione separata (FP-001). Questa voce serve se l'app viene usata da qualcun altro, o se la posizione previdenziale cambia. Da fare dopo FP-001, riusandone la struttura.
 
 **Riferimenti:** `backend/src/services/scadenzeFiscaliService.js:68-99`, `configService.js`, `forfettarioService.js`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -126,7 +126,7 @@ Utile anche come difesa dall'allucinazione: un dato AI senza fonte verificabile 
 Resta una proposta, non una raccomandazione né un impegno di roadmap: non passa in analisi finché non viene richiesto esplicitamente.
 
 **Riferimenti:** `backend/src/routes/forfettarioRoutes.js`, `backend/src/routes/invoiceRoutes.js`, `backend/src/services/sdiRicevuteService.js`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -141,7 +141,7 @@ Resta una proposta, non una raccomandazione né un impegno di roadmap: non passa
 Dipende da FP-008 per i tool. Stesso confine: legge, non scrive, non invia. Resta una proposta, come FP-008: nessun impegno di roadmap.
 
 **Riferimenti:** `backend/src/services/envService.js`, `backend/src/services/geminiAtecoService.js` (pattern di chiamata AI già in uso)
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
@@ -160,15 +160,74 @@ Dipende da FP-008 per i tool. Stesso confine: legge, non scrive, non invia. Rest
 🟡 Il routing resta **come oggi** (fallback per disponibilità, non selezione manuale ad ogni chiamata): il flag agisce a monte, restringendo l'insieme dei provider considerati da `ritentareDopoErrore` e dalle funzioni analoghe. Un provider disattivato viene saltato come se la sua API key non fosse configurata.
 
 **Riferimenti:** `backend/src/services/envService.js:91-166`, `backend/src/services/scadenzeFiscaliService.js:121-166`, `frontend/src/components/wizard/StepAI.vue`, `frontend/src/components/wizard/StepGeminiAI.vue`
-**Piano di dettaglio:** — (da creare in `Plans/` quando passa a 🔍)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
+
+---
+
+## FP-011 — Incassi in Bitcoin con dati per il controllo
+
+**Stato:** ✅ implementata (2026-09-25, commit 47ee611, 3c1bb58, ac27763, b306ad2) · **Impatto:** Medio · **Sforzo:** M
+
+🟢 Oggi `pagamenti[]` (`pagamentiFattureService.js:307-317`, `invoiceService.js:37-59`) registra rate solo in EUR da bonifico. Un incasso in BTC (datio in solutum, art. 1197 c.c.) è lecito ma richiede di conservare TXID, quantità in satoshi, cambio EUR/BTC applicato con fonte e ora, e indirizzo di destinazione — dati che oggi non hanno posto nel modello.
+
+🟡 Estende la rata esistente con un campo opzionale `btc: { txid, satoshi, cambioEurBtc, fonteCambio, dataOraCambio, indirizzoDestinatario }`; `importo` resta sempre in EUR calcolato lato server, così dashboard, soglia e cassa forfettario non cambiano. Nuovo endpoint `/pagamenti/conferma-btc`, indirizzi wallet in configurazione, dicitura opzionale in fattura per cliente, colonne aggiuntive nell'export commercialista.
+
+**Vincolo di retro-compatibilità**: il campo `btc` è opzionale, le fatture e la configurazione esistenti restano lette e scritte senza migrazione; le fatture di clienti senza il nuovo flag restano identiche byte per byte.
+
+Analisi già svolta, non pubblicata: contiene la verifica puntuale delle norme fiscali applicabili, da riconfermare col commercialista prima dell'implementazione.
+
+**Riferimenti:** `backend/src/services/pagamentiFattureService.js:307-327`, `backend/src/services/invoiceService.js:37-59`, `backend/src/services/fatturaPaXmlGenerator.js:101-108`, `backend/src/services/exportService.js`, `backend/src/services/configService.js:119-158`, `frontend/src/views/FatturaView.vue:304-309`
+
+---
+
+## FP-012 — Registro lotti BTC e plusvalenze da redditi diversi
+
+**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** L
+
+🔴 Il BTC incassato (FP-011) e poi speso o venduto genera redditi diversi (art. 67 c. 1 lett. c-sexies TUIR, aliquota 33% dal 2026). Serve un registro delle uscite dal wallet e un metodo di calcolo (LIFO, FIFO o costo medio) — non codificato in modo univoco per le cripto, va confermato col commercialista prima di scegliere.
+
+🟡 Il costo di carico di ogni lotto è il controvalore EUR già registrato all'incasso da FP-011: la dipendenza è diretta, non solo cronologica.
+
+**Riferimenti:** dipende da FP-011
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
+
+---
+
+## FP-013 — Quadro RW e imposta IC sulle cripto
+
+**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+
+🟢 Le cripto detenute al 31/12 vanno monitorate nel quadro RW (L. 197/2022) con imposta IC dello 0,2% sul valore (art. 19 c. 18-bis DL 201/2011). 🟡 Serve il saldo e il valore del wallet al 31/12, dato che l'app non possiede finché non traccia anche le uscite — per questo dipende da FP-012, non solo da FP-011.
+
+**Riferimenti:** dipende da FP-012
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
+
+---
+
+## FP-014 — Import automatico incassi per indirizzo (mai xpub)
+
+**Stato:** 💡 proposta 🔴 · **Impatto:** Basso · **Sforzo:** M
+
+🔴 **xpub esclusa in modo permanente**: una extended public key rivela l'intero storico di indirizzi e saldi del wallet, non solo gli incassi legati a Timesheet — rischio privacy sproporzionato rispetto al beneficio. Non riconsiderare senza un cambio radicale di modello (es. wallet watch-only dedicato a un solo indirizzo).
+
+🟡 Alternativa più stretta, coerente con F2/F4 (già in FP-011: singolo indirizzo dichiarato, singolo TXID): interrogare in sola lettura, per il/i soli indirizzi di ricezione già configurati (`config.walletBtc`), un provider **self-hostable, open source, senza account/API key legata a identità**:
+- **mempool.space** (`/api/address/:addr/txs`) — stesso servizio già proposto in FP-011 §F4 per singolo TXID, estende la stessa fiducia già accettata;
+- **blockstream.info** — stesso team/stack di mempool.space, come fallback/ridondanza.
+
+Scartati di proposito: provider a pagamento con account nominativo (peggiora la tracciabilità dell'operatore), aggregatori generalisti non specializzati BTC.
+
+Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di incassi in BTC rende l'inserimento manuale (FP-011) un collo di bottiglia reale.
+
+**Riferimenti:** dipende da FP-011 (F2 indirizzi configurati, F4 pattern chiamata mempool.space)
+**Piano di dettaglio:** — (da redigere quando passa a 🔍)
 
 ---
 
 ## Review Checklist
 
 - **Completeness:** copre i gap fiscali/operativi individuati in questa revisione del prodotto. Non è un elenco esaustivo di ogni possibile miglioramento — solo le voci con impatto Alto/Medio ritenute concrete.
-- **Accuracy:** ogni voce cita `file:riga` verificato sul codice al momento della stesura (2026-09-18).
-- **Consistency:** confidence tag assegnati per singola affermazione, non per intera voce; le dipendenze dichiarate (FP-003 → FP-001, FP-007 → FP-001, FP-009 → FP-008) sono coerenti con l'ordine dei numeri.
+- **Accuracy:** ogni voce cita `file:riga` verificato sul codice al momento della stesura (2026-09-18; FP-011…FP-014 aggiunte 2026-09-23).
+- **Consistency:** confidence tag assegnati per singola affermazione, non per intera voce; le dipendenze dichiarate (FP-003 → FP-001, FP-007 → FP-001, FP-009 → FP-008, FP-012 → FP-011, FP-013 → FP-012, FP-014 → FP-011) sono coerenti con l'ordine dei numeri.
 - **TODO:** rileggere FP-001 e FP-007 quando cambiano le aliquote INPS dell'anno (fonte da versionare, vedi FP-006); ridiscutere FP-008/FP-009 se emerge una richiesta esplicita di integrazione AI esterna; verificare se il flag di FP-010 debba estendersi anche a FP-008/FP-009 una volta implementate.
 - **Missing information:** le stime di Impatto/Sforzo sono giudizi non validati con un prototipo o con l'utente finale oltre all'autore della revisione.
 - **Open questions:** se e quando FP-008/FP-009 passano da proposta a analisi è una decisione di prodotto, non presa qui.

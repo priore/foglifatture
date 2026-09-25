@@ -6,6 +6,11 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-25
+
+### Added
+- Incasso fatture in Bitcoin: una rata può essere registrata come incasso BTC (datio in solutum) invece che a bonifico, con TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione — dati pronti per un eventuale controllo fiscale. L'importo in EUR è sempre calcolato dal cambio dichiarato. Dicitura opzionale in fattura per i clienti abilitati, lettura opzionale dei dati transazione da mempool.space e del cambio storico da CoinGecko, colonne dedicate nell'export per il commercialista.
+
 ## [1.2.0] - 2026-09-18
 
 ### Added
