@@ -87,6 +87,17 @@ Chi aggiorna l'app con dati già esistenti non deve notare alcun cambiamento né
 
 ## 4. Passi di implementazione
 
+Indice avanzamento (aggiornato ad ogni step concluso):
+
+- [x] Step 1 — `confermaPagamentoBtc` + route + test (2026-09-25)
+- [x] Step 2 — `configService.js`: `walletBtc` + `clienti[].pagamentoBtc` (2026-09-25)
+- [ ] Step 3 — Causale condizionale XML + PDF (F3)
+- [ ] Step 4 — Frontend `FatturaView.vue` + `api.js` (F1 UI)
+- [ ] Step 5 — F4: pulsante "Leggi da blockchain" (mempool.space) + avviso privacy
+- [ ] Step 6 — F5: pulsante "Recupera cambio" (API storica) + avviso privacy
+- [ ] Step 7 — `exportService.js`: colonne F6 + test
+- [ ] Step 8 — `CHANGELOG.md` + `FEATURE_PROPOSALS.md` (FP-011 ✅)
+
 1. `pagamentiFattureService.js`: aggiungere `confermaPagamentoBtc(anno, mese, clienteId, datiBtc)` con validazione e calcolo dell'EUR, estendendo `pagamentiFattureService.test.js` (runner `--test`). Casi da coprire:
    - calcolo e arrotondamento;
    - TXID non valido;
