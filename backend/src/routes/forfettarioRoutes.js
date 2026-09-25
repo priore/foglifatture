@@ -7,7 +7,7 @@ import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModell
 import { verificaESalvaModelloGroq, verificaESalvaModelloClaude } from '../services/pagamentiFattureService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
-import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
+import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
 import { prossimeScadenzeFiscali } from '../services/scadenzeFiscaliService.js';
 
 export const forfettarioRoutes = Router();
@@ -187,6 +187,19 @@ forfettarioRoutes.post('/pagamenti/conferma', async (req, res) => {
   if (!anno || !mese || !clienteId || !dataPagamento || !importo) return res.status(400).json({ errore: 'Dati mancanti' });
   try {
     const fattura = await confermaPagamento(Number(anno), Number(mese), clienteId, dataPagamento, Number(importo));
+    res.json({ ok: true, fattura });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.post('/pagamenti/conferma-btc', async (req, res) => {
+  const { anno, mese, clienteId, dataPagamento, txid, satoshi, cambioEurBtc, fonteCambio, dataOraCambio, indirizzoDestinatario } = req.body;
+  if (!anno || !mese || !clienteId || !dataPagamento) return res.status(400).json({ errore: 'Dati mancanti' });
+  try {
+    const fattura = await confermaPagamentoBtc(Number(anno), Number(mese), clienteId, dataPagamento, {
+      txid, satoshi: Number(satoshi), cambioEurBtc: Number(cambioEurBtc), fonteCambio, dataOraCambio, indirizzoDestinatario,
+    });
     res.json({ ok: true, fattura });
   } catch (err) {
     res.status(400).json({ errore: err.message });

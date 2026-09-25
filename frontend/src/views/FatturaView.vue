@@ -83,6 +83,10 @@ const datiFattura = computed(() => {
     bollo: anteprimaEffettiva.value.bollo,
     bolloApplicabile: anteprimaEffettiva.value.bolloApplicabile,
     nettoAPagare: anteprimaEffettiva.value.nettoAPagare,
+    // Se già generata, usa i valori congelati in fattura (immutabili dopo l'emissione,
+    // vedi PAGAMENTI_BTC.md F3): altrimenti mostra un'anteprima dal cliente corrente.
+    pagamentoBtc: fatturaGenerata.value?.pagamentoBtc ?? clienteCorrente.value.pagamentoBtc,
+    causaleBtc: fatturaGenerata.value?.causaleBtc ?? clienteCorrente.value.causaleBtc,
   });
 });
 
@@ -136,6 +140,130 @@ function formattaData(valore) {
 async function eliminaPagamento(indice) {
   await api.eliminaPagamentoFattura(fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId, indice);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
+}
+
+// Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
+// backend, mai inviato dal client — qui solo i dati grezzi della transazione/cambio.
+const mostraFormBtc = ref(false);
+const avvisoModale = ref('');
+const motivoBtcDisabilitato = computed(() => {
+  if (!fatturaGenerata.value) return 'Genera prima la fattura per poter registrare un incasso.';
+  if (fatturaGenerata.value.residuo <= 0) return 'Fattura già saldata: nessun residuo da incassare.';
+  return '';
+});
+const btcForm = ref({ txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: '' });
+const registrandoBtc = ref(false);
+const erroreBtc = ref('');
+const erroreBtcSuIndirizzo = ref(false); // true: mostra erroreBtc sotto Indirizzo; false: sotto TXID
+const indirizzoLibero = ref(false); // true: mostra input libero invece della select dei wallet configurati
+const caricandoTx = ref(false);
+const caricandoCambio = ref(false);
+
+function apriFormBtc() {
+  if (motivoBtcDisabilitato.value) { avvisoModale.value = motivoBtcDisabilitato.value; return; }
+  mostraFormBtc.value = true;
+  resetFormBtc();
+}
+
+// Ultimo indirizzo di destinazione scelto, persistito come default per la fattura
+// successiva (stesso pattern di clienteAttivoId in localStorage).
+function indirizzoBtcDefault() {
+  const ultimo = localStorage.getItem('indirizzoBtcUltimo');
+  if (ultimo && config.value?.walletBtc?.some((w) => w.indirizzo === ultimo)) return ultimo;
+  return config.value?.walletBtc?.[0]?.indirizzo || '';
+}
+
+function resetFormBtc() {
+  btcForm.value = { txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: indirizzoBtcDefault() };
+  erroreBtc.value = '';
+  erroreBtcSuIndirizzo.value = false;
+  indirizzoLibero.value = false;
+}
+
+function applicaTx(tx, indirizzo) {
+  const output = tx.vout?.find((o) => !indirizzo || o.scriptpubkey_address === indirizzo);
+  if (!output) { erroreBtc.value = 'Transazione trovata, ma nessun output verso questo indirizzo'; return; }
+  if (tx.status?.block_time) btcForm.value.dataOraCambio = new Date(tx.status.block_time * 1000).toISOString();
+  btcForm.value.satoshi = output.value;
+  btcForm.value.txid = tx.txid;
+  if (!btcForm.value.indirizzoDestinatario) btcForm.value.indirizzoDestinatario = output.scriptpubkey_address;
+}
+
+// F4: legge TXID/orario/satoshi dalla blockchain pubblica invece dell'inserimento manuale.
+// Con TXID già inserito, legge quella transazione. Senza TXID ma con indirizzo compilato,
+// cerca l'ultima transazione ricevuta su quell'indirizzo e la propone.
+// bech32 (bc1...) esclude 1, b, i, o dal corpo per evitare ambiguità di lettura — un
+// indirizzo con questi caratteri è quasi sempre un errore di trascrizione (es. "O" al
+// posto di "0"). Controllo lato client per un errore immediato invece di un 400 remoto.
+function indirizzoBech32NonValido(indirizzo) {
+  if (!/^bc1/i.test(indirizzo)) return false;
+  return /[1boi]/.test(indirizzo.slice(3));
+}
+
+async function leggiDaBlockchain() {
+  if (!btcForm.value.txid && !btcForm.value.indirizzoDestinatario) return;
+  erroreBtcSuIndirizzo.value = !btcForm.value.txid;
+  if (!btcForm.value.txid && indirizzoBech32NonValido(btcForm.value.indirizzoDestinatario)) {
+    erroreBtc.value = 'Indirizzo non valido: un indirizzo bc1... non contiene 1, b, i, o (probabile errore di trascrizione)';
+    return;
+  }
+  caricandoTx.value = true;
+  erroreBtc.value = '';
+  try {
+    if (btcForm.value.txid) {
+      const tx = await api.txBlockchain(btcForm.value.txid);
+      applicaTx(tx, btcForm.value.indirizzoDestinatario);
+    } else {
+      const txs = await api.txPerIndirizzo(btcForm.value.indirizzoDestinatario);
+      if (!txs.length) { erroreBtc.value = 'Nessuna transazione trovata su questo indirizzo'; return; }
+      applicaTx(txs[0], btcForm.value.indirizzoDestinatario);
+    }
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    caricandoTx.value = false;
+  }
+}
+
+// F5: cambio storico EUR/BTC da CoinGecko alla data del pagamento (resta modificabile a mano).
+async function recuperaCambio() {
+  if (!dataFattura.value) return;
+  caricandoCambio.value = true;
+  erroreBtc.value = '';
+  try {
+    const dati = await api.cambioStoricoBtc(dataFattura.value);
+    const eur = dati.market_data?.current_price?.eur;
+    if (eur) {
+      btcForm.value.cambioEurBtc = eur;
+      btcForm.value.fonteCambio = 'CoinGecko';
+      if (!btcForm.value.dataOraCambio) btcForm.value.dataOraCambio = dataFattura.value;
+    } else {
+      erroreBtc.value = 'CoinGecko: nessun dato di cambio per questa data';
+    }
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    caricandoCambio.value = false;
+  }
+}
+
+async function registraPagamentoBtc() {
+  registrandoBtc.value = true;
+  erroreBtc.value = '';
+  try {
+    const risultato = await api.confermaPagamentoBtcFattura(
+      fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId,
+      new Date().toISOString().slice(0, 10), btcForm.value,
+    );
+    fatturaGenerata.value = risultato.fattura;
+    if (btcForm.value.indirizzoDestinatario) localStorage.setItem('indirizzoBtcUltimo', btcForm.value.indirizzoDestinatario);
+    mostraFormBtc.value = false;
+    resetFormBtc();
+  } catch (err) {
+    erroreBtc.value = err.message;
+  } finally {
+    registrandoBtc.value = false;
+  }
 }
 
 async function scaricaXml() {
@@ -305,10 +433,71 @@ onMounted(async () => {
               <label>Pagamenti registrati {{ fatturaGenerata.residuo > 0 ? `(residuo ${formattaEuro(fatturaGenerata.residuo)})` : '(saldata)' }}</label>
               <ul class="lista-piatta">
                 <li v-for="(p, i) in fatturaGenerata.pagamenti" :key="i" style="display:flex;justify-content:space-between;align-items:center">
-                  <span>{{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}</span>
+                  <span>
+                    {{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}
+                    <template v-if="p.btc">
+                      — ₿ <a :href="`https://mempool.space/tx/${p.btc.txid}`" target="_blank" rel="noopener">{{ p.btc.txid.slice(0, 10) }}…</a>
+                    </template>
+                  </span>
                   <button class="btn btn-ghost" @click="eliminaPagamento(i)">Elimina</button>
                 </li>
               </ul>
+            </div>
+            <div class="field">
+              <button v-if="!mostraFormBtc" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
+              <small v-if="!mostraFormBtc && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
+              <div v-if="mostraFormBtc" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+                <label>Indirizzo di destinazione</label>
+                <div style="display:flex;gap:6px">
+                  <select v-if="config.walletBtc?.length && !indirizzoLibero" v-model="btcForm.indirizzoDestinatario" style="flex:1" @change="btcForm.indirizzoDestinatario === '__altro__' && (indirizzoLibero = true, btcForm.indirizzoDestinatario = '')">
+                    <option v-for="w in config.walletBtc" :key="w.indirizzo" :value="w.indirizzo">{{ w.etichetta || w.indirizzo }}</option>
+                    <option value="__altro__">Altro indirizzo…</option>
+                  </select>
+                  <input v-else v-model="btcForm.indirizzoDestinatario" placeholder="il tuo indirizzo BTC che ha ricevuto il pagamento" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
+                    <span v-if="caricandoTx">…</span>
+                    <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </button>
+                </div>
+                <small class="note-legal">Precompilato dal wallet di default (Impostazioni). Se vuoto, prendilo dal tuo wallet o da un block explorer.</small>
+                <span v-if="erroreBtc && erroreBtcSuIndirizzo" class="note-legal" style="color:var(--warn)">{{ erroreBtc }}</span>
+
+                <label>TXID</label>
+                <div style="display:flex;gap:6px">
+                  <input v-model="btcForm.txid" placeholder="64 caratteri esadecimali (lascia vuoto per cercarlo dall'indirizzo)" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
+                    <span v-if="caricandoTx">…</span>
+                    <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </button>
+                </div>
+                <small class="note-legal">Con TXID: legge quella transazione. Senza TXID: cerca l'ultima ricevuta sull'indirizzo sopra. Invia dati a mempool.space (servizio esterno, vedi IP).</small>
+                <span v-if="erroreBtc && !erroreBtcSuIndirizzo" class="note-legal" style="color:var(--warn)">{{ erroreBtc }}</span>
+
+                <label>Satoshi ricevuti</label>
+                <input v-model.number="btcForm.satoshi" type="number" min="1" step="1" />
+
+                <label>Cambio EUR/BTC</label>
+                <div style="display:flex;gap:6px">
+                  <input v-model.number="btcForm.cambioEurBtc" type="number" min="0" step="0.01" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="caricandoCambio" @click="recuperaCambio">{{ caricandoCambio ? '…' : 'Recupera cambio' }}</button>
+                </div>
+                <small class="note-legal">Invia solo la data al servizio esterno (CoinGecko). Il valore resta modificabile: prevale il criterio concordato col cliente.</small>
+
+                <label>Fonte cambio</label>
+                <input v-model="btcForm.fonteCambio" placeholder="es. Kraken, CoinGecko" />
+
+                <label>Data/ora cambio</label>
+                <input v-model="btcForm.dataOraCambio" placeholder="ISO 8601" />
+
+                <span v-if="btcForm.satoshi && btcForm.cambioEurBtc" class="badge-mono">
+                  ≈ {{ formattaEuro((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc) }}
+                </span>
+
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-primary" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormBtc = false">Annulla</button>
+                </div>
+              </div>
             </div>
             <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
@@ -364,6 +553,16 @@ onMounted(async () => {
 
       <div style="min-width:0">
         <TemplateStampa v-if="datiFattura" ref="anteprimaRef" :template-id="templateIdFattura" :dati="datiFattura" />
+      </div>
+    </div>
+
+    <div v-if="avvisoModale" class="modal-overlay" @click.self="avvisoModale = ''">
+      <div class="modal-box">
+        <h2>₿ Incasso in BTC</h2>
+        <p>{{ avvisoModale }}</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" @click="avvisoModale = ''">Ho capito</button>
+        </div>
       </div>
     </div>
   </div>

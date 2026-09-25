@@ -26,6 +26,12 @@ function formattaImporto(numero) {
  */
 export function generaXmlFatturaPA(dati) {
   const { fornitore, cliente, fattura } = dati;
+  // Letto da fattura (congelato al momento di "Genera fattura" in invoiceRoutes.js),
+  // mai da cliente: la clausola BTC è pattuita all'emissione e non deve cambiare
+  // retroattivamente se il flag cliente viene modificato dopo (vedi PAGAMENTI_BTC.md, F3).
+  const causaleBtc = fattura.pagamentoBtc && fattura.causaleBtc
+    ? `\n        <Causale>${escapeXml(fattura.causaleBtc)}</Causale>`
+    : '';
 
   const datiBollo = fattura.bolloApplicabile
     ? `        <DatiBollo>
@@ -105,7 +111,7 @@ export function generaXmlFatturaPA(dati) {
 ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</ImportoTotaleDocumento>
         <Causale>Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario.</Causale>
         <Causale>Operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</Causale>${fattura.bolloApplicabile ? `
-        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}
+        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaleBtc}
       </DatiGeneraliDocumento>
     </DatiGenerali>
     <DatiBeniServizi>

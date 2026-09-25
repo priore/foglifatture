@@ -9,7 +9,18 @@ import { api } from '../../services/api.js';
 const props = defineProps({
   modelValue: { type: Object, required: true }, // config.fornitore
   forfettario: { type: Object, required: true }, // config.forfettario
+  walletBtc: { type: Array, required: true }, // config.walletBtc: [{ etichetta, indirizzo }]
 });
+defineEmits(['salva-subito']);
+
+// Indirizzo di default proposto negli incassi BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2):
+// un solo indirizzo principale, gestito qui come primo elemento dell'array.
+function aggiungiWalletBtc() {
+  props.walletBtc.push({ etichetta: '', indirizzo: '' });
+}
+function rimuoviWalletBtc(indice) {
+  props.walletBtc.splice(indice, 1);
+}
 
 const partitaIvaOk = computed(() => pivaValida(props.modelValue.partitaIva));
 const codiceFiscaleOk = computed(() => codiceFiscaleValido(props.modelValue.codiceFiscale));
@@ -127,6 +138,29 @@ function selezionaCodice(c) {
         </p>
       </div>
     </div>
+
+    <div class="card" style="margin-bottom:0">
+      <div class="card-head"><h2>₿ Wallet Bitcoin</h2></div>
+      <div class="card-body">
+        <p class="note-legal">Indirizzi proposti come destinazione quando registri un incasso in BTC su una fattura. Il primo è quello precompilato di default.</p>
+        <div v-for="(w, i) in walletBtc" :key="i" class="form-grid" style="align-items:end;margin-top:8px">
+          <div class="field"><label>Etichetta</label><input v-model="w.etichetta" placeholder="es. Wallet principale"></div>
+          <div class="field">
+            <label>Indirizzo</label>
+            <div style="display:flex;gap:6px">
+              <input v-model="w.indirizzo" placeholder="bc1..." style="flex:1">
+              <button type="button" class="btn-icon" title="Rimuovi" aria-label="Rimuovi indirizzo" @click="rimuoviWalletBtc(i)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <button type="button" class="btn btn-ghost" @click="aggiungiWalletBtc">+ Aggiungi indirizzo</button>
+          <button type="button" class="btn btn-primary" @click="$emit('salva-subito')">Salva</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -134,7 +168,7 @@ function selezionaCodice(c) {
 .btn-icon {
   border: 1px solid var(--line); background: var(--card); color: var(--ink);
   border-radius: var(--radius-sm); width: 24px; height: 24px; line-height: 1; cursor: pointer;
-  font-size: .95rem;
+  font-size: .95rem; display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-icon:disabled { opacity: .5; cursor: default; }
 .ateco-risultati {

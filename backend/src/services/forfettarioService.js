@@ -51,7 +51,7 @@ export async function ricaviAnnoCassa(anno, tutte) {
   // incassateAnno: usato da exportService per la sezione CSV "incassate" — un elenco di
   // RATE (una entry per rata), non di fatture. Ogni entry porta i dati fattura necessari
   // per la riga CSV più data/importo della singola rata.
-  const incassateAnno = rateAnno.map((r) => ({ ...r.fattura, dataPagamento: r.pagamento.data, nettoAPagare: r.pagamento.importo }));
+  const incassateAnno = rateAnno.map((r) => ({ ...r.fattura, dataPagamento: r.pagamento.data, nettoAPagare: r.pagamento.importo, btc: r.pagamento.btc }));
 
   // Fatture emesse nell'anno con residuo ancora da incassare: rischiano di slittare
   // sul fatturato-cassa dell'anno successivo — utili per l'avviso "a cavallo d'anno".
