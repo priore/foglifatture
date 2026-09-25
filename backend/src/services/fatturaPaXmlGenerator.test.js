@@ -51,3 +51,20 @@ test('escapa caratteri speciali XML nella denominazione', () => {
 test('nome file conforme allo standard IT<P.IVA>_<PROGRESSIVO>.xml (progressivo alfanumerico libero)', () => {
   assert.equal(generaNomeFileXml(fornitore, 'a1b2c3d4e5'), 'IT11111111111_a1b2c3d4e5.xml');
 });
+
+test('cliente senza pagamentoBtc: XML identico, nessuna Causale BTC aggiunta (retro-compatibilità)', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore, cliente,
+    fattura: { numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 },
+  });
+  assert.doesNotMatch(xml, /Bitcoin/);
+});
+
+test('cliente con pagamentoBtc: aggiunge la Causale configurata, escapata', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore,
+    cliente: { ...cliente, pagamentoBtc: true, causaleBtc: 'Pagamento ammesso in Bitcoin & simili' },
+    fattura: { numero: '1', data: '2026-01-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 1, imponibile: 1, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 },
+  });
+  assert.match(xml, /<Causale>Pagamento ammesso in Bitcoin &amp; simili<\/Causale>/);
+});

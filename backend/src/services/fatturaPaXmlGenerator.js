@@ -26,6 +26,9 @@ function formattaImporto(numero) {
  */
 export function generaXmlFatturaPA(dati) {
   const { fornitore, cliente, fattura } = dati;
+  const causaleBtc = cliente?.pagamentoBtc && cliente?.causaleBtc
+    ? `\n        <Causale>${escapeXml(cliente.causaleBtc)}</Causale>`
+    : '';
 
   const datiBollo = fattura.bolloApplicabile
     ? `        <DatiBollo>
@@ -105,7 +108,7 @@ export function generaXmlFatturaPA(dati) {
 ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</ImportoTotaleDocumento>
         <Causale>Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario.</Causale>
         <Causale>Operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</Causale>${fattura.bolloApplicabile ? `
-        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}
+        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaleBtc}
       </DatiGeneraliDocumento>
     </DatiGenerali>
     <DatiBeniServizi>

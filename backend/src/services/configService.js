@@ -118,6 +118,7 @@ const CLIENTE_VUOTO = {
   templateFatturaId: null, // null = usa il template fallback fattura-default
   templateTimesheetId: null, // null = usa il template fallback timesheet-default
   pagamentoBtc: false, // se true, aggiunge la Causale di ammissione pagamento BTC in fattura (F3)
+  causaleBtc: "Pagamento ammesso anche in Bitcoin (datio in solutum, art. 1197 c.c.) al controvalore dell'importo in EUR, cambio concordato alla data/ora di invio.", // testo configurabile: il criterio di cambio va concordato col cliente
 };
 
 // Elenco clienti salvato: fonde ogni cliente coi campi di default (stesso motivo di
