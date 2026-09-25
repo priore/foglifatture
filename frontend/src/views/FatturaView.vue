@@ -141,11 +141,22 @@ async function eliminaPagamento(indice) {
 // Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
 // backend, mai inviato dal client — qui solo i dati grezzi della transazione/cambio.
 const mostraFormBtc = ref(false);
+const motivoBtcDisabilitato = computed(() => {
+  if (!fatturaGenerata.value) return 'Genera prima la fattura per poter registrare un incasso.';
+  if (fatturaGenerata.value.residuo <= 0) return 'Fattura già saldata: nessun residuo da incassare.';
+  return '';
+});
 const btcForm = ref({ txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: '' });
 const registrandoBtc = ref(false);
 const erroreBtc = ref('');
 const caricandoTx = ref(false);
 const caricandoCambio = ref(false);
+
+function apriFormBtc() {
+  if (motivoBtcDisabilitato.value) return;
+  mostraFormBtc.value = true;
+  resetFormBtc();
+}
 
 function resetFormBtc() {
   btcForm.value = { txid: '', satoshi: null, cambioEurBtc: null, fonteCambio: '', dataOraCambio: '', indirizzoDestinatario: config.value?.walletBtc?.[0]?.indirizzo || '' };
@@ -390,9 +401,10 @@ onMounted(async () => {
                 </li>
               </ul>
             </div>
-            <div class="field" v-if="fatturaGenerata && fatturaGenerata.residuo > 0">
-              <button v-if="!mostraFormBtc" class="btn btn-ghost" @click="mostraFormBtc = true; resetFormBtc()">₿ Registra incasso in BTC</button>
-              <div v-else style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div class="field">
+              <button v-if="!mostraFormBtc" class="btn btn-ghost" :disabled="Boolean(motivoBtcDisabilitato)" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
+              <small v-if="!mostraFormBtc && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
+              <div v-if="mostraFormBtc" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
                 <label>TXID</label>
                 <div style="display:flex;gap:6px">
                   <input v-model="btcForm.txid" placeholder="64 caratteri esadecimali" style="flex:1" />
