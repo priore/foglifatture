@@ -153,7 +153,7 @@ const caricandoTx = ref(false);
 const caricandoCambio = ref(false);
 
 function apriFormBtc() {
-  if (motivoBtcDisabilitato.value) return;
+  if (motivoBtcDisabilitato.value) { alert(motivoBtcDisabilitato.value); return; }
   mostraFormBtc.value = true;
   resetFormBtc();
 }
@@ -402,7 +402,7 @@ onMounted(async () => {
               </ul>
             </div>
             <div class="field">
-              <button v-if="!mostraFormBtc" class="btn btn-ghost" :disabled="Boolean(motivoBtcDisabilitato)" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
+              <button v-if="!mostraFormBtc" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
               <small v-if="!mostraFormBtc && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
               <div v-if="mostraFormBtc" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
                 <label>TXID</label>
