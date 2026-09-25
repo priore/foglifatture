@@ -166,7 +166,7 @@ Dipende da FP-008 per i tool. Stesso confine: legge, non scrive, non invia. Rest
 
 ## FP-011 — Incassi in Bitcoin con dati per il controllo
 
-**Stato:** 🔍 in analisi · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata (2026-09-25, commit 47ee611, 3c1bb58, ac27763, b306ad2) · **Impatto:** Medio · **Sforzo:** M
 
 🟢 Oggi `pagamenti[]` (`pagamentiFattureService.js:307-317`, `invoiceService.js:37-59`) registra rate solo in EUR da bonifico. Un incasso in BTC (datio in solutum, art. 1197 c.c.) è lecito ma richiede di conservare TXID, quantità in satoshi, cambio EUR/BTC applicato con fonte e ora, e indirizzo di destinazione — dati che oggi non hanno posto nel modello.
 
