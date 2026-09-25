@@ -15,7 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
+      - name: Install libsecret (keytar native dependency on Linux)
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev
       - name: Install backend deps
         working-directory: backend
         run: npm ci
