@@ -3,6 +3,9 @@
 [![Licenza](https://img.shields.io/badge/licenza-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
 ![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows-lightgrey)
+![FatturaPA XML](https://img.shields.io/badge/FatturaPA%20XML-conforme-blue)
+![Invio SDI](https://img.shields.io/badge/SDI-invio%20diretto-blue)
+![Incasso Bitcoin](https://img.shields.io/badge/Bitcoin-incasso%20fatture-orange?logo=bitcoin)
 [![Security Policy](https://img.shields.io/badge/security-policy-orange)](SECURITY.md)
 [![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
 [![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
@@ -32,6 +35,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Features
 
+- **Incasso fatture in Bitcoin** — nessun altro gestionale forfettario italiano noto lo offre: registra un incasso in BTC (datio in solutum) con TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione, dati pronti per un eventuale controllo fiscale. Dicitura opzionale in fattura/XML per i clienti abilitati, lettura opzionale da blockchain e cambio storico, colonne dedicate nell'export per il commercialista.
 - **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
 - **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, regime forfettario (`RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia), validato prima dell'invio.
 - **Invio PEC automatico** — fattura inviata al Sistema di Interscambio (SDI) direttamente dall'app, via la tua casella PEC.
