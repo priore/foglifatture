@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+- Dashboard: card riordinabili con trascinamento (ordine salvato nel browser).
+
 ## [1.3.0] - 2026-09-25
 
 ### Added

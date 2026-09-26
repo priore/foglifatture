@@ -24,6 +24,7 @@ backend/src/data/atecoSettori.json.bak
 .vscode/*
 !.vscode/extensions.json
 .playwright-mcp/
+shots/
 
 # output locali (es. export CSV bancari usati per debug), possono contenere dati sensibili
 AI-Workspace/Output/

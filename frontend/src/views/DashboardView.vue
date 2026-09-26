@@ -159,6 +159,73 @@ function formattaEuro(valore) {
 function esportaCommercialista() {
   window.open(api.urlExportCommercialista(annoSelezionato.value), '_blank');
 }
+
+// Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
+// non è un dato di dominio: nessuna sincronizzazione col backend.
+const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const CHIAVE_ORDINE = 'dashboardOrdineCard';
+
+function caricaOrdineSalvato() {
+  try {
+    const salvato = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
+    if (!Array.isArray(salvato)) return [...ORDINE_DEFAULT];
+    // Tieni solo id noti, poi aggiungi in coda quelli mancanti (card nuove non spariscono).
+    const noti = salvato.filter((id) => ORDINE_DEFAULT.includes(id));
+    const mancanti = ORDINE_DEFAULT.filter((id) => !noti.includes(id));
+    return [...noti, ...mancanti];
+  } catch {
+    return [...ORDINE_DEFAULT];
+  }
+}
+
+const ordineCard = ref(caricaOrdineSalvato());
+const trascinata = ref(null);
+
+function salvaOrdine() {
+  try {
+    localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordineCard.value));
+  } catch {
+    // storage non disponibile (privato/pieno): ordine resta solo in memoria per questa sessione.
+  }
+}
+
+function ordinePer(id) {
+  return ordineCard.value.indexOf(id);
+}
+
+function dragStart(id) {
+  trascinata.value = id;
+}
+
+function drop(idTarget) {
+  if (!trascinata.value || trascinata.value === idTarget) return;
+  const lista = [...ordineCard.value];
+  const daIndex = lista.indexOf(trascinata.value);
+  const aIndex = lista.indexOf(idTarget);
+  lista.splice(daIndex, 1);
+  lista.splice(aIndex, 0, trascinata.value);
+  ordineCard.value = lista;
+  trascinata.value = null;
+  salvaOrdine();
+}
+
+function spostaConTastiera(id, delta) {
+  const lista = [...ordineCard.value];
+  const daIndex = lista.indexOf(id);
+  const aIndex = daIndex + delta;
+  if (aIndex < 0 || aIndex >= lista.length) return;
+  lista.splice(daIndex, 1);
+  lista.splice(aIndex, 0, id);
+  ordineCard.value = lista;
+  salvaOrdine();
+}
+
+const layoutModificato = computed(() => ordineCard.value.some((id, i) => id !== ORDINE_DEFAULT[i]));
+
+function ripristinaLayout() {
+  ordineCard.value = [...ORDINE_DEFAULT];
+  salvaOrdine();
+}
 </script>
 
 <template>
@@ -171,6 +238,11 @@ function esportaCommercialista() {
           @click="mostraPopupAggiornamento = true"
         >Aggiornamento disponibile</button>
         <button type="button" class="btn btn-ghost" @click="esportaCommercialista">Esporta per commercialista</button>
+        <button
+          type="button" class="btn btn-ghost" :disabled="!layoutModificato"
+          :title="layoutModificato ? '' : 'Layout già di default'"
+          @click="ripristinaLayout"
+        >Ripristina layout</button>
         <select v-model.number="annoSelezionato" class="status">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
         </select>
@@ -200,10 +272,14 @@ function esportaCommercialista() {
         <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="card">
-          <div class="card-head">
-            <h2>Soglia forfettario (cassa)</h2>
+      <div class="griglia-card">
+        <div class="card" :style="{ order: ordinePer('soglia-cassa') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('soglia-cassa')" @dragover.prevent @drop="drop('soglia-cassa')"
+            @keydown.alt.up.prevent="spostaConTastiera('soglia-cassa', -1)" @keydown.alt.down.prevent="spostaConTastiera('soglia-cassa', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Soglia forfettario (cassa)</h2></span>
             <span class="badge-fonte" title="Fatturato/imposta calcolati sulla data di incasso, non di emissione: è il criterio che vale davvero per il regime forfettario">fa fede per le tasse</span>
           </div>
           <div class="card-body">
@@ -225,8 +301,14 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><h2>Soglia forfettario (competenza)</h2></div>
+        <div class="card" :style="{ order: ordinePer('soglia-competenza') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('soglia-competenza')" @dragover.prevent @drop="drop('soglia-competenza')"
+            @keydown.alt.up.prevent="spostaConTastiera('soglia-competenza', -1)" @keydown.alt.down.prevent="spostaConTastiera('soglia-competenza', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Soglia forfettario (competenza)</h2></span>
+          </div>
           <div class="card-body">
             <DonutChart :fette="fetteSoglia" :centro-valore="`${dashboard.percentualeSoglia}%`" centro-label="soglia" />
             <p class="note-legal" style="margin-top:20px">
@@ -236,11 +318,15 @@ function esportaCommercialista() {
             </p>
           </div>
         </div>
-      </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
-        <div class="card">
-          <div class="card-head"><h2>Composizione compenso</h2></div>
+        <div class="card" :style="{ order: ordinePer('composizione') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('composizione')" @dragover.prevent @drop="drop('composizione')"
+            @keydown.alt.up.prevent="spostaConTastiera('composizione', -1)" @keydown.alt.down.prevent="spostaConTastiera('composizione', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Composizione compenso</h2></span>
+          </div>
           <div class="card-body">
             <DonutChart :fette="fetteComposizione" />
             <p class="note-legal" style="margin-top:20px">
@@ -250,16 +336,26 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><h2>Andamento mensile ricavi</h2></div>
+        <div class="card" :style="{ order: ordinePer('andamento') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('andamento')" @dragover.prevent @drop="drop('andamento')"
+            @keydown.alt.up.prevent="spostaConTastiera('andamento', -1)" @keydown.alt.down.prevent="spostaConTastiera('andamento', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Andamento mensile ricavi</h2></span>
+          </div>
           <div class="card-body">
             <BarChart :barre="barreRicaviMensili" />
           </div>
         </div>
 
-        <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
-            <h2>Fatture da incassare</h2>
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('fatture-da-incassare') }">
+          <div
+            class="card-head" style="display:flex;justify-content:space-between;align-items:center" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('fatture-da-incassare')" @dragover.prevent @drop="drop('fatture-da-incassare')"
+            @keydown.alt.up.prevent="spostaConTastiera('fatture-da-incassare', -1)" @keydown.alt.down.prevent="spostaConTastiera('fatture-da-incassare', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Fatture da incassare</h2></span>
             <router-link to="/importa-storico?passo=2" class="btn btn-ghost">Importa CSV pagamenti</router-link>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
@@ -303,9 +399,13 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head">
-            <h2>Scadenze fiscali</h2>
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('scadenze-fiscali') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('scadenze-fiscali')" @dragover.prevent @drop="drop('scadenze-fiscali')"
+            @keydown.alt.up.prevent="spostaConTastiera('scadenze-fiscali', -1)" @keydown.alt.down.prevent="spostaConTastiera('scadenze-fiscali', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Scadenze fiscali</h2></span>
             <span v-if="fonteScadenzeFiscali !== 'base'" class="badge-fonte" :title="`Proroghe/importi verificati via ${fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini'} con ricerca web`">verificato via {{ fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini' }}</span>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
@@ -388,4 +488,10 @@ function esportaCommercialista() {
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }
+
+.griglia-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.card-head-titolo { display: flex; align-items: center; gap: 8px; }
+.maniglia-card { cursor: grab; color: var(--muted); font-size: .9rem; line-height: 1; user-select: none; }
+.maniglia-card:active { cursor: grabbing; }
+.card-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 </style>

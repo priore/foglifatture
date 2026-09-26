@@ -10,3 +10,4 @@ Index of project-specific rules kept in the repo so a checkout on any machine ca
 - [No commit without explicit OK](no_commit_without_explicit_ok.md) — never auto-commit after a green step, wait for explicit user go-ahead
 - [Local first, push last](local_first_push_last.md) — reproduce and verify CI fixes locally (matching Node/tool version) before pushing, never iterate via remote pushes
 - [Changelog readable format](changelog_readable_format.md) — multi-aspect CHANGELOG/Release entries: bold title + bullet sub-list, not one long paragraph
+- [UI changes need pre/post screenshot](ui_changes_pre_post_screenshot.md) — grid/layout edits verified with Playwright screenshots before/after, light+dark, 2 viewports; unexplained diffs root-caused first
