@@ -79,6 +79,7 @@ onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
+  caricaMercatoBtc();
 });
 watch(annoSelezionato, carica);
 
@@ -200,11 +201,50 @@ const andamentoCambioBtc = computed(() => {
     .map((r) => ({ etichetta: formattaData(r.data), valore: r.cambioEurBtc, valoreTesto: formattaEuro(r.cambioEurBtc) }));
 });
 
+// Card "Valore BTC di mercato": prezzo attuale + variazione 24h + storico 30gg, indipendente
+// dagli incassi (utile anche in anni senza rate BTC). Fetch al mount della pagina, non per anno.
+const prezzoMercatoBtc = ref(null);
+const storicoMercatoBtc = ref([]);
+const erroreMercatoBtc = ref('');
+const caricandoMercatoBtc = ref(false);
+async function caricaMercatoBtc() {
+  caricandoMercatoBtc.value = true;
+  erroreMercatoBtc.value = '';
+  try {
+    // Due chiamate CoinGecko separate e non critiche a vicenda: se lo storico fallisce
+    // (es. rate limit) il prezzo attuale resta comunque visibile, solo senza sparkline.
+    const [rispPrezzo, rispStorico] = await Promise.allSettled([api.prezzoMercatoBtc(), api.storicoPrezzoMercatoBtc()]);
+    if (rispPrezzo.status === 'rejected') throw new Error(`Prezzo non disponibile (${rispPrezzo.reason?.message ?? 'errore rete'})`);
+    const eur = rispPrezzo.value?.bitcoin?.eur;
+    if (!eur) throw new Error('Prezzo non disponibile');
+    prezzoMercatoBtc.value = { eur, variazione24h: rispPrezzo.value.bitcoin.eur_24h_change };
+
+    if (rispStorico.status === 'fulfilled') {
+      // CoinGecko restituisce granularità oraria (~720 punti su 30gg): un punto al giorno
+      // (l'ultimo rilevato di ogni giorno) basta per il trend e disegna una linea leggibile.
+      const perGiorno = new Map();
+      for (const [ts, valore] of rispStorico.value?.prices ?? []) {
+        const giorno = new Date(ts).toISOString().slice(0, 10);
+        perGiorno.set(giorno, valore); // sovrascrive: resta l'ultimo rilevamento del giorno
+      }
+      storicoMercatoBtc.value = [...perGiorno].map(([giorno, valore]) => ({
+        etichetta: new Date(giorno).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
+        valore,
+        valoreTesto: formattaEuro(valore),
+      }));
+    }
+  } catch (err) {
+    erroreMercatoBtc.value = err.message;
+  } finally {
+    caricandoMercatoBtc.value = false;
+  }
+}
+
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
 // Due viste (Dashboard/Bitcoin), ognuna col proprio ordine e la propria chiave localStorage.
 const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
-const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale'];
+const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale', 'btc-mercato'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
 const CHIAVE_TAB = 'dashboardTabAttivo';
@@ -611,6 +651,31 @@ function ripristinaLayout() {
             </template>
           </div>
         </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-mercato') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-mercato')" @dragover.prevent @drop="drop('btc-mercato')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-mercato', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-mercato', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore BTC di mercato</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="caricandoMercatoBtc" class="note-legal">Verifico prezzo di mercato…</p>
+            <p v-else-if="erroreMercatoBtc" class="note-legal">Errore: {{ erroreMercatoBtc }}</p>
+            <template v-else-if="prezzoMercatoBtc">
+              <div class="mercato-btc-hero">
+                <span class="mercato-btc-prezzo">{{ formattaEuro(prezzoMercatoBtc.eur) }}</span>
+                <span
+                  v-if="prezzoMercatoBtc.variazione24h != null" class="badge-variazione"
+                  :class="prezzoMercatoBtc.variazione24h >= 0 ? 'positiva' : 'negativa'"
+                >{{ prezzoMercatoBtc.variazione24h >= 0 ? '+' : '' }}{{ prezzoMercatoBtc.variazione24h.toFixed(2) }}% 24h</span>
+              </div>
+              <LineChart v-if="storicoMercatoBtc.length > 1" :punti="storicoMercatoBtc" scala-relativa sparkline />
+              <p class="note-legal" style="margin-top:12px">Prezzo di mercato BTC/EUR, indipendente dagli incassi registrati — fonte CoinGecko.</p>
+            </template>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -669,6 +734,12 @@ function ripristinaLayout() {
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }
+
+.mercato-btc-hero { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.mercato-btc-prezzo { font-size: 1.6rem; font-weight: 700; color: var(--ink); }
+.badge-variazione { font-size: .72rem; font-weight: 700; border-radius: var(--radius-pill); padding: 3px 10px; }
+.badge-variazione.positiva { color: var(--ok); background: var(--ok-bg); }
+.badge-variazione.negativa { color: var(--warn); background: var(--warn-bg); }
 
 .tab-toggle { display: flex; gap: 8px; margin-bottom: 20px; }
 .griglia-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
