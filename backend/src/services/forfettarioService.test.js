@@ -13,7 +13,10 @@ mock.module('./invoiceService.js', {
     getInvoice: async (anno, mese, clienteId) => {
       const chiave = `${anno}-${String(mese).padStart(2, '0')}-${clienteId}`;
       const store = {
-        '2026-01-cliA': { anno: 2026, mese: 1, clienteId: 'cliA', imponibile: 1000, numero: 1, dataPagamento: '2026-03-10', nettoAPagare: 1000 },
+        '2026-01-cliA': {
+          anno: 2026, mese: 1, clienteId: 'cliA', imponibile: 1000, numero: 1, nettoAPagare: 1000,
+          pagamenti: [{ data: '2026-03-10', importo: 1000, btc: { txid: 'abc123', satoshi: 2000000, cambioEurBtc: 50000, fonteCambio: 'test', dataOraCambio: '2026-03-10T10:00:00Z', indirizzoDestinatario: 'bc1qtest' } }],
+        },
         '2026-01-cliB': { anno: 2026, mese: 1, clienteId: 'cliB', imponibile: 1000, numero: 2, dataPagamento: null, nettoAPagare: 1000 },
         '2026-02-cliA': { anno: 2026, mese: 2, clienteId: 'cliA', imponibile: 500, numero: 3, dataPagamento: '2027-01-15', nettoAPagare: 500 },
       };
@@ -73,4 +76,25 @@ test('cassa.nonIncassateEmesseAnno elenca le fatture dell\'anno senza dataPagame
   // cliB (2026-01) non ha dataPagamento: resta fuori dal fatturato cassa ma va segnalata come in attesa.
   assert.equal(risultato.cassa.nonIncassateEmesseAnno.length, 1);
   assert.equal(risultato.cassa.nonIncassateEmesseAnno[0].clienteId, 'cliB');
+});
+
+test('cassa.btc aggrega solo le rate con btc valorizzato (misto bonifico+BTC)', async () => {
+  const risultato = await calcolaDashboardForfettario(configBase, { anno: 2026, meseCorrente: 12 });
+  // Unica rata BTC: cliA-01, 1000 EUR / 0.02 BTC (2000000 sat) -> cambio medio 50000.
+  assert.equal(risultato.cassa.btc.rate, 1);
+  assert.equal(risultato.cassa.btc.eur, 1000);
+  assert.equal(risultato.cassa.btc.satoshi, 2000000);
+  assert.equal(risultato.cassa.btc.cambioMedio, 50000);
+  assert.equal(risultato.cassa.btc.elenco[0].txid, 'abc123');
+  // 1000 EUR BTC su 1000 EUR incassato-cassa totale 2026 -> 100%.
+  assert.equal(risultato.cassa.btc.percentualeSuIncassato, 100);
+  assert.equal(risultato.cassa.btc.walletConfigurati, false);
+});
+
+test('cassa.btc su anno senza incassi BTC restituisce rate/importi a zero', async () => {
+  const risultato = await calcolaDashboardForfettario(configBase, { anno: 2027, meseCorrente: 12 });
+  assert.equal(risultato.cassa.btc.rate, 0);
+  assert.equal(risultato.cassa.btc.eur, 0);
+  assert.equal(risultato.cassa.btc.cambioMedio, 0);
+  assert.deepEqual(risultato.cassa.btc.elenco, []);
 });

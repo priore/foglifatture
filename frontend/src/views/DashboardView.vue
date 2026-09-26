@@ -4,6 +4,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
+import LineChart from '../components/LineChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
@@ -42,6 +43,7 @@ async function carica() {
   errore.value = '';
   try {
     dashboard.value = await api.dashboardForfettario(annoSelezionato.value);
+    caricaValoreAttualeBtc();
   } catch (err) {
     errore.value = err.message;
   }
@@ -77,6 +79,7 @@ onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
+  caricaMercatoBtc();
 });
 watch(annoSelezionato, carica);
 
@@ -159,6 +162,186 @@ function formattaEuro(valore) {
 function esportaCommercialista() {
   window.open(api.urlExportCommercialista(annoSelezionato.value), '_blank');
 }
+
+// Card BTC (FP-011, riepilogo dashboard): TXID abbreviato per la tabella rate.
+function abbreviaTxid(txid) {
+  return `${txid.slice(0, 4)}…${txid.slice(-4)}`;
+}
+
+// Valore attuale controvalore BTC: fetch automatica ad ogni cambio anno (deroga
+// esplicita al pattern privacy-IP-solo-su-click, approvata dall'utente per questa card),
+// solo se ci sono BTC incassati nell'anno.
+const valoreAttualeBtc = ref(null);
+const erroreValoreAttualeBtc = ref('');
+const caricandoValoreAttualeBtc = ref(false);
+async function caricaValoreAttualeBtc() {
+  valoreAttualeBtc.value = null;
+  erroreValoreAttualeBtc.value = '';
+  if (!dashboard.value.cassa.btc.rate) return;
+  caricandoValoreAttualeBtc.value = true;
+  try {
+    const risposta = await api.cambioAttualeBtc();
+    const cambioOggi = risposta?.bitcoin?.eur;
+    if (!cambioOggi) throw new Error('Cambio non disponibile');
+    const btc = dashboard.value.cassa.btc;
+    const controvaloreOggi = Number((btc.satoshi / 1e8 * cambioOggi).toFixed(2));
+    valoreAttualeBtc.value = { cambioOggi, controvaloreOggi, differenza: Number((controvaloreOggi - btc.eur).toFixed(2)) };
+  } catch (err) {
+    erroreValoreAttualeBtc.value = err.message;
+  } finally {
+    caricandoValoreAttualeBtc.value = false;
+  }
+}
+
+// Andamento cambio EUR/BTC storico delle rate dell'anno, per il grafico lineare della card.
+const andamentoCambioBtc = computed(() => {
+  if (!dashboard.value) return [];
+  return [...dashboard.value.cassa.btc.elenco]
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .map((r) => ({ etichetta: formattaData(r.data), valore: r.cambioEurBtc, valoreTesto: formattaEuro(r.cambioEurBtc) }));
+});
+
+// Card "Valore BTC di mercato": prezzo attuale + variazione 24h + storico 30gg, indipendente
+// dagli incassi (utile anche in anni senza rate BTC). Fetch al mount della pagina, non per anno.
+const prezzoMercatoBtc = ref(null);
+const storicoMercatoBtc = ref([]);
+const erroreMercatoBtc = ref('');
+const caricandoMercatoBtc = ref(false);
+async function caricaMercatoBtc() {
+  caricandoMercatoBtc.value = true;
+  erroreMercatoBtc.value = '';
+  try {
+    // Due chiamate CoinGecko separate e non critiche a vicenda: se lo storico fallisce
+    // (es. rate limit) il prezzo attuale resta comunque visibile, solo senza sparkline.
+    const [rispPrezzo, rispStorico] = await Promise.allSettled([api.prezzoMercatoBtc(), api.storicoPrezzoMercatoBtc()]);
+    if (rispPrezzo.status === 'rejected') throw new Error(`Prezzo non disponibile (${rispPrezzo.reason?.message ?? 'errore rete'})`);
+    const eur = rispPrezzo.value?.bitcoin?.eur;
+    if (!eur) throw new Error('Prezzo non disponibile');
+    prezzoMercatoBtc.value = { eur, variazione24h: rispPrezzo.value.bitcoin.eur_24h_change };
+
+    if (rispStorico.status === 'fulfilled') {
+      // CoinGecko restituisce granularità oraria (~720 punti su 30gg): un punto al giorno
+      // (l'ultimo rilevato di ogni giorno) basta per il trend e disegna una linea leggibile.
+      const perGiorno = new Map();
+      for (const [ts, valore] of rispStorico.value?.prices ?? []) {
+        const giorno = new Date(ts).toISOString().slice(0, 10);
+        perGiorno.set(giorno, valore); // sovrascrive: resta l'ultimo rilevamento del giorno
+      }
+      storicoMercatoBtc.value = [...perGiorno].map(([giorno, valore]) => ({
+        etichetta: new Date(giorno).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
+        valore,
+        valoreTesto: formattaEuro(valore),
+      }));
+    }
+  } catch (err) {
+    erroreMercatoBtc.value = err.message;
+  } finally {
+    caricandoMercatoBtc.value = false;
+  }
+}
+
+// Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
+// non è un dato di dominio: nessuna sincronizzazione col backend.
+// Due viste (Dashboard/Bitcoin), ognuna col proprio ordine e la propria chiave localStorage.
+const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale', 'btc-mercato'];
+const CHIAVE_ORDINE = 'dashboardOrdineCard';
+const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
+const CHIAVE_TAB = 'dashboardTabAttivo';
+
+function caricaOrdineSalvato(chiave, ordineDefault) {
+  try {
+    const salvato = JSON.parse(localStorage.getItem(chiave));
+    if (!Array.isArray(salvato)) return [...ordineDefault];
+    // Tieni solo id noti, poi aggiungi in coda quelli mancanti (card nuove non spariscono).
+    const noti = salvato.filter((id) => ordineDefault.includes(id));
+    const mancanti = ordineDefault.filter((id) => !noti.includes(id));
+    return [...noti, ...mancanti];
+  } catch {
+    return [...ordineDefault];
+  }
+}
+
+function caricaTabSalvato() {
+  try {
+    const salvato = localStorage.getItem(CHIAVE_TAB);
+    return salvato === 'Bitcoin' ? 'Bitcoin' : 'Dashboard';
+  } catch {
+    return 'Dashboard';
+  }
+}
+
+const tabAttivo = ref(caricaTabSalvato());
+function cambiaTab(tab) {
+  tabAttivo.value = tab;
+  try {
+    localStorage.setItem(CHIAVE_TAB, tab);
+  } catch {
+    // storage non disponibile: preferenza resta solo in memoria per questa sessione.
+  }
+}
+
+const ordineCard = ref(caricaOrdineSalvato(CHIAVE_ORDINE, ORDINE_DEFAULT));
+const ordineCardBtc = ref(caricaOrdineSalvato(CHIAVE_ORDINE_BTC, ORDINE_DEFAULT_BTC));
+const trascinata = ref(null);
+
+function salvaOrdine() {
+  try {
+    localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordineCard.value));
+    localStorage.setItem(CHIAVE_ORDINE_BTC, JSON.stringify(ordineCardBtc.value));
+  } catch {
+    // storage non disponibile (privato/pieno): ordine resta solo in memoria per questa sessione.
+  }
+}
+
+function ordinePer(id) {
+  return (ORDINE_DEFAULT.includes(id) ? ordineCard.value : ordineCardBtc.value).indexOf(id);
+}
+
+function dragStart(id) {
+  trascinata.value = id;
+}
+
+function drop(idTarget) {
+  if (!trascinata.value || trascinata.value === idTarget) return;
+  const target = ORDINE_DEFAULT.includes(idTarget) ? ordineCard : ordineCardBtc;
+  const lista = [...target.value];
+  const daIndex = lista.indexOf(trascinata.value);
+  const aIndex = lista.indexOf(idTarget);
+  if (daIndex === -1 || aIndex === -1) return; // trascinata e target appartengono a viste diverse
+  lista.splice(daIndex, 1);
+  lista.splice(aIndex, 0, trascinata.value);
+  target.value = lista;
+  trascinata.value = null;
+  salvaOrdine();
+}
+
+function spostaConTastiera(id, delta) {
+  const target = ORDINE_DEFAULT.includes(id) ? ordineCard : ordineCardBtc;
+  const lista = [...target.value];
+  const daIndex = lista.indexOf(id);
+  const aIndex = daIndex + delta;
+  if (aIndex < 0 || aIndex >= lista.length) return;
+  lista.splice(daIndex, 1);
+  lista.splice(aIndex, 0, id);
+  target.value = lista;
+  salvaOrdine();
+}
+
+const layoutModificato = computed(() => {
+  const ordineAttuale = tabAttivo.value === 'Bitcoin' ? ordineCardBtc.value : ordineCard.value;
+  const ordineDefault = tabAttivo.value === 'Bitcoin' ? ORDINE_DEFAULT_BTC : ORDINE_DEFAULT;
+  return ordineAttuale.some((id, i) => id !== ordineDefault[i]);
+});
+
+function ripristinaLayout() {
+  if (tabAttivo.value === 'Bitcoin') {
+    ordineCardBtc.value = [...ORDINE_DEFAULT_BTC];
+  } else {
+    ordineCard.value = [...ORDINE_DEFAULT];
+  }
+  salvaOrdine();
+}
 </script>
 
 <template>
@@ -171,6 +354,11 @@ function esportaCommercialista() {
           @click="mostraPopupAggiornamento = true"
         >Aggiornamento disponibile</button>
         <button type="button" class="btn btn-ghost" @click="esportaCommercialista">Esporta per commercialista</button>
+        <button
+          type="button" class="btn btn-ghost" :disabled="!layoutModificato"
+          :title="layoutModificato ? '' : 'Layout già di default'"
+          @click="ripristinaLayout"
+        >Ripristina layout</button>
         <select v-model.number="annoSelezionato" class="status">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
         </select>
@@ -200,10 +388,19 @@ function esportaCommercialista() {
         <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="card">
-          <div class="card-head">
-            <h2>Soglia forfettario (cassa)</h2>
+      <div class="tab-toggle">
+        <button type="button" :class="tabAttivo === 'Dashboard' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Dashboard')">Dashboard</button>
+        <button type="button" :class="tabAttivo === 'Bitcoin' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Bitcoin')">Bitcoin</button>
+      </div>
+
+      <div v-if="tabAttivo === 'Dashboard'" class="griglia-card">
+        <div class="card" :style="{ order: ordinePer('soglia-cassa') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('soglia-cassa')" @dragover.prevent @drop="drop('soglia-cassa')"
+            @keydown.alt.up.prevent="spostaConTastiera('soglia-cassa', -1)" @keydown.alt.down.prevent="spostaConTastiera('soglia-cassa', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Soglia forfettario (cassa)</h2></span>
             <span class="badge-fonte" title="Fatturato/imposta calcolati sulla data di incasso, non di emissione: è il criterio che vale davvero per il regime forfettario">fa fede per le tasse</span>
           </div>
           <div class="card-body">
@@ -225,8 +422,14 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><h2>Soglia forfettario (competenza)</h2></div>
+        <div class="card" :style="{ order: ordinePer('soglia-competenza') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('soglia-competenza')" @dragover.prevent @drop="drop('soglia-competenza')"
+            @keydown.alt.up.prevent="spostaConTastiera('soglia-competenza', -1)" @keydown.alt.down.prevent="spostaConTastiera('soglia-competenza', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Soglia forfettario (competenza)</h2></span>
+          </div>
           <div class="card-body">
             <DonutChart :fette="fetteSoglia" :centro-valore="`${dashboard.percentualeSoglia}%`" centro-label="soglia" />
             <p class="note-legal" style="margin-top:20px">
@@ -236,11 +439,15 @@ function esportaCommercialista() {
             </p>
           </div>
         </div>
-      </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
-        <div class="card">
-          <div class="card-head"><h2>Composizione compenso</h2></div>
+        <div class="card" :style="{ order: ordinePer('composizione') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('composizione')" @dragover.prevent @drop="drop('composizione')"
+            @keydown.alt.up.prevent="spostaConTastiera('composizione', -1)" @keydown.alt.down.prevent="spostaConTastiera('composizione', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Composizione compenso</h2></span>
+          </div>
           <div class="card-body">
             <DonutChart :fette="fetteComposizione" />
             <p class="note-legal" style="margin-top:20px">
@@ -250,16 +457,26 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><h2>Andamento mensile ricavi</h2></div>
+        <div class="card" :style="{ order: ordinePer('andamento') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('andamento')" @dragover.prevent @drop="drop('andamento')"
+            @keydown.alt.up.prevent="spostaConTastiera('andamento', -1)" @keydown.alt.down.prevent="spostaConTastiera('andamento', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Andamento mensile ricavi</h2></span>
+          </div>
           <div class="card-body">
             <BarChart :barre="barreRicaviMensili" />
           </div>
         </div>
 
-        <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
-            <h2>Fatture da incassare</h2>
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('fatture-da-incassare') }">
+          <div
+            class="card-head" style="display:flex;justify-content:space-between;align-items:center" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('fatture-da-incassare')" @dragover.prevent @drop="drop('fatture-da-incassare')"
+            @keydown.alt.up.prevent="spostaConTastiera('fatture-da-incassare', -1)" @keydown.alt.down.prevent="spostaConTastiera('fatture-da-incassare', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Fatture da incassare</h2></span>
             <router-link to="/importa-storico?passo=2" class="btn btn-ghost">Importa CSV pagamenti</router-link>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
@@ -303,9 +520,13 @@ function esportaCommercialista() {
           </div>
         </div>
 
-        <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-head">
-            <h2>Scadenze fiscali</h2>
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('scadenze-fiscali') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('scadenze-fiscali')" @dragover.prevent @drop="drop('scadenze-fiscali')"
+            @keydown.alt.up.prevent="spostaConTastiera('scadenze-fiscali', -1)" @keydown.alt.down.prevent="spostaConTastiera('scadenze-fiscali', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Scadenze fiscali</h2></span>
             <span v-if="fonteScadenzeFiscali !== 'base'" class="badge-fonte" :title="`Proroghe/importi verificati via ${fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini'} con ricerca web`">verificato via {{ fonteScadenzeFiscali === 'claude' ? 'Claude' : 'Gemini' }}</span>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
@@ -328,6 +549,131 @@ function esportaCommercialista() {
               </li>
             </ul>
             <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="griglia-card">
+        <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-riepilogo')" @dragover.prevent @drop="drop('btc-riepilogo')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-riepilogo', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-riepilogo', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Riepilogo Bitcoin</h2></span>
+          </div>
+          <div class="card-body">
+            <template v-if="dashboard.cassa.btc.rate > 0">
+              <div class="mini-stat-row">
+                <div class="mini-stat"><span class="mini-stat-label">Incassato in BTC</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.btc.eur) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">BTC totali</span><span class="mini-stat-value">{{ (dashboard.cassa.btc.satoshi / 1e8).toFixed(8) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Rate</span><span class="mini-stat-value">{{ dashboard.cassa.btc.rate }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Cambio medio</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.btc.cambioMedio) }}</span></div>
+              </div>
+              <p class="note-legal" style="margin-top:12px">{{ dashboard.cassa.btc.percentualeSuIncassato }}% dell'incassato per cassa.</p>
+            </template>
+            <template v-else>
+              <p class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}.</p>
+              <p class="nota-piede">
+                <router-link v-if="!dashboard.cassa.btc.walletConfigurati" to="/impostazioni">Configura un wallet BTC in Impostazioni</router-link>
+                <span v-else>Registra un incasso BTC dalla pagina fattura.</span>
+              </p>
+            </template>
+          </div>
+        </div>
+
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('btc-rate') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-rate')" @dragover.prevent @drop="drop('btc-rate')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-rate', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-rate', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Rate incassate in BTC</h2></span>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;flex:1">
+            <p v-if="!dashboard.cassa.btc.elenco.length" class="note-legal">Nessuna rata BTC nel {{ dashboard.anno }}.</p>
+            <table v-else class="data-table lista-scroll">
+              <thead>
+                <tr><th>Fattura</th><th>Data</th><th>BTC</th><th>Cambio</th><th>EUR</th><th>TXID</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in dashboard.cassa.btc.elenco" :key="`${r.anno}-${r.mese}-${r.clienteId}-${r.numero}-${r.txid}`">
+                  <td>Fattura {{ r.numero }}</td>
+                  <td>{{ formattaData(r.data) }}</td>
+                  <td>{{ (r.satoshi / 1e8).toFixed(8) }}</td>
+                  <td>{{ formattaEuro(r.cambioEurBtc) }}</td>
+                  <td>{{ formattaEuro(r.eur) }}</td>
+                  <td><a :href="`https://mempool.space/tx/${r.txid}`" target="_blank" rel="noopener">{{ abbreviaTxid(r.txid) }}</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-rw') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-rw')" @dragover.prevent @drop="drop('btc-rw')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-rw', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-rw', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Quadro RW</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="dashboard.cassa.btc.rate > 0" class="avviso-riga avviso-info">
+              BTC incassati nel {{ dashboard.anno }}: se detenuti al 31/12 vanno indicati nel quadro RW (imposta IC 0,2%) — verificare col commercialista.
+            </p>
+            <p v-else class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}: nessun obbligo RW da questa fonte.</p>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-valore-attuale') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-valore-attuale')" @dragover.prevent @drop="drop('btc-valore-attuale')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-valore-attuale', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-valore-attuale', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore attuale</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="dashboard.cassa.btc.rate === 0" class="note-legal">Nessun BTC incassato nel {{ dashboard.anno }}.</p>
+            <p v-else-if="caricandoValoreAttualeBtc" class="note-legal">Verifico cambio attuale…</p>
+            <p v-else-if="erroreValoreAttualeBtc" class="note-legal">Errore: {{ erroreValoreAttualeBtc }}</p>
+            <template v-else-if="valoreAttualeBtc">
+              <div class="mini-stat-row">
+                <div class="mini-stat"><span class="mini-stat-label">Cambio oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.cambioOggi) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Controvalore oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.controvaloreOggi) }}</span></div>
+                <div
+                  class="mini-stat" :title="'Informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati (FP-012)'"
+                ><span class="mini-stat-label">Differenza vs registrato</span><span class="mini-stat-value" :style="{ color: valoreAttualeBtc.differenza >= 0 ? 'var(--ok)' : 'var(--warn)' }">{{ formattaEuro(valoreAttualeBtc.differenza) }}</span></div>
+              </div>
+              <p class="note-legal" style="margin-top:12px">Andamento cambio EUR/BTC delle rate incassate nel {{ dashboard.anno }}:</p>
+              <LineChart v-if="andamentoCambioBtc.length > 1" :punti="andamentoCambioBtc" />
+            </template>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-mercato') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-mercato')" @dragover.prevent @drop="drop('btc-mercato')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-mercato', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-mercato', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore BTC di mercato</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="caricandoMercatoBtc" class="note-legal">Verifico prezzo di mercato…</p>
+            <p v-else-if="erroreMercatoBtc" class="note-legal">Errore: {{ erroreMercatoBtc }}</p>
+            <template v-else-if="prezzoMercatoBtc">
+              <div class="mercato-btc-hero">
+                <span class="mercato-btc-prezzo">{{ formattaEuro(prezzoMercatoBtc.eur) }}</span>
+                <span
+                  v-if="prezzoMercatoBtc.variazione24h != null" class="badge-variazione"
+                  :class="prezzoMercatoBtc.variazione24h >= 0 ? 'positiva' : 'negativa'"
+                >{{ prezzoMercatoBtc.variazione24h >= 0 ? '+' : '' }}{{ prezzoMercatoBtc.variazione24h.toFixed(2) }}% 24h</span>
+              </div>
+              <LineChart v-if="storicoMercatoBtc.length > 1" :punti="storicoMercatoBtc" scala-relativa sparkline />
+              <p class="note-legal" style="margin-top:12px">Prezzo di mercato BTC/EUR, indipendente dagli incassi registrati — fonte CoinGecko.</p>
+            </template>
           </div>
         </div>
       </div>
@@ -388,4 +734,17 @@ function esportaCommercialista() {
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }
+
+.mercato-btc-hero { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.mercato-btc-prezzo { font-size: 1.6rem; font-weight: 700; color: var(--ink); }
+.badge-variazione { font-size: .72rem; font-weight: 700; border-radius: var(--radius-pill); padding: 3px 10px; }
+.badge-variazione.positiva { color: var(--ok); background: var(--ok-bg); }
+.badge-variazione.negativa { color: var(--warn); background: var(--warn-bg); }
+
+.tab-toggle { display: flex; gap: 8px; margin-bottom: 20px; }
+.griglia-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.card-head-titolo { display: flex; align-items: center; gap: 8px; }
+.maniglia-card { cursor: grab; color: var(--muted); font-size: .9rem; line-height: 1; user-select: none; }
+.maniglia-card:active { cursor: grabbing; }
+.card-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 </style>

@@ -78,6 +78,23 @@ function fattureACavalloAnno(tutte) {
   return righe;
 }
 
+// Riepilogo incassi BTC (FP-011) a partire dalle rate cassa dell'anno: filtra le rate
+// con `.btc` valorizzato e aggrega totali/cambio medio/elenco per la card dashboard.
+export function riepilogoBtc(incassateAnno) {
+  const rateBtc = incassateAnno.filter((r) => r.btc);
+  const eur = Number(rateBtc.reduce((tot, r) => tot + r.nettoAPagare, 0).toFixed(2));
+  const satoshi = rateBtc.reduce((tot, r) => tot + r.btc.satoshi, 0);
+  const cambioMedio = satoshi > 0 ? Number((eur / (satoshi / 1e8)).toFixed(2)) : 0;
+  const elenco = rateBtc
+    .map((r) => ({
+      numero: r.numero, anno: r.anno, mese: r.mese, clienteId: r.clienteId,
+      data: r.dataPagamento, satoshi: r.btc.satoshi, cambioEurBtc: r.btc.cambioEurBtc,
+      eur: r.nettoAPagare, txid: r.btc.txid, indirizzoDestinatario: r.btc.indirizzoDestinatario,
+    }))
+    .sort((a, b) => b.data.localeCompare(a.data));
+  return { rate: rateBtc.length, eur, satoshi, cambioMedio, elenco };
+}
+
 // Ricavi (imponibile) aggregati per mese civile, per il grafico andamento mensile in dashboard.
 function ricaviPerMese(risolteValide) {
   const perMese = new Map();
@@ -125,7 +142,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
   // calcolo per competenza sopra, mai in sua sostituzione — la numerazione/FatturaPA restano
   // per competenza, solo soglia/imposta rilevanti ai fini fiscali seguono l'incasso.
   const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
-  const { ricaviCumulati: ricaviCumulatiCassa, nonIncassateEmesseAnno } = await ricaviAnnoCassa(anno, tutte);
+  const { ricaviCumulati: ricaviCumulatiCassa, incassateAnno, nonIncassateEmesseAnno } = await ricaviAnnoCassa(anno, tutte);
   const redditoImponibileCassa = Number((ricaviCumulatiCassa * coefficenteRedditivita / 100).toFixed(2));
   const impostaStimataCassa = Number((redditoImponibileCassa * aliquota / 100).toFixed(2));
   const percentualeSogliaCassa = sogliaAnnua > 0 ? Number((ricaviCumulatiCassa / sogliaAnnua * 100).toFixed(1)) : 0;
@@ -142,6 +159,13 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
       anno: f.anno, mese: f.mese, clienteId: f.clienteId, numero: f.numero, nettoAPagare: f.nettoAPagare, residuo: f.residuo,
     })),
     fattureACavalloAnno: fattureACavalloAnno(tutte).filter((f) => f.anno === anno || f.annoIncasso === anno),
+    btc: (() => {
+      const riepilogo = riepilogoBtc(incassateAnno);
+      const percentualeSuIncassato = ricaviCumulatiCassa > 0
+        ? Number((riepilogo.eur / ricaviCumulatiCassa * 100).toFixed(1))
+        : 0;
+      return { ...riepilogo, percentualeSuIncassato, walletConfigurati: (config.walletBtc?.length ?? 0) > 0 };
+    })(),
   };
 
   return {
