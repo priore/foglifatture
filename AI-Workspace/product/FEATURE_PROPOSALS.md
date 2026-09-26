@@ -178,6 +178,8 @@ Analisi già svolta, non pubblicata: contiene la verifica puntuale delle norme f
 
 **Riferimenti:** `backend/src/services/pagamentiFattureService.js:307-327`, `backend/src/services/invoiceService.js:37-59`, `backend/src/services/fatturaPaXmlGenerator.js:101-108`, `backend/src/services/exportService.js`, `backend/src/services/configService.js:119-158`, `frontend/src/views/FatturaView.vue:304-309`
 
+🟢 Estensione UI (2026-09-26): dashboard forfettario mostra 4 card dedicate (riepilogo, rate con TXID, quadro RW, valore attuale con grafico andamento cambio) — `backend/src/services/forfettarioService.js` (`riepilogoBtc`), `frontend/src/views/DashboardView.vue`.
+
 ---
 
 ## FP-012 — Registro lotti BTC e plusvalenze da redditi diversi

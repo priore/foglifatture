@@ -4,6 +4,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
+import LineChart from '../components/LineChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
@@ -42,6 +43,7 @@ async function carica() {
   errore.value = '';
   try {
     dashboard.value = await api.dashboardForfettario(annoSelezionato.value);
+    caricaValoreAttualeBtc();
   } catch (err) {
     errore.value = err.message;
   }
@@ -160,9 +162,47 @@ function esportaCommercialista() {
   window.open(api.urlExportCommercialista(annoSelezionato.value), '_blank');
 }
 
+// Card BTC (FP-011, riepilogo dashboard): TXID abbreviato per la tabella rate.
+function abbreviaTxid(txid) {
+  return `${txid.slice(0, 4)}…${txid.slice(-4)}`;
+}
+
+// Valore attuale controvalore BTC: fetch automatica ad ogni cambio anno (deroga
+// esplicita al pattern privacy-IP-solo-su-click, approvata dall'utente per questa card),
+// solo se ci sono BTC incassati nell'anno.
+const valoreAttualeBtc = ref(null);
+const erroreValoreAttualeBtc = ref('');
+const caricandoValoreAttualeBtc = ref(false);
+async function caricaValoreAttualeBtc() {
+  valoreAttualeBtc.value = null;
+  erroreValoreAttualeBtc.value = '';
+  if (!dashboard.value.cassa.btc.rate) return;
+  caricandoValoreAttualeBtc.value = true;
+  try {
+    const risposta = await api.cambioAttualeBtc();
+    const cambioOggi = risposta?.bitcoin?.eur;
+    if (!cambioOggi) throw new Error('Cambio non disponibile');
+    const btc = dashboard.value.cassa.btc;
+    const controvaloreOggi = Number((btc.satoshi / 1e8 * cambioOggi).toFixed(2));
+    valoreAttualeBtc.value = { cambioOggi, controvaloreOggi, differenza: Number((controvaloreOggi - btc.eur).toFixed(2)) };
+  } catch (err) {
+    erroreValoreAttualeBtc.value = err.message;
+  } finally {
+    caricandoValoreAttualeBtc.value = false;
+  }
+}
+
+// Andamento cambio EUR/BTC storico delle rate dell'anno, per il grafico lineare della card.
+const andamentoCambioBtc = computed(() => {
+  if (!dashboard.value) return [];
+  return [...dashboard.value.cassa.btc.elenco]
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .map((r) => ({ etichetta: formattaData(r.data), valore: r.cambioEurBtc, valoreTesto: formattaEuro(r.cambioEurBtc) }));
+});
+
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
-const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali', 'btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 
 function caricaOrdineSalvato() {
@@ -428,6 +468,104 @@ function ripristinaLayout() {
               </li>
             </ul>
             <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-riepilogo')" @dragover.prevent @drop="drop('btc-riepilogo')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-riepilogo', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-riepilogo', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Riepilogo Bitcoin</h2></span>
+          </div>
+          <div class="card-body">
+            <template v-if="dashboard.cassa.btc.rate > 0">
+              <div class="mini-stat-row">
+                <div class="mini-stat"><span class="mini-stat-label">Incassato in BTC</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.btc.eur) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">BTC totali</span><span class="mini-stat-value">{{ (dashboard.cassa.btc.satoshi / 1e8).toFixed(8) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Rate</span><span class="mini-stat-value">{{ dashboard.cassa.btc.rate }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Cambio medio</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.btc.cambioMedio) }}</span></div>
+              </div>
+              <p class="note-legal" style="margin-top:12px">{{ dashboard.cassa.btc.percentualeSuIncassato }}% dell'incassato per cassa.</p>
+            </template>
+            <template v-else>
+              <p class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}.</p>
+              <p class="nota-piede">
+                <router-link v-if="!dashboard.cassa.btc.walletConfigurati" to="/impostazioni">Configura un wallet BTC in Impostazioni</router-link>
+                <span v-else>Registra un incasso BTC dalla pagina fattura.</span>
+              </p>
+            </template>
+          </div>
+        </div>
+
+        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('btc-rate') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-rate')" @dragover.prevent @drop="drop('btc-rate')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-rate', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-rate', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Rate incassate in BTC</h2></span>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;flex:1">
+            <p v-if="!dashboard.cassa.btc.elenco.length" class="note-legal">Nessuna rata BTC nel {{ dashboard.anno }}.</p>
+            <table v-else class="data-table lista-scroll">
+              <thead>
+                <tr><th>Fattura</th><th>Data</th><th>BTC</th><th>Cambio</th><th>EUR</th><th>TXID</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in dashboard.cassa.btc.elenco" :key="`${r.anno}-${r.mese}-${r.clienteId}-${r.numero}-${r.txid}`">
+                  <td>Fattura {{ r.numero }}</td>
+                  <td>{{ formattaData(r.data) }}</td>
+                  <td>{{ (r.satoshi / 1e8).toFixed(8) }}</td>
+                  <td>{{ formattaEuro(r.cambioEurBtc) }}</td>
+                  <td>{{ formattaEuro(r.eur) }}</td>
+                  <td><a :href="`https://mempool.space/tx/${r.txid}`" target="_blank" rel="noopener">{{ abbreviaTxid(r.txid) }}</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-rw') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-rw')" @dragover.prevent @drop="drop('btc-rw')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-rw', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-rw', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Quadro RW</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="dashboard.cassa.btc.rate > 0" class="avviso-riga avviso-info">
+              BTC incassati nel {{ dashboard.anno }}: se detenuti al 31/12 vanno indicati nel quadro RW (imposta IC 0,2%) — verificare col commercialista.
+            </p>
+            <p v-else class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}: nessun obbligo RW da questa fonte.</p>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-valore-attuale') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-valore-attuale')" @dragover.prevent @drop="drop('btc-valore-attuale')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-valore-attuale', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-valore-attuale', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore attuale</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="dashboard.cassa.btc.rate === 0" class="note-legal">Nessun BTC incassato nel {{ dashboard.anno }}.</p>
+            <p v-else-if="caricandoValoreAttualeBtc" class="note-legal">Verifico cambio attuale…</p>
+            <p v-else-if="erroreValoreAttualeBtc" class="note-legal">Errore: {{ erroreValoreAttualeBtc }}</p>
+            <template v-else-if="valoreAttualeBtc">
+              <div class="mini-stat-row">
+                <div class="mini-stat"><span class="mini-stat-label">Cambio oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.cambioOggi) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Controvalore oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.controvaloreOggi) }}</span></div>
+                <div
+                  class="mini-stat" :title="'Informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati (FP-012)'"
+                ><span class="mini-stat-label">Differenza vs registrato</span><span class="mini-stat-value" :style="{ color: valoreAttualeBtc.differenza >= 0 ? 'var(--ok)' : 'var(--warn)' }">{{ formattaEuro(valoreAttualeBtc.differenza) }}</span></div>
+              </div>
+              <p class="note-legal" style="margin-top:12px">Andamento cambio EUR/BTC delle rate incassate nel {{ dashboard.anno }}:</p>
+              <LineChart v-if="andamentoCambioBtc.length > 1" :punti="andamentoCambioBtc" />
+            </template>
           </div>
         </div>
       </div>

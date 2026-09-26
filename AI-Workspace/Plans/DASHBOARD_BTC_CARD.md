@@ -3,7 +3,7 @@
 ## Stato avanzamento
 - [x] Step 1 — Drag/drop dashboard as-is (7 card attuali) — completato 2026-09-26
 - [x] Step 2 — Backend `riepilogoBtc` — completato 2026-09-26
-- [ ] Step 3 — Card "Incassi Bitcoin" in dashboard as-is
+- [x] Step 3 — 4 card BTC dedicate in dashboard as-is — completato 2026-09-26
 - [ ] Step 4 — Tabbar dashboard (As-is / Bitcoin)
 - [ ] Step 5 — Drag/drop su tab Bitcoin
 
@@ -66,56 +66,58 @@ Verifica:
 
 ---
 
-## Step 3 — Card "Incassi Bitcoin" in dashboard as-is
-Nuova card temporaneamente aggiunta alla griglia unica dello Step 1 (verrà spostata nel tab Bitcoin allo Step 4), stili riusati (`card`, `mini-stat-row`, `avviso-riga`, `badge-fonte`, `lista-scroll`, `data-table`).
+## Step 3 — 4 card BTC dedicate (temporaneamente in dashboard as-is)
+Non più 1 card monolitica: **4 card separate**, una per punto, aggiunte in coda alla griglia unica dello Step 1 (verranno spostate nel tab Bitoin allo Step 4, dove finiscono tutte insieme). Stili riusati (`card`, `mini-stat-row`, `avviso-riga`, `badge-fonte`, `lista-scroll`, `data-table`).
 
-1. **Riepilogo** — `mini-stat-row` 4 voci: EUR incassati in BTC, BTC totali (`satoshi/1e8` toFixed 8), n° rate, cambio medio EUR/BTC; nota "`x%` dell'incassato per cassa".
-2. **Lista rate** — tabella `lista-scroll`: Fattura, data, BTC, cambio, EUR, TXID abbreviato (`abcd…wxyz`) con link `https://mempool.space/tx/{txid}` (`target=_blank rel=noopener`).
-3. **Promemoria RW/IC** — se `rate > 0`: `avviso-riga avviso-info` "BTC incassati nel {anno}: se detenuti al 31/12 vanno indicati nel quadro RW (imposta IC 0,2%) — verificare col commercialista." Solo nota, nessun calcolo (FP-013 resta proposta).
-4. **Valore attuale** — bottone "Mostra valore attuale" (fetch solo su click, niente chiamata automatica, per privacy IP): nuova funzione `api.cambioAttualeBtc()` in [api.js](frontend/src/services/api.js) accanto a `cambioStoricoBtc` → `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur`. Mostra controvalore oggi dei BTC incassati nell'anno e differenza vs EUR registrato, con `title` avviso "informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati (FP-012)". Errore fetch ⇒ messaggio inline, non `errore` globale.
+1. **Card "Riepilogo Bitcoin"** — `mini-stat-row` 4 voci: EUR incassati in BTC, BTC totali (`satoshi/1e8` toFixed 8), n° rate, cambio medio EUR/BTC; nota "`x%` dell'incassato per cassa".
+2. **Card "Rate incassate in BTC"** — tabella `lista-scroll`: Fattura, data, BTC, cambio, EUR, TXID abbreviato (`abcd…wxyz`) con link `https://mempool.space/tx/{txid}` (`target=_blank rel=noopener`).
+3. **Card "Quadro RW"** — se `rate > 0`: `avviso-riga avviso-info` "BTC incassati nel {anno}: se detenuti al 31/12 vanno indicati nel quadro RW (imposta IC 0,2%) — verificare col commercialista." Solo nota, nessun calcolo (FP-013 resta proposta).
+4. **Card "Valore attuale"** — niente bottone: fetch automatica al mount (deroga esplicita alla regola privacy-IP-solo-su-click, approvata dall'utente per questa card) con nuova funzione `api.cambioAttualeBtc()` in [api.js](frontend/src/services/api.js) accanto a `cambioStoricoBtc` → `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur`. Mostra subito controvalore oggi dei BTC incassati nell'anno e differenza vs EUR registrato, con `title` avviso "informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati (FP-012)". Sotto, grafico lineare andamento cambio EUR/BTC storico delle rate dell'anno (`cambioEurBtc` per `data` di ogni rata in `dashboard.cassa.btc.elenco`, ordinate per data asc) — nuovo componente `LineChart.vue` (analogo a `BarChart.vue` esistente, stessa cartella componenti) se non già presente uno riusabile. Errore fetch ⇒ messaggio inline, non `errore` globale.
 
-Stato vuoto (regola "mai nascondere"): card sempre visibile; se `rate === 0` mostra "Nessun incasso BTC nel {anno}" + riga: se `config.walletBtc` vuoto ⇒ link a Impostazioni (configura wallet), altrimenti "registra un incasso BTC dalla pagina fattura". Bottone valore attuale disabilitato con `title` spiegazione. Esporre `walletConfigurati: config.walletBtc.length > 0` in `cassa.btc` dal backend (evita seconda fetch).
+Stato vuoto per ognuna delle 4 (regola "mai nascondere"): card sempre visibile; se `rate === 0` mostra "Nessun incasso BTC nel {anno}" + riga: se `config.walletBtc` vuoto ⇒ link a Impostazioni (configura wallet), altrimenti "registra un incasso BTC dalla pagina fattura". Card 4: niente fetch se `rate === 0` (nessun dato da mostrare). Esporre `walletConfigurati: config.walletBtc.length > 0` in `cassa.btc` dal backend (evita seconda fetch).
 
 Nuovi colori: nessuno, solo token esistenti (`--accent`, `--warn`, `--ok`, `--muted`).
 
 `FEATURE_PROPOSALS.md` FP-011: nessuna nuova voce numerata (estensione UI di FP-011); aggiungere riga riferimento dashboard.
 
 Verifica:
-1. Screenshot pre (= post-Step 1) / post secondo stesso vincolo pixel-perfect: unica differenza ammessa = card BTC in coda.
+1. Screenshot pre (= post-Step 1) / post secondo stesso vincolo pixel-perfect: unica differenza ammessa = le 4 card BTC in coda.
 2. `cd frontend && npm run build`, riavvio backend (AskUserQuestion).
-3. Playwright: anno con rata BTC ⇒ totali coerenti con export commercialista; anno senza BTC ⇒ stato vuoto; click "valore attuale" ⇒ controvalore mostrato; tema dark leggibile.
-4. Drag/drop dello Step 1 include correttamente la nuova card (ordine, persistenza).
-5. CHANGELOG `[Unreleased]`: "Dashboard: card Incassi Bitcoin (riepilogo anno, rate con TXID, promemoria quadro RW, valore attuale opzionale)".
+3. Playwright: anno con rata BTC ⇒ totali coerenti con export commercialista; anno senza BTC ⇒ stato vuoto su tutte e 4; card "Valore attuale" ⇒ controvalore e grafico mostrati automaticamente senza click; tema dark leggibile.
+4. Drag/drop dello Step 1 include correttamente le 4 nuove card (ordine, persistenza).
+5. CHANGELOG `[Unreleased]`: "Dashboard: 4 card Incassi Bitcoin (riepilogo, rate con TXID, quadro RW, valore attuale con grafico andamento cambio)".
 
 → Spuntare Step 3, fermarsi, attendere conferma.
 
 ---
 
-## Step 4 — Tabbar dashboard (As-is / Bitcoin)
-Stesso pattern tabbar già usato in Impostazioni (riusare componente/markup/stile esistente, non inventarne uno nuovo — verificare nome file in Impostazioni in fase esecuzione).
+## Step 4 — Toggle 2 bottoni (As-is / Bitcoin)
+Nessun componente tabbar condiviso esistente in Impostazioni (verificato, non c'è) — 2 `button` tipo `btn-ghost`/`btn-primary` a seconda stato attivo, stesso pattern segmented-toggle già visto altrove (es. selettore tema light/dark), non un tab-component nuovo da inventare.
 
-- Due tab: "As-is" (le 6 card esistenti) e "Bitcoin" (la card Incassi Bitcoin dello Step 3, spostata qui).
-- Righe KPI fisse (`summary-row`, `stat-gruppo-stima`) restano sopra la tabbar, visibili in entrambi i tab (sono riepilogo generale, non specifiche BTC) — salvo diverso avviso dell'utente in fase esecuzione se alcune sono BTC-specifiche.
-- Ognuna delle due griglie card mantiene il proprio `ordineCard` con chiave `localStorage` distinta: `dashboardOrdineCard` (tab as-is, già esistente da Step 1) e `dashboardOrdineCardBtc` (tab Bitcoin, nuova, singolo elemento per ora ma predisposta per Step 5/card BTC future).
-- Tab attivo persistito in `localStorage` (`dashboardTabAttivo`), default "As-is".
+- Bottone 1 "Dashboard" → griglia as-is (le 6 card esistenti: ricavi cumulati, reddito imponibile, ecc. — quelle già in dashboard).
+- Bottone 2 "Bitcoin" → le 4 card BTC dello Step 3, spostate qui (rimosse dalla griglia as-is).
+- Un solo gruppo di card visibile alla volta (mutuamente esclusivi, non due tab con contenuto sempre montato).
+- Righe KPI fisse (`summary-row`, `stat-gruppo-stima`) restano sopra il toggle, visibili in entrambe le viste (riepilogo generale, non specifiche BTC) — salvo diverso avviso dell'utente in fase esecuzione se alcune sono BTC-specifiche.
+- Ognuna delle due griglie card mantiene il proprio `ordineCard` con chiave `localStorage` distinta: `dashboardOrdineCard` (vista Dashboard, già esistente da Step 1) e `dashboardOrdineCardBtc` (vista Bitcoin, nuova, 4 elementi, predisposta per Step 5).
+- Vista attiva persistita in `localStorage` (`dashboardTabAttivo`), default "Dashboard".
 
 Verifica:
-1. Screenshot pre (= post-Step 3) / post: tab "As-is" deve essere pixel-perfect identico al vecchio layout unico (stessa griglia, minus card BTC che è nell'altro tab); tab "Bitcoin" mostra solo la card BTC.
+1. Screenshot pre (= post-Step 3) / post: vista "Dashboard" deve essere pixel-perfect identica al vecchio layout unico (stessa griglia, minus le 4 card BTC che sono nell'altra vista); vista "Bitcoin" mostra solo le 4 card BTC.
 2. `cd frontend && npm run build`, riavvio backend (AskUserQuestion).
-3. Cambio tab conserva stato scroll/filtri ragionevole, non resetta l'anno selezionato in dashboard.
-4. CHANGELOG `[Unreleased]`: "Dashboard: doppia vista As-is/Bitcoin con tab dedicati".
+3. Cambio vista conserva stato scroll/filtri ragionevole, non resetta l'anno selezionato in dashboard.
+4. CHANGELOG `[Unreleased]`: "Dashboard: doppia vista Dashboard/Bitcoin con toggle dedicato".
 
 → Spuntare Step 4, fermarsi, attendere conferma.
 
 ---
 
-## Step 5 — Drag/drop su tab Bitcoin
-Stessa meccanica dello Step 1 (drag native, `ordineCard`/`order` CSS, maniglia `⋮⋮`, Alt+↑/↓, bottone "Ripristina layout"), applicata alle card del tab Bitcoin usando la chiave `dashboardOrdineCardBtc` già predisposta allo Step 4. Con una sola card oggi il riordino è no-op visibile ma il meccanismo deve essere pronto per card BTC future.
+## Step 5 — Drag/drop su vista Bitcoin
+Stessa meccanica dello Step 1 (drag native, `ordineCard`/`order` CSS, maniglia `⋮⋮`, Alt+↑/↓, bottone "Ripristina layout"), applicata alle 4 card della vista Bitcoin usando la chiave `dashboardOrdineCardBtc` già predisposta allo Step 4.
 
 Verifica:
-1. Screenshot pre (= post-Step 4) / post sul tab Bitcoin.
+1. Screenshot pre (= post-Step 4) / post sulla vista Bitcoin.
 2. `cd frontend && npm run build`, riavvio backend (AskUserQuestion).
-3. Maniglia e bottone "Ripristina layout" presenti anche nel tab Bitcoin, funzionanti, indipendenti da quelli del tab As-is.
-4. CHANGELOG `[Unreleased]`: "Dashboard: card riordinabili anche nel tab Bitcoin".
+3. Maniglia e bottone "Ripristina layout" presenti anche nella vista Bitcoin, funzionanti, indipendenti da quelli della vista Dashboard; riordino tra le 4 card BTC persiste.
+4. CHANGELOG `[Unreleased]`: "Dashboard: card riordinabili anche nella vista Bitcoin".
 
 → Spuntare Step 5, fermarsi. Piano completato.

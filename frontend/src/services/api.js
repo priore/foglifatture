@@ -172,6 +172,11 @@ export const api = {
       return r.json();
     });
   },
+  // Dashboard: cambio EUR/BTC attuale da CoinGecko, per il controvalore odierno degli incassi BTC (fetch solo su richiesta esplicita dell'utente, per privacy IP)
+  cambioAttualeBtc: () => fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur').then(async (r) => {
+    if (!r.ok) throw new Error(`CoinGecko ha risposto ${r.status}`);
+    return r.json();
+  }),
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 
   // Widget dashboard: fatture non incassate, prossime scadenze fiscali
