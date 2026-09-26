@@ -4,7 +4,7 @@
 - [x] Step 1 — Drag/drop dashboard as-is (7 card attuali) — completato 2026-09-26
 - [x] Step 2 — Backend `riepilogoBtc` — completato 2026-09-26
 - [x] Step 3 — 4 card BTC dedicate in dashboard as-is — completato 2026-09-26
-- [ ] Step 4 — Tabbar dashboard (As-is / Bitcoin)
+- [x] Step 4 — Tabbar dashboard (As-is / Bitcoin) — completato 2026-09-26
 - [ ] Step 5 — Drag/drop su tab Bitcoin
 
 Esecuzione: uno step alla volta, in quest'ordine. Dopo ogni step: verifica passi, spuntare la checkbox sopra (`[x]`), **fermarsi** e attendere conferma esplicita dell'utente prima di iniziare lo step successivo. Non anticipare step futuri durante uno step corrente.

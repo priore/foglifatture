@@ -202,35 +202,60 @@ const andamentoCambioBtc = computed(() => {
 
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
-const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali', 'btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale'];
+// Due viste (Dashboard/Bitcoin), ognuna col proprio ordine e la propria chiave localStorage.
+const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
+const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
+const CHIAVE_TAB = 'dashboardTabAttivo';
 
-function caricaOrdineSalvato() {
+function caricaOrdineSalvato(chiave, ordineDefault) {
   try {
-    const salvato = JSON.parse(localStorage.getItem(CHIAVE_ORDINE));
-    if (!Array.isArray(salvato)) return [...ORDINE_DEFAULT];
+    const salvato = JSON.parse(localStorage.getItem(chiave));
+    if (!Array.isArray(salvato)) return [...ordineDefault];
     // Tieni solo id noti, poi aggiungi in coda quelli mancanti (card nuove non spariscono).
-    const noti = salvato.filter((id) => ORDINE_DEFAULT.includes(id));
-    const mancanti = ORDINE_DEFAULT.filter((id) => !noti.includes(id));
+    const noti = salvato.filter((id) => ordineDefault.includes(id));
+    const mancanti = ordineDefault.filter((id) => !noti.includes(id));
     return [...noti, ...mancanti];
   } catch {
-    return [...ORDINE_DEFAULT];
+    return [...ordineDefault];
   }
 }
 
-const ordineCard = ref(caricaOrdineSalvato());
+function caricaTabSalvato() {
+  try {
+    const salvato = localStorage.getItem(CHIAVE_TAB);
+    return salvato === 'Bitcoin' ? 'Bitcoin' : 'Dashboard';
+  } catch {
+    return 'Dashboard';
+  }
+}
+
+const tabAttivo = ref(caricaTabSalvato());
+function cambiaTab(tab) {
+  tabAttivo.value = tab;
+  try {
+    localStorage.setItem(CHIAVE_TAB, tab);
+  } catch {
+    // storage non disponibile: preferenza resta solo in memoria per questa sessione.
+  }
+}
+
+const ordineCard = ref(caricaOrdineSalvato(CHIAVE_ORDINE, ORDINE_DEFAULT));
+const ordineCardBtc = ref(caricaOrdineSalvato(CHIAVE_ORDINE_BTC, ORDINE_DEFAULT_BTC));
 const trascinata = ref(null);
 
 function salvaOrdine() {
   try {
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordineCard.value));
+    localStorage.setItem(CHIAVE_ORDINE_BTC, JSON.stringify(ordineCardBtc.value));
   } catch {
     // storage non disponibile (privato/pieno): ordine resta solo in memoria per questa sessione.
   }
 }
 
 function ordinePer(id) {
-  return ordineCard.value.indexOf(id);
+  return (ORDINE_DEFAULT.includes(id) ? ordineCard.value : ordineCardBtc.value).indexOf(id);
 }
 
 function dragStart(id) {
@@ -239,31 +264,42 @@ function dragStart(id) {
 
 function drop(idTarget) {
   if (!trascinata.value || trascinata.value === idTarget) return;
-  const lista = [...ordineCard.value];
+  const target = ORDINE_DEFAULT.includes(idTarget) ? ordineCard : ordineCardBtc;
+  const lista = [...target.value];
   const daIndex = lista.indexOf(trascinata.value);
   const aIndex = lista.indexOf(idTarget);
+  if (daIndex === -1 || aIndex === -1) return; // trascinata e target appartengono a viste diverse
   lista.splice(daIndex, 1);
   lista.splice(aIndex, 0, trascinata.value);
-  ordineCard.value = lista;
+  target.value = lista;
   trascinata.value = null;
   salvaOrdine();
 }
 
 function spostaConTastiera(id, delta) {
-  const lista = [...ordineCard.value];
+  const target = ORDINE_DEFAULT.includes(id) ? ordineCard : ordineCardBtc;
+  const lista = [...target.value];
   const daIndex = lista.indexOf(id);
   const aIndex = daIndex + delta;
   if (aIndex < 0 || aIndex >= lista.length) return;
   lista.splice(daIndex, 1);
   lista.splice(aIndex, 0, id);
-  ordineCard.value = lista;
+  target.value = lista;
   salvaOrdine();
 }
 
-const layoutModificato = computed(() => ordineCard.value.some((id, i) => id !== ORDINE_DEFAULT[i]));
+const layoutModificato = computed(() => {
+  const ordineAttuale = tabAttivo.value === 'Bitcoin' ? ordineCardBtc.value : ordineCard.value;
+  const ordineDefault = tabAttivo.value === 'Bitcoin' ? ORDINE_DEFAULT_BTC : ORDINE_DEFAULT;
+  return ordineAttuale.some((id, i) => id !== ordineDefault[i]);
+});
 
 function ripristinaLayout() {
-  ordineCard.value = [...ORDINE_DEFAULT];
+  if (tabAttivo.value === 'Bitcoin') {
+    ordineCardBtc.value = [...ORDINE_DEFAULT_BTC];
+  } else {
+    ordineCard.value = [...ORDINE_DEFAULT];
+  }
   salvaOrdine();
 }
 </script>
@@ -312,7 +348,12 @@ function ripristinaLayout() {
         <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
       </div>
 
-      <div class="griglia-card">
+      <div class="tab-toggle">
+        <button type="button" :class="tabAttivo === 'Dashboard' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Dashboard')">Dashboard</button>
+        <button type="button" :class="tabAttivo === 'Bitcoin' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Bitcoin')">Bitcoin</button>
+      </div>
+
+      <div v-if="tabAttivo === 'Dashboard'" class="griglia-card">
         <div class="card" :style="{ order: ordinePer('soglia-cassa') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -470,7 +511,9 @@ function ripristinaLayout() {
             <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
           </div>
         </div>
+      </div>
 
+      <div v-else class="griglia-card">
         <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -627,6 +670,7 @@ function ripristinaLayout() {
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow-y: auto; }
 
+.tab-toggle { display: flex; gap: 8px; margin-bottom: 20px; }
 .griglia-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 .card-head-titolo { display: flex; align-items: center; gap: 8px; }
 .maniglia-card { cursor: grab; color: var(--muted); font-size: .9rem; line-height: 1; user-select: none; }

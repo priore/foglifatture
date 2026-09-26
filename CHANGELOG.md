@@ -8,6 +8,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 - Dashboard: card riordinabili con trascinamento (ordine salvato nel browser).
 - Dashboard: 4 card Incassi Bitcoin (riepilogo, rate con TXID, quadro RW, valore attuale con grafico andamento cambio).
+- Dashboard: doppia vista Dashboard/Bitcoin con toggle dedicato.
 
 ## [1.3.0] - 2026-09-25
 
