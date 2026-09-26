@@ -2,7 +2,7 @@
 
 ## Stato avanzamento
 - [x] Step 1 — Drag/drop dashboard as-is (7 card attuali) — completato 2026-09-26
-- [ ] Step 2 — Backend `riepilogoBtc`
+- [x] Step 2 — Backend `riepilogoBtc` — completato 2026-09-26
 - [ ] Step 3 — Card "Incassi Bitcoin" in dashboard as-is
 - [ ] Step 4 — Tabbar dashboard (As-is / Bitcoin)
 - [ ] Step 5 — Drag/drop su tab Bitcoin
