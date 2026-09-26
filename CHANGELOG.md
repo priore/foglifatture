@@ -6,6 +6,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-26
+
+### Added
+- **Dashboard riordinabile a trascinamento** — ogni card si sposta con drag & drop (maniglia dedicata, anche da tastiera con Alt+↑/↓), ordine salvato nel browser, bottone "Ripristina layout" per tornare al default.
+- **Vista dedicata Incassi Bitcoin** — doppio tab in dashboard (As-is / Bitcoin), riordinabile allo stesso modo, con 4 nuove card:
+  - riepilogo (totale EUR, BTC, numero rate, cambio medio)
+  - rate incassate in BTC con link diretto alla transazione
+  - promemoria quadro RW per i BTC detenuti al 31/12
+  - valore attuale del controvalore BTC incassato, con andamento del cambio
+- **Card "Valore BTC di mercato"** — prezzo Bitcoin/EUR corrente, variazione nelle ultime 24h e andamento a sparkline degli ultimi 30 giorni, indipendente dagli incassi registrati.
+
 ## [1.3.0] - 2026-09-25
 
 ### Added
