@@ -1,76 +1,222 @@
-# Piano (step 2): calcolo e compilazione autonoma F24
+# Piano (step 2): stima versamenti F24 (imposta sostitutiva + INPS)
 
-Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
+Confidence: 🟢 confermato da codice o fonte ufficiale · 🟡 inferito / da riconfermare · 🔴 ipotesi
 
 Collegato a: [F24_STEP1_RICOGNIZIONE.md](F24_STEP1_RICOGNIZIONE.md) (presupposto), [EXPORT_COMMERCIALISTA.md](EXPORT_COMMERCIALISTA.md).
 
 Tracciato su Gogs (locale), escluso solo dal sync verso GitHub (skill `sync-public`) — non pubblicato.
 
-⚠️ Questo step dipende dall'esito dello Step 1: se lo Step 1 conclude che i versamenti reali si tracciano a mano (scenario più probabile, vedi quel documento), questo step si riduce a "calcolare quanto versare" — non tocca mai dati esterni, solo output. Se invece un domani esistesse un'integrazione automatica con AE/banca (scartata nello Step 1 come non praticabile oggi), questo step si complicherebbe con riconciliazione stimato/importato — scenario non trattato qui perché lo Step 1 lo esclude.
+⚠️ Questo step dipende dall'esito dello Step 1: i versamenti reali si tracciano a mano, quindi questo step produce solo output ("quanto versare, quando, con quale codice"), non tocca mai dati esterni.
+
+Revisione 2026-09-26: verifica su fonti ufficiali (AdE, INPS, Normattiva) di un documento esterno generato da Gemini sulle fonti F24; correzioni al piano originale; decisione di scope = **stima**, non F24 pronto all'uso.
 
 ## Obiettivo
 
-Valutare se l'app può, in autonomia, calcolare gli importi F24 dovuti (imposta sostitutiva + eventuale INPS) e produrre un F24 compilato (o i dati pronti per compilarlo), con scelta tra pagamento in unica soluzione o rateizzato.
+Mostrare all'utente, per ogni anno fiscale, una **stima** dei versamenti dovuti (imposta sostitutiva + contributi INPS gestione separata), divisa per scadenza (giugno / novembre), con codice tributo/causale e importo — dati pronti da ricopiare in F24 web / home banking. Sempre etichettata "stima, verificare con il commercialista". Nessun F24 generato come file/PDF.
 
-## Cosa già esiste da riusare
+## Nota su IRPEF
 
-🟢 `forfettarioService.js` già calcola, per anno:
-- `redditoImponibile` (ricavi × coefficiente redditività)
-- `aliquota` (5% primi 5 anni, 15% dopo — logica già corretta e testata)
-- `impostaStimata` (reddito imponibile × aliquota)
+🟢 Nel regime forfettario l'imposta sostitutiva **sostituisce** IRPEF, addizionali regionale/comunale e IRAP (L. 190/2014, art. 1, c. 64). Sul reddito forfettario quindi **non si versa IRPEF**: la voce "IRPEF" della stima è l'imposta sostitutiva (codici 1790/1791/1792). Le regole di acconto/saldo/rateizzazione sono però le stesse dell'IRPEF (stesse scadenze, stesse soglie), per questo le fonti AdE le trattano insieme.
 
-Questo è esattamente la base imponibile e l'imposta lorda annua che serve per compilare la sezione Erario dell'F24. **Nessun nuovo calcolo fiscale da inventare per l'imposta sostitutiva** — il motore di calcolo c'è già, manca solo la trasformazione in "importi da versare per scadenza".
+🔴 Fuori scope: IRPEF su *altri* redditi dell'utente (lavoro dipendente, immobili, ecc.) — l'app non li conosce e non deve stimarli.
 
-## Cosa manca (analisi, non ancora implementazione)
+## Stato attuale del codice
 
-### 1. Logica acconto/saldo — non presente
+🟢 `forfettarioService.js` (`calcolaDashboardForfettario`) calcola già: `redditoImponibile`, `aliquota` (5%/15%, `aliquotaImposta`), `impostaStimata`, `accontoStimato`, e in parallelo il blocco `cassa` (`ricaviCumulati`, `redditoImponibile`, `impostaStimata`) basato sulle rate incassate.
 
-🟢 Oggi `forfettarioService.js` calcola solo l'imposta sull'anno corrente (consuntivo). Il sistema fiscale italiano richiede:
-- **Saldo** anno N (imposta sull'anno appena chiuso) entro il 30 giugno (o 30 luglio con maggiorazione) dell'anno N+1.
-- **Acconto** anno N+1 (stimato sul metodo storico: 100% dell'imposta anno N, salvo eccezioni) in 1 rata (se sotto una soglia) o 2 rate (giugno + novembre).
-- 🔴 Regole di soglie/percentuali acconto possono cambiare per legge di bilancio anno per anno — un calcolo "automatico" rischia di essere sbagliato se non aggiornato ogni anno fiscale. Questo è un rischio reale, non teorico: un errore qui ha conseguenza economica diretta per l'utente (sanzioni AE), a differenza di un bug nell'export CSV.
+### Problemi da correggere prima di qualsiasi stima F24
 
-### 2. Codici tributo F24 — dominio nuovo, nessun dato in config
+1. 🟢 **Acconto calcolato per competenza.** `accontoStimato` ([forfettarioService.js:138-139](../../backend/src/services/forfettarioService.js)) usa `ricaviProiettati`, che derivano dalle fatture *emesse*. Il forfettario è tassato **per cassa** (il codice stesso lo dice alle righe 35-38). La base corretta è il fatturato incassato (`ricaviAnnoCassa`), non quello emesso.
+2. 🟢 **Contributi INPS non dedotti.** L. 190/2014, art. 1, c. 64: i contributi previdenziali versati nell'anno si deducono dal reddito forfettario. Oggi `impostaStimata` è `ricavi × coefficiente × aliquota` senza deduzione ⇒ **sovrastima sistematica** dell'imposta.
+3. 🟢 **Nessun dato previdenziale in config.** `config.forfettario` ha solo `sogliaAnnua`, `codiceAteco`, `settoreAteco`, `coefficenteRedditivita`, `dataInizioAttivita`.
 
-🟢 `config.forfettario` oggi non contiene nessun codice tributo. Servirebbero (dati statici, non calcolati):
-- `1790`/`1791`/`1792`/`1793` (saldo/acconto imposta sostitutiva forfettari, il codice esatto dipende dall'anno e dal tipo rata — da verificare ogni anno su normativa AE).
-- Codice INPS gestione separata (se applicabile — dipende dalla situazione previdenziale specifica dell'utente, che l'app non traccia oggi: nessun campo "regime previdenziale" in `config.js`).
-- 🔴 L'INPS gestione separata/artigiani ha regole di calcolo indipendenti dal reddito imponibile forfettario (aliquote INPS diverse, minimali contributivi) — l'app oggi non ha NESSUN dato su questo (non c'è iscrizione INPS in config). Calcolarlo "in autonomia" richiederebbe aggiungere tutto un sotto-dominio previdenziale che oggi non esiste per niente nel prodotto.
+## Regole verificate su fonti ufficiali
 
-### 3. Produzione del file F24 — non è un'operazione di sola lettura
+### Imposta sostitutiva (sezione Erario F24)
 
-🟢 A differenza dell'export CSV per il commercialista (Step precedente, sola lettura/aggregazione di dati già corretti), qui l'output è un **documento fiscale che l'utente userà per pagare denaro reale**. Un bug produce un versamento sbagliato (importo, codice tributo, scadenza) con conseguenze dirette: sanzioni, interessi, o mancato versamento.
+| Regola | Valore | Fonte |
+|---|---|---|
+| Codice saldo | `1792` | 🟢 AdE ricerca codici; Ris. 59/E/2015 |
+| Codice acconto prima rata | `1790` | 🟢 idem |
+| Codice acconto seconda rata o unica soluzione | `1791` | 🟢 idem |
+| ~~`1793`~~ | **non è del forfettario** — regime di vantaggio (minimi, art. 27 DL 98/2011). Errore del piano originale | 🟢 AdE ricerca codici |
+| Metodo storico acconto | 100% dell'imposta dell'anno precedente | 🟢 AdE "Come si paga l'Irpef" |
+| Acconto non dovuto | imposta anno precedente ≤ 51,65 € | 🟢 idem |
+| Ripartizione acconto forfettari/ISA | 50% + 50% (non 40/60) | 🟢 Ris. 93/E/2019; AdE "Come si paga l'Irpef" |
+| Unica soluzione a novembre | acconto ≤ 206 € (forfettari/ISA) | 🟢 AdE "Come si paga l'Irpef" |
+| Scadenza saldo + primo acconto | 30 giugno (slitta al primo giorno lavorativo) | 🟢 idem |
+| Differimento | +30 giorni con maggiorazione 0,40% | 🟢 idem |
+| Scadenza secondo acconto | 30 novembre (slitta al primo giorno lavorativo) | 🟢 scadenzario AdE |
+| Rateizzazione | solo saldo + primo acconto; rate mensili al 16 del mese; ultima **entro il 16 dicembre**; interessi 4% annuo sulle rate successive alla prima (codice `1668`) | 🟢 D.Lgs. 241/1997 art. 20 come modificato da D.Lgs. 1/2024 art. 8; Circ. 9/E/2024 |
+| Secondo acconto in 5 rate gennaio–maggio (P.IVA con ricavi ≤ 170.000 €) | norma a termine, rinnovata anno per anno | 🟡 esisteva per 2023 (DL 145/2023) e 2024 (scadenzario 16/01/2025) — **da riverificare ogni anno**, esempio concreto del rischio "regole che cambiano" |
 
-🟡 Non esiste in Italia un formato "F24 XML" standard equivalente a FatturaPA che un privato possa generare e mandare a un sistema — l'F24 si presenta fisicamente in banca/home banking/Entratel, non via canale telematico diretto per il singolo contribuente forfettario (a differenza delle fatture via SDI, qui non c'è un "sistema di interscambio" verso cui l'app possa inviare qualcosa). Quindi "compilazione autonoma" realisticamente significa: **generare un riepilogo stampabile/compilabile a mano o da copiare nell'home banking**, non un invio automatico — è un'operazione diversa nella natura da tutto il resto dell'app (che genera e *invia* XML FatturaPA via PEC).
+### Contributi INPS gestione separata (sezione INPS F24)
 
-## Valutazione rischio vs beneficio
+| Regola | Valore 2026 | Fonte |
+|---|---|---|
+| Aliquota professionisti senza altra copertura | 26,07% (25 IVS + 0,72 + 0,35 ISCRO) | 🟢 INPS Circ. 8 del 03/02/2026 |
+| Aliquota pensionati / altra copertura obbligatoria | 24% | 🟢 idem |
+| Massimale reddito | 122.295,00 € | 🟢 idem |
+| Minimale (solo accredito contributivo, non obbligo di versamento) | 18.808,00 € | 🟢 idem |
+| Base imponibile | reddito forfettario (ricavi × coefficiente), **al lordo** dei contributi | 🟡 prassi consolidata, da confermare su Circ. INPS annuale Quadro RR |
+| Scadenze | stesse dell'imposta (saldo + primo acconto giugno, secondo acconto novembre), stesso 0,40%, stessa rateizzazione | 🟢 INPS scheda F24 GS; comunicato INPS 07/07/2025 |
+| Misura acconto | 80% dei contributi dell'anno precedente, in due rate da 40% | 🟡 prassi nota, non trovata in forma testuale nelle pagine INPS consultate (renderizzate lato client) — da confermare su Circ. INPS Quadro RR |
+| Causali F24 | `PXX` (aliquota piena) / `P10` (aliquota ridotta); suffisso `R` per rateizzazione; interessi esposti a parte | 🟡 mappatura PXX/P10 da confermare su tabella AdE causali INPS |
 
-- Beneficio: evita all'utente di ricalcolare a mano acconto/saldo/rate — dato che il motore di calcolo imposta esiste già, l'incremento di codice per "quanto versare in totale" è piccolo.
-- Rischio: le regole acconto/rateizzazione/codici tributo cambiano ogni anno fiscale e non sono nel dominio che l'app già modella bene (il forfettario stesso, coefficiente redditività, sono stabili — le regole di *versamento* non lo sono altrettanto). Un errore qui costa soldi veri all'utente, categoria di rischio ben diversa da un bug nella dashboard o nell'export.
-- 🔴 Mantenere aggiornate le regole acconto/codici tributo anno per anno è un carico di manutenzione ricorrente che il resto dell'app non ha (FatturaPA cambia schema raramente, le regole fiscali di versamento cambiano quasi ogni legge di bilancio).
+🔴 Fuori scope: gestione artigiani/commercianti (minimale obbligatorio, contributi fissi trimestrali, riduzione 35% per forfettari) e casse professionali. Modello di calcolo diverso; da aggiungere solo se servirà.
 
-## Raccomandazione (da confermare con l'utente)
+## Cosa implementare (stima)
 
-🔴 Ipotesi di scope minimo, se si procede: limitarsi a un **calcolo di supporto, mai un F24 "pronto all'uso"**:
-- Mostrare in dashboard: "imposta stimata anno corrente: € X — acconto anno prossimo suggerito: € Y (metodo storico, verificare con commercialista)".
-- Nessuna compilazione di modulo F24 vero, nessun codice tributo hard-coded che possa invecchiare silenziosamente.
-- Il testo deve esplicitamente indicare "stima, verificare con il commercialista" — l'app non deve mai presentarsi come autorità sul quanto versare.
+### 1. Correzioni al calcolo esistente — `forfettarioService.js`
 
-Full automation (F24 compilato pronto, importi finali, rate incluse) è sconsigliata per rischio/manutenzione sproporzionati rispetto al resto del progetto, a meno che l'utente non accetti esplicitamente l'onere di verificare/aggiornare le regole ogni anno.
+- `accontoStimato`: base cassa (`ricaviCumulatiCassa` proiettati), non competenza. Lasciare la proiezione per competenza come informazione separata se serve alla dashboard, ma non chiamarla acconto.
+- `impostaStimata` e `cassa.impostaStimata`: dedurre i contributi INPS versati nell'anno (vedi punto 3) prima di applicare l'aliquota, con minimo 0.
 
-## Beneficio possibile da Gemini (già integrato nel progetto)
+### 2. Config — `config.forfettario` (in `configService.js` `DEFAULT_CONFIG`)
 
-🟢 `geminiAtecoService.js` è il precedente diretto: usa Gemini (`gemini-2.0-flash` + tool `google_search`) **non per calcolare**, ma per recuperare/aggiornare una tabella normativa pubblica (ATECO → coefficiente redditività) che non esiste in nessun formato strutturato scaricabile, e la salva come JSON statico locale (`atecoSettori.json`) tramite `aggiornaAtecoSettoriDaGemini()`, chiamata manualmente dal wizard (`StepGemini.vue`), non ad ogni richiesta.
+Nuovi campi, con default che non cambiano il comportamento attuale:
 
-Questo pattern si applica bene a un pezzo dello Step 2, non a tutto:
+```js
+gestionePrevidenziale: '',        // '' | 'gestioneSeparata' | 'altro' (artigiani/commercianti/cassa: non stimato)
+altraCoperturaPrevidenziale: false, // true ⇒ aliquota ridotta (24%) invece di quella piena (26,07%)
+contributiVersati: {},             // { "2026": 1234.56 } contributi INPS versati per cassa nell'anno, inseriti a mano
+accontiVersati: {},                // { "2026": { imposta: 0, inps: 0 } } acconti effettivamente versati per l'anno, a mano
+```
 
-- **Buon uso (stesso pattern di ATECO)**: recuperare/aggiornare annualmente i **codici tributo F24** (`1790`/`1791`/…) e le **soglie/percentuali acconto** correnti, che oggi non sono in `config.forfettario` e cambiano ogni legge di bilancio (il rischio "manutenzione annua" segnalato sopra). Stesso schema: prompt con `google_search`, risposta JSON validata, salvata in un file statico (es. `backend/src/data/f24Regole.json`), aggiornabile manualmente da un pulsante "Aggiorna regole F24" — non un calcolo automatico invisibile, un refresh dati esplicito e ispezionabile come già avviene per ATECO.
-- **Cattivo uso (da evitare)**: chiedere a Gemini di calcolare l'importo finale da versare per l'utente specifico. L'aritmetica (imponibile × aliquota, riparto acconto/saldo) è già ferma e corretta in `forfettarioService.js` — non ha senso delegare un calcolo deterministico a un LLM, che aggiunge solo rischio di errore/allucinazione su un dato con conseguenza economica diretta. Gemini resta uno strumento per **recuperare fatti normativi pubblici che cambiano nel tempo**, mai per fare i conti dell'utente.
+- `contributiVersati` / `accontiVersati` sono inseriti a mano: l'app non vede i pagamenti F24 (Step 1). Se mancano, si usa la stima dell'anno precedente e la UI lo dichiara ("stimato, non dichiarato").
+- ⚠️ **Superato**: esiste già `versamentiF24Service.js` (`f24Versamenti.json`) con i versamenti effettivi. I due campi non servono: si riusa quel service con un campo `codice` opzionale. Vedi [F24_STEP3_SVILUPPO_STIMA.md](F24_STEP3_SVILUPPO_STIMA.md), Step 3.
+- 🟢 Nessun dato sensibile nuovo fuori da `config.json` (già gitignored): gli importi restano lì.
 
-Riduce quindi il rischio principale segnalato sopra (mantenere aggiornati codici tributo/soglie ogni anno) senza introdurre il rischio peggiore (un LLM che calcola quanto l'utente deve pagare). Resta comunque un dato "recuperato da AI, verificare" — la raccomandazione di non produrre un F24 pronto-uso senza verifica umana resta valida anche con questo aiuto.
+### 3. Regole versionate — `backend/src/data/regoleVersamenti.json`
+
+Nuovo file statico, **versionato** (dati pubblici, nessun segreto), stesso posto di `atecoSettori.json`:
+
+```json
+{
+  "2026": {
+    "verificatoIl": "2026-09-26",
+    "impostaSostitutiva": {
+      "codici": { "saldo": "1792", "accontoPrimaRata": "1790", "accontoSecondaRata": "1791", "interessiRate": "1668" },
+      "sogliaAccontoNonDovuto": 51.65, "sogliaUnicaSoluzione": 206, "percentualePrimaRata": 50
+    },
+    "inpsGestioneSeparata": {
+      "aliquotaPiena": 26.07, "aliquotaRidotta": 24, "massimale": 122295,
+      "percentualeAcconto": 80, "causali": { "piena": "PXX", "ridotta": "P10" }
+    },
+    "scadenze": { "saldoPrimoAcconto": "06-30", "secondoAcconto": "11-30", "maggiorazioneDifferimento": 0.40 },
+    "fonti": ["https://www.agenziaentrate.gov.it/portale/come-si-paga-l-irpef6", "https://www.inps.it/…/Circolare-numero-8-del-03-02-2026.pdf"]
+  }
+}
+```
+
+- Un blocco per anno fiscale, aggiornato a mano una volta l'anno (febbraio, dopo la circolare INPS sulle aliquote). Se l'anno richiesto manca, si usa l'ultimo disponibile e la UI mostra "regole non aggiornate per l'anno X".
+- Letto con `readJson`/import statico come `atecoSettori.json`, non via `jsonStore` (è dato di prodotto, non dato utente).
+- ⛔ Niente cronjob, niente scraping di tabelle AdE (sono PDF e i codici forfettario non cambiano dal 2015), niente refresh automatico via Gemini. Il costo di un aggiornamento annuo a mano di ~10 numeri è minore di qualsiasi pipeline. Il refresh via Gemini (pattern `geminiAtecoService.js`) resta un'opzione **futura**, solo se l'aggiornamento manuale si rivelasse un peso.
+
+### 4. Calcolo — nuovo `backend/src/services/versamentiService.js`
+
+Funzioni **pure** (nessun I/O), input = dati già calcolati da `forfettarioService` + config + regole dell'anno. Per l'anno fiscale N (versamenti nell'anno N+1):
+
+```
+redditoForfettario(N)  = ricaviCassa(N) × coefficiente
+INPS(N)                = min(redditoForfettario, massimale) × aliquotaINPS         (se gestioneSeparata)
+imponibileImposta(N)   = max(0, redditoForfettario − contributiVersati(N))
+imposta(N)             = imponibileImposta × aliquota (5/15)
+
+saldoImposta(N)        = imposta(N) − accontiVersati(N).imposta
+saldoINPS(N)           = INPS(N) − accontiVersati(N).inps
+
+accontoImposta(N+1)    = imposta(N) se > 51,65, altrimenti 0
+  ≤ 206 € ⇒ tutto a novembre (1791); altrimenti 50% giugno (1790) + 50% novembre (1791)
+accontoINPS(N+1)       = 80% × INPS(N), 40% giugno + 40% novembre
+```
+
+Output: elenco righe F24 raggruppate per scadenza:
+
+```js
+{ scadenza: '2027-06-30', sezione: 'erario', codice: '1792', annoRiferimento: 2026, importo: 1234.56, descrizione: 'Saldo imposta sostitutiva 2026' }
+```
+
+più totale per scadenza e l'importo con maggiorazione 0,40% se si paga entro 30 giorni.
+
+- Il saldo può venire negativo (acconti > imposta) ⇒ mostrarlo come **credito** ("a credito, compensabile"), non come importo da versare. Niente logica di compensazione.
+- Arrotondamenti: al centesimo, come il resto del service.
+- 🟡 Una scadenza che cade di sabato o domenica slitta al primo giorno lavorativo: funzione minima (solo weekend). Le festività non si gestiscono: l'unica rilevante sarebbe l'8 dicembre, che non tocca queste scadenze.
+
+### 5. Rateizzazione (opzionale, fase 2)
+
+Input: numero di rate (1..n, con l'ultima entro il 16 dicembre). Output: rate mensili al 16 del mese con interessi 4% annuo pro rata sulle rate dopo la prima, riga separata per gli interessi (`1668`; per l'INPS causale con suffisso `R`). Solo su saldo + primo acconto. Da fare solo dopo che la stima base è stata validata su un anno reale.
+
+### 6. Route e UI
+
+- Estendere la risposta di `calcolaDashboardForfettario` con `versamenti` (nessuna nuova route: la dashboard è già l'unico consumatore).
+- `DashboardView.vue`: nuova card "Versamenti stimati" riordinabile come le altre (drag/drop esistente). Contiene la tabella per scadenza: sezione, codice, anno di riferimento, importo, totale. Disclaimer fisso: "Stima basata su regole verificate il {verificatoIl}. Verificare con il commercialista prima di pagare."
+- `gestionePrevidenziale` vuoto o `'altro'` ⇒ la parte INPS resta **visibile ma disabilitata**, con un link alle impostazioni per configurarla (regola "mai nascondere, sempre disabilitare con azione").
+- Impostazioni (sezione forfettario): i campi del punto 2, più l'inserimento per anno di contributi e acconti versati.
+
+### 7. Test — `versamentiService.test.js` (Node `--test`)
+
+Casi minimi:
+- acconto ≤ 51,65 ⇒ nessun acconto;
+- acconto tra 51,65 e 206 ⇒ unica soluzione a novembre;
+- acconto > 206 ⇒ 50/50;
+- deduzione INPS che azzera l'imponibile;
+- massimale INPS;
+- saldo negativo ⇒ credito;
+- scadenza nel weekend ⇒ slitta;
+- anno assente in `regoleVersamenti.json` ⇒ fallback con flag.
+
+Aggiornare `forfettarioService.test.js` per la base cassa dell'acconto.
+
+## Esplicitamente escluso
+
+- Generazione PDF/file F24 o invio telematico. 🟢 Chi ha partita IVA paga l'F24 per forza in via telematica, ma lo fa da solo con F24 web / home banking: non esiste un canale tipo SDI da cui l'app possa inviarlo.
+- Artigiani/commercianti, casse professionali, concordato preventivo biennale (CPB), secondo acconto rateizzato gennaio–maggio (norma a termine), metodo previsionale dell'acconto.
+- Qualsiasi calcolo fatto da un LLM.
+
+## Valutazione del documento esterno (fonti F24 generate da Gemini)
+
+- 🟢 Corretti: codici 1790/1791/1792/1668; si rateizzano solo saldo e primo acconto; l'API Normattiva esiste (`dati.normattiva.it`, endpoint `api.normattiva.it`); il principio "LLM solo per strutturare testo, calcoli nel backend".
+- 🔴 Errati o non verificabili: link `google.com/search?q=` e `utm_source=gemini` (non sono fonti reali); "feed RSS dello scadenzario" (gli RSS AdE coprono solo notizie e prassi); "endpoint di ricerca" DeF Finanze (nessuna API documentata); tabelle codici "CSV/TXT" (sono PDF o HTML).
+- 🔴 Mancano: 50/50 per i forfettari, soglie 51,65 / 206, 0,40%, 4%, 16 dicembre, tutta la parte INPS.
+- Conclusione: utile come indice delle fonti, **non** come base per una pipeline automatica.
+
+## Ordine di implementazione proposto
+
+Piano di sviluppo dettagliato, con step e checkbox: [F24_STEP3_SVILUPPO_STIMA.md](F24_STEP3_SVILUPPO_STIMA.md).
+
+1. Correzioni al punto 1 (base cassa + deduzione INPS) con test — ha valore anche da solo, perché la dashboard attuale sovrastima.
+2. Config (punto 2) + `regoleVersamenti.json` (punto 3).
+3. `versamentiService.js` + test (punti 4 e 7).
+4. Card dashboard + impostazioni (punto 6), verificata con screenshot prima/dopo.
+5. Rateizzazione (punto 5), solo se serve.
+6. Aggiornare `CHANGELOG.md` (voce `[Unreleased]`).
 
 ## Domande aperte per l'utente
 
-1. Sei iscritto a INPS gestione separata (oltre all'imposta sostitutiva)? Se sì, quell'aliquota/calcolo non è oggi in `config.forfettario` e andrebbe aggiunto come dominio nuovo — impatta molto lo scope.
-2. Accetteresti un output "stima acconto/saldo, verifica con commercialista" (basso rischio) o serve davvero un F24 pronto a importo definitivo (alto rischio, manutenzione annua delle regole)?
-3. Chi si impegna ad aggiornare i codici tributo/soglie acconto ogni anno fiscale, se si costruisce questa feature?
+1. ~~Conferma: iscritto alla gestione separata INPS, senza altra copertura previdenziale (aliquota 26,07%)?~~ ✅ 2026-09-26: sì, gestione separata. Artigiani/commercianti e casse restano fuori scope.
+2. Per gli anni già chiusi, hai gli importi degli F24 effettivamente pagati (contributi e acconti) da inserire? Senza, la stima del saldo si basa su acconti stimati.
+3. La rateizzazione (punto 5) serve davvero o basta l'unica soluzione?
+
+## Fonti ufficiali
+
+- [AdE – Codici tributo 1790](https://www1.agenziaentrate.gov.it/servizi/codici/ricerca/compilaf24_erario.php?CT=1790), [1791](https://www1.agenziaentrate.gov.it/documentazione/versamenti/codici/ricerca/compilaf24_erario.php?CT=1791), [1792](https://www1.agenziaentrate.gov.it/servizi/codici/ricerca/compilaf24_erario.php?CT=1792), [elenco imposte sostitutive](https://www1.agenziaentrate.gov.it/servizi/codici/ricerca/elencoTributi.php?Q1=&Q2=&Q3=IMPOSTE+SOSTITUTIVE)
+- [AdE – Risoluzioni codici 2015 (59/E)](https://www.agenziaentrate.gov.it/portale/it/web/guest/archivio/normativa-prassi-archivio-documentazione/istituzione-codici-tributo-archivio-risoluzioni/2015-ris-codici-ist)
+- [AdE – Risoluzione 93/E/2019](https://www.agenziaentrate.gov.it/portale/documents/20143/2139920/Risoluzione+n.+93+del+12+novembre+2019.pdf/731cf395-788b-06d4-4d6b-f8f69be11928)
+- [AdE – Circolare 9/E/2024](https://www.agenziaentrate.gov.it/portale/documents/20143/6101200/Circolare+n.+9_02_05_2024.pdf/c5932a62-5b45-179a-adbe-ccdb3db9b0b8)
+- [AdE – Come si paga l'Irpef (professionisti)](https://www.agenziaentrate.gov.it/portale/come-si-paga-l-irpef6)
+- [AdE – Secondo acconto ricavi ≤ 170mila](https://www.agenziaentrate.gov.it/portale/-/autonomi-e-imprenditori-individuali-con-ricavi-fino-a-170mila-euro-il-secondo-acconto-irpef-va-al-2024), [scadenzario 16/01/2025](https://www1.agenziaentrate.gov.it/servizi/scadenzario/main.php?op=4&chi=3790&cosa=10825&come=504&entroil=16-01-2025)
+- [AdE – Tabelle causali INPS per F24](https://www.agenziaentrate.gov.it/portale/web/guest/strumenti/codici-attivita-e-tributo/f24-codici-tributo-per-i-versamenti/tabelle-dei-codici-tributo-e-altri-codici-per-il-modello-f24/tabelle-codici-inps-e-enti-previdenziali-ed-assicurativi)
+- [INPS – Circolare 8 del 03/02/2026 (aliquote GS 2026)](https://www.inps.it/content/dam/inps-site/it/scorporati/circolari-e-messaggi/2026/02/Circolare_15153/Allegati/16573_Circolare-numero-8-del-03-02-2026.pdf)
+- [INPS – F24 professionisti Gestione Separata](https://www.inps.it/it/it/dettaglio-approfondimento.schede-informative.49920.F24-per-professionisti-iscritti-alla-Gestione-Separata.html), [comunicato 07/07/2025 (Circ. 105/2025)](https://www.inps.it/content/dam/inps-site/it/scorporati/comunicati-stampa/2025/07/Allegati/3820_CS_Istruzioni-compilazione-Quadro-RR-art_com-e-gestione-separata.pdf)
+- [Normattiva OpenData](https://dati.normattiva.it/)
+
+## Review Checklist
+
+- **Completezza**: calcolo imposta, INPS gestione separata, scadenze, codici, config, test e UI coperti. Rateizzazione rimandata a fase 2. Artigiani/casse esclusi.
+- **Accuratezza**: codici, soglie, 50/50, aliquote INPS 2026 e regole di rateizzazione verificati su AdE/INPS (🟢). Acconto INPS all'80%, causali PXX/P10 e base INPS al lordo dei contributi: 🟡.
+- **Coerenza**: riusa `forfettarioService`, il pattern `atecoSettori.json` e il drag/drop della dashboard. Nessuna nuova route. Test con `--test`.
+- **TODO**: riconfermare le voci 🟡 su Circ. INPS Quadro RR 2026 e sulla tabella AdE delle causali INPS prima di implementare il punto 4.
+- **Informazioni mancanti**: F24 storici effettivamente pagati. La posizione previdenziale è confermata: gestione separata.
+- **Domande aperte**: vedi sezione dedicata.
+- **Livello di confidenza**: alto sulla parte imposta sostitutiva, medio-alto sulla parte INPS.
