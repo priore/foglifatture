@@ -8,7 +8,7 @@ import TemplateStampa from '../components/common/TemplateStampa.vue';
 import { api } from '../services/api.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
 import { inviaPdfEmail } from '../composables/useMailto.js';
-import { preparaDatiFattura } from '../composables/useTemplateData.js';
+import { preparaDatiFattura, pagamentoDaConfig } from '../composables/useTemplateData.js';
 
 const oggi = new Date();
 const anno = ref(oggi.getFullYear());
@@ -87,6 +87,8 @@ const datiFattura = computed(() => {
     // vedi PAGAMENTI_BTC.md F3): altrimenti mostra un'anteprima dal cliente corrente.
     pagamentoBtc: fatturaGenerata.value?.pagamentoBtc ?? clienteCorrente.value.pagamentoBtc,
     causaleBtc: fatturaGenerata.value?.causaleBtc ?? clienteCorrente.value.causaleBtc,
+    pagamento: fatturaGenerata.value ? (fatturaGenerata.value.pagamento ?? null) : pagamentoDaConfig(config.value, clienteCorrente.value),
+    dataScadenzaPagamento: fatturaGenerata.value?.dataScadenzaPagamento ?? null,
   });
 });
 
@@ -427,7 +429,7 @@ onMounted(async () => {
             <div class="field" v-if="fatturaGenerata">
               <label>Scadenza pagamento</label>
               <input type="date" v-model="dataScadenzaPagamento" :disabled="salvandoScadenza" @change="salvaScadenzaPagamento" />
-              <small class="note-legal">Termine commerciale, non fiscale: modificabile anche a fattura già emessa.</small>
+              <small class="note-legal">Termine commerciale, non fiscale: modificabile anche a fattura già emessa. Va in XML (DatiPagamento) se la fattura non è ancora stata inviata.</small>
             </div>
             <div class="field" v-if="fatturaGenerata?.pagamenti?.length">
               <label>Pagamenti registrati {{ fatturaGenerata.residuo > 0 ? `(residuo ${formattaEuro(fatturaGenerata.residuo)})` : '(saldata)' }}</label>

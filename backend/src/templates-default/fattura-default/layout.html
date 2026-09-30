@@ -49,4 +49,15 @@
   {{#if pagamentoBtc}}
     <p class="legal-note">{{causaleBtc}}</p>
   {{/if}}
+{{#if pagamento}}
+<div class="pag-box">
+  <div class="pag-dati">
+    <p class="pag-titolo">Dati per il pagamento</p>
+    {{#if pagamento.mostraIban}}<p>IBAN <strong>{{pagamento.ibanFormattato}}</strong>{{#if pagamento.intestatario}} &mdash; {{pagamento.intestatario}}{{/if}}</p>{{/if}}
+    {{#if pagamento.btcAddress}}<p>Bitcoin <strong class="pag-btc">{{pagamento.btcAddress}}</strong></p>{{/if}}
+    <p>Modalit&agrave;: {{pagamento.modalitaEtichetta}} &middot; Scadenza: {{pagamento.scadenzaFormattata}}</p>
+  </div>
+  {{#if pagamento.qrSvg}}<div class="pag-qr">{{{pagamento.qrSvg}}}<span>{{pagamento.qrEtichetta}}</span></div>{{/if}}
+</div>
+{{/if}}
 </div>
