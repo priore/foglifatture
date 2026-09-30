@@ -32,3 +32,13 @@ test('campi mancanti riportati singolarmente', () => {
   assert.match(r.errori.join(';'), /CAP fornitore/);
   assert.match(r.errori.join(';'), /Numero fattura/);
 });
+
+test('data fattura nel futuro (fuso Europe/Rome) rifiutata, oggi e passato ok', () => {
+  const adesso = new Date('2026-08-31T22:30:00Z'); // 1/9 00:30 a Roma
+  const esito = (data) => validaDatiFatturaPA({ fornitore, cliente, fattura: { ...fattura, data } }, adesso);
+  assert.equal(esito('2026-09-01').valido, true);
+  assert.equal(esito('2026-08-31').valido, true);
+  const futura = esito('2026-09-02');
+  assert.equal(futura.valido, false);
+  assert.match(futura.errori.join(';'), /00403/);
+});

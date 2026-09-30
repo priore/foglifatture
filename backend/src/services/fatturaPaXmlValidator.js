@@ -10,6 +10,11 @@ const RE_PROVINCIA = /^[A-Za-z]{2}$/;
 const RE_CODICE_DESTINATARIO = /^[0-9A-Za-z]{6,7}$/;
 const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
 
+// Data odierna in Europe/Rome (formato AAAA-MM-GG, en-CA) per il confronto con la data fattura.
+function oggiRoma(adesso = new Date()) {
+  return adesso.toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
+}
+
 function requireCampo(errori, valore, etichetta) {
   if (valore == null || String(valore).trim() === '') errori.push(`${etichetta} mancante`);
 }
@@ -26,7 +31,7 @@ function requireMatch(errori, valore, regex, etichetta) {
  * gli errori di formato più comuni (lunghezza P.IVA/CF/CAP, provincia, codice destinatario).
  * @returns {{ valido: boolean, errori: string[] }}
  */
-export function validaDatiFatturaPA({ fornitore, cliente, fattura }) {
+export function validaDatiFatturaPA({ fornitore, cliente, fattura }, adesso = new Date()) {
   const errori = [];
 
   requireCampo(errori, fornitore?.denominazione, 'Denominazione fornitore');
@@ -56,6 +61,9 @@ export function validaDatiFatturaPA({ fornitore, cliente, fattura }) {
   requireCampo(errori, fattura?.numero, 'Numero fattura');
   requireCampo(errori, fattura?.data, 'Data fattura');
   requireMatch(errori, fattura?.data, RE_DATA, 'Data fattura (formato AAAA-MM-GG)');
+  if (RE_DATA.test(String(fattura?.data ?? '')) && fattura.data > oggiRoma(adesso)) {
+    errori.push(`Data fattura nel futuro (${fattura.data}): lo SDI la scarta con errore 00403`);
+  }
   requireCampo(errori, fattura?.descrizione, 'Descrizione fattura');
   if (fattura?.imponibile == null || !Number.isFinite(Number(fattura.imponibile)) || Number(fattura.imponibile) <= 0) {
     errori.push('Imponibile fattura non valido');

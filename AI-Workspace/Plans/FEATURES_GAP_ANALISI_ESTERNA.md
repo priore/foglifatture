@@ -393,33 +393,35 @@ Timesheet ha invece funzioni che l'esterno non ha: timesheet e ore, multi-client
 
 ## G. Ordine di realizzazione
 
+**Regola: a fine di ogni voce implementata, aggiornare subito la colonna «Stato» di questa tabella** (⬜ da fare · 🚧 in corso · ✅ data + commit), come ultimo passo del task.
+
 Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipendono solo da voci già fatte (livello 1, 2…). Il livello è la lunghezza della catena di dipendenze più lunga. Dentro ogni livello si va dallo **sforzo più basso al più alto**. Dove due voci hanno lo stesso sforzo, prima quella che ne sblocca altre.
 
-| Ordine | Voce | Sforzo | Dipende da |
-|---|---|---|---|
-| **Livello 0: indipendenti** | | | |
-| 1° | 12 Data fattura nel futuro (FP-029) | S | — |
-| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — |
-| 3° | 1 Regole fiscali versionate (FP-021) | M | — |
-| 4° | 18 PEC guidata (FP-032) | M | — |
-| 5° | 17 Import ZIP (FP-017) | M | — |
-| **Livello 1: dipendono solo da voci di livello 0** | | | |
-| 6° | 4 Calendario fiscale (FP-026), conferma a parte | S | 1 |
-| 7° | 5 Requisiti 5% / ISA (FP-027), conferma a parte | S | 1 |
-| 8° | 11 Avviso soglia + FP-002 (FP-028) | S | 1 |
-| 9° | 14 Rivalsa INPS 4% (FP-031) | S-M | 1 |
-| 10° | 2 Registro fonti (FP-019) | M | 1 |
-| 11° | 15 Clienti esteri (FP-018) | M | 1 |
-| 12° | 6 Piano F24 = F24_STEP3 Step 1-7 (FP-015) | L | F24_STEP3 |
-| **Livello 2** | | | |
-| 13° | 16 Valuta e cambio (FP-020) | S-M | 15 |
-| 14° | 7 Stesura F24 PDF (FP-023) | M | 6 |
-| 15° | 3 Controllo periodico fonti (FP-022) | M | 1, 2 |
-| **Livello 3** | | | |
-| 16° | 8 Stato F24 + versati automatici (FP-024) | S-M | 7 |
-| 17° | 10 Bollo trimestrale + F24 (FP-025) | S-M | 1, 7 |
-| **Livello 4** | | | |
-| 18° | 9 Compensazione crediti (FP-016) | M | 7, 8 |
+| Ordine | Voce | Sforzo | Dipende da | Stato |
+|---|---|---|---|---|
+| **Livello 0: indipendenti** | | | | |
+| 1° | 12 Data fattura nel futuro (FP-029) | S | — | ✅ 2026-09-30 (commit: da fare) |
+| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ⬜ |
+| 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
+| 4° | 18 PEC guidata (FP-032) | M | — | ⬜ |
+| 5° | 17 Import ZIP (FP-017) | M | — | ⬜ |
+| **Livello 1: dipendono solo da voci di livello 0** | | | | |
+| 6° | 4 Calendario fiscale (FP-026), conferma a parte | S | 1 | ⬜ |
+| 7° | 5 Requisiti 5% / ISA (FP-027), conferma a parte | S | 1 | ⬜ |
+| 8° | 11 Avviso soglia + FP-002 (FP-028) | S | 1 | ⬜ |
+| 9° | 14 Rivalsa INPS 4% (FP-031) | S-M | 1 | ⬜ |
+| 10° | 2 Registro fonti (FP-019) | M | 1 | ⬜ |
+| 11° | 15 Clienti esteri (FP-018) | M | 1 | ⬜ |
+| 12° | 6 Piano F24 = F24_STEP3 Step 1-7 (FP-015) | L | F24_STEP3 | ⬜ |
+| **Livello 2** | | | | |
+| 13° | 16 Valuta e cambio (FP-020) | S-M | 15 | ⬜ |
+| 14° | 7 Stesura F24 PDF (FP-023) | M | 6 | ⬜ |
+| 15° | 3 Controllo periodico fonti (FP-022) | M | 1, 2 | ⬜ |
+| **Livello 3** | | | | |
+| 16° | 8 Stato F24 + versati automatici (FP-024) | S-M | 7 | ⬜ |
+| 17° | 10 Bollo trimestrale + F24 (FP-025) | S-M | 1, 7 | ⬜ |
+| **Livello 4** | | | | |
+| 18° | 9 Compensazione crediti (FP-016) | M | 7, 8 | ⬜ |
 
 La sezione A non è una voce: le precisazioni si recepiscono **dentro** F24_STEP3 quando si arriva allo step indicato (voce 6).
 
