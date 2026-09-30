@@ -6,19 +6,29 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
-- Dashboard: card riordinabili con trascinamento (ordine salvato nel browser).
-- Dashboard: 4 card Incassi Bitcoin (riepilogo, rate con TXID, quadro RW, valore attuale con grafico andamento cambio).
-- Dashboard: doppia vista Dashboard/Bitcoin con toggle dedicato.
-- Dashboard: card riordinabili anche nella vista Bitcoin.
-- Dashboard: nuova card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg) nella vista Bitcoin, indipendente dagli incassi registrati.
-- Importa storico: archivio ZIP del portale Fatture e Corrispettivi caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti.
-- Fatture: la data nel futuro viene bloccata prima della generazione/invio XML, con avviso sul rifiuto SDI (00403).
-- PEC guidata (Impostazioni > PEC):
-  - Gestori preconfigurati (Aruba, Poste, InfoCert, Namirial) che compilano server e porte, con avviso sulla password dedicata quando serve.
-  - "Prova connessione": controlla invio e ricezione passo per passo, senza inviare nulla, con messaggi chiari sugli errori.
+## [1.4.0] - 2026-09-30
+
+### Added
+- **Dashboard Bitcoin** — vista dedicata con toggle Dashboard/Bitcoin:
+  - 4 card Incassi Bitcoin (riepilogo per anno, rate con TXID, quadro RW, valore attuale con grafico andamento cambio EUR/BTC).
+  - Card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg).
+  - Card riordinabili con trascinamento (ordine salvato nel browser), sia in Dashboard che in Bitcoin.
+- **Importa storico da ZIP** — archivio ZIP del portale Fatture e Corrispettivi (o SDI) caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti (FP-017).
+- **Fatture: blocco data nel futuro** — la data di emissione nel futuro viene bloccata prima della generazione/invio XML, con avviso preciso sul rifiuto SDI 00403 (FP-029).
+- **PEC guidata** (Impostazioni > PEC) (FP-032):
+  - Gestori preconfigurati (Aruba, Poste, InfoCert, Namirial) che compilano server/porte, con avviso sulla password dedicata quando serve.
+  - "Prova connessione": controlla invio/ricezione passo per passo, senza inviare nulla, con messaggi chiari sugli errori (utile anche per debug di timeout/DNS).
   - "PEC di prova allo SDI": invia una PEC vuota (con conferma) e mostra la risposta di cortesia, senza toccare le ricevute.
-- Fatture: dati di pagamento in XML (modalità, IBAN, scadenza) con IBAN e giorni di scadenza predefiniti in Impostazioni, sovrascrivibili per cliente; IBAN validato.
-- Fattura PDF: riquadro «Dati per il pagamento» con IBAN e/o indirizzo Bitcoin, scadenza e mini QR (bonifico EPC o bitcoin:) in tutti i template fattura; Bitcoin selezionabile come modalità di pagamento.
+- **Dati di pagamento in fattura** (FP-030):
+  - IBAN, modalità pagamento e scadenza dichiarati in XML (FatturaPA).
+  - IBAN e giorni scadenza predefiniti in Impostazioni, sovrascrivibili per cliente; IBAN validato via IBAN check digit.
+  - Fattura PDF: riquadro «Dati per il pagamento» con IBAN e/o indirizzo Bitcoin, scadenza e mini QR (bonifico EPC o bitcoin:) in tutti i template fattura.
+  - Bitcoin selezionabile come modalità di pagamento (con indirizzo SegWit visualizzato).
+
+### Fixed
+- Wizard Impostazioni: ordine step corretto (Tariffa & fiscali prima di Clienti).
+- Passo Login nel wizard ora autosalva in background (non richiede click esplicito per andare avanti).
+- Sottotitoli mancanti nei vari passo del wizard.
 
 ## [1.3.0] - 2026-09-25
 
