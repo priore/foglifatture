@@ -500,7 +500,7 @@ Si fa insieme a FP-002, con la stessa funzione.
 
 ## FP-032 — PEC guidata: gestori preconfigurati, prova passo-passo, PEC di prova allo SDI
 
-**Stato:** ✅ implementata 2026-09-30 (commit: da inserire; host dei gestori da rileggere sulle pagine ufficiali, `verificatoIl` ancora null) · ex 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata 2026-09-30 (commit: e96d46a; host dei gestori da rileggere sulle pagine ufficiali, `verificatoIl` ancora null) · ex 💡 proposta · **Impatto:** Medio · **Sforzo:** M
 
 🟢 `StepPec.vue` chiede host e porte a mano. `pecService.js` non ha una prova di connessione.
 
