@@ -4,6 +4,7 @@ import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js'
 import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati, impostaScadenzaPagamento } from '../services/invoiceService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
+import { costruisciPagamento } from '../lib/pagamento.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
 import { listaRicevutePerFattura, statoSdiFattura } from '../services/sdiRicevuteService.js';
 
@@ -153,8 +154,11 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     // live da cliente ad ogni download XML/PDF — l'XML già trasmesso a SDI è immutabile
     // (AI-Workspace/Plans/PAGAMENTI_BTC.md, F3). La registrazione dell'incasso BTC vero e
     // proprio resta indipendente e sempre possibile in qualsiasi momento successivo.
-    pagamentoBtc: cliente.pagamentoBtc ?? false,
+    pagamentoBtc: Boolean(cliente.pagamentoBtc) || (cliente.modalitaPagamento || config.fatturazione.modalitaDefault) === 'BTC',
     causaleBtc: cliente.causaleBtc ?? '',
+    // Congelato alla generazione (come la clausola BTC): l'XML già trasmesso non cambia se
+    // si modifica l'IBAN in Impostazioni. null = né IBAN né indirizzo BTC configurati.
+    pagamento: costruisciPagamento(config, cliente),
   };
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);

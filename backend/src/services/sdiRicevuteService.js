@@ -109,6 +109,26 @@ export function estraiErroriScarto(contenutoXml) {
   });
 }
 
+/**
+ * Salva una ricevuta/notifica SDI in <archivio>/<anno>/<esito>/. Con sovrascrivi=false un file
+ * già presente non viene toccato (import da ZIP: niente doppioni). codiceTipo opzionale: se
+ * assente si deduce dal nome file (_RC_, _NS_…).
+ * @returns {Promise<{ destinazione: string|null, tipo: {codice, descrizione}, giaPresente: boolean }>}
+ */
+export async function archiviaRicevuta(percorsoArchivio, nomeFile, contenuto, { codiceTipo, sovrascrivi = true } = {}) {
+  const tipo = codiceTipo
+    ? { codice: codiceTipo, descrizione: PREFISSI_TIPO_RICEVUTA[codiceTipo] }
+    : riconosciTipo(nomeFile);
+  const cartella = path.join(percorsoArchivio, annoRicevuta(contenuto), risolviSottocartella(tipo.codice, contenuto));
+  const destinazione = path.join(cartella, path.basename(nomeFile));
+  if (!sovrascrivi) {
+    try { await stat(destinazione); return { destinazione, tipo, giaPresente: true }; } catch { /* non esiste: si salva */ }
+  }
+  await mkdir(cartella, { recursive: true });
+  await writeFile(destinazione, contenuto);
+  return { destinazione, tipo, giaPresente: false };
+}
+
 function creaClientImap(pecConfig) {
   return new ImapFlow({
     host: pecConfig.imapHost,
@@ -170,13 +190,7 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
           const nomeFile = allegato.filename?.toLowerCase();
           // daticert.xml è il solo metadato di certificazione PEC (non un documento SDI): si scarta.
           if (!nomeFile?.endsWith('.xml') || nomeFile === 'daticert.xml') continue;
-          const tipo = riconosciTipo(allegato.filename);
-          const anno = annoRicevuta(allegato.content);
-          const sottocartella = risolviSottocartella(tipo.codice, allegato.content);
-          const cartellaDestinazione = path.join(percorsoArchivio, anno, sottocartella);
-          await mkdir(cartellaDestinazione, { recursive: true });
-          const destinazione = path.join(cartellaDestinazione, path.basename(allegato.filename));
-          await writeFile(destinazione, allegato.content);
+          const { tipo, destinazione } = await archiviaRicevuta(percorsoArchivio, allegato.filename, allegato.content);
           nuove += 1;
           await sdiLogger.info(`Archiviato ${allegato.filename} (${tipo.descrizione})`, { destinazione });
           notificaMac('Ricevuta SDI', `${tipo.descrizione}: ${allegato.filename}`);

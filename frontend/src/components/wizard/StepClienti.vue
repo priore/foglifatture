@@ -88,6 +88,24 @@ function riattivaCliente(cliente) {
           <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
           <small class="note-legal">Una o più email separate da virgola, usate per l'invio di timesheet e fattura via app di posta.</small>
         </div>
+        <div style="display:flex;gap:20px;margin-top:12px">
+          <div class="field" style="flex:1">
+            <label>Modalità di pagamento</label>
+            <select v-model="cliente.modalitaPagamento">
+              <option value="">Predefinita (Impostazioni)</option>
+              <option value="MP05">Bonifico</option>
+        <option value="MP19">Addebito diretto SEPA</option>
+        <option value="MP08">Carta di pagamento</option>
+        <option value="MP02">Assegno</option>
+        <option value="MP01">Contanti</option>
+        <option value="BTC">Bitcoin (indirizzo dal primo wallet in Fornitore)</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1">
+            <label>Giorni di scadenza</label>
+            <input type="number" min="0" v-model.number="cliente.giorniScadenza" placeholder="Predefiniti">
+          </div>
+        </div>
         <div class="field" style="margin-top:12px">
           <div style="display:flex;align-items:center;gap:8px">
             <input :id="`btc-abilitato-${cliente.id}`" type="checkbox" v-model="cliente.pagamentoBtc" class="checkbox-app">

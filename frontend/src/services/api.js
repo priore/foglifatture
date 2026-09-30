@@ -54,6 +54,12 @@ export const api = {
   controllaRicevuteSdi: () => richiesta('/sdi/controlla', { method: 'POST' }),
   cronologiaPec: () => richiesta('/sdi/cronologia'),
 
+  // PEC guidata: gestori preconfigurati, prova passo-passo, PEC di prova allo SDI
+  gestoriPec: () => richiesta('/pec/gestori'),
+  provaPec: () => richiesta('/pec/prova', { method: 'POST' }),
+  provaPecSdi: () => richiesta('/pec/prova-sdi', { method: 'POST', body: JSON.stringify({ conferma: true }) }),
+  risposteProvaPecSdi: (dal) => richiesta(`/pec/prova-sdi/risposte?dal=${encodeURIComponent(dal)}`),
+
   // Import storico pregresso (timesheet da xls originale, fatture da XML FatturaPA già emesse)
   importaTimesheet: (anno, mese, clienteId, file) => {
     const form = new FormData();
@@ -79,6 +85,21 @@ export const api = {
     for (const file of files) form.append('file', file);
     if (clienteId) form.append('clienteId', clienteId);
     return fetch(`${BASE_URL}/import/fattura-batch`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
+
+  analizzaZip: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return fetch(`${BASE_URL}/import/zip/anteprima`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
+  importaZip: (file, selezionati, clienteId) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('selezionati', JSON.stringify(selezionati));
+    if (clienteId) form.append('clienteId', clienteId);
+    return fetch(`${BASE_URL}/import/zip`, { method: 'POST', body: form })
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
 

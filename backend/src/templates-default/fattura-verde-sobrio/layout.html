@@ -39,4 +39,18 @@
 
   <p class="legal">Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 — Regime forfetario. Operazione non soggetta a ritenuta d'acconto.
   {{#if bolloApplicabile}}Imposta di bollo assolta in modo virtuale ove applicabile.{{/if}}</p>
+{{#if pagamentoBtc}}
+<p class="legal">{{causaleBtc}}</p>
+{{/if}}
+{{#if pagamento}}
+<div class="pag-box">
+  <div class="pag-dati">
+    <p class="pag-titolo">Dati per il pagamento</p>
+    {{#if pagamento.mostraIban}}<p>IBAN <strong>{{pagamento.ibanFormattato}}</strong>{{#if pagamento.intestatario}} &mdash; {{pagamento.intestatario}}{{/if}}</p>{{/if}}
+    {{#if pagamento.btcAddress}}<p>Bitcoin <strong class="pag-btc">{{pagamento.btcAddress}}</strong></p>{{/if}}
+    <p>Modalit&agrave;: {{pagamento.modalitaEtichetta}} &middot; Scadenza: {{pagamento.scadenzaFormattata}}</p>
+  </div>
+  {{#if pagamento.qrSvg}}<div class="pag-qr">{{{pagamento.qrSvg}}}<span>{{pagamento.qrEtichetta}}</span></div>{{/if}}
+</div>
+{{/if}}
 </div>

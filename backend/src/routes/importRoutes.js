@@ -7,6 +7,8 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { importaTimesheetDaXls, estraiAnnoMeseDaNomeFile } from '../services/xlsTimesheetImporter.js';
 import { importaFatturaDaXml } from '../services/xmlInvoiceImporter.js';
+import { analizzaZip } from '../services/importZipService.js';
+import { archiviaRicevuta } from '../services/sdiRicevuteService.js';
 import { saveTimesheet } from '../services/timesheetService.js';
 import { saveInvoice } from '../services/invoiceService.js';
 import { getConfig, saveConfig } from '../services/configService.js';
@@ -208,4 +210,50 @@ importRoutes.post('/fattura-batch', upload.array('file'), async (req, res) => {
     }
   }
   res.json({ risultati });
+});
+
+// Archivio ZIP del Cassetto Fiscale (fatture + ricevute SDI). Due passi senza stato sul server:
+// anteprima (riconoscimento file per file, nulla viene scritto) e import dei soli file scelti
+// (lo ZIP viene ricaricato, i nomi scelti arrivano in `selezionati`).
+const uploadZip = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+importRoutes.post('/zip/anteprima', uploadZip.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
+  try {
+    const file = analizzaZip(req.file.buffer).map(({ nome, tipo, codiceTipo, motivo, anteprima }) => ({ nome, tipo, codiceTipo, motivo, anteprima }));
+    res.json({ file });
+  } catch (err) {
+    logger.error('Errore lettura ZIP', { errore: err.message });
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+importRoutes.post('/zip', uploadZip.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
+  try {
+    const selezionati = new Set(JSON.parse(req.body.selezionati || '[]'));
+    const { sdi } = await getConfig();
+    const risultati = [];
+    for (const voce of analizzaZip(req.file.buffer).filter((v) => selezionati.has(v.nome))) {
+      try {
+        if (voce.tipo === 'fattura') {
+          const invoice = await importaUnaFatturaXml(voce.contenuto, voce.nome, req.body.clienteId);
+          risultati.push({ file: voce.nome, ok: true, ...invoice });
+        } else if (voce.tipo === 'ricevuta') {
+          if (!sdi.percorsoArchivio) throw new Error('Cartella archivio SDI non configurata');
+          const { giaPresente } = await archiviaRicevuta(sdi.percorsoArchivio, voce.nome, voce.contenuto, { codiceTipo: voce.codiceTipo, sovrascrivi: false });
+          risultati.push({ file: voce.nome, ok: true, nota: giaPresente ? 'già presente, non toccata' : 'ricevuta archiviata' });
+        } else {
+          risultati.push({ file: voce.nome, ok: false, errore: voce.motivo });
+        }
+      } catch (err) {
+        logger.error(`Errore import da ZIP: ${voce.nome}`, { errore: err.message });
+        risultati.push({ file: voce.nome, ok: false, errore: err.message });
+      }
+    }
+    res.json({ risultati });
+  } catch (err) {
+    logger.error('Errore import ZIP', { errore: err.message });
+    res.status(400).json({ errore: err.message });
+  }
 });
