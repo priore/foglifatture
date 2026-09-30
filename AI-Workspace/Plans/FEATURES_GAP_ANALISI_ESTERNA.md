@@ -400,7 +400,7 @@ Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipen
 | Ordine | Voce | Sforzo | Dipende da | Stato |
 |---|---|---|---|---|
 | **Livello 0: indipendenti** | | | | |
-| 1° | 12 Data fattura nel futuro (FP-029) | S | — | ✅ 2026-09-30 (commit: da fare) |
+| 1° | 12 Data fattura nel futuro (FP-029) | S | — | ✅ 2026-09-30 (commit: 561fc8a) |
 | 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ⬜ |
 | 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
 | 4° | 18 PEC guidata (FP-032) | M | — | ⬜ |

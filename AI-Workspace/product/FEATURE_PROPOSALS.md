@@ -459,7 +459,7 @@ Si fa insieme a FP-002, con la stessa funzione.
 
 ## FP-029 — Blocco della data fattura nel futuro
 
-**Stato:** ✅ implementata 2026-09-30 (commit: da fare; validazione in `fatturaPaXmlValidator.js`, non sull'import XML: sono fatture già emesse) · ex 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+**Stato:** ✅ implementata 2026-09-30 (commit: 561fc8a; validazione in `fatturaPaXmlValidator.js`, non sull'import XML: sono fatture già emesse) · ex 💡 proposta · **Impatto:** Basso · **Sforzo:** S
 
 🟢 Nessun controllo sulla data in `fatturaPaXmlValidator.js`/`invoiceService.js`. Lo SDI scarta una fattura con data successiva alla ricezione (errore 00403).
 
