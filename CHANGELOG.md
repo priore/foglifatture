@@ -13,13 +13,13 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   - 4 card Incassi Bitcoin (riepilogo per anno, rate con TXID, quadro RW, valore attuale con grafico andamento cambio EUR/BTC).
   - Card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg).
   - Card riordinabili con trascinamento (ordine salvato nel browser), sia in Dashboard che in Bitcoin.
-- **Importa storico da ZIP** — archivio ZIP del portale Fatture e Corrispettivi (o SDI) caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti (FP-017).
-- **Fatture: blocco data nel futuro** — la data di emissione nel futuro viene bloccata prima della generazione/invio XML, con avviso preciso sul rifiuto SDI 00403 (FP-029).
-- **PEC guidata** (Impostazioni > PEC) (FP-032):
+- **Importa storico da ZIP** — archivio ZIP del portale Fatture e Corrispettivi (o SDI) caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti.
+- **Fatture: blocco data nel futuro** — la data di emissione nel futuro viene bloccata prima della generazione/invio XML, con avviso preciso sul rifiuto SDI 00403.
+- **PEC guidata** (Impostazioni > PEC):
   - Gestori preconfigurati (Aruba, Poste, InfoCert, Namirial) che compilano server/porte, con avviso sulla password dedicata quando serve.
   - "Prova connessione": controlla invio/ricezione passo per passo, senza inviare nulla, con messaggi chiari sugli errori (utile anche per debug di timeout/DNS).
   - "PEC di prova allo SDI": invia una PEC vuota (con conferma) e mostra la risposta di cortesia, senza toccare le ricevute.
-- **Dati di pagamento in fattura** (FP-030):
+- **Dati di pagamento in fattura**:
   - IBAN, modalità pagamento e scadenza dichiarati in XML (FatturaPA).
   - IBAN e giorni scadenza predefiniti in Impostazioni, sovrascrivibili per cliente; IBAN validato via IBAN check digit.
   - Fattura PDF: riquadro «Dati per il pagamento» con IBAN e/o indirizzo Bitcoin, scadenza e mini QR (bonifico EPC o bitcoin:) in tutti i template fattura.
