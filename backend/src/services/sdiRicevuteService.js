@@ -32,9 +32,22 @@ const PREFISSI_TIPO_RICEVUTA = {
   AT: 'Attestazione di Trasmissione (mancato recapito)',
 };
 
-function riconosciTipo(nomeFile) {
+function riconosciTipo(nomeFile, contenutoXml = null) {
+  // Prova prima il riconoscimento per nome file (metodo veloce)
   const prefisso = Object.keys(PREFISSI_TIPO_RICEVUTA).find(p => nomeFile.toUpperCase().includes(`_${p}_`));
-  return prefisso ? { codice: prefisso, descrizione: PREFISSI_TIPO_RICEVUTA[prefisso] } : { codice: 'ALTRO', descrizione: 'Allegato SDI non classificato' };
+  if (prefisso) {
+    return { codice: prefisso, descrizione: PREFISSI_TIPO_RICEVUTA[prefisso] };
+  }
+
+  // Se il nome non contiene prefisso noto, fallback al parsing del contenuto XML
+  if (contenutoXml) {
+    const classificazione = classificaAllegatoXml(nomeFile, contenutoXml);
+    if (classificazione.isValido && classificazione.tipo) {
+      return { codice: classificazione.tipo, descrizione: PREFISSI_TIPO_RICEVUTA[classificazione.tipo] };
+    }
+  }
+
+  return { codice: 'ALTRO', descrizione: 'Allegato SDI non classificato' };
 }
 
 // Sottocartelle di smistamento per esito, create automaticamente sotto la cartella archivio.
@@ -93,6 +106,54 @@ function decodeEntitaXml(testo) {
   return testo?.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&') ?? null;
 }
 
+// Estrae il tag radice di un documento XML. Ritorna nome tag (senza namespace) o null se parse fallisce.
+export function estraiRadiceXml(contenutoXml) {
+  try {
+    const contenutoStr = contenutoXml?.toString('utf8') ?? '';
+    if (!contenutoStr.trim()) return null;
+
+    // Estrai tag radice con regex (veloce, niente parse profondo completo)
+    const match = contenutoStr.match(/<([^\s/?!>:]+:)?([A-Za-z][A-Za-z0-9_:.-]*)/);
+    if (!match?.[2]) return null;
+    return match[2];
+  } catch (err) {
+    return null;
+  }
+}
+
+// Classifica un allegato XML SDI per radice element. Ignora nome file.
+// Ritorna { isValido, tipo, motivo }. isValido=true solo per ricevute SDI effettive.
+export function classificaAllegatoXml(nomeFile, contenutoXml) {
+  // Filtra by filename i metadati ovvi (daticert)
+  if (nomeFile === 'daticert.xml') {
+    return { isValido: false, tipo: null, motivo: 'metadato-trasporto' };
+  }
+
+  const radice = estraiRadiceXml(contenutoXml);
+  if (!radice) {
+    return { isValido: false, tipo: null, motivo: 'xml-malformato' };
+  }
+
+  // Whitelist radici SDI valide
+  const mappe = {
+    'FileMetadati': { isValido: false, motivo: 'metadato-trasporto' },
+    'NotificaEsito': { isValido: true, tipo: 'NE' },
+    'NotificaEsitoCedente': { isValido: true, tipo: 'EC' },
+    'NotificaScarto': { isValido: true, tipo: 'NS' },
+    'Ricevuta': { isValido: true, tipo: 'RC' },
+    'MancataConsegna': { isValido: true, tipo: 'MC' },
+    'AttestazionTrasmissione': { isValido: true, tipo: 'AT' },
+    'DecorrenzaTermini': { isValido: true, tipo: 'DT' },
+  };
+
+  const classificazione = mappe[radice];
+  if (classificazione) {
+    return { ...classificazione, motivo: classificazione.motivo ?? null };
+  }
+
+  return { isValido: false, tipo: null, motivo: 'non-riconosciuto' };
+}
+
 // Estrae la lista errori dichiarati in una Notifica di Scarto (NS): ogni <Errore> ha
 // codice/descrizione/suggerimento ufficiali SDI (es. 00300 "IdCodice non valido").
 export function estraiErroriScarto(contenutoXml) {
@@ -118,7 +179,7 @@ export function estraiErroriScarto(contenutoXml) {
 export async function archiviaRicevuta(percorsoArchivio, nomeFile, contenuto, { codiceTipo, sovrascrivi = true } = {}) {
   const tipo = codiceTipo
     ? { codice: codiceTipo, descrizione: PREFISSI_TIPO_RICEVUTA[codiceTipo] }
-    : riconosciTipo(nomeFile);
+    : riconosciTipo(nomeFile, contenuto);
   const cartella = path.join(percorsoArchivio, annoRicevuta(contenuto), risolviSottocartella(tipo.codice, contenuto));
   const destinazione = path.join(cartella, path.basename(nomeFile));
   if (!sovrascrivi) {
@@ -173,23 +234,45 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
         const email = await simpleParser(content);
         await sdiLogger.info(`Email SDI ricevuta: ${email.subject}`, { da: email.from?.text });
 
-        // L'XML FatturaPA può arrivare come allegato diretto (alcune ricevute SDI) oppure
-        // imbustato in un .eml di trasporto (es. postacert.eml di Aruba/Legalmail): si
-        // raccolgono entrambe le fonti, senza assumere quale delle due sia usata.
-        const allegatiDiretti = email.attachments || [];
-        // eml.content può mancare se l'allegato non è stato scaricato per intero da
-        // ImapFlow (stesso motivo del guard su "content" sopra): si scarta silenziosamente
-        // invece di far fallire l'intero giro di polling per un singolo allegato vuoto.
-        const allegatiEml = allegatiDiretti.filter(a => a.filename?.toLowerCase().endsWith('.eml') && a.content);
-        const allegatiImbustati = (await Promise.all(
-          allegatiEml.map(async (eml) => (await simpleParser(eml.content)).attachments || [])
-        )).flat();
-        const tuttiGliAllegati = [...allegatiDiretti, ...allegatiImbustati];
+        // Estrai allegati da email e da matrioske EML ricorsivamente.
+        const estraiAllegati = async (attachments, profondita = 0) => {
+          if (profondita > 10) return []; // ponytail: limite ricorsione matrioske maligne
+          const risultati = [];
+          for (const a of attachments || []) {
+            if (!a.content) continue; // allegato vuoto: scarta
+            const nomeBase = a.filename?.toLowerCase() ?? '';
+            if (nomeBase.endsWith('.eml')) {
+              // EML: estrai allegati interni ricorsivamente
+              try {
+                const inner = await simpleParser(a.content);
+                const innerAllegati = await estraiAllegati(inner.attachments, profondita + 1);
+                risultati.push(...innerAllegati);
+              } catch (err) {
+                await sdiLogger.warn(`EML malformato ignorato: ${a.filename}`, { err: err.message });
+              }
+            } else {
+              // Allegato diretto (XML, PDF, ecc): mantieni
+              risultati.push(a);
+            }
+          }
+          return risultati;
+        };
+        const tuttiGliAllegati = await estraiAllegati(email.attachments);
 
         for (const allegato of tuttiGliAllegati) {
           const nomeFile = allegato.filename?.toLowerCase();
-          // daticert.xml è il solo metadato di certificazione PEC (non un documento SDI): si scarta.
-          if (!nomeFile?.endsWith('.xml') || nomeFile === 'daticert.xml') continue;
+          if (!nomeFile?.endsWith('.xml')) continue;
+
+          const classificazione = classificaAllegatoXml(nomeFile, allegato.content);
+          if (!classificazione.isValido) {
+            if (classificazione.motivo === 'metadato-trasporto') {
+              await sdiLogger.debug(`Scartato metadato trasporto: ${allegato.filename} (${classificazione.motivo})`);
+            } else {
+              await sdiLogger.warn(`Scartato allegato XML non riconosciuto: ${allegato.filename} (${classificazione.motivo})`);
+            }
+            continue;
+          }
+
           const { tipo, destinazione } = await archiviaRicevuta(percorsoArchivio, allegato.filename, allegato.content);
           nuove += 1;
           await sdiLogger.info(`Archiviato ${allegato.filename} (${tipo.descrizione})`, { destinazione });
