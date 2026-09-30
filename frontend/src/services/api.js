@@ -88,6 +88,21 @@ export const api = {
       .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
   },
 
+  analizzaZip: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return fetch(`${BASE_URL}/import/zip/anteprima`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
+  importaZip: (file, selezionati, clienteId) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('selezionati', JSON.stringify(selezionati));
+    if (clienteId) form.append('clienteId', clienteId);
+    return fetch(`${BASE_URL}/import/zip`, { method: 'POST', body: form })
+      .then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || `Errore HTTP ${r.status}`); return r.json(); });
+  },
+
   // Backup/restore cifrato di backend/data/
   salvaImpostazioniBackup: (dati) => richiesta('/backup/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
   esportaBackup: async (password) => {

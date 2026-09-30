@@ -257,7 +257,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-017 — Import massivo da archivio ZIP del Cassetto Fiscale
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata 2026-09-30 (commit: da fare) · **Impatto:** Medio · **Sforzo:** M
 
 🟢 `xmlInvoiceImporter.js` importa file XML di fatture uno alla volta o più file XML sciolti; un archivio ZIP scaricato dal Cassetto Fiscale (portale Fatture e Corrispettivi), che contiene insieme fatture e ricevute di consegna/scarto dello SDI, oggi va prima scompattato ed i file smistati a mano.
 

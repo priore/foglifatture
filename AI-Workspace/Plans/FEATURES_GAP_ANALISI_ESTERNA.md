@@ -357,6 +357,12 @@ Sono risposte, con la fonte, ai punti che F24_STEP3 segna come 🟡 o lascia ape
 - Anteprima (`POST /api/import/anteprima`) e import dei soli file scelti. Stesso nome file ⇒ niente doppioni.
 - Test sugli esempi ufficiali di ricevute RC/NS/MC (da fatturapa.gov.it, da scaricare noi).
 
+**Implementato (2026-09-30), scostamenti dal piano.**
+- 🟢 Lettore ZIP con `zlib` (`backend/src/lib/zipReader.js`, no ZIP64/cifratura), limiti 5 MB/file, 2.000 file, 200 MB totali, controllati anche sull'output reale; upload max 50 MB.
+- 🟢 Riconoscimento dall'elemento radice (`importZipService.js`): fattura, ricevuta (RC/NS/MC più NE/EC/DT/AT), altro ignorato con motivo. Ricevute salvate con `archiviaRicevuta` (ora condivisa col polling PEC), file già presente non toccato.
+- 🟢 Rotte stateless `POST /api/import/zip/anteprima` e `/api/import/zip` (lo ZIP viene ricaricato con i nomi scelti). UI: riquadro sotto "Importa Fattura" in Importa storico.
+- 🟡 Nessun aggancio esplicito ricevuta-fattura dal nome: le ricevute sono lette dall'archivio per prefisso nome file, quindi si agganciano da sole; le fatture importate sono comunque sempre "accettate". Test su esempi ufficiali RC/NS/MC non fatti (fixture sintetiche). Screenshot UI da fare.
+
 **Riferimento esterno.** `apps/api/src/common/import/archive-reader.ts` (limiti), `apps/api/src/imports/services/document-import.service.ts` (`preview`, `importFiles`, un gestore per tipo), `packages/fatturapa/src/xml-document-kind.ts`, `apps/api/src/sdi/services/sdi-receipts-import.service.ts`.
 
 ---
@@ -412,7 +418,7 @@ Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipen
 | 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ✅ 2026-09-30 (commit: 2c28f8c) |
 | 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
 | 4° | 18 PEC guidata (FP-032) | M | — | ✅ 2026-09-30 (commit: e96d46a) |
-| 5° | 17 Import ZIP (FP-017) | M | — | ⬜ |
+| 5° | 17 Import ZIP (FP-017) | M | — | ✅ 2026-09-30 (commit: da fare) |
 | **Livello 1: dipendono solo da voci di livello 0** | | | | |
 | 6° | 4 Calendario fiscale (FP-026), conferma a parte | S | 1 | ⬜ |
 | 7° | 5 Requisiti 5% / ISA (FP-027), conferma a parte | S | 1 | ⬜ |
@@ -461,7 +467,7 @@ Esecuzione, come per F24_STEP3: una voce alla volta, test verdi, **stop** in att
 
 Nessuna nuova voce in `.gitignore`: tutti i dati utente finiscono sotto `backend/data/` o in `config.json`, già esclusi. Da verificare comunque con `git ls-files` a ogni voce (regola `sensitive-data.md`).
 
-Nuove dipendenze: `pdf-lib` (voce 7, motivata sopra) e `qrcode-generator` (frontend, già aggiunta con la voce 13). Per lo ZIP (voce 17) la decisione è rimandata al passaggio in analisi.
+Nuove dipendenze: `pdf-lib` (voce 7, motivata sopra) e `qrcode-generator` (frontend, già aggiunta con la voce 13). Per lo ZIP (voce 17): nessuna dipendenza, lettore con `zlib`.
 
 ---
 
@@ -478,7 +484,7 @@ Nuove dipendenze: `pdf-lib` (voce 7, motivata sopra) e `qrcode-generator` (front
 
 1. Codice sede INPS: basta un campo a mano con link alla tabella INPS (proposta), o serve l'elenco completo selezionabile?
 2. ~~Dati di pagamento: un solo IBAN~~ Risolta: un solo IBAN in config (voce 13 implementata).
-3. Import ZIP: lettore ZIP con la stdlib (circa 60 righe) o una piccola dipendenza? Da decidere quando la voce passa in analisi.
+3. ~~Import ZIP: lettore ZIP~~ Risolta: stdlib (`zlib`), `lib/zipReader.js`, nessuna dipendenza (voce 17 implementata).
 4. Rivalsa 4%: da verificare, anche col commercialista, se entra nella base della soglia del bollo (77,47 €).
 
 ---

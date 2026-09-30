@@ -11,6 +11,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard: doppia vista Dashboard/Bitcoin con toggle dedicato.
 - Dashboard: card riordinabili anche nella vista Bitcoin.
 - Dashboard: nuova card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg) nella vista Bitcoin, indipendente dagli incassi registrati.
+- Importa storico: archivio ZIP del portale Fatture e Corrispettivi caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti.
 - Fatture: la data nel futuro viene bloccata prima della generazione/invio XML, con avviso sul rifiuto SDI (00403).
 - PEC guidata (Impostazioni > PEC):
   - Gestori preconfigurati (Aruba, Poste, InfoCert, Namirial) che compilano server e porte, con avviso sulla password dedicata quando serve.
