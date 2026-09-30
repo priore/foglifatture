@@ -41,6 +41,13 @@ Repo locale (`/Users/danilo/Documents/Prioregroup/Timesheet`, branch `develop`, 
 
    ⚠️ **Controlla anche il contenuto dei diff su `.github/workflows/*`, `backend/package.json`, `frontend/package.json` e i relativi `package-lock.json`**: essendo due repository separati, il pubblico può aver ricevuto bump Dependabot mai recepiti nel locale (verificato il 2026-09-25: `actions/checkout` v7→v4, `imapflow` 2.0.5→1.7.6, `nodemailer` 10.0.10→9.0.6 sarebbero stati un downgrade). Se il diff su questi file va nella direzione "versione più vecchia sostituisce una più recente", **non sincronizzarlo**: `git checkout HEAD -- <file>` per ripristinare la versione pubblica più aggiornata, oppure merge manuale se ci sono anche modifiche locali legittime da preservare.
 
+   ⚠️ **CHANGELOG.md e release notes**: rimuovi tutti i riferimenti a documentazione interna non versionata prima di committare:
+   - `(FP-XXX)` — riferimenti a Feature Proposal (pianificazione interna)
+   - `AI-Workspace/Plans/` — path a piani interni
+   - Qualsiasi altro riferimento a `.claude/` o doc di pianificazione
+   
+   Grep per verificare: `grep -E '(FP-|Plans|AI-Workspace)' CHANGELOG.md` e `grep -E '(FP-|Plans|AI-Workspace)' <release-notes>`. La documentazione pubblica deve descrivere feature dal punto di vista utente, non interno.
+
 4. **Proponi messaggio di commit**: guarda i commit recenti nel locale non ancora riflessi (confronta a occhio con l'ultimo sync noto o chiedi all'utente cosa cambia), scrivi un messaggio sensato in italiano, stile Keep a Changelog coerente col resto del progetto — mai un messaggio generico tipo "sync" o "update".
 
 5. **STOP — chiedi conferma esplicita** (AskUserQuestion) prima di:
