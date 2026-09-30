@@ -40,7 +40,7 @@ const esitoFattura = ref('');
 // del messaggio singolo usato per l'import di un file solo.
 function formattaEsitoBatch(risultati) {
   return risultati
-    .map(r => r.ok ? `✓ ${r.file}` : `✗ ${r.file}: ${r.errore}`)
+    .map(r => r.ok ? `✓ ${r.file}${r.nota ? ` (${r.nota})` : ''}` : `✗ ${r.file}: ${r.errore}`)
     .join('\n');
 }
 
@@ -97,6 +97,50 @@ async function importaFattura() {
     esitoFattura.value = `Errore: ${err.message}`;
   } finally {
     importandoFattura.value = false;
+  }
+}
+
+// Import ZIP: anteprima dei file riconosciuti, poi import dei soli selezionati.
+const fileZip = ref(null);
+const vociZip = ref([]);
+const selezionatiZip = ref(new Set());
+const lavorandoZip = ref(false);
+const esitoZip = ref('');
+const DESCRIZIONE_TIPO_ZIP = { fattura: 'Fattura', ricevuta: 'Ricevuta SDI', ignorato: 'Ignorato' };
+
+async function analizzaZip(files) {
+  fileZip.value = files[0] ?? null;
+  vociZip.value = [];
+  esitoZip.value = '';
+  if (!fileZip.value) return;
+  lavorandoZip.value = true;
+  try {
+    const { file } = await api.analizzaZip(fileZip.value);
+    vociZip.value = file;
+    selezionatiZip.value = new Set(file.filter(f => f.tipo !== 'ignorato').map(f => f.nome));
+  } catch (err) {
+    esitoZip.value = `Errore: ${err.message}`;
+  } finally {
+    lavorandoZip.value = false;
+  }
+}
+
+function alternaZip(nome) {
+  const s = new Set(selezionatiZip.value);
+  if (!s.delete(nome)) s.add(nome);
+  selezionatiZip.value = s;
+}
+
+async function importaZip() {
+  lavorandoZip.value = true;
+  esitoZip.value = '';
+  try {
+    const { risultati } = await api.importaZip(fileZip.value, [...selezionatiZip.value], clienteIdFattura.value || undefined);
+    esitoZip.value = formattaEsitoBatch(risultati);
+  } catch (err) {
+    esitoZip.value = `Errore: ${err.message}`;
+  } finally {
+    lavorandoZip.value = false;
   }
 }
 
@@ -316,6 +360,29 @@ async function riavvia() {
           {{ importandoFattura ? 'Importo…' : 'Importa fattura' }}
         </button>
         <pre v-if="esitoFattura" class="badge-mono" style="white-space:pre-wrap">{{ esitoFattura }}</pre>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px" v-if="passoAttivo === 1">
+      <div class="card-head"><h2>Importa archivio ZIP (fatture e ricevute SDI)</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <p class="note-legal">Lo ZIP scaricato dal portale Fatture e Corrispettivi si carica così com'è: ogni file è riconosciuto dal contenuto. Vedi l'anteprima, poi importa solo i file scelti. Le ricevute vanno nella cartella archivio SDI; quelle già presenti non vengono toccate. Il cliente segue la scelta del riquadro sopra.</p>
+        <FileDrop accept=".zip" label="Trascina lo ZIP o clicca per sfogliare" :disabled="lavorandoZip" @change="analizzaZip" />
+        <table v-if="vociZip.length" class="data-table">
+          <thead><tr><th></th><th>File</th><th>Tipo</th><th>Dettaglio</th></tr></thead>
+          <tbody>
+            <tr v-for="v in vociZip" :key="v.nome">
+              <td><input type="checkbox" :checked="selezionatiZip.has(v.nome)" :disabled="v.tipo === 'ignorato'" @change="alternaZip(v.nome)"></td>
+              <td class="cella-descrizione">{{ v.nome }}</td>
+              <td>{{ DESCRIZIONE_TIPO_ZIP[v.tipo] }}{{ v.codiceTipo ? ` (${v.codiceTipo})` : '' }}</td>
+              <td>{{ v.anteprima ? `n.${v.anteprima.numero} del ${v.anteprima.data}` : v.motivo || '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <button v-if="vociZip.length" class="btn btn-primary" :disabled="!selezionatiZip.size || lavorandoZip" @click="importaZip">
+          {{ lavorandoZip ? 'Importo…' : `Importa ${selezionatiZip.size} file` }}
+        </button>
+        <pre v-if="esitoZip" class="badge-mono" style="white-space:pre-wrap">{{ esitoZip }}</pre>
       </div>
     </div>
 

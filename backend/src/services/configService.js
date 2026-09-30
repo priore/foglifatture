@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { rename, readdir, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import keytar from 'keytar';
+import { ibanValido } from '../lib/iban.js';
 import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
 
 const CONFIG_FILE = 'config.json';
@@ -38,6 +39,12 @@ const DEFAULT_CONFIG = {
   fatturazione: {
     sogliaBolloVirtuale: 77.47,
     importoBollo: 2.00,
+    // Dati di pagamento in fattura (DatiPagamento XML). Senza IBAN il blocco non viene scritto.
+    iban: '',
+    intestatario: '',
+    istitutoFinanziario: '',
+    modalitaDefault: 'MP05', // MP05 bonifico, MP19 addebito SEPA, MP08 carta, MP01 contanti, MP02 assegno
+    giorniScadenzaDefault: 30,
   },
   pec: {
     smtpHost: '',
@@ -112,6 +119,8 @@ const CLIENTE_VUOTO = {
   tariffaOraria: 0,
   email: '', // una o più email separate da virgola, destinatarie di timesheet/fattura via mailto
   figura: '', // campo header PDF timesheet
+  modalitaPagamento: '', // vuoto = fatturazione.modalitaDefault
+  giorniScadenza: null, // null = fatturazione.giorniScadenzaDefault
   commessa: '', // campo header PDF timesheet
   clientePdf: '', // campo header PDF timesheet (etichetta "Cliente", distinta da denominazione)
   progetto: '', // campo header PDF timesheet
@@ -242,6 +251,10 @@ export function validaConfig(partialConfig) {
         }
       }
     });
+  }
+  const iban = partialConfig.fatturazione?.iban;
+  if (iban && String(iban).trim() && !ibanValido(iban)) {
+    errori.push('fatturazione: IBAN non valido (controllare cifre di controllo)');
   }
   if (partialConfig.pec?.casellaMittente !== undefined
     && !campoValido(partialConfig.pec.casellaMittente, REGEX_EMAIL)) {

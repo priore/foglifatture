@@ -40,3 +40,10 @@
   .sheet .legal { break-inside: avoid; }
   .sheet { box-shadow: none; }
 }
+
+.pag-box { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 24pt; padding-top: 10pt; border-top: 1px solid currentColor; font-size: 9pt; font-style: normal; break-inside: avoid; }
+.pag-box p { margin: 0 0 3pt; }
+.pag-box .pag-titolo { font-weight: bold; text-transform: uppercase; letter-spacing: .05em; }
+.pag-box .pag-btc { word-break: break-all; }
+.pag-box .pag-qr { flex: 0 0 auto; text-align: center; }
+.pag-box .pag-qr svg { display: block; width: 2.4cm; height: 2.4cm; margin: 0 auto 2pt; }

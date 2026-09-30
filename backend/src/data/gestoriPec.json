@@ -1,0 +1,23 @@
+[
+  {
+    "id": "aruba", "nome": "Aruba PEC",
+    "smtpHost": "smtps.pec.aruba.it", "smtpPort": 465, "imapHost": "imaps.pec.aruba.it", "imapPort": 993,
+    "suggerimentoPassword": "Con la verifica in due passaggi attiva la password della webmail non funziona nei programmi di posta: serve una password dedicata generata dal pannello Aruba (scade dopo 6 mesi).",
+    "guidaUrl": "https://guide.pec.it/", "verificatoIl": null
+  },
+  {
+    "id": "poste", "nome": "Poste Italiane (Postecert)",
+    "smtpHost": "smtps.postecert.it", "smtpPort": 465, "imapHost": "imaps.postecert.it", "imapPort": 993,
+    "suggerimentoPassword": null, "guidaUrl": "https://www.poste.it/", "verificatoIl": null
+  },
+  {
+    "id": "legalmail", "nome": "InfoCert Legalmail",
+    "smtpHost": "sendm.cert.legalmail.it", "smtpPort": 465, "imapHost": "mbox.cert.legalmail.it", "imapPort": 993,
+    "suggerimentoPassword": null, "guidaUrl": "https://www.legalmail.it/", "verificatoIl": null
+  },
+  {
+    "id": "namirial", "nome": "Namirial (Sicurezza Postale)",
+    "smtpHost": "smtps.sicurezzapostale.it", "smtpPort": 465, "imapHost": "imaps.sicurezzapostale.it", "imapPort": 993,
+    "suggerimentoPassword": null, "guidaUrl": "https://www.namirial.it/", "verificatoIl": null
+  }
+]

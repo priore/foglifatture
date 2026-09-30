@@ -70,8 +70,8 @@ export async function saveInvoice(anno, mese, clienteId, invoice) {
   return invoice;
 }
 
-// Termine di pagamento pattuito col cliente: dato commerciale, non fiscale (non entra
-// nell'XML FatturaPA), quindi scrivibile anche a fattura già accettata da SDI — a
+// Termine di pagamento pattuito col cliente: dato commerciale, non fiscale (finisce in
+// DatiPagamento solo se l'XML non è ancora stato trasmesso), scrivibile anche a fattura già accettata da SDI — a
 // differenza di importo/descrizione/numero, che passano da /genera e restano bloccati.
 export async function impostaScadenzaPagamento(anno, mese, clienteId, dataScadenzaPagamento) {
   const invoice = await getInvoice(anno, mese, clienteId);
