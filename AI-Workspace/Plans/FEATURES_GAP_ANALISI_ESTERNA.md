@@ -418,7 +418,7 @@ Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipen
 | 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ✅ 2026-09-30 (commit: 2c28f8c) |
 | 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
 | 4° | 18 PEC guidata (FP-032) | M | — | ✅ 2026-09-30 (commit: e96d46a) |
-| 5° | 17 Import ZIP (FP-017) | M | — | ✅ 2026-09-30 (commit: da fare) |
+| 5° | 17 Import ZIP (FP-017) | M | — | ✅ 2026-09-30 (commit: fe603ba) |
 | **Livello 1: dipendono solo da voci di livello 0** | | | | |
 | 6° | 4 Calendario fiscale (FP-026), conferma a parte | S | 1 | ⬜ |
 | 7° | 5 Requisiti 5% / ISA (FP-027), conferma a parte | S | 1 | ⬜ |
