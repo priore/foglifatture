@@ -54,6 +54,12 @@ export const api = {
   controllaRicevuteSdi: () => richiesta('/sdi/controlla', { method: 'POST' }),
   cronologiaPec: () => richiesta('/sdi/cronologia'),
 
+  // PEC guidata: gestori preconfigurati, prova passo-passo, PEC di prova allo SDI
+  gestoriPec: () => richiesta('/pec/gestori'),
+  provaPec: () => richiesta('/pec/prova', { method: 'POST' }),
+  provaPecSdi: () => richiesta('/pec/prova-sdi', { method: 'POST', body: JSON.stringify({ conferma: true }) }),
+  risposteProvaPecSdi: (dal) => richiesta(`/pec/prova-sdi/risposte?dal=${encodeURIComponent(dal)}`),
+
   // Import storico pregresso (timesheet da xls originale, fatture da XML FatturaPA già emesse)
   importaTimesheet: (anno, mese, clienteId, file) => {
     const form = new FormData();
