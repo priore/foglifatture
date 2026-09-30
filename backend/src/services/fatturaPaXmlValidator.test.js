@@ -42,3 +42,9 @@ test('data fattura nel futuro (fuso Europe/Rome) rifiutata, oggi e passato ok', 
   assert.equal(futura.valido, false);
   assert.match(futura.errori.join(';'), /00403/);
 });
+
+test('IBAN in fattura non valido rifiutato per bonifico, ignorato per contanti', () => {
+  const pagamento = { modalita: 'MP05', iban: 'IT61X0542811101000000123456' };
+  assert.match(validaDatiFatturaPA({ fornitore, cliente, fattura: { ...fattura, pagamento } }).errori.join(';'), /IBAN/);
+  assert.equal(validaDatiFatturaPA({ fornitore, cliente, fattura: { ...fattura, pagamento: { ...pagamento, modalita: 'MP01' } } }).valido, true);
+});

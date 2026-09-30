@@ -281,11 +281,19 @@ Sono risposte, con la fonte, ai punti che F24_STEP3 segna come 🟡 o lascia ape
 **Oggi in Timesheet.** 🟢 `fatturaPaXmlGenerator.js` non scrive il blocco `DatiPagamento`. Non esiste un campo IBAN.
 
 **Cosa fare.**
-- `config.pagamento`: `iban`, `intestatario`, `istitutoFinanziario` (facoltativo), `modalitaDefault` (`MP05`), `giorniScadenzaDefault` (es. 30). Sovrascrivibili per cliente (`CLIENTE_VUOTO`: `modalitaPagamento`, `giorniScadenza`). L'IBAN non è un segreto come la password PEC, ma è un dato personale: resta in `config.json`, già escluso da git (regola dati sensibili rispettata senza nuovi file).
+- (Implementato come campi di `config.fatturazione`, non sezione `config.pagamento`: evita un nuovo step UI; blocco `pagamento` congelato nella fattura alla generazione; BTC = modalità aggiuntiva senza codice FatturaPA (niente `DatiPagamento`, vale la Causale BTC); riquadro pagamento + QR nel PDF di tutti i 5 template fattura.) `config.pagamento`: `iban`, `intestatario`, `istitutoFinanziario` (facoltativo), `modalitaDefault` (`MP05`), `giorniScadenzaDefault` (es. 30). Sovrascrivibili per cliente (`CLIENTE_VUOTO`: `modalitaPagamento`, `giorniScadenza`). L'IBAN non è un segreto come la password PEC, ma è un dato personale: resta in `config.json`, già escluso da git (regola dati sensibili rispettata senza nuovi file).
 - XML: `DatiPagamento` → `CondizioniPagamento` `TP02` (pagamento completo), `DettaglioPagamento` con `ModalitaPagamento`, `DataScadenzaPagamento`, `ImportoPagamento`, e `IBAN` solo per le modalità che lo usano (bonifico, SEPA). Validazione IBAN (lunghezza per paese + controllo mod-97, poche righe di stdlib).
 - Anteprima fattura e template PDF: stessi dati.
 - Fatture senza configurazione ⇒ XML identico a oggi (retrocompatibile, come per FP-011).
 - Test in `fatturaPaXmlGenerator.test.js`: con/senza IBAN, contanti senza IBAN, IBAN non valido rifiutato.
+
+**Implementato (2026-09-30), scostamenti dal piano.**
+- 🟢 Campi in `config.fatturazione` (non `config.pagamento`); override per cliente `modalitaPagamento`/`giorniScadenza`. Un solo IBAN (risolve la domanda aperta 2).
+- 🟢 Blocco `pagamento` congelato nella fattura alla generazione (`backend/src/lib/pagamento.js`), come la clausola BTC. IBAN validato mod-97 (`backend/src/lib/iban.js`), in Impostazioni e prima dell'invio.
+- 🟢 **Bitcoin come modalità**: FatturaPA non ha un codice per BTC, quindi niente `DatiPagamento` in XML (vale la Causale BTC, che imposta da sola `pagamentoBtc`). L'indirizzo è il primo di `config.walletBtc`.
+- 🟢 **PDF**: riquadro «Dati per il pagamento» (IBAN e/o indirizzo BTC, modalità, scadenza) in fondo, prima del piè pagina, in tutti e 5 i template fattura, con mini QR dipendente dalla modalità: EPC QR per bonifico/SEPA, URI `bitcoin:` per BTC. La Causale BTC, prima presente solo in `fattura-default`, è ora in tutti i template.
+- 🟢 Nuova dipendenza frontend `qrcode-generator` (QR non realizzabile con la stdlib).
+- 🟡 Solo contanti/assegno senza IBAN: nessun blocco pagamento (la condizione è IBAN o indirizzo BTC). Screenshot PDF reale ancora da fare.
 
 **Riferimento esterno.** `packages/fatturapa/src/payment-methods.ts` (codici MP01-MP23 dalle specifiche 1.9.1), `packages/fatturapa/src/builder.ts:202-209`, `schema.prisma` `BankAccount`, `PaymentTerms` (profili "30 giorni bonifico"). 🟡 Semplificazione: un solo conto in config invece di una tabella di conti. Più conti solo se servono davvero.
 
@@ -401,7 +409,7 @@ Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipen
 |---|---|---|---|---|
 | **Livello 0: indipendenti** | | | | |
 | 1° | 12 Data fattura nel futuro (FP-029) | S | — | ✅ 2026-09-30 (commit: 561fc8a) |
-| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ⬜ |
+| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ✅ 2026-09-30 (commit: da fare) |
 | 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
 | 4° | 18 PEC guidata (FP-032) | M | — | ⬜ |
 | 5° | 17 Import ZIP (FP-017) | M | — | ⬜ |
@@ -453,7 +461,7 @@ Esecuzione, come per F24_STEP3: una voce alla volta, test verdi, **stop** in att
 
 Nessuna nuova voce in `.gitignore`: tutti i dati utente finiscono sotto `backend/data/` o in `config.json`, già esclusi. Da verificare comunque con `git ls-files` a ogni voce (regola `sensitive-data.md`).
 
-Nuove dipendenze: **solo `pdf-lib`** (voce 7), motivata sopra. Per lo ZIP (voce 17) la decisione è rimandata al passaggio in analisi.
+Nuove dipendenze: `pdf-lib` (voce 7, motivata sopra) e `qrcode-generator` (frontend, già aggiunta con la voce 13). Per lo ZIP (voce 17) la decisione è rimandata al passaggio in analisi.
 
 ---
 
@@ -469,7 +477,7 @@ Nuove dipendenze: **solo `pdf-lib`** (voce 7), motivata sopra. Per lo ZIP (voce 
 ## J. Domande aperte
 
 1. Codice sede INPS: basta un campo a mano con link alla tabella INPS (proposta), o serve l'elenco completo selezionabile?
-2. Dati di pagamento: un solo IBAN in config (proposta) o più conti selezionabili per cliente?
+2. ~~Dati di pagamento: un solo IBAN~~ Risolta: un solo IBAN in config (voce 13 implementata).
 3. Import ZIP: lettore ZIP con la stdlib (circa 60 righe) o una piccola dipendenza? Da decidere quando la voce passa in analisi.
 4. Rivalsa 4%: da verificare, anche col commercialista, se entra nella base della soglia del bollo (77,47 €).
 

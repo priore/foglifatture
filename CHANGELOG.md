@@ -12,6 +12,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - Dashboard: card riordinabili anche nella vista Bitcoin.
 - Dashboard: nuova card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg) nella vista Bitcoin, indipendente dagli incassi registrati.
 - Fatture: la data nel futuro viene bloccata prima della generazione/invio XML, con avviso sul rifiuto SDI (00403).
+- Fatture: dati di pagamento in XML (modalità, IBAN, scadenza) con IBAN e giorni di scadenza predefiniti in Impostazioni, sovrascrivibili per cliente; IBAN validato.
+- Fattura PDF: riquadro «Dati per il pagamento» con IBAN e/o indirizzo Bitcoin, scadenza e mini QR (bonifico EPC o bitcoin:) in tutti i template fattura; Bitcoin selezionabile come modalità di pagamento.
 
 ## [1.3.0] - 2026-09-25
 

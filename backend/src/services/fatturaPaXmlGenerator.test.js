@@ -79,3 +79,24 @@ test('cliente con pagamentoBtc attivo ma fattura congelata senza: nessuna Causal
   });
   assert.doesNotMatch(xml, /Bitcoin/);
 });
+
+const fatturaBase = { numero: '1', data: '2026-09-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 100, imponibile: 100, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 };
+const pagamento = { modalita: 'MP05', iban: 'IT60X0542811101000000123456', intestatario: 'Danilo Priore', istitutoFinanziario: '', giorniScadenza: 30 };
+
+test('DatiPagamento: bonifico con IBAN e scadenza = data + giorni', () => {
+  const xml = generaXmlFatturaPA({ fornitore, cliente, fattura: { ...fatturaBase, pagamento } });
+  assert.match(xml, /<CondizioniPagamento>TP02<\/CondizioniPagamento>/);
+  assert.match(xml, /<ModalitaPagamento>MP05<\/ModalitaPagamento>/);
+  assert.match(xml, /<DataScadenzaPagamento>2026-10-01<\/DataScadenzaPagamento>/);
+  assert.match(xml, /<IBAN>IT60X0542811101000000123456<\/IBAN>/);
+});
+
+test('DatiPagamento: scadenza esplicita prevale, contanti senza IBAN', () => {
+  const xml = generaXmlFatturaPA({ fornitore, cliente, fattura: { ...fatturaBase, dataScadenzaPagamento: '2026-09-15', pagamento: { ...pagamento, modalita: 'MP01' } } });
+  assert.match(xml, /<DataScadenzaPagamento>2026-09-15<\/DataScadenzaPagamento>/);
+  assert.doesNotMatch(xml, /<IBAN>/);
+});
+
+test('senza blocco pagamento: nessun DatiPagamento (XML invariato)', () => {
+  assert.doesNotMatch(generaXmlFatturaPA({ fornitore, cliente, fattura: fatturaBase }), /DatiPagamento/);
+});

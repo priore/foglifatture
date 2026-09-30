@@ -15,6 +15,37 @@ function escapeXml(testo) {
     .replace(/'/g, '&apos;');
 }
 
+// Modalità di pagamento (specifiche FatturaPA) che riportano l'IBAN nel DettaglioPagamento.
+const MODALITA_CON_IBAN = new Set(['MP05', 'MP19']);
+
+function aggiungiGiorni(dataIso, giorni) {
+  const d = new Date(`${dataIso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + Number(giorni));
+  return d.toISOString().slice(0, 10);
+}
+
+// DatiPagamento solo se la fattura ha il blocco `pagamento` congelato alla generazione:
+// fatture senza (config senza IBAN, o generate prima di questa funzione) restano identiche.
+function datiPagamentoXml(fattura) {
+  const p = fattura.pagamento;
+  if (!p || p.modalita === 'BTC' || (MODALITA_CON_IBAN.has(p.modalita) && !p.iban)) return '';
+  const scadenza = fattura.dataScadenzaPagamento ?? aggiungiGiorni(fattura.data, p.giorniScadenza);
+  const righe = [
+    p.intestatario ? `<Beneficiario>${escapeXml(p.intestatario)}</Beneficiario>` : '',
+    `<ModalitaPagamento>${escapeXml(p.modalita)}</ModalitaPagamento>`,
+    `<DataScadenzaPagamento>${escapeXml(scadenza)}</DataScadenzaPagamento>`,
+    `<ImportoPagamento>${formattaImporto(fattura.imponibile)}</ImportoPagamento>`,
+    MODALITA_CON_IBAN.has(p.modalita) && p.istitutoFinanziario ? `<IstitutoFinanziario>${escapeXml(p.istitutoFinanziario)}</IstitutoFinanziario>` : '',
+    MODALITA_CON_IBAN.has(p.modalita) ? `<IBAN>${escapeXml(p.iban)}</IBAN>` : '',
+  ].filter(Boolean).map((r) => `        ${r}`).join('\n');
+  return `    <DatiPagamento>
+      <CondizioniPagamento>TP02</CondizioniPagamento>
+      <DettaglioPagamento>
+${righe}
+      </DettaglioPagamento>
+    </DatiPagamento>\n`;
+}
+
 function formattaImporto(numero) {
   return Number(numero).toFixed(2);
 }
@@ -131,7 +162,7 @@ ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</I
         <Imposta>0.00</Imposta>
       </DatiRiepilogo>
     </DatiBeniServizi>
-  </FatturaElettronicaBody>
+${datiPagamentoXml(fattura)}  </FatturaElettronicaBody>
 </ns2:FatturaElettronica>
 `;
 }
