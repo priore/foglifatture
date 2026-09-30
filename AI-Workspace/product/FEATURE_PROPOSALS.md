@@ -472,7 +472,7 @@ Si fa insieme a FP-002, con la stessa funzione.
 
 ## FP-030 — Dati di pagamento in fattura
 
-**Stato:** ✅ implementata 2026-09-30 (commit: da fare; XML, UI impostazioni/cliente, riquadro PDF con QR, modalità Bitcoin) · ex 💡 proposta · **Impatto:** Medio · **Sforzo:** S-M
+**Stato:** ✅ implementata 2026-09-30 (commit: 2c28f8c; XML, UI impostazioni/cliente, riquadro PDF con QR, modalità Bitcoin) · ex 💡 proposta · **Impatto:** Medio · **Sforzo:** S-M
 
 🟢 `fatturaPaXmlGenerator.js` non scrive il blocco `DatiPagamento` e non esiste un campo IBAN.
 

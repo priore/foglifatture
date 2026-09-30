@@ -409,7 +409,7 @@ Criterio: si parte dalle voci **indipendenti** (livello 0), poi quelle che dipen
 |---|---|---|---|---|
 | **Livello 0: indipendenti** | | | | |
 | 1° | 12 Data fattura nel futuro (FP-029) | S | — | ✅ 2026-09-30 (commit: 561fc8a) |
-| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ✅ 2026-09-30 (commit: da fare) |
+| 2° | 13 Dati di pagamento in fattura (FP-030) | S-M | — | ✅ 2026-09-30 (commit: 2c28f8c) |
 | 3° | 1 Regole fiscali versionate (FP-021) | M | — | ⬜ |
 | 4° | 18 PEC guidata (FP-032) | M | — | ⬜ |
 | 5° | 17 Import ZIP (FP-017) | M | — | ⬜ |
