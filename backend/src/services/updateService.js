@@ -39,7 +39,7 @@ async function versioneLocale() {
 // Tag più recente esistente sul remote e raggiungibile dal branch di produzione (main),
 // così un tag creato su un branch feature/hotfix non fa comparire il bottone per errore.
 async function tagRemotoPiuRecente() {
-  await git(['fetch', '--tags', 'origin', 'main']);
+  await git(['fetch', '--tags', 'origin']);
   const righe = await git(['ls-remote', '--tags', '--refs', 'origin']);
   const tagCandidati = righe.split('\n')
     .map(riga => riga.split('refs/tags/')[1])

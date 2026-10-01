@@ -6,6 +6,9 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Controllo aggiornamenti: `git fetch --tags origin main` falliva sempre con "couldn't find remote ref main" quando il processo gira sul branch `develop`; corretto in `git fetch --tags origin`.
+
 ## [1.4.1] - 2026-09-30
 
 ### Fixed
