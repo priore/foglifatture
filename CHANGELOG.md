@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-30
+
 ### Fixed
 - **Parsing ricevute SDI** — metadati di trasporto (FileMetadati XML, daticert) e allegati SDI malformati non vengono più archiviati come "non classificati". Supporto per matrioske EML (nidificazioni Aruba/Legalmail) e whitelist esplicita dei 7 tipi di ricevuta SDI.
 
