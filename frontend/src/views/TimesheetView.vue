@@ -91,7 +91,8 @@ async function inviaEmail() {
     const nomeFile = `timesheet-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
     const oggetto = `Timesheet ${String(mese.value).padStart(2, '0')}/${anno.value}`;
     const corpo = `Buongiorno,\n\nin allegato il timesheet relativo al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
-    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, clienteCorrente.value.email, oggetto, corpo);
+    const emailDest = clienteCorrente.value.email;
+    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, emailDest, oggetto, corpo);
     esitoEmail.value = risultato.modalita === 'mail-app-mac'
       ? 'Bozza aperta in Mail con allegato pronto'
       : 'PDF salvato e rivelato nel file manager: trascinalo nella mail appena aperta';

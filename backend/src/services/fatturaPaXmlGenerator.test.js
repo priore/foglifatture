@@ -100,3 +100,21 @@ test('DatiPagamento: scadenza esplicita prevale, contanti senza IBAN', () => {
 test('senza blocco pagamento: nessun DatiPagamento (XML invariato)', () => {
   assert.doesNotMatch(generaXmlFatturaPA({ fornitore, cliente, fattura: fatturaBase }), /DatiPagamento/);
 });
+
+test('rivalsa INPS: DatiCassaPrevidenziale TC22 con importo 4%, totale documento = imponibile + rivalsa', () => {
+  const xml = generaXmlFatturaPA({
+    fornitore, cliente,
+    fattura: { ...fatturaBase, rivalsaInps: 4 }, // 4% di 100
+  });
+  assert.match(xml, /<TipoCassa>TC22<\/TipoCassa>/);
+  assert.match(xml, /<AlCassa>4\.00<\/AlCassa>/);
+  assert.match(xml, /<ImportoContributoCassa>4\.00<\/ImportoContributoCassa>/);
+  assert.match(xml, /<ImponibileCassa>100\.00<\/ImponibileCassa>/);
+  assert.match(xml, /<ImportoTotaleDocumento>104\.00<\/ImportoTotaleDocumento>/);
+});
+
+test('senza rivalsa INPS: nessun DatiCassaPrevidenziale, totale = imponibile (retrocompatibilità)', () => {
+  const xml = generaXmlFatturaPA({ fornitore, cliente, fattura: fatturaBase });
+  assert.doesNotMatch(xml, /DatiCassaPrevidenziale/);
+  assert.match(xml, /<ImportoTotaleDocumento>100\.00<\/ImportoTotaleDocumento>/);
+});

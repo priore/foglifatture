@@ -8,7 +8,7 @@ import { verificaESalvaModelloGroq, verificaESalvaModelloClaude } from '../servi
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
 import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
-import { prossimeScadenzeFiscali } from '../services/scadenzeFiscaliService.js';
+import { prossimeScadenzeFiscali, scadenzeIntrastatAnno } from '../services/scadenzeFiscaliService.js';
 
 export const forfettarioRoutes = Router();
 
@@ -98,7 +98,24 @@ forfettarioRoutes.get('/fatture-aperte', async (req, res) => {
 // (vedi scadenzeFiscaliService.js). Mai errore bloccante: fallback sono le date ordinarie.
 forfettarioRoutes.get('/scadenze-fiscali', async (req, res) => {
   try {
-    res.json(await prossimeScadenzeFiscali());
+    const risultato = await prossimeScadenzeFiscali();
+    // Aggiunge scadenze Intrastat se il fornitore è iscritto al VIES e ha clienti UE attivi
+    try {
+      const config = await getConfig();
+      const anno = new Date().getFullYear();
+      const paesiUeSet = new Set([
+        'AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU',
+        'IE','LT','LU','LV','MT','NL','PL','PT','RO','SE','SI','SK',
+      ]);
+      const haClientiUe = config.clienti.some(
+        (c) => c.attivo && c.tipo === 'azienda' && paesiUeSet.has((c.paese ?? 'IT').toUpperCase()) && (c.paese ?? 'IT').toUpperCase() !== 'IT'
+      );
+      if (config.fornitore.iscrittoVies && haClientiUe) {
+        risultato.scadenze = [...risultato.scadenze, ...scadenzeIntrastatAnno(anno)]
+          .sort((a, b) => a.data.localeCompare(b.data));
+      }
+    } catch { /* non bloccare se i clienti non si leggono */ }
+    res.json(risultato);
   } catch (err) {
     res.status(502).json({ errore: err.message, prossimoRetryIl: err.prossimoRetryIl ?? null });
   }

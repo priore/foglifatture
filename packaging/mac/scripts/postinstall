@@ -1,0 +1,74 @@
+#!/bin/bash
+# Eseguito da macOS Installer dopo la copia dei file del .pkg
+set -euo pipefail
+
+REPO_URL="http://localhost:3000/danilo/Timesheet.git"
+# macOS Installer esegue postinstall come root; recupera la home dell'utente reale
+REAL_USER="$(stat -f '%Su' /dev/console)"
+REAL_HOME="$(dscl . -read /Users/$REAL_USER NFSHomeDirectory | awk '{print $2}')"
+INSTALL_DIR="$REAL_HOME/Library/Application Support/FogliFatture"
+APP_BUNDLE="$REAL_HOME/Applications/FogliFatture.app"
+
+# Verifica Git
+if ! command -v git >/dev/null 2>&1; then
+  osascript -e 'display alert "FogliFatture" message "Git non trovato. Installa Xcode Command Line Tools:\n\nxcode-select --install\n\nPoi esegui di nuovo il .pkg." as critical'
+  exit 1
+fi
+
+# Clona o aggiorna il repo
+if [ -d "$INSTALL_DIR/.git" ]; then
+  git -C "$INSTALL_DIR" fetch origin
+  git -C "$INSTALL_DIR" checkout main
+  git -C "$INSTALL_DIR" pull --ff-only origin main
+else
+  rm -rf "$INSTALL_DIR"
+  git clone "$REPO_URL" "$INSTALL_DIR"
+fi
+
+# Lancia install.sh come utente reale (non root) — install.sh usa $HOME per launchd plist
+sudo -u "$REAL_USER" bash "$INSTALL_DIR/scripts/install.sh"
+
+# Crea bundle .app minimale per Dock/Launchpad (come utente reale)
+sudo -u "$REAL_USER" mkdir -p "$APP_BUNDLE/Contents/MacOS"
+sudo -u "$REAL_USER" mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+# Launcher: apre il browser sull'app già in esecuzione via launchd
+cat > "$APP_BUNDLE/Contents/MacOS/FogliFatture" <<'LAUNCHER'
+#!/bin/bash
+open "http://localhost:1969"
+LAUNCHER
+chmod +x "$APP_BUNDLE/Contents/MacOS/FogliFatture"
+
+# Copia icona se disponibile
+ICNS_SRC="$INSTALL_DIR/packaging/mac/FogliFatture.icns"
+if [ -f "$ICNS_SRC" ]; then
+  cp "$ICNS_SRC" "$APP_BUNDLE/Contents/Resources/FogliFatture.icns"
+  ICON_KEY="<key>CFBundleIconFile</key><string>FogliFatture</string>"
+else
+  ICON_KEY=""
+fi
+
+cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.prioregroup.foglifatture</string>
+  <key>CFBundleName</key>
+  <string>FogliFatture</string>
+  <key>CFBundleDisplayName</key>
+  <string>FogliFatture</string>
+  <key>CFBundleExecutable</key>
+  <string>FogliFatture</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.4.1</string>
+  $ICON_KEY
+</dict>
+</plist>
+PLIST
+
+echo "FogliFatture installato in: $INSTALL_DIR"
+echo "Bundle .app: $APP_BUNDLE"

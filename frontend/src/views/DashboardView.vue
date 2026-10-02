@@ -6,6 +6,7 @@ import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
 import LineChart from '../components/LineChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
+import StepRegoleFiscali from '../components/wizard/StepRegoleFiscali.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 
@@ -38,6 +39,7 @@ async function eseguiAggiornamento() {
 const fattureAperte = ref([]);
 const scadenzeFiscali = ref([]);
 const fonteScadenzeFiscali = ref('base');
+const statoRegoleFiscali = ref(null);
 
 async function carica() {
   errore.value = '';
@@ -75,11 +77,16 @@ async function caricaScadenzeFiscali() {
   fonteScadenzeFiscali.value = risposta?.fonte ?? 'base';
 }
 
+async function caricaStatoRegole() {
+  statoRegoleFiscali.value = await api.statoRegoleFiscali().catch(() => null);
+}
+
 onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
   caricaMercatoBtc();
+  caricaStatoRegole();
 });
 watch(annoSelezionato, carica);
 
@@ -265,7 +272,9 @@ function caricaOrdineSalvato(chiave, ordineDefault) {
 function caricaTabSalvato() {
   try {
     const salvato = localStorage.getItem(CHIAVE_TAB);
-    return salvato === 'Bitcoin' ? 'Bitcoin' : 'Dashboard';
+    if (salvato === 'Bitcoin') return 'Bitcoin';
+    if (salvato === 'Regole fiscali') return 'Regole fiscali';
+    return 'Dashboard';
   } catch {
     return 'Dashboard';
   }
@@ -388,12 +397,25 @@ function ripristinaLayout() {
         <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
       </div>
 
+      <div
+        v-if="statoRegoleFiscali?.aggiornamentoDisponibile"
+        class="banner-regole"
+      >
+        Regole fiscali {{ statoRegoleFiscali.annoDisponibile }} disponibili e non ancora confermate.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
+
       <div class="tab-toggle">
         <button type="button" :class="tabAttivo === 'Dashboard' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Dashboard')">Dashboard</button>
         <button type="button" :class="tabAttivo === 'Bitcoin' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Bitcoin')">Bitcoin</button>
+        <button type="button" :class="tabAttivo === 'Regole fiscali' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Regole fiscali')">Regole fiscali</button>
       </div>
 
-      <div v-if="tabAttivo === 'Dashboard'" class="griglia-card">
+      <div v-if="tabAttivo === 'Regole fiscali'" class="regole-fiscali-wrapper">
+        <StepRegoleFiscali @confermata="caricaStatoRegole" />
+      </div>
+
+      <div v-else-if="tabAttivo === 'Dashboard'" class="griglia-card">
         <div class="card" :style="{ order: ordinePer('soglia-cassa') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -409,7 +431,8 @@ function ripristinaLayout() {
               <div class="mini-stat"><span class="mini-stat-label">Incassato</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.ricaviCumulati) }}</span></div>
               <div class="mini-stat"><span class="mini-stat-label">Imposta stimata</span><span class="mini-stat-value">{{ formattaEuro(dashboard.cassa.impostaStimata) }}</span></div>
             </div>
-            <p v-if="dashboard.cassa.superamentoSoglia" class="avviso-riga avviso-warn">Soglia già superata (per cassa).</p>
+            <p v-if="dashboard.cassa.statoSoglia === 'uscitaImmediata'" class="avviso-riga avviso-warn">⚠️ Soglia 100.000 € superata — se incassato nell'anno, il regime forfettario cessa immediatamente e l'IVA è dovuta già da questa fattura. Verificare subito con il commercialista.</p>
+            <p v-else-if="dashboard.cassa.superamentoSoglia || dashboard.cassa.statoSoglia === 'uscitaAnnoSuccessivo'" class="avviso-riga avviso-warn">Soglia già superata (per cassa) — uscita dal regime l'anno prossimo.</p>
             <p v-if="dashboard.cassa.fattureACavalloAnno.length" class="avviso-riga avviso-warn">
               {{ dashboard.cassa.fattureACavalloAnno.length }} fattura/e a cavallo d'anno — emesse in un anno, incassate in un altro.
             </p>
@@ -434,7 +457,8 @@ function ripristinaLayout() {
             <DonutChart :fette="fetteSoglia" :centro-valore="`${dashboard.percentualeSoglia}%`" centro-label="soglia" />
             <p class="note-legal" style="margin-top:20px">
               Soglia annua: {{ formattaEuro(dashboard.sogliaAnnua) }} · proiezione fine anno: {{ formattaEuro(dashboard.ricaviProiettati) }} ({{ dashboard.percentualeSogliaProiettata }}%).
-              <span v-if="dashboard.superamentoSoglia" style="color:var(--warn);font-weight:600"> Soglia già superata.</span>
+              <span v-if="dashboard.statoSoglia === 'uscitaImmediata'" style="color:var(--warn);font-weight:600"> Soglia 100.000 € superata — regime cessa immediatamente!</span>
+              <span v-else-if="dashboard.superamentoSoglia" style="color:var(--warn);font-weight:600"> Soglia già superata — uscita dal regime l'anno prossimo.</span>
               <span v-else-if="dashboard.superamentoSogliaProiettato" style="color:var(--warn);font-weight:600"> Proiezione fine anno oltre soglia.</span>
             </p>
           </div>
@@ -747,4 +771,20 @@ function ripristinaLayout() {
 .maniglia-card { cursor: grab; color: var(--muted); font-size: .9rem; line-height: 1; user-select: none; }
 .maniglia-card:active { cursor: grabbing; }
 .card-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.banner-regole {
+  background: var(--warn-bg);
+  color: var(--warn);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  font-size: var(--font-size-sm);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.banner-link-btn {
+  background: none; border: none; padding: 0;
+  color: inherit; font-weight: 600; font-size: inherit;
+  text-decoration: underline; cursor: pointer;
+}
+.regole-fiscali-wrapper { padding: 4px 0; }
 </style>

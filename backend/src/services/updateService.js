@@ -22,10 +22,11 @@ function parseSemver(tag) {
   return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
-// > 0 se a > b, coerente con Array.prototype.sort.
+// > 0 se a > b; null se uno dei due non è semver valido (es. v1.5.0-dev).
 function confrontaSemver(a, b) {
   const pa = parseSemver(a);
   const pb = parseSemver(b);
+  if (!pa || !pb) return null;
   for (let i = 0; i < 3; i++) {
     if (pa[i] !== pb[i]) return pa[i] - pb[i];
   }
@@ -39,7 +40,7 @@ async function versioneLocale() {
 // Tag più recente esistente sul remote e raggiungibile dal branch di produzione (main),
 // così un tag creato su un branch feature/hotfix non fa comparire il bottone per errore.
 async function tagRemotoPiuRecente() {
-  await git(['fetch', '--tags', 'origin', 'main']);
+  await git(['fetch', '--tags', 'origin']);
   const righe = await git(['ls-remote', '--tags', '--refs', 'origin']);
   const tagCandidati = righe.split('\n')
     .map(riga => riga.split('refs/tags/')[1])

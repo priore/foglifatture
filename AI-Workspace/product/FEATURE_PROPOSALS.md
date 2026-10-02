@@ -29,7 +29,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ## FP-002 — Soglia 100.000 €, uscita immediata dal regime
 
-**Stato:** 💡 proposta · **Impatto:** Alto · **Sforzo:** S
+**Stato:** ✅ implementato · 2026-10-02 · implementato insieme a FP-028 · **Impatto:** Alto · **Sforzo:** S
 
 🟢 La soglia 85.000 è gestita con proiezione (`forfettarioService.js:110-115`, `percentualeSogliaProiettata`, `superamentoSogliaProiettato` a riga 163), ma superare i 100.000 in corso d'anno ha una conseguenza diversa e più grave: uscita immediata dal regime, con IVA dovuta sulle operazioni dell'anno in corso. Oggi l'app non distingue i due casi — solo un booleano `superamentoSoglia`, sia sul ramo competenza (riga 162) sia sul ramo cassa (riga 138).
 
@@ -270,7 +270,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-018 — Clienti esteri: trattamento IVA corretto in fattura (Natura, Intrastat)
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata (2026-10-02) · **Impatto:** Medio · **Sforzo:** M
 
 🟢 `fatturaPaXmlGenerator.js:125,129` scrive sempre `Natura N2.2` (operazione non soggetta del regime forfettario): corretto solo per clienti italiani. Un cliente estero (UE o extra-UE, azienda o privato) richiede una Natura diversa per legge: N2.1 (fuori campo IVA) per aziende UE/extra-UE, con obbligo di elenco Intrastat trimestrale per le sole aziende UE; i clienti privati restano di norma trattati come italiani, salvo alcuni servizi specifici (consulenza, elaborazione dati) verso privati extra-UE.
 
@@ -411,7 +411,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-026 — Calendario fiscale: festività e slittamenti di legge
 
-**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+**Stato:** ✅ implementata 2026-10-02 · **Impatto:** Basso · **Sforzo:** S
 
 🟢 `scadenzeFiscaliService.js` (`FESTIVITA_FISSE`) non contiene il 4 ottobre, festa nazionale dal 2026 (L. 151/2025). `primoGiornoLavorativo` non applica lo slittamento al 20 agosto delle scadenze dall'1 al 20 agosto (D.Lgs. 33/2025 art. 11).
 
@@ -424,24 +424,24 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-027 — Requisiti aliquota 5% e ripartizione acconti
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S
+**Stato:** ✅ implementata · 2026-10-02 · **Impatto:** Medio · **Sforzo:** S
 
-🟢 `forfettarioService.js` (`aliquotaImposta`) applica il 5% nei primi 5 anni a chiunque abbia una data di inizio attività. La legge lo concede solo con requisiti precisi (L. 190/2014 c. 65: per esempio nessuna attività nei 3 anni precedenti, e l'attività non deve proseguire un lavoro dipendente precedente). F24_STEP3 dà per scontata la ripartizione 50/50 degli acconti.
+🟢 `forfettarioService.js` (`aliquotaImposta`) ora richiede il flag `requisitiAliquotaRidotta` (default `false`) per applicare il 5%. `calcolaDashboardForfettario` espone `soggettoIsa` nel risultato per F24_STEP3.
 
-🟡 Due spunte in "Regime forfettario":
-- "ho i requisiti per il 5%": default no, cioè 15%, la scelta prudente;
-- "attività con ISA": default sì, acconti 50/50; senza, 40/60.
+🟢 Due spunte in "Regime forfettario" (`StepFornitore.vue`):
+- "Ho i requisiti per l'aliquota agevolata del 5%": default no (15%, scelta prudente); L. 190/2014 c. 65.
+- "Soggetto a ISA": default sì (acconti 50/50); DPR 435/2001 art. 17 c. 3.
 
-⚠️ I numeri in dashboard cambiano per chi oggi ha il 5% senza aver dichiarato i requisiti: è una correzione, da confermare a parte e da scrivere nel CHANGELOG.
+🟢 `config.forfettario.requisitiAliquotaRidotta` e `soggettoIsa` aggiunti in `DEFAULT_CONFIG`.
 
-**Riferimenti:** `backend/src/services/forfettarioService.js:4-12`, `frontend/src/components/wizard/StepFornitore.vue`
-**Piano di dettaglio:** — (da redigere quando passa a 🔍) · piano di massima: [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 5
+**Riferimenti:** [forfettarioService.js:7](../../../backend/src/services/forfettarioService.js#L7), [StepFornitore.vue:133](../../../frontend/src/components/wizard/StepFornitore.vue#L133), [configService.js:91](../../../backend/src/services/configService.js#L91)
+**Piano di dettaglio:** [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 5
 
 ---
 
 ## FP-028 — Avviso soglia prima di emettere e limite personale
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S
+**Stato:** ✅ implementato · 2026-10-02 · **Impatto:** Medio · **Sforzo:** S
 
 🟢 La soglia si vede solo in dashboard (`forfettarioService.js`): all'emissione (`FatturaView.vue`, `invoiceRoutes.js`) non c'è nessun controllo.
 
@@ -485,7 +485,7 @@ Si fa insieme a FP-002, con la stessa funzione.
 
 ## FP-031 — Rivalsa INPS 4% facoltativa
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S-M
+**Stato:** ✅ implementata (2026-10-02) · **Impatto:** Medio · **Sforzo:** S-M
 
 🟢 Oggi è esclusa per scelta (`fatturaPaXmlGenerator.js:6`, `FatturaView.vue:405` "Rivalsa INPS: assente").
 
@@ -513,6 +513,21 @@ Nessuna dipendenza nuova (`nodemailer`, `imapflow` già presenti).
 
 **Riferimenti:** `frontend/src/components/wizard/StepPec.vue`, `backend/src/services/pecService.js`, `sdiRicevuteService.js`
 **Piano di dettaglio:** — (da redigere quando passa a 🔍) · piano di massima: [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 18
+
+---
+
+## FP-033 — Email fornitori: indirizzi separati per timesheet e per fatture, multi-email
+
+**Stato:** ✅ implementata 2026-10-02 · **Impatto:** Basso · **Sforzo:** S
+
+🟢 Ogni cliente ha un unico campo `email` (stringa, multi-indirizzo separato da virgola) usato sia per timesheet che per fattura.
+
+Aggiungere `emailTimesheet` e `emailFattura` separati, con fallback su `email` per retrocompatibilità. L'invio timesheet usa `emailTimesheet`; l'invio fattura usa `emailFattura`. Se il campo specifico è vuoto, fallback sull'altro, poi su `email`.
+
+UI: due campi di testo al posto di uno in `StepClienti.vue`, con il campo generico come fallback visibile.
+
+**Riferimenti:** `frontend/src/components/wizard/StepClienti.vue`, `frontend/src/views/TimesheetView.vue`, `frontend/src/views/FatturaView.vue`, `backend/src/services/configService.js`, `backend/src/lib/email.js`
+**Piano di dettaglio:** [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 19
 
 ---
 

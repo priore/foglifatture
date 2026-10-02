@@ -85,7 +85,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
     <div class="card">
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
-        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :wallet-btc="config.walletBtc" @salva-subito="salva" />
+        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :wallet-btc="config.walletBtc" />
         <StepFatturazione v-else-if="passoAttivo === 1" v-model="config.fatturazione" />
         <StepClienti v-else-if="passoAttivo === 2" v-model="config.clienti" @salva-subito="salva" />
         <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
@@ -98,9 +98,10 @@ onBeforeRouteUpdate(async (to, from, next) => {
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-ghost" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>
           <span class="badge-mono">{{ messaggio }}</span>
-          <button class="btn btn-primary" @click="avanti">
-            {{ passoAttivo === PASSI.length - 1 ? 'Salva' : 'Avanti →' }}
-          </button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ok" @click="salva">Salva</button>
+            <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary" @click="avanti">Avanti →</button>
+          </div>
         </div>
         <div v-else style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-ghost" @click="indietro">← Indietro</button>

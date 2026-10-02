@@ -11,6 +11,8 @@ const RE_CAP = /^\d{5}$/;
 const RE_PROVINCIA = /^[A-Za-z]{2}$/;
 const RE_CODICE_DESTINATARIO = /^[0-9A-Za-z]{6,7}$/;
 const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
+// Identificativo fiscale estero: meno restrittivo (alfanumerico, 1-28 chars, spec FatturaPA)
+const RE_ID_ESTERO = /^[0-9A-Za-z]{1,28}$/;
 
 // Data odierna in Europe/Rome (formato AAAA-MM-GG, en-CA) per il confronto con la data fattura.
 function oggiRoma(adesso = new Date()) {
@@ -48,17 +50,28 @@ export function validaDatiFatturaPA({ fornitore, cliente, fattura }, adesso = ne
   requireMatch(errori, fornitore?.provincia, RE_PROVINCIA, 'Provincia fornitore (sigla 2 lettere)');
   requireCampo(errori, fornitore?.provincia, 'Provincia fornitore');
 
+  const clienteEstero = (cliente?.paese ?? 'IT').toUpperCase() !== 'IT';
   requireCampo(errori, cliente?.denominazione, 'Denominazione cliente');
-  requireCampo(errori, cliente?.partitaIva, 'Partita IVA cliente');
-  requireMatch(errori, cliente?.partitaIva, RE_PIVA, 'Partita IVA cliente (11 cifre)');
+  requireCampo(errori, cliente?.partitaIva, 'Partita IVA / identificativo fiscale cliente');
+  if (clienteEstero) {
+    // Clienti esteri: identificativo meno restrittivo (VAT number estero, max 28 chars)
+    requireMatch(errori, cliente?.partitaIva, RE_ID_ESTERO, 'Identificativo fiscale cliente estero (max 28 caratteri alfanumerici)');
+  } else {
+    requireMatch(errori, cliente?.partitaIva, RE_PIVA, 'Partita IVA cliente (11 cifre)');
+  }
   requireCampo(errori, cliente?.indirizzo, 'Indirizzo cliente');
-  requireMatch(errori, cliente?.cap, RE_CAP, 'CAP cliente (5 cifre)');
-  requireCampo(errori, cliente?.cap, 'CAP cliente');
-  requireCampo(errori, cliente?.comune, 'Comune cliente');
-  requireMatch(errori, cliente?.provincia, RE_PROVINCIA, 'Provincia cliente (sigla 2 lettere)');
-  requireCampo(errori, cliente?.provincia, 'Provincia cliente');
-  requireCampo(errori, cliente?.codiceDestinatarioSdi, 'Codice Destinatario SDI cliente');
-  requireMatch(errori, cliente?.codiceDestinatarioSdi, RE_CODICE_DESTINATARIO, 'Codice Destinatario SDI cliente (6-7 caratteri)');
+  if (!clienteEstero) {
+    // Per clienti esteri CAP sarà "00000" e Provincia assente: non validare
+    requireMatch(errori, cliente?.cap, RE_CAP, 'CAP cliente (5 cifre)');
+    requireCampo(errori, cliente?.cap, 'CAP cliente');
+    requireCampo(errori, cliente?.comune, 'Comune cliente');
+    requireMatch(errori, cliente?.provincia, RE_PROVINCIA, 'Provincia cliente (sigla 2 lettere)');
+    requireCampo(errori, cliente?.provincia, 'Provincia cliente');
+    requireCampo(errori, cliente?.codiceDestinatarioSdi, 'Codice Destinatario SDI cliente');
+    requireMatch(errori, cliente?.codiceDestinatarioSdi, RE_CODICE_DESTINATARIO, 'Codice Destinatario SDI cliente (6-7 caratteri)');
+  } else {
+    requireCampo(errori, cliente?.comune, 'Città/Comune cliente');
+  }
 
   requireCampo(errori, fattura?.numero, 'Numero fattura');
   requireCampo(errori, fattura?.data, 'Data fattura');

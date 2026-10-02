@@ -1,9 +1,11 @@
 // Generazione XML FatturaPA v1.2.2 per Regime Forfettario (Flat Tax).
 // Segue esattamente lo schema del template Templates/IT11111111111_00008.xml:
 // - RegimeFiscale RF19
-// - Natura IVA N2.2 (operazioni non soggette, regime forfettario)
+// - Natura IVA N2.2 (ordinario forfettario) o N2.1 (clienti esteri B2B)
+// - CessionarioCommittente adattato per clienti esteri (IdPaese/Nazione, CodiceDestinatario XXXXXXX, CAP 00000)
 // - DatiBollo con BolloVirtuale/ImportoBollo se l'importo totale supera la soglia
-// - Nessuna rivalsa INPS, nessuna ritenuta d'acconto
+// - DatiCassaPrevidenziale TC22 (rivalsa INPS 4%) se fattura.rivalsaInps > 0
+// - Nessuna ritenuta d'acconto
 
 // Escapa i caratteri speciali XML per evitare di produrre un documento non valido.
 function escapeXml(testo) {
@@ -53,15 +55,43 @@ function formattaImporto(numero) {
 /**
  * Genera l'XML FatturaPA come stringa UTF-8.
  * @param {object} dati - { fornitore, cliente, fattura: { numero, data, descrizione, oreTotali,
- *   tariffaOraria, imponibile, bollo, bolloApplicabile, progressivoInvio } }
+ *   tariffaOraria, imponibile, bollo, bolloApplicabile, progressivoInvio, trattamentoEstero } }
+ *   trattamentoEstero: congelato al momento di "Genera fattura" da clienteEsteroService.trattamentoCliente()
  */
 export function generaXmlFatturaPA(dati) {
   const { fornitore, cliente, fattura } = dati;
+
+  // trattamentoEstero congelato nella fattura: determina Natura IVA, diciture e dati anagrafici esteri.
+  // null/assente = cliente IT, trattamento ordinario forfettario.
+  const trattamento = fattura.trattamentoEstero ?? null;
+  const estero = trattamento?.estero ?? false;
+  const natura = trattamento?.natura ?? 'N2.2';
+  const causaliEstere = trattamento?.causali ?? null; // array di stringhe o null
+
+  // Per clienti esteri: CodiceDestinatario XXXXXXX, CAP 00000, no Provincia, IdPaese del cliente
+  const paeseCliente = estero ? (cliente.paese ?? 'IT').toUpperCase() : 'IT';
+  const codiceDestinatario = estero ? 'XXXXXXX' : escapeXml(cliente.codiceDestinatarioSdi);
+  const capCliente = estero ? '00000' : escapeXml(cliente.cap);
+  const provinciaCliente = estero ? '' : `\n        <Provincia>${escapeXml(cliente.provincia)}</Provincia>`;
+
+  // Aziende UE: AltriDatiGestionali INVCONT su ogni riga (guida AdE alla compilazione)
+  const altriDatiInvCont = (estero && trattamento?.intrastat)
+    ? `        <AltriDatiGestionali>
+          <TipoDato>INVCONT</TipoDato>
+          <RiferimentoTesto>Inversione contabile</RiferimentoTesto>
+        </AltriDatiGestionali>\n`
+    : '';
+
   // Letto da fattura (congelato al momento di "Genera fattura" in invoiceRoutes.js),
   // mai da cliente: la clausola BTC è pattuita all'emissione e non deve cambiare
   // retroattivamente se il flag cliente viene modificato dopo (vedi PAGAMENTI_BTC.md, F3).
   const causaleBtc = fattura.pagamentoBtc && fattura.causaleBtc
     ? `\n        <Causale>${escapeXml(fattura.causaleBtc)}</Causale>`
+    : '';
+
+  // Causali aggiuntive per clienti esteri (dicitura normativa), precedono la causale bollo e BTC
+  const causaliEstereXml = causaliEstere?.length
+    ? causaliEstere.map((c) => `\n        <Causale>${escapeXml(c)}</Causale>`).join('')
     : '';
 
   const datiBollo = fattura.bolloApplicabile
@@ -71,9 +101,21 @@ export function generaXmlFatturaPA(dati) {
         </DatiBollo>\n`
     : '';
 
-  // Il bollo (se dovuto) è dichiarato in DatiBollo/Causale ma non sommato al totale
-  // documento: resta a carico del professionista, non riaddebitato al cliente.
-  const importoTotale = fattura.imponibile;
+  // La rivalsa INPS (se > 0) è addebitata al cliente (L. 662/96 c. 212) e va nel totale.
+  // Il bollo resta a carico del professionista: non sommato al totale.
+  const rivalsaInps = fattura.rivalsaInps ?? 0;
+  const importoTotale = Number((fattura.imponibile + rivalsaInps).toFixed(2));
+
+  const datiCassaPrevidenzialeXml = rivalsaInps > 0
+    ? `        <DatiCassaPrevidenziale>
+          <TipoCassa>TC22</TipoCassa>
+          <AlCassa>4.00</AlCassa>
+          <ImportoContributoCassa>${formattaImporto(rivalsaInps)}</ImportoContributoCassa>
+          <ImponibileCassa>${formattaImporto(fattura.imponibile)}</ImponibileCassa>
+          <AliquotaIVA>0.00</AliquotaIVA>
+          <Natura>${escapeXml(natura)}</Natura>
+        </DatiCassaPrevidenziale>\n`
+    : '';
 
   // Fattura manuale (importo libero, senza timesheet): riga unica quantità 1.
   const quantita = fattura.oreTotali ?? 1;
@@ -89,7 +131,7 @@ export function generaXmlFatturaPA(dati) {
       </IdTrasmittente>
       <ProgressivoInvio>${escapeXml(fattura.progressivoInvio)}</ProgressivoInvio>
       <FormatoTrasmissione>FPR12</FormatoTrasmissione>
-      <CodiceDestinatario>${escapeXml(cliente.codiceDestinatarioSdi)}</CodiceDestinatario>
+      <CodiceDestinatario>${codiceDestinatario}</CodiceDestinatario>
     </DatiTrasmissione>
     <CedentePrestatore>
       <DatiAnagrafici>
@@ -115,20 +157,19 @@ export function generaXmlFatturaPA(dati) {
     <CessionarioCommittente>
       <DatiAnagrafici>
         <IdFiscaleIVA>
-          <IdPaese>IT</IdPaese>
+          <IdPaese>${escapeXml(paeseCliente)}</IdPaese>
           <IdCodice>${escapeXml(cliente.partitaIva)}</IdCodice>
-        </IdFiscaleIVA>
-        <CodiceFiscale>${escapeXml(cliente.partitaIva)}</CodiceFiscale>
+        </IdFiscaleIVA>${estero ? '' : `
+        <CodiceFiscale>${escapeXml(cliente.partitaIva)}</CodiceFiscale>`}
         <Anagrafica>
           <Denominazione>${escapeXml(cliente.denominazione)}</Denominazione>
         </Anagrafica>
       </DatiAnagrafici>
       <Sede>
         <Indirizzo>${escapeXml(cliente.indirizzo)}</Indirizzo>
-        <CAP>${escapeXml(cliente.cap)}</CAP>
-        <Comune>${escapeXml(cliente.comune)}</Comune>
-        <Provincia>${escapeXml(cliente.provincia)}</Provincia>
-        <Nazione>IT</Nazione>
+        <CAP>${capCliente}</CAP>
+        <Comune>${escapeXml(cliente.comune)}</Comune>${provinciaCliente}
+        <Nazione>${escapeXml(paeseCliente)}</Nazione>
       </Sede>
     </CessionarioCommittente>
   </FatturaElettronicaHeader>
@@ -139,10 +180,10 @@ export function generaXmlFatturaPA(dati) {
         <Divisa>EUR</Divisa>
         <Data>${escapeXml(fattura.data)}</Data>
         <Numero>${escapeXml(fattura.numero)}</Numero>
-${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</ImportoTotaleDocumento>
+${datiBollo}${datiCassaPrevidenzialeXml}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</ImportoTotaleDocumento>
         <Causale>Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario.</Causale>
         <Causale>Operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</Causale>${fattura.bolloApplicabile ? `
-        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaleBtc}
+        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaliEstereXml}${causaleBtc}
       </DatiGeneraliDocumento>
     </DatiGenerali>
     <DatiBeniServizi>
@@ -153,11 +194,11 @@ ${datiBollo}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</I
         <PrezzoUnitario>${formattaImporto(prezzoUnitario)}</PrezzoUnitario>
         <PrezzoTotale>${formattaImporto(fattura.imponibile)}</PrezzoTotale>
         <AliquotaIVA>0.00</AliquotaIVA>
-        <Natura>N2.2</Natura>
-      </DettaglioLinee>
+        <Natura>${escapeXml(natura)}</Natura>
+${altriDatiInvCont}      </DettaglioLinee>
       <DatiRiepilogo>
         <AliquotaIVA>0.00</AliquotaIVA>
-        <Natura>N2.2</Natura>
+        <Natura>${escapeXml(natura)}</Natura>
         <ImponibileImporto>${formattaImporto(fattura.imponibile)}</ImponibileImporto>
         <Imposta>0.00</Imposta>
       </DatiRiepilogo>

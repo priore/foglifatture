@@ -1,7 +1,7 @@
 <script setup>
 // Anagrafica fornitore e regime forfettario in un'unica pagina (2 pannelli): sono lo
 // stesso soggetto fiscale, l'utente li compila/verifica insieme invece che in step separati.
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import LogoUpload from './LogoUpload.vue';
 import { pivaValida, codiceFiscaleValido } from '../../composables/useValidazioneFiscale.js';
 import { api } from '../../services/api.js';
@@ -11,8 +11,6 @@ const props = defineProps({
   forfettario: { type: Object, required: true }, // config.forfettario
   walletBtc: { type: Array, required: true }, // config.walletBtc: [{ etichetta, indirizzo }]
 });
-defineEmits(['salva-subito']);
-
 // Indirizzo di default proposto negli incassi BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2):
 // un solo indirizzo principale, gestito qui come primo elemento dell'array.
 function aggiungiWalletBtc() {
@@ -60,6 +58,21 @@ const risultati = computed(() => {
     .slice(0, 20);
 });
 
+// Aliquota agevolata: eligibile solo se dataInizioAttivita è impostata e l'attività
+// è nei primi 5 anni solari (anno inizio incluso). Fuori da questa finestra il flag
+// non ha alcun effetto fiscale, quindi viene disabilitato e azzerato.
+const annoCorrente = new Date().getFullYear();
+const requisitiEligibili = computed(() => {
+  const d = props.forfettario.dataInizioAttivita;
+  if (!d) return false;
+  const annoInizio = new Date(d).getFullYear();
+  return (annoCorrente - annoInizio) < 5;
+});
+
+watch(requisitiEligibili, (ok) => {
+  if (!ok) props.forfettario.requisitiAliquotaRidotta = false;
+});
+
 function selezionaCodice(c) {
   props.forfettario.codiceAteco = c.codice;
   props.forfettario.settoreAteco = c.settore;
@@ -92,6 +105,13 @@ function selezionaCodice(c) {
           <div class="field"><label>CAP</label><input v-model="modelValue.cap"></div>
           <div class="field"><label>Comune</label><input v-model="modelValue.comune"></div>
           <div class="field"><label>Provincia</label><input v-model="modelValue.provincia" maxlength="2" style="text-transform:uppercase"></div>
+          <div class="field full">
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="iscritto-vies" type="checkbox" v-model="modelValue.iscrittoVies" class="checkbox-app">
+              <label for="iscritto-vies" style="margin:0">Iscritto al VIES (necessario per fatturare con inversione contabile ad aziende UE)</label>
+            </div>
+            <small class="note-legal" style="margin-top:4px">L'iscrizione al VIES consente di applicare la non imponibilità IVA (art. 7-ter DPR 633/72) alle prestazioni verso aziende UE. Senza iscrizione compare un avviso in bozza fattura ma non viene bloccata l'emissione.</small>
+          </div>
         </div>
       </div>
     </div>
@@ -101,6 +121,11 @@ function selezionaCodice(c) {
       <div class="card-body">
         <div class="form-grid">
           <div class="field"><label>Soglia fatturato annuo (€)</label><input type="number" step="1" min="1" v-model.number="forfettario.sogliaAnnua"></div>
+          <div class="field">
+            <label>Limite personale di sicurezza (€)</label>
+            <input type="number" step="1" min="0" v-model.number="forfettario.limitePersonale" placeholder="0 = disabilitato">
+            <small class="note-legal" style="margin-top:4px">Soglia personale opzionale (es. 80.000 €): superarla richiede conferma prima di generare la fattura. Indipendente dalla soglia di legge.</small>
+          </div>
           <div class="field"><label>Data inizio attività</label><input type="date" v-model="forfettario.dataInizioAttivita"></div>
           <div class="field field-full" style="position:relative">
             <label style="display:flex;align-items:center;gap:8px">
@@ -131,9 +156,36 @@ function selezionaCodice(c) {
           </div>
           <div class="field"><label>Settore</label><input type="text" v-model="forfettario.settoreAteco" readonly></div>
           <div class="field"><label>Coefficiente di redditività (%)</label><input type="number" step="1" min="0" max="100" v-model.number="forfettario.coefficenteRedditivita"></div>
+          <div class="field full">
+            <div class="checkbox-row">
+              <div class="field" style="margin:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input id="requisiti-aliquota-ridotta" type="checkbox" v-model="forfettario.requisitiAliquotaRidotta" class="checkbox-app" :disabled="!requisitiEligibili">
+                  <label for="requisiti-aliquota-ridotta" style="margin:0" :style="!requisitiEligibili ? 'opacity:.45' : ''">Ho i requisiti per l'aliquota agevolata del 5%</label>
+                </div>
+                <small v-if="!requisitiEligibili" class="note-legal" style="margin-top:6px">
+                  {{ forfettario.dataInizioAttivita ? 'Attività avviata da più di 5 anni: aliquota ordinaria 15% applicata.' : 'Inserisci la data di inizio attività per verificare l\'eligibilità.' }}
+                </small>
+                <small v-else class="note-legal" style="margin-top:6px">L. 190/2014 c. 65: nessuna attività d'impresa o professionale nei 3 anni precedenti e l'attività non prosegue un lavoro dipendente. Se non spuntato, l'imposta stimata usa il 15% (scelta prudente).</small>
+              </div>
+              <div class="field" style="margin:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input id="soggetto-isa" type="checkbox" v-model="forfettario.soggettoIsa" class="checkbox-app">
+                  <label for="soggetto-isa" style="margin:0">Soggetto a ISA (indici sintetici di affidabilità)</label>
+                </div>
+                <small class="note-legal" style="margin-top:6px">DPR 435/2001 art. 17 c. 3: gli acconti sono versati in due rate uguali (50% + 50%). Deselezionare solo se il proprio codice ATECO non ha ISA approvato (40% + 60%). Quasi tutti i forfettari hanno ISA.</small>
+              </div>
+              <div class="field" style="margin:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input id="rivalsa-inps" type="checkbox" v-model="forfettario.rivalsaInps" class="checkbox-app">
+                  <label for="rivalsa-inps" style="margin:0">Rivalsa INPS 4% addebitata al cliente</label>
+                </div>
+                <small class="note-legal" style="margin-top:6px">L. 662/96 art. 1 c. 212: aggiunge in fattura il 4% del compenso a carico del cliente. Facoltativa, da concordare. Il 4% conta come ricavo ai fini della soglia. Disabilitabile per singolo cliente nelle impostazioni clienti.</small>
+              </div>
+            </div>
+          </div>
         </div>
         <p class="note-legal" style="margin-top:16px">
-          Aliquota imposta sostitutiva: 5% nei primi 5 anni solari dall'inizio attività, 15% dal sesto anno.
           Il coefficiente si auto-compila selezionando il codice ATECO, ma resta modificabile.
         </p>
       </div>
@@ -155,9 +207,8 @@ function selezionaCodice(c) {
             </div>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px">
+        <div style="margin-top:8px">
           <button type="button" class="btn btn-ghost" @click="aggiungiWalletBtc">+ Aggiungi indirizzo</button>
-          <button type="button" class="btn btn-primary" @click="$emit('salva-subito')">Salva</button>
         </div>
       </div>
     </div>
@@ -165,6 +216,21 @@ function selezionaCodice(c) {
 </template>
 
 <style scoped>
+.checkbox-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.checkbox-app {
+  appearance: none; width: 18px; height: 18px; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); background: none; cursor: pointer; flex-shrink: 0;
+  margin: 0; position: relative;
+}
+.checkbox-app:checked { background: var(--accent); border-color: var(--accent); }
+.checkbox-app:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.checkbox-app:checked::after {
+  content: ''; position: absolute; top: 45%; left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 5px; height: 9px; border: solid var(--accent-ink); border-width: 0 2px 2px 0;
+}
 .btn-icon {
   border: 1px solid var(--line); background: var(--card); color: var(--ink);
   border-radius: var(--radius-sm); width: 24px; height: 24px; line-height: 1; cursor: pointer;
