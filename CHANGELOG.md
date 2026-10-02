@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-02
+
 ### Added
 - **Avviso soglia alla generazione fattura**:
   - Prima di generare una fattura, l'app calcola se il totale (incassato + da incassare + nuova fattura) supera le soglie del regime forfettario.
