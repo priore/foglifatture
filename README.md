@@ -38,6 +38,10 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Incasso fatture in Bitcoin** — nessun altro gestionale forfettario italiano noto lo offre: registra un incasso in BTC (datio in solutum) con TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione, dati pronti per un eventuale controllo fiscale. Dicitura opzionale in fattura/XML per i clienti abilitati, lettura opzionale da blockchain e cambio storico, colonne dedicate nell'export per il commercialista.
 - **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
 - **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, regime forfettario (`RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia), validato prima dell'invio.
+- **Clienti esteri** — gestione IVA automatica per clienti UE e extra-UE (inversione contabile N2.1, art. 7-ter/7-septies DPR 633/72), XML FatturaPA adattivo (CodiceDestinatario, CAP, IdPaese), scadenze Intrastat trimestrali se iscritto al VIES.
+- **Rivalsa INPS 4% facoltativa** — addebito al cliente del contributo INPS (L. 662/96 art. 1 c. 212), con blocco `DatiCassaPrevidenziale TC22` in XML; configurabile globalmente o per singolo cliente.
+- **Avviso soglia forfettaria** — conferma obbligatoria prima di emettere una fattura che supera 85.000€ (uscita dal regime l'anno prossimo) o 100.000€ (uscita immediata); limite personale configurabile.
+- **Email separata per timesheet e fattura** — ogni cliente può avere indirizzi email distinti per l'invio del timesheet e della fattura, con supporto più destinatari per indirizzo.
 - **Invio PEC automatico** — fattura inviata al Sistema di Interscambio (SDI) direttamente dall'app, via la tua casella PEC.
 - **Ricezione ricevute SDI automatica** — polling della casella PEC via IMAP, riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...), notifica desktop.
 - **Fatturazione a importo libero** — anche senza passare dal timesheet, per fatture a corpo o extra.
@@ -47,6 +51,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Backup automatico ed esportazione cifrata** — copia periodica programmabile, esportazione manuale protetta da password.
 - **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
 - **Regole fiscali versionate** — aliquote, soglie, codici tributo e causali INPS del regime forfettario raccolti in un pacchetto per anno, con la fonte normativa e link al documento ufficiale per ogni valore. La dashboard mostra il tab "Regole fiscali" con le variazioni rispetto all'anno precedente in tabella; il bottone "Spiega con AI" genera una spiegazione in linguaggio semplice delle differenze.
+- **Regime forfettario avanzato** — flag aliquota agevolata 5% (con verifica automatica dei requisiti d'età dell'attività) e flag ISA per la ripartizione degli acconti (50/50 o 40/60).
 - **Scadenze fiscali con AI** — calcolo locale delle scadenze del regime forfettario, con supporto AI (Gemini) solo per casi particolari come le proroghe.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
@@ -91,8 +96,8 @@ Il modo più semplice: scarica l'installer per il tuo sistema dalla [pagina Rele
 
 | Sistema | File da scaricare |
 |---|---|
-| macOS (Universal) | `FogliFatture-1.4.1-mac-universal.pkg` |
-| Windows 10/11 (64-bit) | `FogliFatture-1.4.1-win-x64.exe` |
+| macOS (Universal) | `FogliFatture-1.5.0-mac-universal.pkg` |
+| Windows 10/11 (64-bit) | `FogliFatture-1.5.0-win-x64.exe` |
 
 **macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
 
