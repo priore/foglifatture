@@ -46,6 +46,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
 - **Backup automatico ed esportazione cifrata** — copia periodica programmabile, esportazione manuale protetta da password.
 - **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
+- **Regole fiscali versionate** — aliquote, soglie, codici tributo e causali INPS del regime forfettario raccolti in un pacchetto per anno, con la fonte normativa e link al documento ufficiale per ogni valore. La dashboard mostra il tab "Regole fiscali" con le variazioni rispetto all'anno precedente in tabella; il bottone "Spiega con AI" genera una spiegazione in linguaggio semplice delle differenze.
 - **Scadenze fiscali con AI** — calcolo locale delle scadenze del regime forfettario, con supporto AI (Gemini) solo per casi particolari come le proroghe.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
@@ -84,11 +85,33 @@ Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di u
 
 ## Installazione
 
+### Installer 1-click (consigliato)
+
+Il modo più semplice: scarica l'installer per il tuo sistema dalla [pagina Release](https://github.com/priore/foglifatture/releases/latest), aprilo e segui la procedura guidata. Non servono terminale né Node.js — l'installer scarica e configura tutto da solo.
+
+| Sistema | File da scaricare |
+|---|---|
+| macOS (Universal) | `FogliFatture-1.4.1-mac-universal.pkg` |
+| Windows 10/11 (64-bit) | `FogliFatture-1.4.1-win-x64.exe` |
+
+**macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
+
+**Windows**: esegui il `.exe` e segui il wizard. Se Windows Defender SmartScreen mostra un avviso, clicca "Ulteriori informazioni" → "Esegui comunque".
+
+Al termine dell'installazione l'app:
+- parte da sola ad ogni avvio del computer,
+- si riavvia da sola se dovesse bloccarsi,
+- è raggiungibile all'indirizzo `http://localhost:1969`.
+
+---
+
+### Installazione da terminale (alternativa)
+
 Serve solo la prima volta. Lo script fa tutto da solo: installa Node.js se manca, scarica le librerie necessarie, prepara la configurazione, avvia l'app come servizio permanente e apre il browser sulla pagina iniziale.
 
 Requisiti minimi: Node.js ≥ 18 (installato automaticamente dallo script se assente), macOS o Windows 10/11.
 
-### Mac
+#### Mac
 
 1. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
 2. Scarica il progetto ed entra nella cartella:
@@ -111,7 +134,7 @@ Per disinstallarla (ferma il servizio, **non tocca** i tuoi dati):
 scripts/uninstall.sh
 ```
 
-### Windows
+#### Windows
 
 1. Apri **PowerShell** (cerca "PowerShell" nel menu Start).
 2. Scarica il progetto ed entra nella cartella:

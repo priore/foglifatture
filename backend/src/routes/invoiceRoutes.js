@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati, impostaScadenzaPagamento } from '../services/invoiceService.js';
+import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati, impostaScadenzaPagamento, arricchisciStatoPagamento } from '../services/invoiceService.js';
+import { previsioneSoglia, tutteLeFattureRisolte, ricaviAnnoCassa } from '../services/forfettarioService.js';
+import { regoleAnno } from '../services/regoleFiscaliService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
 import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
 import { costruisciPagamento } from '../lib/pagamento.js';
+import { trattamentoCliente } from '../services/clienteEsteroService.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
 import { listaRicevutePerFattura, statoSdiFattura } from '../services/sdiRicevuteService.js';
 
@@ -25,6 +28,24 @@ function clienteNonTrovato(res) {
 }
 
 // Calcola (senza salvare) la fattura pro-forma di un mese a partire dal timesheet.
+async function calcolaPrevisione(config, annoFattura, imponibile) {
+  let sogliaAnnua = config.forfettario.sogliaAnnua ?? 85000;
+  let sogliaUscitaImmediata = 100000;
+  try {
+    const regole = await regoleAnno(annoFattura);
+    sogliaAnnua = regole.forfettario.sogliaAnnua ?? sogliaAnnua;
+    sogliaUscitaImmediata = regole.forfettario.sogliaUscitaImmediata ?? sogliaUscitaImmediata;
+  } catch { /* usa fallback */ }
+  try {
+    const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
+    const { ricaviCumulati: incassato } = await ricaviAnnoCassa(annoFattura, tutte);
+    const daIncassare = tutte
+      .filter((f) => f.anno === annoFattura && f.residuo > 0)
+      .reduce((tot, f) => tot + f.residuo, 0);
+    return previsioneSoglia({ incassato, daIncassare, importoFattura: imponibile, sogliaAnnua, sogliaUscitaImmediata, limitePersonale: config.forfettario.limitePersonale ?? 0 });
+  } catch { return null; }
+}
+
 invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
@@ -38,7 +59,8 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima', async (req, res) => {
     sogliaBolloVirtuale: config.fatturazione.sogliaBolloVirtuale,
     importoBollo: config.fatturazione.importoBollo,
   });
-  res.json({ anno: Number(anno), mese: Number(mese), totaleOre: riepilogo.totaleOreDecimale, ...compenso });
+  const previsione = await calcolaPrevisione(config, Number(anno), compenso.imponibile);
+  res.json({ anno: Number(anno), mese: Number(mese), totaleOre: riepilogo.totaleOreDecimale, ...compenso, previsione });
 });
 
 // Calcola (senza salvare) bollo/netto per una fattura manuale a importo libero, senza timesheet.
@@ -53,7 +75,8 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima-manuale', async (req, res) 
     config.fatturazione.sogliaBolloVirtuale,
     config.fatturazione.importoBollo
   );
-  res.json({ anno: Number(req.params.anno), mese: Number(req.params.mese), ...compenso });
+  const previsione = await calcolaPrevisione(config, Number(req.params.anno), compenso.imponibile);
+  res.json({ anno: Number(req.params.anno), mese: Number(req.params.mese), ...compenso, previsione });
 });
 
 invoiceRoutes.get('/:anno/:mese/:clienteId', async (req, res) => {
@@ -85,6 +108,18 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
   const manuale = req.body.importo != null;
   let compenso, oreTotali, tariffaOraria, descrizioneDefault;
 
+  // Regole fiscali per l'anno: lette una sola volta, usate da rivalsa INPS e trattamento estero.
+  let regole = null;
+  try { regole = await regoleAnno(Number(anno)); } catch { /* usa fallback */ }
+
+  // Rivalsa INPS: cliente override (true/false) > impostazione globale forfettario.
+  const rivalsaAttiva = cliente.rivalsaInps !== null && cliente.rivalsaInps !== undefined
+    ? Boolean(cliente.rivalsaInps)
+    : Boolean(config.forfettario.rivalsaInps);
+  const rivalsaAliquota = rivalsaAttiva
+    ? (regole?.inpsGestioneSeparata?.rivalsaAliquota ?? 4)
+    : 0;
+
   if (manuale) {
     const importo = Number(req.body.importo);
     if (!Number.isFinite(importo) || importo <= 0) {
@@ -93,7 +128,8 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     compenso = calcolaBollo(
       Number(importo.toFixed(2)),
       config.fatturazione.sogliaBolloVirtuale,
-      config.fatturazione.importoBollo
+      config.fatturazione.importoBollo,
+      rivalsaAliquota
     );
     oreTotali = null;
     tariffaOraria = null;
@@ -109,6 +145,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
       tariffaOraria: cliente.tariffaOraria,
       sogliaBolloVirtuale: config.fatturazione.sogliaBolloVirtuale,
       importoBollo: config.fatturazione.importoBollo,
+      rivalsaAliquota,
     });
     oreTotali = riepilogo.totaleOreDecimale;
     tariffaOraria = cliente.tariffaOraria;
@@ -141,6 +178,43 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     }
   }
 
+  // Controllo soglia FP-028 + FP-002: avviso vicino all'80%, blocco+conferma oltre 85k, blocco+conferma sopra 100k.
+  // Salta il controllo se la fattura è già esistente (rigenerazione) o se l'utente ha già confermato.
+  if (!esistente && !req.body.confermaSoglia) {
+    try {
+      const annoFattura = Number(anno);
+      const sogliaAnnua = regole?.forfettario?.sogliaAnnua ?? config.forfettario.sogliaAnnua ?? 85000;
+      const sogliaUscitaImmediata = regole?.forfettario?.sogliaUscitaImmediata ?? 100000;
+      const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
+      const { ricaviCumulati: incassato } = await ricaviAnnoCassa(annoFattura, tutte);
+      const daIncassare = tutte
+        .filter((f) => f.anno === annoFattura && f.residuo > 0)
+        .reduce((tot, f) => tot + f.residuo, 0);
+      const previsione = previsioneSoglia({
+        incassato,
+        daIncassare,
+        importoFattura: compenso.imponibile,
+        sogliaAnnua,
+        sogliaUscitaImmediata,
+        limitePersonale: config.forfettario.limitePersonale ?? 0,
+      });
+      if (previsione.livelloUscita === 'uscitaImmediata') {
+        return res.status(409).json({
+          errore: `Attenzione: con questa fattura supereresti i ${sogliaUscitaImmediata.toLocaleString('it-IT')} €. Se incassata nell'anno, il regime forfettario cessa immediatamente e l'IVA è dovuta già da questa fattura. Confermare per procedere.`,
+          tipo: 'soglia100',
+          previsione,
+        });
+      }
+      if (previsione.livelloSoglia === 'oltre' || previsione.livelloLimitePersonale === 'oltre') {
+        return res.status(409).json({
+          errore: `Attenzione: con questa fattura supereresti la soglia annua (${sogliaAnnua.toLocaleString('it-IT')} €${previsione.livelloLimitePersonale === 'oltre' ? ` o il tuo limite personale di ${config.forfettario.limitePersonale.toLocaleString('it-IT')} €` : ''}). L'anno prossimo potresti uscire dal regime forfettario. Confermare per procedere.`,
+          tipo: 'soglia85',
+          previsione,
+        });
+      }
+    } catch { /* errore nel calcolo previsionale: non bloccare la generazione */ }
+  }
+
   const invoice = {
     anno: Number(anno), mese: Number(mese), clienteId, numero, data, descrizione,
     oreTotali, tariffaOraria,
@@ -159,6 +233,14 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     // Congelato alla generazione (come la clausola BTC): l'XML già trasmesso non cambia se
     // si modifica l'IBAN in Impostazioni. null = né IBAN né indirizzo BTC configurati.
     pagamento: costruisciPagamento(config, cliente),
+    // Congelato alla generazione: Natura IVA, diciture e dati anagrafici per clienti esteri.
+    // null = cliente IT o regole non disponibili: trattamento ordinario forfettario.
+    trattamentoEstero: regole ? (() => {
+      try {
+        const t = trattamentoCliente(cliente, regole);
+        return t.estero ? t : null;
+      } catch { return null; }
+    })() : null,
   };
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);

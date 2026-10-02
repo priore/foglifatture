@@ -1,0 +1,249 @@
+{
+  "anno": 2026,
+  "forfettario": {
+    "sogliaAnnua": 85000,
+    "sogliaUscitaImmediata": 100000,
+    "aliquotaOrdinaria": 15,
+    "aliquotaRidotta": 5,
+    "anniAliquotaRidotta": 5,
+    "coefficienteRedditivitaDefault": 78,
+    "fonti": {
+      "sogliaAnnua": {
+        "id": "l190-2014",
+        "citazione": "i contribuenti persone fisiche esercenti attività d'impresa, arti o professioni applicano il regime forfetario di cui al presente comma e ai commi da 55 a 89 se, al contempo, nell'anno precedente: a) hanno conseguito ricavi ovvero hanno percepito compensi, ragguagliati ad anno, non superiori a 85.000 euro",
+        "riferimento": "L. 190/2014 art. 1 c. 54 lett. a)",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
+      },
+      "sogliaUscitaImmediata": {
+        "id": "l190-2014",
+        "citazione": "il regime forfetario cessa di avere applicazione dall'anno stesso in cui i ricavi o i compensi percepiti sono superiori a 100.000 euro",
+        "riferimento": "L. 190/2014 art. 1 c. 71",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
+      },
+      "aliquotaOrdinaria": {
+        "id": "l190-2014",
+        "citazione": "Sul reddito imponibile si applica un'imposta sostitutiva dell'imposta sui redditi, delle addizionali regionali e comunali e dell'imposta regionale sulle attività produttive di cui al decreto legislativo 15 dicembre 1997, n. 446, pari al 15 per cento",
+        "riferimento": "L. 190/2014 art. 1 c. 64",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
+      },
+      "aliquotaRidotta": {
+        "id": "l190-2014",
+        "citazione": "L'imposta sostitutiva di cui al comma 64 è stabilita nella misura del 5 per cento per il periodo d'imposta in cui l'attività è iniziata e per i quattro successivi",
+        "riferimento": "L. 190/2014 art. 1 c. 65",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
+      }
+    }
+  },
+  "acconti": {
+    "percentualeAcconto": 100,
+    "ripartizioneSoggettoIsa": { "prima": 50, "seconda": 50 },
+    "ripartizioneNoIsa": { "prima": 40, "seconda": 60 },
+    "sogliaUnicaSoluzione": 103,
+    "fonti": {
+      "ripartizioneSoggettoIsa": {
+        "id": "dpr435-2001",
+        "citazione": "I soggetti che esercitano attività per le quali sono stati elaborati gli indici sintetici di affidabilità fiscale versano in due rate di pari importo ciascuna pari al 50 per cento",
+        "riferimento": "DPR 435/2001 art. 17 c. 3 (mod. DL 124/2019 art. 58)",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
+      },
+      "sogliaUnicaSoluzione": {
+        "id": "dpr435-2001",
+        "citazione": "il versamento non è dovuto se l'importo risultante dal calcolo non supera 103 euro",
+        "riferimento": "DPR 435/2001 art. 17 c. 2",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
+      }
+    }
+  },
+  "scadenze": {
+    "saldoPrimoAcconto": { "mese": 6, "giorno": 30 },
+    "secondoAcconto": { "mese": 11, "giorno": 30 },
+    "inpsGestioneSeparata": { "mese": 6, "giorno": 16 },
+    "inpsGestioneSeparataSecondo": { "mese": 11, "giorno": 30 },
+    "proroga2026": {
+      "dataProrogata": "2026-07-20",
+      "maggiorazione": 0.40,
+      "differimentoUlteriore": "2026-08-20",
+      "maggiorazioneDifferimento": 0.80,
+      "fonti": {
+        "proroga": {
+          "id": "dl89-2026",
+          "citazione": "i versamenti risultanti dalle dichiarazioni dei redditi e da quelle in materia di imposta regionale sulle attività produttive, il cui termine scade dal 1° luglio 2026 al 31 luglio 2026, possono essere effettuati entro il 20 luglio 2026",
+          "riferimento": "DL 89/2026 art. 6 c. 1",
+          "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2026;89!vig=2026-01-01~art6"
+        }
+      }
+    },
+    "fonti": {
+      "saldoPrimoAcconto": {
+        "id": "dpr435-2001",
+        "citazione": "il versamento del saldo dovuto in base alla dichiarazione dei redditi e del primo acconto delle imposte sui redditi... è effettuato entro il 30 giugno",
+        "riferimento": "DPR 435/2001 art. 17 c. 1",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
+      }
+    }
+  },
+  "rate": {
+    "tassoInteresseSecondaRata": 4.0,
+    "incrementoRateSuccessive": 0.33,
+    "giorniBase": 360,
+    "mesiCommerciali": 30,
+    "scadenzaMassima": { "mese": 12, "giorno": 16 },
+    "fonti": {
+      "tassoInteresse": {
+        "id": "dm21-05-2009",
+        "citazione": "il tasso di interesse per la rateazione è stabilito nella misura del 4 per cento annuo",
+        "riferimento": "DM 21/5/2009 art. 5",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:ministero.dell.economia.e.delle.finanze:decreto:2009-05-21!vig=2026-01-01~art5"
+      },
+      "normativa": {
+        "id": "dlgs33-2025",
+        "citazione": "i versamenti possono essere eseguiti in rate mensili di uguale importo, con esclusione dell'ultima rata il cui importo può essere diverso",
+        "riferimento": "D.Lgs. 33/2025 art. 10",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2025;33!vig=2026-01-01~art10"
+      }
+    }
+  },
+  "inpsGestioneSeparata": {
+    "aliquota": 26.07,
+    "aliquotaAltreAttivita": 24.0,
+    "massimale": 119650,
+    "rivalsaAliquota": 4,
+    "fonti": {
+      "rivalsaAliquota": {
+        "id": "l662-1996",
+        "citazione": "il professionista può addebitare in fattura, a titolo di rivalsa, un importo pari al 4 per cento dei compensi lordi",
+        "riferimento": "L. 662/96 art. 1 c. 212",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1996-12-23;662!vig=2026-01-01~art1"
+      },
+      "aliquota": {
+        "id": "circ-inps-62-2026",
+        "citazione": "l'aliquota contributiva per i soggetti non pensionati e non iscritti ad altra forma pensionistica obbligatoria è pari al 26,07 per cento",
+        "riferimento": "Circ. INPS 62/2026 §2.1",
+        "url": "https://www.inps.it/"
+      },
+      "massimale": {
+        "id": "circ-inps-62-2026",
+        "citazione": "il massimale di reddito previsto dall'articolo 2, comma 18, della legge 8 agosto 1995, n. 335, è pari a 119.650 euro",
+        "riferimento": "Circ. INPS 62/2026 §2.2",
+        "url": "https://www.inps.it/"
+      }
+    }
+  },
+  "bollo": {
+    "importo": 2.0,
+    "sogliaBolloVirtuale": 77.47,
+    "sogliaRinvio": 5000,
+    "codiciTributo": {
+      "primoTrimestre": "2521",
+      "secondoTrimestre": "2522",
+      "terzoTrimestre": "2523",
+      "quartoTrimestre": "2524"
+    },
+    "scadenze": {
+      "primoTrimestre": { "mese": 5, "giorno": 31 },
+      "secondoTrimestre": { "mese": 9, "giorno": 30 },
+      "terzoTrimestre": { "mese": 11, "giorno": 30 },
+      "quartoTrimestre": { "mese": 2, "giorno": 28, "annoSuccessivo": true }
+    },
+    "fonti": {
+      "importo": {
+        "id": "guida-ade-bollo-fe-2026",
+        "citazione": "l'imposta di bollo è applicata nella misura di 2 euro per ogni fattura emessa",
+        "riferimento": "Guida AdE «L'imposta di bollo sulle fatture elettroniche» (giugno 2026) §2",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/fatture-e-corrispettivi"
+      },
+      "soglia": {
+        "id": "guida-ade-bollo-fe-2026",
+        "citazione": "l'imposta di bollo non è dovuta qualora le fatture siano di importo inferiore o uguale a 77,47 euro",
+        "riferimento": "Guida AdE «L'imposta di bollo sulle fatture elettroniche» (giugno 2026) §2",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/fatture-e-corrispettivi"
+      }
+    }
+  },
+  "codiciTributo": {
+    "impostaSostitutiva": "1790",
+    "impostaSostitutivaAcconto": "1791",
+    "impostaSostitutivaSaldo": "1792",
+    "interessiRateazione": "1668",
+    "interessiRateazioneAcconto": "1669",
+    "bolloFatture": { "1": "2521", "2": "2522", "3": "2523", "4": "2524" },
+    "fonti": {
+      "impostaSostitutiva": {
+        "id": "ade-codici-tributo",
+        "citazione": "codice tributo 1790 — IRPEF — acconto prima rata",
+        "riferimento": "Tabella codici tributo AdE — sezione «Erario»",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/fatture-e-corrispettivi"
+      }
+    }
+  },
+  "causaliInps": {
+    "ordinaria": "PXX",
+    "aliquotaRidotta": "P10",
+    "rateazioneOrdinaria": "PXXR",
+    "rateazioneRidotta": "P10R",
+    "interessi": "DPPI",
+    "fonti": {
+      "causali": {
+        "id": "scheda-inps-f24-gs",
+        "citazione": "la causale PXX identifica i contributi dovuti alla gestione separata per i lavoratori autonomi",
+        "riferimento": "Scheda INPS «F24 per professionisti iscritti alla Gestione Separata»",
+        "url": "https://www.inps.it/"
+      }
+    }
+  },
+  "fatturaPa": {
+    "codiciNaturaIva": {
+      "forfettario": "N2.2",
+      "invertContabile": "N2.1",
+      "nonSoggetta": "N2.1"
+    },
+    "fonti": {
+      "naturaForFettario": {
+        "id": "specifiche-fatturapa-1-9-1",
+        "citazione": "N2.2 — Non soggette — altri casi",
+        "riferimento": "Specifiche tecniche FatturaPA 1.9.1, Allegato A",
+        "url": "https://www.fatturapa.gov.it/it/norme-e-regole/"
+      }
+    }
+  },
+  "clientiEsteri": {
+    "paesiUe": [
+      "AT","BE","BG","CY","CZ","DE","DK","EE","ES","FI","FR","GR","HR","HU",
+      "IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK"
+    ],
+    "paesiUeServiziNote": "UK (GB) e Irlanda del Nord (XI) sono extra-UE per i servizi dal 2021 (Brexit).",
+    "scadenzaEmissioneEstero": { "giorni": 15, "descrizione": "Fatture a clienti esteri (UE e extra-UE): emissione entro il 15 del mese successivo all'operazione (DPR 633/72 art. 21 c. 4)." },
+    "scadenzaIntrastatTrimestre": { "giorno": 25, "descrizione": "Elenco riepilogativo Intrastat servizi resi, 25 del mese dopo il trimestre." },
+    "diciture": {
+      "azAziendaUe": "Operazione non soggetta ad IVA ai sensi dell'art. 7-ter del DPR 633/72. Inversione contabile.",
+      "azAziendaExtraUe": "Operazione non soggetta ad IVA ai sensi dell'art. 7-ter del DPR 633/72.",
+      "privExtraUeSepties": "Operazione non soggetta ad IVA ai sensi dell'art. 7-septies del DPR 633/72."
+    },
+    "fonti": {
+      "art7ter": {
+        "id": "dpr633-72",
+        "citazione": "Le prestazioni di servizi si considerano effettuate nel territorio dello Stato quando sono rese a soggetti passivi stabiliti nel territorio dello Stato",
+        "riferimento": "DPR 633/72 art. 7-ter c. 1 lett. a)",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art7ter"
+      },
+      "art7septies": {
+        "id": "dpr633-72",
+        "citazione": "In deroga a quanto stabilito dall'articolo 7-ter, le seguenti prestazioni di servizi, quando rese a committenti non soggetti passivi domiciliati o residenti fuori dalla Comunità europea, si considerano effettuate fuori dal territorio della Comunità europea",
+        "riferimento": "DPR 633/72 art. 7-septies c. 1",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art7septies"
+      },
+      "art21c6bis": {
+        "id": "dpr633-72",
+        "citazione": "Per le cessioni intracomunitarie di beni e per le prestazioni di servizi rese a soggetti passivi stabiliti in un altro Stato membro... la fattura è emessa entro il giorno 15 del mese successivo a quello di effettuazione dell'operazione",
+        "riferimento": "DPR 633/72 art. 21 c. 4 lett. b)",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art21"
+      },
+      "intrastat": {
+        "id": "dpr633-72",
+        "citazione": "I soggetti passivi iscritti al VIES presentano elenchi riepilogativi delle prestazioni di servizi rese a soggetti passivi stabiliti in un altro Stato membro",
+        "riferimento": "DPR 633/72 art. 50 c. 6 (D.Lgs. 18/2010)",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/intrastat"
+      }
+    }
+  }
+}

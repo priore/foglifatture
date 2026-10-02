@@ -28,3 +28,17 @@ shots/
 
 # output locali (es. export CSV bancari usati per debug), possono contenere dati sensibili
 AI-Workspace/Output/
+
+# packaging: build temporanei e installer compilati (non versionati)
+packaging/build/
+packaging/dist/
+
+# ⚠️ CRITICAL: skills private SEMPRE versionati su Gogs locale, NEVER su GitHub
+# Contengono path assoluti personali, credenziali, topologia privata
+# MAI cancellarli dal locale, MAI da repo GitHub (public)
+.claude/skills/sync-public/
+.claude/skills/pre-publish-check/
+.claude/skills/build-installers/
+
+# iOS/SCW mapping: local-only, never sync to GitHub
+AI-Workspace/documentation/BE_SWIFT_MAPPING.md

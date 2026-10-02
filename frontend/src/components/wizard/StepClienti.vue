@@ -27,7 +27,8 @@ function aggiungiCliente() {
   const nuovo = {
     id: crypto.randomUUID(), attivo: true,
     denominazione: '', indirizzo: '', cap: '', comune: '', provincia: '',
-    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0, email: '',
+    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0,
+    email: '', emailFattura: '',
     figura: '', commessa: '', clientePdf: '', progetto: '',
   };
   props.modelValue.push(nuovo);
@@ -84,9 +85,14 @@ function riattivaCliente(cliente) {
           <input type="number" step="0.01" v-model.number="cliente.tariffaOraria">
         </div>
         <div class="field" style="margin-top:12px">
-          <label>Email cliente</label>
+          <label>Email per timesheet</label>
           <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
-          <small class="note-legal">Una o più email separate da virgola, usate per l'invio di timesheet e fattura via app di posta.</small>
+          <small class="note-legal">Una o più email separate da virgola per l'invio del timesheet. Se "Email per fattura" è vuota, viene usata anche per le fatture.</small>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Email per fattura <span style="opacity:0.6">(opzionale)</span></label>
+          <input type="text" v-model="cliente.emailFattura" placeholder="es. amministrazione@azienda.it, acquisti@azienda.it">
+          <small class="note-legal">Se compilato, usa questi indirizzi per l'invio della fattura invece dell'email timesheet.</small>
         </div>
         <div style="display:flex;gap:20px;margin-top:12px">
           <div class="field" style="flex:1">
@@ -116,6 +122,15 @@ function riattivaCliente(cliente) {
         <div class="field" v-if="cliente.pagamentoBtc" style="margin-top:8px">
           <label>Testo della clausola</label>
           <textarea v-model="cliente.causaleBtc" rows="2" placeholder="Criterio di cambio da concordare col cliente" style="resize:vertical;font-family:inherit"></textarea>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Rivalsa INPS 4%</label>
+          <select v-model="cliente.rivalsaInps">
+            <option :value="null">Predefinita (Impostazioni fornitore)</option>
+            <option :value="true">Attiva per questo cliente</option>
+            <option :value="false">Disattiva per questo cliente</option>
+          </select>
+          <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente.</small>
         </div>
         <div style="display:flex;gap:20px;margin-top:12px">
           <div class="field" style="flex:1">

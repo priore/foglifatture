@@ -25,7 +25,7 @@ mock.module('./invoiceService.js', {
   },
 });
 
-const { calcolaDashboardForfettario } = await import('./forfettarioService.js');
+const { calcolaDashboardForfettario, aliquotaImposta } = await import('./forfettarioService.js');
 
 const configBase = {
   forfettario: { sogliaAnnua: 85000, coefficenteRedditivita: 78, dataInizioAttivita: '' },
@@ -97,4 +97,58 @@ test('cassa.btc su anno senza incassi BTC restituisce rate/importi a zero', asyn
   assert.equal(risultato.cassa.btc.eur, 0);
   assert.equal(risultato.cassa.btc.cambioMedio, 0);
   assert.deepEqual(risultato.cassa.btc.elenco, []);
+});
+
+// --- aliquotaImposta: flag requisitiAliquotaRidotta ---
+
+test('aliquotaImposta: senza flag (default false) restituisce aliquota ordinaria anche con data inizio recente', async () => {
+  // dataInizioAttivita 2024: nei primi 5 anni, ma senza il flag rimane al 15%
+  const aliquota = await aliquotaImposta('2024-01-01', 2026);
+  assert.equal(aliquota, 15);
+});
+
+test('aliquotaImposta: con flag true e data inizio recente restituisce aliquota ridotta 5%', async () => {
+  const aliquota = await aliquotaImposta('2024-01-01', 2026, true);
+  assert.equal(aliquota, 5);
+});
+
+test('aliquotaImposta: con flag true ma fuori dai 5 anni restituisce aliquota ordinaria', async () => {
+  const aliquota = await aliquotaImposta('2010-01-01', 2026, true);
+  assert.equal(aliquota, 15);
+});
+
+test('aliquotaImposta: senza dataInizioAttivita restituisce sempre aliquota ordinaria', async () => {
+  const aliquota = await aliquotaImposta('', 2026, true);
+  assert.equal(aliquota, 15);
+});
+
+// --- calcolaDashboardForfettario: soggettoIsa nel risultato ---
+
+test('calcolaDashboardForfettario espone soggettoIsa dal config (default true)', async () => {
+  const risultato = await calcolaDashboardForfettario(configBase, { anno: 2026, meseCorrente: 12 });
+  assert.equal(risultato.soggettoIsa, true);
+});
+
+test('calcolaDashboardForfettario espone soggettoIsa false se impostato nel config', async () => {
+  const configNoIsa = { forfettario: { ...configBase.forfettario, soggettoIsa: false } };
+  const risultato = await calcolaDashboardForfettario(configNoIsa, { anno: 2026, meseCorrente: 12 });
+  assert.equal(risultato.soggettoIsa, false);
+});
+
+test('calcolaDashboardForfettario: requisitiAliquotaRidotta true usa aliquota 5% con data inizio recente', async () => {
+  const configConRequisiti = {
+    forfettario: { ...configBase.forfettario, dataInizioAttivita: '2024-01-01', requisitiAliquotaRidotta: true },
+  };
+  const risultato = await calcolaDashboardForfettario(configConRequisiti, { anno: 2026, meseCorrente: 12 });
+  assert.equal(risultato.aliquota, 5);
+  // impostaStimata = ricaviCumulati(2500) * coefficiente(0.78) * aliquota(0.05)
+  assert.equal(risultato.impostaStimata, 97.5);
+});
+
+test('calcolaDashboardForfettario: requisitiAliquotaRidotta false (default) usa 15% anche con data inizio recente', async () => {
+  const configSenzaRequisiti = {
+    forfettario: { ...configBase.forfettario, dataInizioAttivita: '2024-01-01', requisitiAliquotaRidotta: false },
+  };
+  const risultato = await calcolaDashboardForfettario(configSenzaRequisiti, { anno: 2026, meseCorrente: 12 });
+  assert.equal(risultato.aliquota, 15);
 });

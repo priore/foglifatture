@@ -31,6 +31,8 @@ const esitoEmail = ref('');
 const modoManuale = ref(false);
 const importoManuale = ref(0);
 const descrizioneManuale = ref('');
+const previsioneManuale = ref(null);
+let _previsioneDebounce = null;
 const dataFattura = ref('');
 const dataScadenzaPagamento = ref('');
 const salvandoScadenza = ref(false);
@@ -67,7 +69,11 @@ const anteprimaEffettiva = computed(() => {
   const imponibile = Number((Number(importoManuale.value) || 0).toFixed(2));
   const bolloApplicabile = imponibile > config.value.fatturazione.sogliaBolloVirtuale;
   const bollo = bolloApplicabile ? config.value.fatturazione.importoBollo : 0;
-  return { imponibile, bolloApplicabile, bollo, nettoAPagare: imponibile };
+  const rivalsaAttiva = clienteCorrente.value?.rivalsaInps !== null && clienteCorrente.value?.rivalsaInps !== undefined
+    ? Boolean(clienteCorrente.value.rivalsaInps)
+    : Boolean(config.value.forfettario?.rivalsaInps);
+  const rivalsaInps = rivalsaAttiva ? Number((imponibile * 0.04).toFixed(2)) : 0;
+  return { imponibile, bolloApplicabile, bollo, rivalsaInps, nettoAPagare: Number((imponibile + rivalsaInps).toFixed(2)) };
 });
 
 const templateIdFattura = computed(() => clienteCorrente.value?.templateFatturaId || 'fattura-default');
@@ -113,13 +119,22 @@ async function aggiornaMeseMinimo() {
   meseMinimo.value = chiavi.length ? chiavi.sort()[0] : null;
 }
 
-async function generaFattura() {
+async function generaFattura(confermaSoglia = false) {
   const dati = modoManuale.value
     ? { importo: Number(importoManuale.value), descrizione: descrizioneManuale.value, data: dataFattura.value }
     : { data: dataFattura.value };
-  fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
-  dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
-  await caricaRicevuteSdi();
+  if (confermaSoglia) dati.confermaSoglia = true;
+  try {
+    fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
+    dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
+    await caricaRicevuteSdi();
+  } catch (err) {
+    if (err.tipo === 'soglia100' || err.tipo === 'soglia85') {
+      if (window.confirm(err.message)) await generaFattura(true);
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function salvaScadenzaPagamento() {
@@ -310,6 +325,25 @@ function inizializzaClienteId() {
 }
 watch(clienteId, (id) => { if (id) localStorage.setItem('clienteAttivoId', id); });
 
+// Previsione soglia in modo manuale: aggiorna con debounce 400ms quando cambia l'importo.
+watch(importoManuale, (val) => {
+  clearTimeout(_previsioneDebounce);
+  if (!modoManuale.value || !Number.isFinite(Number(val)) || Number(val) <= 0) {
+    previsioneManuale.value = null;
+    return;
+  }
+  _previsioneDebounce = setTimeout(async () => {
+    try {
+      const r = await api.anteprimaFatturaManuale(anno.value, mese.value, clienteId.value, Number(val));
+      previsioneManuale.value = r.previsione ?? null;
+    } catch { previsioneManuale.value = null; }
+  }, 400);
+});
+
+const previsioneSogliaCorrente = computed(() =>
+  modoManuale.value ? previsioneManuale.value : anteprima.value?.previsione ?? null
+);
+
 async function controllaSdi() {
   controllandoSdi.value = true;
   esitoSdi.value = '';
@@ -336,7 +370,8 @@ async function inviaEmail() {
     const nomeFile = `fattura-${anno.value}-${String(mese.value).padStart(2, '0')}.pdf`;
     const oggetto = `Fattura ${fatturaGenerata.value?.numero ?? ''} — ${String(mese.value).padStart(2, '0')}/${anno.value}`;
     const corpo = `Buongiorno,\n\nin allegato la fattura relativa al mese di ${String(mese.value).padStart(2, '0')}/${anno.value}.\n\nCordiali saluti.`;
-    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, clienteCorrente.value.email, oggetto, corpo);
+    const emailDest = clienteCorrente.value.emailFattura || clienteCorrente.value.email;
+    const risultato = await inviaPdfEmail(pdfBlob, nomeFile, emailDest, oggetto, corpo);
     esitoEmail.value = risultato.modalita === 'mail-app-mac'
       ? 'Bozza aperta in Mail con allegato pronto'
       : 'PDF salvato e rivelato nel file manager: trascinalo nella mail appena aperta';
@@ -404,7 +439,8 @@ onMounted(async () => {
               <tr v-if="!modoManuale"><td>Ore totali mensili</td><td style="text-align:right">{{ (fatturaGenerata?.oreTotali ?? anteprima.totaleOre).toFixed(2) }}</td></tr>
               <tr v-if="!modoManuale"><td>Tariffa oraria</td><td style="text-align:right">€ {{ (fatturaGenerata?.tariffaOraria ?? clienteCorrente.tariffaOraria).toFixed(2) }}</td></tr>
               <tr><td>Imponibile</td><td style="text-align:right">€ {{ anteprimaEffettiva.imponibile.toFixed(2) }}</td></tr>
-              <tr><td>Rivalsa INPS</td><td style="text-align:right">assente</td></tr>
+              <tr v-if="anteprimaEffettiva.rivalsaInps > 0"><td>Rivalsa INPS 4%</td><td style="text-align:right">€ {{ anteprimaEffettiva.rivalsaInps.toFixed(2) }}</td></tr>
+              <tr v-else><td>Rivalsa INPS</td><td style="text-align:right">assente</td></tr>
               <tr v-if="anteprimaEffettiva.bolloApplicabile"><td>Bollo virtuale (&gt; {{ config.fatturazione.sogliaBolloVirtuale }}€)</td><td style="text-align:right">€ {{ anteprimaEffettiva.bollo.toFixed(2) }}</td></tr>
             </table>
             <div class="stat accent" style="margin-top:14px">
@@ -501,15 +537,17 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura">
+            <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura()">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
             <small v-if="fatturaAccettataSdi" class="note-legal">Fattura accettata dallo SDI: emessa e non più modificabile. Per correggere un errore, emetti una nota di variazione.</small>
+            <small v-else-if="!fatturaGenerata && previsioneSogliaCorrente?.livelloUscita === 'uscitaImmediata'" class="note-legal" style="color:var(--warn)">⚠️ Con questa fattura supereresti i 100.000 €: se incassata nell'anno il regime cessa immediatamente. Sarà chiesta conferma.</small>
+            <small v-else-if="!fatturaGenerata && (previsioneSogliaCorrente?.livelloSoglia === 'oltre' || previsioneSogliaCorrente?.livelloSoglia === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'oltre')" class="note-legal" style="color:var(--warn)">Attenzione: con questa fattura ti avvicini o superi la soglia forfettaria{{ previsioneSogliaCorrente?.livelloSoglia === 'oltre' ? ' — sarà chiesta conferma' : '' }}.</small>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !clienteCorrente.email || inviandoEmail" @click="inviaEmail">
+            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !(clienteCorrente.emailFattura || clienteCorrente.email) || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
-            <small v-if="fatturaGenerata && !clienteCorrente.email" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
+            <small v-if="fatturaGenerata && !(clienteCorrente.emailFattura || clienteCorrente.email)" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
             <button class="btn" :class="ultimoScarto ? 'btn-warn' : 'btn-ok'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
               {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}

@@ -12,6 +12,8 @@ async function richiesta(percorso, opzioni = {}) {
     const messaggio = corpo.dettagli?.length ? `${corpo.errore}: ${corpo.dettagli.join('; ')}` : corpo.errore;
     const errore = new Error(messaggio || `Errore HTTP ${risposta.status}`);
     if (corpo.prossimoRetryIl) errore.prossimoRetryIl = corpo.prossimoRetryIl;
+    if (corpo.tipo) errore.tipo = corpo.tipo;
+    if (corpo.previsione) errore.previsione = corpo.previsione;
     throw errore;
   }
   const tipo = risposta.headers.get('content-type') || '';
@@ -217,6 +219,14 @@ export const api = {
   // Template di stampa (fattura/timesheet)
   listTemplates: (tipo) => richiesta(`/templates${tipo ? `?tipo=${tipo}` : ''}`),
   getTemplate: (id) => richiesta(`/templates/${id}`),
+
+  // Regole fiscali versionate per anno
+  statoRegoleFiscali: () => richiesta('/regole-fiscali/stato'),
+  elencoAnniRegole: () => richiesta('/regole-fiscali'),
+  regoleFiscaliAnno: (anno) => richiesta(`/regole-fiscali/${anno}`),
+  differenzeRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/differenze`),
+  confermaRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/conferma`, { method: 'POST' }),
+  spiegaDiffRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/spiega-diff`, { method: 'POST' }),
 };
 
 export const updateApi = {

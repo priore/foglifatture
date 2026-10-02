@@ -38,6 +38,24 @@ Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
 
 🟢 No duplicate/inline overrides found for any primitive — single source of truth confirmed by absence of `<style>` blocks in components/views.
 
+### Checkbox — `.checkbox-app`
+
+Pattern obbligatorio per tutte le checkbox nel wizard e nelle impostazioni. `input` e `label` **sempre separati** (non wrappati), collegati via `id`/`for`.
+
+```html
+<div style="display:flex;align-items:center;gap:8px">
+  <input id="my-flag" type="checkbox" v-model="obj.flag" class="checkbox-app">
+  <label for="my-flag" style="margin:0">Testo della checkbox</label>
+</div>
+<small class="note-legal" style="margin-top:6px">Spiegazione normativa opzionale.</small>
+```
+
+- **Non** usare `<label>` come wrapper del `<input>` — rompe lo stile.
+- **Non** usare `style="width:auto"` inline — la larghezza fissa (18 px) è nello stile.
+- `.checkbox-app` è scoped: va definito nel `<style scoped>` del componente che lo usa (non è in `style.css` globale). Copiare dal blocco `<style scoped>` di `StepClienti.vue` o `StepFornitore.vue`.
+- Due checkbox logicamente correlate che devono stare sulla stessa riga vanno in un `div.field.full` (span intera riga nella `form-grid`) con un div interno `.checkbox-row` (grid 1fr 1fr), e ogni checkbox in un `.field` figlio. **Importante:** la classe span-riga è `.full`, non `.field-full` — in `style.css` la regola è `.field.full { grid-column: 1/-1 }`. Non usare due `.field` separati nella grid esterna: la `note-legal` di altezza variabile li spinge su righe diverse.
+- Esempi: `StepClienti.vue` (flag `pagamentoBtc`), `StepFornitore.vue` (flag `requisitiAliquotaRidotta`, `soggettoIsa`).
+
 ## Composables (not components, but shared logic units — `frontend/src/composables/`)
 
 - 🟢 `useTimeCalculator.js` — wraps hour-calculation logic (used by TimesheetView).

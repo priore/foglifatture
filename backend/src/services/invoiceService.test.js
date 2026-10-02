@@ -23,7 +23,7 @@ mock.module('../lib/jsonStore.js', {
   },
 });
 
-const { verificaIntegritaNumerazione, prossimoProgressivoInvio } = await import('./invoiceService.js');
+const { verificaIntegritaNumerazione, prossimoProgressivoInvio, calcolaBollo } = await import('./invoiceService.js');
 
 test('prossimo progressivo invio rispetta le regole di nomenclatura SDI (max 5 char, A-Z0-9), univoco ad ogni chiamata', () => {
   const a = prossimoProgressivoInvio();
@@ -81,4 +81,17 @@ test('clienteId non entra mai nel calcolo del progressivo (nessuna alterazione d
   // resti 4 (dopo 1,2,3) nonostante i clienteId siano stringhe alfanumeriche con trattini.
   const risultato = await verificaIntegritaNumerazione(2026, 3, CLI_A, '4');
   assert.equal(risultato.valido, true);
+});
+
+test('calcolaBollo: rivalsa INPS 4% calcolata su imponibile, inclusa nel netto a pagare', () => {
+  const r = calcolaBollo(1000, 77.47, 2, 4);
+  assert.equal(r.rivalsaInps, 40);
+  assert.equal(r.nettoAPagare, 1040);
+  assert.equal(r.imponibile, 1000);
+});
+
+test('calcolaBollo: senza rivalsa (default), nettoAPagare = imponibile', () => {
+  const r = calcolaBollo(500, 77.47, 2);
+  assert.equal(r.rivalsaInps, 0);
+  assert.equal(r.nettoAPagare, 500);
 });

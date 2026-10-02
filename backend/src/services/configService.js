@@ -5,6 +5,7 @@ import { rename, readdir, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import keytar from 'keytar';
 import { ibanValido } from '../lib/iban.js';
+import { parseEmails } from '../lib/email.js';
 import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
 
 const CONFIG_FILE = 'config.json';
@@ -31,6 +32,7 @@ const DEFAULT_CONFIG = {
     codiceFiscale: '',
     regimeFiscale: 'RF19',
     logoDataUrl: '', // logo mostrato nella stampa PDF della Fattura Pro-Forma
+    iscrittoVies: false, // iscrizione al VIES: necessaria per fatturare a aziende UE con inversione contabile
   },
   // Elenco clienti (supporto multi-cliente concorrente): ogni cliente ha un id stabile
   // e la propria tariffa oraria. "attivo:false" è cancellazione logica (nascosto dai
@@ -87,6 +89,10 @@ const DEFAULT_CONFIG = {
     settoreAteco: '', // nome del settore/sub-settore associato al codice selezionato
     coefficenteRedditivita: 0, // % di redditività del settore selezionato (0-100)
     dataInizioAttivita: '', // "YYYY-MM-DD": aliquota 5% nei primi 5 anni di attività, poi 15%
+    requisitiAliquotaRidotta: false, // L. 190/2014 c. 65: nessuna attività nei 3 anni precedenti, attività non in prosecuzione di lavoro dipendente
+    soggettoIsa: true, // DPR 435/2001 art. 17 c. 3: acconti 50/50 se soggetto ISA, 40/60 altrimenti
+    limitePersonale: 0, // soglia personale di sicurezza (€); 0 = disabilitato (FP-028)
+    rivalsaInps: false, // L. 662/96 c. 212: rivalsa INPS 4% addebitata al cliente (opt-in, default off)
   },
   dati: {
     // Override di backend/data/, es. una cartella sincronizzata (Dropbox/iCloud/OneDrive)
@@ -117,7 +123,8 @@ const CLIENTE_VUOTO = {
   codiceDestinatarioSdi: '',
   logoDataUrl: '',
   tariffaOraria: 0,
-  email: '', // una o più email separate da virgola, destinatarie di timesheet/fattura via mailto
+  email: '',         // una o più email separate da virgola per l'invio del timesheet (e della fattura se emailFattura è vuota)
+  emailFattura: '',  // una o più email separate da virgola per l'invio della fattura; se vuoto usa email
   figura: '', // campo header PDF timesheet
   modalitaPagamento: '', // vuoto = fatturazione.modalitaDefault
   giorniScadenza: null, // null = fatturazione.giorniScadenzaDefault
@@ -126,6 +133,10 @@ const CLIENTE_VUOTO = {
   progetto: '', // campo header PDF timesheet
   templateFatturaId: null, // null = usa il template fallback fattura-default
   templateTimesheetId: null, // null = usa il template fallback timesheet-default
+  rivalsaInps: null, // null = eredita da forfettario.rivalsaInps; true/false = override per questo cliente
+  paese: 'IT',       // codice ISO 3166-1 alpha-2 del paese del cliente (IT = italiano)
+  tipo: 'azienda',   // 'azienda' o 'privato': determina il trattamento IVA per i clienti esteri
+  servizi7Septies: false, // true = le prestazioni rientrano nell'art. 7-septies DPR 633/72 (consulenza, elaborazione dati, ecc.)
   pagamentoBtc: false, // se true, aggiunge la Causale di ammissione pagamento BTC in fattura (F3)
   causaleBtc: "Pagamento ammesso anche in Bitcoin (datio in solutum, art. 1197 c.c.) al controvalore dell'importo in EUR, cambio concordato alla data/ora di invio.", // testo configurabile: il criterio di cambio va concordato col cliente
 };
@@ -244,10 +255,12 @@ export function validaConfig(partialConfig) {
         errori.push(`cliente[${etichetta}]: ogni cliente deve avere un id univoco`);
       }
       idVisti.add(c.id);
-      if (c.email !== undefined && String(c.email).trim()) {
-        const nonValide = String(c.email).split(',').map(e => e.trim()).filter(e => e && !REGEX_EMAIL.test(e));
-        if (nonValide.length) {
-          errori.push(`cliente[${etichetta}]: email non valida: ${nonValide.join(', ')}`);
+      for (const campo of ['email', 'emailFattura']) {
+        if (c[campo] !== undefined && String(c[campo]).trim()) {
+          const nonValide = String(c[campo]).split(',').map(e => e.trim()).filter(e => e && !REGEX_EMAIL.test(e));
+          if (nonValide.length) {
+            errori.push(`cliente[${etichetta}]: ${campo} non valida: ${nonValide.join(', ')}`);
+          }
         }
       }
     });

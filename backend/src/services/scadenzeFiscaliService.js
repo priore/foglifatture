@@ -24,6 +24,11 @@ const GIORNI_VALIDITA_CACHE = 365;
 const FESTIVITA_FISSE = [
   [1, 1], [1, 6], [4, 25], [5, 1], [6, 2], [8, 15], [11, 1], [12, 8], [12, 25], [12, 26],
 ];
+// Festività introdotte dopo il 2025 (mese, giorno, annoInizio).
+// 4 ottobre: Festa nazionale per centenario della Protezione Civile (L. 151/2025), dal 2026.
+const FESTIVITA_CON_ANNO = [
+  [10, 4, 2026],
+];
 
 function pasquetta(anno) {
   // Algoritmo di Gauss per la Pasqua, +1 giorno per il Lunedì dell'Angelo.
@@ -49,21 +54,44 @@ function isoData(data) {
 function eFestivo(data, festivitaMobili) {
   const giornoSettimana = data.getDay();
   if (giornoSettimana === 0 || giornoSettimana === 6) return true;
-  const mese = data.getMonth() + 1, giorno = data.getDate();
+  const anno = data.getFullYear(), mese = data.getMonth() + 1, giorno = data.getDate();
   if (FESTIVITA_FISSE.some(([m, g]) => m === mese && g === giorno)) return true;
+  if (FESTIVITA_CON_ANNO.some(([m, g, da]) => m === mese && g === giorno && anno >= da)) return true;
   return festivitaMobili.some((f) => isoData(f) === isoData(data));
 }
 
+// Scadenze dall'1 al 19 agosto slittano al 20 agosto (D.Lgs. 33/2025 art. 11).
+// Il 20 agosto stesso non slita: è già la data target.
+function slittamentoAgosto(data) {
+  if (data.getMonth() === 7 && data.getDate() >= 1 && data.getDate() <= 19) {
+    return new Date(data.getFullYear(), 7, 20);
+  }
+  return data;
+}
+
 // Sposta al primo giorno lavorativo successivo se la data cade di sabato/domenica/festivo.
+// Applica prima lo slittamento di agosto (D.Lgs. 33/2025 art. 11).
 function primoGiornoLavorativo(anno, mese, giorno) {
   const festivitaMobili = [pasquetta(anno)];
-  let data = new Date(anno, mese - 1, giorno);
+  let data = slittamentoAgosto(new Date(anno, mese - 1, giorno));
   while (eFestivo(data, festivitaMobili)) data = new Date(data.getFullYear(), data.getMonth(), data.getDate() + 1);
   return isoData(data);
 }
 
 // Date ordinarie note e stabili nel tempo per un libero professionista in regime forfettario
 // (persona fisica, no dipendenti): imposta sostitutiva (termini IRPEF ordinari) e INPS.
+// Scadenze Intrastat servizi resi trimestrale: 25 del mese dopo il trimestre.
+// Aggiunta solo se il fornitore è iscritto al VIES e ha fatturato ad aziende UE nell'anno.
+// (DPR 633/72 art. 50 c. 6, D.Lgs. 18/2010)
+export function scadenzeIntrastatAnno(anno) {
+  return [
+    { data: primoGiornoLavorativo(anno, 4, 25), tipo: 'Intrastat servizi resi', descrizione: `I trim. ${anno}: elenco riepilogativo servizi resi a soggetti passivi UE` },
+    { data: primoGiornoLavorativo(anno, 7, 25), tipo: 'Intrastat servizi resi', descrizione: `II trim. ${anno}: elenco riepilogativo servizi resi a soggetti passivi UE` },
+    { data: primoGiornoLavorativo(anno, 10, 25), tipo: 'Intrastat servizi resi', descrizione: `III trim. ${anno}: elenco riepilogativo servizi resi a soggetti passivi UE` },
+    { data: primoGiornoLavorativo(anno + 1, 1, 25), tipo: 'Intrastat servizi resi', descrizione: `IV trim. ${anno}: elenco riepilogativo servizi resi a soggetti passivi UE` },
+  ];
+}
+
 // L'anno successivo compare per le rate a cavallo (saldo INPS artigiani, acconto imposta anno+1).
 export function scadenzeBaseAnno(anno) {
   return [

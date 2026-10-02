@@ -1,14 +1,22 @@
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta/INPS.
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
+import { regoleAnno } from './regoleFiscaliService.js';
 
-// Aliquota agevolata 5% nei primi 5 anni solari di attività (anno di inizio incluso),
-// 15% dal sesto anno in poi. Nessuna rivalsa INPS separata: l'imposta sostitutiva
-// già assorbe IRPEF/addizionali (semplificazione voluta del regime forfettario).
-export function aliquotaImposta(dataInizioAttivita, anno) {
-  if (!dataInizioAttivita) return 15;
+// Aliquota agevolata nei primi N anni solari (anno di inizio incluso), poi ordinaria.
+// requisitiAliquotaRidotta: L. 190/2014 c. 65 (nessuna attività nei 3 anni precedenti,
+// attività non in prosecuzione di lavoro dipendente). Default false = aliquota ordinaria
+// (scelta prudente se i requisiti non sono stati verificati).
+export async function aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta = false) {
+  let aliquotaOrd = 15, aliquotaRid = 5, anniRid = 5;
+  try {
+    const regole = await regoleAnno(anno);
+    aliquotaOrd = regole.forfettario.aliquotaOrdinaria ?? 15;
+    aliquotaRid = regole.forfettario.aliquotaRidotta ?? 5;
+    anniRid = regole.forfettario.anniAliquotaRidotta ?? 5;
+  } catch { /* usa fallback */ }
+  if (!dataInizioAttivita || !requisitiAliquotaRidotta) return aliquotaOrd;
   const annoInizio = new Date(dataInizioAttivita).getFullYear();
-  const annoAgevolazione = anno - annoInizio < 5;
-  return annoAgevolazione ? 5 : 15;
+  return (anno - annoInizio < anniRid) ? aliquotaRid : aliquotaOrd;
 }
 
 async function ricaviAnno(anno) {
@@ -107,14 +115,45 @@ function ricaviPerMese(risolteValide) {
   }));
 }
 
+// Stima previsionale della soglia prima di emettere una nuova fattura (FP-028).
+// Funzione pura: non legge dati, lavora solo sui valori passati.
+// Ritorna: { livelloSoglia: 'ok'|'vicino'|'oltre', livelloUscita: 'ok'|'uscitaAnnoSuccessivo'|'uscitaImmediata', livelloLimitePersonale: 'ok'|'vicino'|'oltre' }
+export function previsioneSoglia({ incassato, daIncassare, importoFattura, sogliaAnnua, sogliaUscitaImmediata, limitePersonale }) {
+  const totale = incassato + daIncassare + importoFattura;
+  const SOGLIA_VICINO_PCT = 0.80;
+  const livelloSoglia = totale > sogliaAnnua ? 'oltre' : (totale >= sogliaAnnua * SOGLIA_VICINO_PCT ? 'vicino' : 'ok');
+  const livelloUscita = totale > sogliaUscitaImmediata
+    ? 'uscitaImmediata'
+    : (totale > sogliaAnnua ? 'uscitaAnnoSuccessivo' : 'ok');
+  const lim = limitePersonale > 0 ? limitePersonale : null;
+  const livelloLimitePersonale = lim
+    ? (totale > lim ? 'oltre' : (totale >= lim * SOGLIA_VICINO_PCT ? 'vicino' : 'ok'))
+    : 'ok';
+  return { livelloSoglia, livelloUscita, livelloLimitePersonale };
+}
+
+// Stato soglia FP-002: da booleano a tre stati, basato sul cumulato per competenza.
+function statoSogliaCompetenza(ricaviCumulati, sogliaAnnua, sogliaUscitaImmediata) {
+  if (ricaviCumulati > sogliaUscitaImmediata) return 'uscitaImmediata';
+  if (ricaviCumulati > sogliaAnnua) return 'uscitaAnnoSuccessivo';
+  return 'ok';
+}
+
 export async function calcolaDashboardForfettario(config, { anno = new Date().getFullYear(), meseCorrente = new Date().getMonth() + 1 } = {}) {
-  const { sogliaAnnua, coefficenteRedditivita, dataInizioAttivita } = config.forfettario;
+  const { sogliaAnnua, coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false, soggettoIsa = true, limitePersonale = 0 } = config.forfettario;
+
+  let sogliaUscitaImmediata = 100000;
+  try {
+    const regole = await regoleAnno(anno);
+    sogliaUscitaImmediata = regole.forfettario.sogliaUscitaImmediata ?? 100000;
+  } catch { /* usa fallback */ }
 
   const { fatture, mesiFatturati, risolteValide } = await ricaviAnno(anno);
-  const ricaviCumulati = Number(fatture.reduce((tot, f) => tot + f.imponibile, 0).toFixed(2));
+  // L. 662/96 c. 212: la rivalsa INPS addebitata al cliente è compenso a tutti gli effetti.
+  const ricaviCumulati = Number(fatture.reduce((tot, f) => tot + f.imponibile + (f.rivalsaInps ?? 0), 0).toFixed(2));
 
   const redditoImponibile = Number((ricaviCumulati * coefficenteRedditivita / 100).toFixed(2));
-  const aliquota = aliquotaImposta(dataInizioAttivita, anno);
+  const aliquota = await aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta);
   const impostaStimata = Number((redditoImponibile * aliquota / 100).toFixed(2));
   const nettoStimato = Number((ricaviCumulati - impostaStimata).toFixed(2));
 
@@ -153,6 +192,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     impostaStimata: impostaStimataCassa,
     percentualeSoglia: percentualeSogliaCassa,
     superamentoSoglia: ricaviCumulatiCassa > sogliaAnnua,
+    statoSoglia: statoSogliaCompetenza(ricaviCumulatiCassa, sogliaAnnua, sogliaUscitaImmediata),
     // Fatture emesse quest'anno ma ancora da incassare: rischiano di pesare sulla soglia
     // dell'anno prossimo se incassate dopo il 31/12, o su quella corrente se incassate entro.
     nonIncassateEmesseAnno: nonIncassateEmesseAnno.map((f) => ({
@@ -173,6 +213,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     sogliaAnnua,
     coefficenteRedditivita,
     aliquota,
+    soggettoIsa,
     ricaviCumulati,
     redditoImponibile,
     impostaStimata,
@@ -185,6 +226,9 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     percentualeSogliaProiettata,
     superamentoSoglia: ricaviCumulati > sogliaAnnua,
     superamentoSogliaProiettato: ricaviProiettati > sogliaAnnua,
+    statoSoglia: statoSogliaCompetenza(ricaviCumulati, sogliaAnnua, sogliaUscitaImmediata),
+    sogliaUscitaImmediata,
+    limitePersonale,
     cassa,
   };
 }

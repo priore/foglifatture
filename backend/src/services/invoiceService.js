@@ -22,16 +22,18 @@ function parseChiave(chiave) {
 // sommato al netto richiesto al cliente: resta solo l'indicazione legale "assolta in
 // modo virtuale" e il campo DatiBollo XML. Regime forfettario: nessuna rivalsa INPS,
 // nessuna ritenuta d'acconto.
-export function calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo) {
+export function calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo, rivalsaAliquota = 0) {
+  const rivalsaInps = rivalsaAliquota > 0 ? Number((imponibile * rivalsaAliquota / 100).toFixed(2)) : 0;
+  const totaleConRivalsa = Number((imponibile + rivalsaInps).toFixed(2));
   const bolloApplicabile = imponibile > sogliaBolloVirtuale;
   const bollo = bolloApplicabile ? importoBollo : 0;
-  return { imponibile, bolloApplicabile, bollo, nettoAPagare: imponibile };
+  return { imponibile, bolloApplicabile, bollo, rivalsaInps, nettoAPagare: totaleConRivalsa };
 }
 
 // Imponibile da timesheet: ore * tariffa oraria.
-export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale, importoBollo }) {
+export function calcolaCompenso({ totaleOre, tariffaOraria, sogliaBolloVirtuale, importoBollo, rivalsaAliquota = 0 }) {
   const imponibile = Number((totaleOre * tariffaOraria).toFixed(2));
-  return calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo);
+  return calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo, rivalsaAliquota);
 }
 
 // Arricchisce una fattura letta da disco con lo stato pagamento derivato da pagamenti[].
