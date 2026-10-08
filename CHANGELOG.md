@@ -6,6 +6,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-08
+
 ### Added
 - **Dashboard: tab F24** — nuova tab dedicata con ordine cards riordinabile e persistito indipendentemente.
   - **Bollo trimestrale**:
