@@ -21,6 +21,34 @@ if [ -z "$NODE_BIN" ]; then
   exit 1
 fi
 
+# ── Google Antigravity CLI (agy) — provider AI gratuito via OAuth Google ──────
+# Verifica che sia il vero agy Google (non un altro binario con lo stesso nome)
+if ! command -v agy >/dev/null 2>&1; then
+  echo "Installazione Google Antigravity CLI..."
+  curl -fsSL https://antigravity.google/cli/install.sh | bash
+  export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+  command -v agy >/dev/null 2>&1 && echo "Google Antigravity CLI installato." || echo "  Installazione agy non riuscita — scarica manualmente da antigravity.google"
+else
+  echo "Google Antigravity CLI già installato."
+fi
+
+# ── GitHub CLI + estensione Copilot — provider AI gratuito via OAuth GitHub ───
+if ! command -v gh >/dev/null 2>&1; then
+  echo "GitHub CLI non trovato."
+  if command -v brew >/dev/null 2>&1; then
+    echo "Installazione tramite Homebrew..."
+    brew install gh
+  else
+    echo "  Homebrew non disponibile — scarica manualmente da cli.github.com"
+  fi
+else
+  echo "GitHub CLI già installato."
+fi
+if command -v gh >/dev/null 2>&1 && ! gh extension list 2>/dev/null | grep -q "gh-copilot"; then
+  echo "Installazione estensione GitHub Copilot..."
+  gh extension install github/gh-copilot 2>/dev/null || echo "  Impossibile installare gh-copilot (potrebbe richiedere login GitHub prima)."
+fi
+
 echo "Installazione build frontend e dipendenze backend..."
 (cd "$PROJECT_DIR/frontend" && npm install --silent && npm run build --silent)
 (cd "$PROJECT_DIR/backend" && npm install --silent)

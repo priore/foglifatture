@@ -93,6 +93,8 @@ const DEFAULT_CONFIG = {
     soggettoIsa: true, // DPR 435/2001 art. 17 c. 3: acconti 50/50 se soggetto ISA, 40/60 altrimenti
     limitePersonale: 0, // soglia personale di sicurezza (€); 0 = disabilitato (FP-028)
     rivalsaInps: false, // L. 662/96 c. 212: rivalsa INPS 4% addebitata al cliente (opt-in, default off)
+    gestionePrevidenziale: '', // '' = non configurata | 'gestioneSeparata' | 'altra' (FP-015)
+    altraCoperturaPrevidenziale: false, // true ⇒ aliquota GS ridotta (pensionati/altra previdenza obbligatoria)
   },
   dati: {
     // Override di backend/data/, es. una cartella sincronizzata (Dropbox/iCloud/OneDrive)
@@ -272,6 +274,10 @@ export function validaConfig(partialConfig) {
   if (partialConfig.pec?.casellaMittente !== undefined
     && !campoValido(partialConfig.pec.casellaMittente, REGEX_EMAIL)) {
     errori.push('pec: Casella PEC mittente non è un indirizzo email valido');
+  }
+  const gp = partialConfig.forfettario?.gestionePrevidenziale;
+  if (gp !== undefined && !['', 'gestioneSeparata', 'altra'].includes(gp)) {
+    errori.push('forfettario: gestionePrevidenziale deve essere \'\', \'gestioneSeparata\' o \'altra\'');
   }
   return errori;
 }

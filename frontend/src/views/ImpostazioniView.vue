@@ -4,7 +4,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import StepFornitore from '../components/wizard/StepFornitore.vue';
-import StepClienti from '../components/wizard/StepClienti.vue';
 import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
 import StepBackup from '../components/wizard/StepBackup.vue';
@@ -87,12 +86,11 @@ onBeforeRouteUpdate(async (to, from, next) => {
       <div class="card-body">
         <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :wallet-btc="config.walletBtc" />
         <StepFatturazione v-else-if="passoAttivo === 1" v-model="config.fatturazione" />
-        <StepClienti v-else-if="passoAttivo === 2" v-model="config.clienti" @salva-subito="salva" />
-        <StepPec v-else-if="passoAttivo === 3" v-model="config.pec" :sdi="config.sdi" />
-        <StepPercorsoDati v-else-if="passoAttivo === 4" v-model="config.dati" />
-        <StepBackup v-else-if="passoAttivo === 5" v-model="config.backup" />
-        <StepPromemoria v-else-if="passoAttivo === 6" v-model="config.reminder" />
-        <StepGoogleAuth v-else-if="passoAttivo === 7" />
+        <StepPec v-else-if="passoAttivo === 2" v-model="config.pec" :sdi="config.sdi" />
+        <StepPercorsoDati v-else-if="passoAttivo === 3" v-model="config.dati" />
+        <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
+        <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" />
+        <StepGoogleAuth v-else-if="passoAttivo === 6" />
         <StepAI v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">

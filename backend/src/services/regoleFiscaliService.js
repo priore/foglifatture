@@ -125,31 +125,17 @@ export async function conferma(anno) {
   return disponibile;
 }
 
-// Spiega le differenze usando Gemini (fallback Groq/Claude come scadenzeFiscaliService).
+// Spiega le differenze usando il router AI (Gemini → agy → gh copilot → Claude → Groq → locale).
 export async function spiegaDiff(anno) {
   const diff = await differenze(anno);
   const scalari = diff.filter(d => d.campo !== 'stato' && d.nuovo !== undefined);
   if (!scalari.length) throw new Error('Nessuna differenza da spiegare');
 
-  const { leggiGeminiApiKey, leggiGeminiModello } = await import('./envService.js');
-  const apiKey = await leggiGeminiApiKey();
-  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → AI)');
-  const modello = (await leggiGeminiModello()) || 'gemini-2.0-flash';
-
+  const { chiamaAI } = await import('./aiRouterService.js');
   const righe = scalari.map(d => `- ${d.campo}: ${d.vecchio ?? '—'} → ${d.nuovo}`).join('\n');
   const prompt = `Sei un consulente fiscale italiano. Spiega in modo semplice e conciso (massimo 3 righe per punto) le seguenti variazioni nelle regole fiscali per il regime forfettario ${anno}:\n${righe}\n\nRispondi in italiano, con elenco puntato, senza tecnicismi inutili.`;
 
-  const risposta = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
-  if (!risposta.ok) throw new Error(`Gemini error ${risposta.status}`);
-  const dati = await risposta.json();
-  const testo = dati?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const { testo } = await chiamaAI(prompt);
   if (!testo) throw new Error('Risposta AI non valida');
   return { spiegazione: testo };
 }

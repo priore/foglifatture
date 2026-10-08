@@ -4,6 +4,7 @@ import FatturaView from '../views/FatturaView.vue';
 import ImportaStoricoView from '../views/ImportaStoricoView.vue';
 import ImpostazioniView from '../views/ImpostazioniView.vue';
 import CronologiaPecView from '../views/CronologiaPecView.vue';
+import ClientiView from '../views/ClientiView.vue';
 import DashboardView from '../views/DashboardView.vue';
 import VersamentiF24View from '../views/VersamentiF24View.vue';
 import PrivacyView from '../views/PrivacyView.vue';
@@ -16,9 +17,11 @@ export const router = createRouter({
     { path: '/fattura', name: 'fattura', component: FatturaView },
     { path: '/dashboard', name: 'dashboard', component: DashboardView },
     { path: '/versamenti-f24', name: 'versamenti-f24', component: VersamentiF24View },
+    { path: '/clienti', name: 'clienti', component: ClientiView },
+    { path: '/pec-cronologia', name: 'pec-cronologia', component: CronologiaPecView },
     { path: '/importa-storico', name: 'importa-storico', component: ImportaStoricoView },
     { path: '/impostazioni', name: 'impostazioni', component: ImpostazioniView },
-    { path: '/impostazioni/pec-cronologia', name: 'pec-cronologia', component: CronologiaPecView },
+    { path: '/impostazioni/pec-cronologia', redirect: '/pec-cronologia' },
     { path: '/privacy', name: 'privacy', component: PrivacyView },
   ],
 });

@@ -227,7 +227,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-015 — Piano F24 automatico (saldo, acconti, rateazione, interessi)
 
-**Stato:** 🔍 in analisi · **Impatto:** Alto · **Sforzo:** L
+**Stato:** 🚧 in corso (Step 2-6 implementati, Step 7 opzionale) · **Impatto:** Alto · **Sforzo:** L
 
 🟢 `versamentiF24Service.js` registra solo i versamenti già effettuati (import da testo del Cassetto Fiscale): oggi Timesheet non calcola né genera un F24 da pagare, solo la stima grezza di imposta/acconto in dashboard.
 
@@ -357,7 +357,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-023 — Stesura F24 sul modello ufficiale (PDF)
 
-**Stato:** 💡 proposta · **Impatto:** Alto · **Sforzo:** M
+**Stato:** ✅ implementata (2026-10-06, commit in develop) · **Impatto:** Alto · **Sforzo:** M
 
 🟢 F24_STEP3 calcola quanto versare, ma esclude esplicitamente la produzione di un modulo F24.
 
@@ -379,20 +379,18 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-024 — Stato degli F24 e versamenti registrati in automatico
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S-M
+**Stato:** ✅ implementata 2026-10-07 · **Impatto:** Medio · **Sforzo:** S-M
 
-🟢 `versamentiF24Service.js` registra i versamenti a mano o dal testo del Cassetto Fiscale, senza codice tributo. F24_STEP3 Step 3 aggiunge un codice opzionale, sempre da inserire a mano.
+🟢 `f24StateService.js`: CRUD F24 con stati da_pagare/programmato/pagato/annullato. Al passaggio a `pagato` crea versamenti automatici in `f24Versamenti.json` con codice tributo, anno di riferimento e quota maggiorazione (separata, non conta come acconto — A5). Tornare da `pagato` li cancella (idempotente). `annullabileEntro` = 3 giorni lavorativi prima del pagamento (Provv. AdE 313945/2024 §5.3). Import dal Cassetto Fiscale non duplica F24 già pagati (filtro su data+totale righe). Route: `GET/POST /api/forfettario/f24`, `PATCH /f24/:id/stato`, `DELETE /f24/:id`. Test 7/7.
 
-🟡 Ogni F24 preparato (FP-023) ha uno stato: da pagare → programmato (addebito a data futura) → pagato, oppure annullato. Quando lo segni pagato, le sue righe finiscono da sole nei versamenti con codice tributo, anno di riferimento e quota di maggiorazione separata (la maggiorazione non conta come acconto versato). Tornare indietro le rimuove. Per un F24 programmato l'app mostra l'ultimo giorno utile per annullarlo: 3 giorni lavorativi prima dell'addebito.
-
-**Riferimenti:** `versamentiF24Service.js`, [F24_STEP3_SVILUPPO_STIMA.md](../Plans/F24_STEP3_SVILUPPO_STIMA.md) Step 3; dipende da FP-023
-**Piano di dettaglio:** — (da redigere quando passa a 🔍) · piano di massima: [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 8
+**Riferimenti:** `f24StateService.js`, `versamentiF24Service.js`; dipende da FP-023
+**Piano di dettaglio:** [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 8
 
 ---
 
 ## FP-025 — Imposta di bollo trimestrale: scadenze e F24
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S-M
+**Stato:** ✅ implementata 2026-10-07 · **Impatto:** Medio · **Sforzo:** S-M
 
 🟢 Il bollo da 2 € viene applicato alle fatture sopra 77,47 € (`fatturaPaXmlGenerator.js:36-40`), ma il suo versamento trimestrale non è in calendario: `scadenzeBaseAnno` non ha le scadenze del bollo.
 

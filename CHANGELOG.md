@@ -6,6 +6,60 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Dashboard: tab F24** — nuova tab dedicata con ordine cards riordinabile e persistito indipendentemente.
+  - **Bollo trimestrale**:
+    - Card dashboard con scadenze e importi del bollo virtuale per trimestre.
+    - Rinvii di legge automatici:
+      - Bollo 1° trimestre ≤ 5.000 € → versa con il 2°.
+      - Bollo 1°+2° trimestre ≤ 5.000 € → versa con il 3°.
+    - F24 precompilato scaricabile per ogni trimestre (codici 2521–2524).
+    - Importi stimati dalla data fattura.
+  - **Stato F24 e versamenti automatici**:
+    - Piano versamenti con stati:
+      - da pagare
+      - programmato
+      - pagato
+      - annullato
+    - Al pagamento, righe inserite automaticamente con codice tributo corretto.
+    - Annullando il pagamento, le righe vengono cancellate.
+    - Calcolo automatico ultimo giorno per annullare addebito (3 giorni lavorativi prima).
+    - Import Cassetto Fiscale non duplica versamenti già coperti da F24 pagato.
+  - **F24 precompilato scaricabile**: PDF su modello ufficiale AdE con dati contribuente e righe Erario/INPS precompilate.
+  - **Stima versamenti F24**:
+    - Card dashboard con scadenze calcolate per l'anno fiscale:
+      - Saldo e acconti imposta sostitutiva.
+      - Contributi INPS gestione separata.
+    - Gestione previdenziale configurabile nelle impostazioni forfettario.
+    - Deduzione automatica contributi INPS dalla base tassabile.
+    - Campo codice tributo opzionale nei versamenti F24.
+    - Rateizzazione INPS con interessi calcolati automaticamente (D.Lgs. 33/2025 art. 10):
+      - Causale PXXR per prima rata.
+      - Causale P10R per rate successive.
+    - Avvisi in card:
+      - Regole fiscali non confermate per l'anno.
+      - Gestione previdenziale non configurata.
+- **Router AI a cascata** (5 provider):
+  - Fallback automatico in cascata:
+    1. Gemini API key
+    2. Google Antigravity CLI (OAuth Google)
+    3. GitHub Copilot CLI (OAuth GitHub)
+    4. Claude API key
+    5. Groq API key
+    6. LLM locale (Ollama/LM Studio)
+  - Nessuna configurazione obbligatoria per chi ha un account Google o GitHub.
+  - Impostazioni → AI: tab per ogni provider con stato e pulsanti di login OAuth.
+  - Verifica stato provider su richiesta esplicita.
+  - LLM locale: URL custom con porta per server remoti o porte non standard.
+
+### Fixed
+- **Scadenza INPS gestione separata**: saldo + 1° acconto era 16 giugno anziché 30 giugno (Circ. INPS 8/2026).
+- **Stima versamenti F24 — soglia minima 1,03 €**: righe sotto soglia escluse dal piano con avviso (Istr. Redditi PF 2026 §7).
+- **Stima versamenti F24 — maggiorazione**: la maggiorazione +0,40% non veniva più conteggiata come acconto versato nel calcolo del saldo.
+
+### Changed
+- **Ristrutturazione menu laterale**: Clienti e Cronologia PEC ora voci dirette nel menu principale, non più in Impostazioni.
+
 ## [1.5.0] - 2026-10-02
 
 ### Added
@@ -25,28 +79,42 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   - Aliquote, soglie, scadenze e codici tributo del regime forfettario raccolti in pacchetto per anno (`regole/2026.json`).
   - Fonte normativa e link al documento ufficiale per ogni valore.
   - Tab "Regole fiscali" in Dashboard mostra stato anno per anno, differenze rispetto al pacchetto attivo in tabella inline.
-  - Conferma pacchetto con un click; banner avvisa quando aggiornamento non è confermato.
+  - Conferma pacchetto con un click.
+  - Banner avvisa quando l'aggiornamento non è confermato.
   - Bottone "Spiega con AI" (Gemini) apre popup con spiegazione variazioni.
 
 - **Clienti esteri: IVA, diciture legali e Intrastat**:
   - Ogni cliente ha ora i campi "Paese" (ISO 3166-1, es. IT/DE/US) e "Tipo soggetto" (azienda / privato).
   - Wizard impostazioni clienti adattivo: Provincia nascosta per esteri, codice SDI fisso "XXXXXXX", campo P.IVA accetta identificativi UE fino a 28 caratteri.
-  - Trattamento IVA automatico al momento della generazione: N2.1 inversione contabile per aziende UE (art. 7-ter DPR 633/72), N2.1 non soggetta per aziende extra-UE, N2.1 art. 7-septies per privati extra-UE con servizi specifici, N2.2 per tutti gli altri casi.
-  - XML FatturaPA: CodiceDestinatario XXXXXXX, CAP 00000, nessuna Provincia, IdPaese/Nazione dal paese del cliente, blocco AltriDatiGestionali INVCONT per B2B UE.
+  - Trattamento IVA automatico al momento della generazione:
+    - N2.1 inversione contabile per aziende UE (art. 7-ter DPR 633/72).
+    - N2.1 non soggetta per aziende extra-UE.
+    - N2.1 art. 7-septies per privati extra-UE con servizi specifici.
+    - N2.2 per tutti gli altri casi.
+  - XML FatturaPA:
+    - CodiceDestinatario XXXXXXX, CAP 00000, nessuna Provincia.
+    - IdPaese/Nazione dal paese del cliente.
+    - Blocco AltriDatiGestionali INVCONT per B2B UE.
   - Dicitura legale corrispondente aggiunta come `<Causale>` nell'XML.
   - Scadenze Intrastat trimestrali (25 del mese successivo a ogni trimestre) aggiunte al pannello scadenze fiscali se il fornitore è iscritto al VIES e ha clienti azienda UE attivi.
   - Checkbox "Iscritto al VIES" in Impostazioni → Anagrafica fornitore.
-  - Campo Paese come lista a discesa (paesi UE e principali extra-UE) invece di campo libero; default IT per clienti preesistenti.
+  - Campo Paese come lista a discesa (paesi UE e principali extra-UE) invece di campo libero.
+  - Default IT per clienti preesistenti.
 - **Rivalsa INPS 4% facoltativa**: opzione per addebitare al cliente il 4% del compenso a titolo di rivalsa INPS (L. 662/96 art. 1 c. 212):
   - Attivabile globalmente in Impostazioni → Regime forfettario, sovrascrivibile per singolo cliente.
   - Blocco `DatiCassaPrevidenziale TC22` aggiunto nell'XML FatturaPA quando attiva.
   - La rivalsa entra nel totale fattura e nei ricavi ai fini della soglia forfettaria.
 
 ### Fixed
-- Requisiti aliquota agevolata 5%: l'aliquota ridotta non viene più applicata automaticamente per chi ha una data di inizio attività recente. È necessario spuntare esplicitamente "Ho i requisiti per l'aliquota agevolata del 5%" nelle Impostazioni → Regime forfettario (L. 190/2014 c. 65). Chi non ha i requisiti vedeva l'imposta stimata a un terzo del valore reale.
-- Scadenze fiscali: 4 ottobre aggiunto come festa nazionale dal 2026 (L. 151/2025); scadenze dall'1 al 19 agosto slittano al 20 agosto (D.Lgs. 33/2025 art. 11).
-- Controllo aggiornamenti: `git fetch --tags origin main` falliva sempre con "couldn't find remote ref main" quando il processo gira sul branch `develop`; corretto in `git fetch --tags origin`.
-- Wizard impostazioni: aggiunto pulsante "Salva" nella barra in basso di ogni schermata (era assente — il salvataggio avveniva solo premendo "Avanti").
+- **Requisiti aliquota agevolata 5%**: l'aliquota ridotta non viene più applicata automaticamente per chi ha una data di inizio attività recente.
+  - Necessario spuntare esplicitamente "Ho i requisiti per l'aliquota agevolata del 5%" in Impostazioni → Regime forfettario (L. 190/2014 c. 65).
+  - Chi non aveva i requisiti vedeva l'imposta stimata a un terzo del valore reale.
+- Scadenze fiscali:
+  - 4 ottobre aggiunto come festa nazionale dal 2026 (L. 151/2025).
+  - Scadenze dall'1 al 19 agosto slittano al 20 agosto (D.Lgs. 33/2025 art. 11).
+- Controllo aggiornamenti: `git fetch --tags origin main` falliva con "couldn't find remote ref main" sul branch `develop`; corretto in `git fetch --tags origin`.
+- Wizard impostazioni: aggiunto pulsante "Salva" nella barra in basso di ogni schermata.
+  - Prima era assente; il salvataggio avveniva solo premendo "Avanti".
 
 ## [1.4.1] - 2026-09-30
 
@@ -66,7 +134,11 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Added
 - **Dashboard Bitcoin** — vista dedicata con toggle Dashboard/Bitcoin:
-  - 4 card Incassi Bitcoin (riepilogo per anno, rate con TXID, quadro RW, valore attuale con grafico andamento cambio EUR/BTC).
+  - 4 card Incassi Bitcoin:
+    - Riepilogo per anno.
+    - Rate con TXID.
+    - Quadro RW.
+    - Valore attuale con grafico andamento cambio EUR/BTC.
   - Card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg).
   - Card riordinabili con trascinamento (ordine salvato nel browser), sia in Dashboard che in Bitcoin.
 - **Importa storico da ZIP** — archivio ZIP del portale Fatture e Corrispettivi (o SDI) caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti.
@@ -77,7 +149,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   - "PEC di prova allo SDI": invia una PEC vuota (con conferma) e mostra la risposta di cortesia, senza toccare le ricevute.
 - **Dati di pagamento in fattura**:
   - IBAN, modalità pagamento e scadenza dichiarati in XML (FatturaPA).
-  - IBAN e giorni scadenza predefiniti in Impostazioni, sovrascrivibili per cliente; IBAN validato via IBAN check digit.
+  - IBAN e giorni scadenza predefiniti in Impostazioni, sovrascrivibili per cliente.
+  - IBAN validato via IBAN check digit.
   - Fattura PDF: riquadro «Dati per il pagamento» con IBAN e/o indirizzo Bitcoin, scadenza e mini QR (bonifico EPC o bitcoin:) in tutti i template fattura.
   - Bitcoin selezionabile come modalità di pagamento (con indirizzo SegWit visualizzato).
 
@@ -91,7 +164,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 ### Added
 - **Incasso fatture in Bitcoin**:
   - Una rata può essere registrata come incasso BTC (datio in solutum) invece che a bonifico.
-  - TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione registrati (pronti per controllo fiscale).
+  - TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione registrati.
+  - Dati pronti per controllo fiscale.
   - Importo in EUR sempre calcolato dal cambio dichiarato.
   - Dicitura opzionale in fattura per i clienti abilitati.
   - Lettura opzionale dati transazione da mempool.space e cambio storico da CoinGecko.
@@ -142,8 +216,14 @@ Prima release pubblica.
   - Ricavi cumulati, soglia annua, previsione imposta sostitutiva e acconto anno successivo.
   - Andamento mensile, fatture da incassare, prossime scadenze fiscali (calcolate localmente, con verifica periodica proroghe via AI).
 - **Gestione pagamenti e versamenti**:
-  - Sezione "Versamenti F24": registrazione manuale, confronto con imposta stimata, import da Cassetto Fiscale, export CSV per anno.
-  - Sezione "Pagamenti fatture": riconoscimento automatico incasso da CSV movimenti bancari, abbinamento per importo.
+  - Sezione "Versamenti F24":
+    - Registrazione manuale.
+    - Confronto con imposta stimata.
+    - Import da Cassetto Fiscale.
+    - Export CSV per anno.
+  - Sezione "Pagamenti fatture":
+    - Riconoscimento automatico incasso da CSV movimenti bancari.
+    - Abbinamento per importo.
 - **Export dati**:
   - CSV "per il commercialista": elenco fatture emesse nell'anno più riepilogo ricavi/imposta/soglia.
 - **Import storico**:
@@ -160,10 +240,12 @@ Prima release pubblica.
   - Dark mode, aggiornamento app da UI con un click (download, build, riavvio).
 - **Intelligenza artificiale**:
   - Aggiornamento codici ATECO assistito da AI (Gemini), fallback su Claude/Groq se quota esaurita.
-  - Promemoria desktop: fine mese per timesheet, fattura scartata da SDI non ancora reinviata (rischio sanzione dopo 5 giorni).
+  - Promemoria desktop:
+    - Fine mese per timesheet.
+    - Fattura scartata da SDI non ancora reinviata (rischio sanzione dopo 5 giorni).
 - **Conformità normativa**:
   - Blocco rigenerazione fattura già accettata dallo SDI (va corretta con nota di variazione).
-  - Pagina "Privacy e trattamento dati": titolare, dati trattati, comunicazione a terzi (SDI, PEC, Google, AI), conservazione, sicurezza, diritti interessato.
+  - Pagina "Privacy e trattamento dati": titolare, dati trattati, comunicazione a terzi (SDI, PEC, Google, AI), conservazione, sicurezza, diritti dell'interessato.
 - **Installazione**:
   - Script multi-piattaforma (macOS `launchd`, Windows Task Scheduler), avvio path-indipendente.
 
@@ -172,10 +254,3 @@ Prima release pubblica.
 - Libreria di lettura file Excel per l'import storico aggiornata, risolte vulnerabilità note (denial of service, prototype pollution).
 - Validazione campi configurazione (P.IVA, PEC, codice destinatario SDI).
 - Controllo integrità numerazione fatture (sequenza unica, obbligo di legge, condivisa correttamente tra più clienti).
-
-### Fixed
-- Conformità XML FatturaPA: IdTrasmittente con codice fiscale invece di P.IVA, progressivo SDI alfanumerico conforme.
-- Esportazione PDF Timesheet/Fattura: rimossa pagina bianca superflua; timesheet con mese pieno (31 giorni) non sconfina più su una seconda pagina.
-- Notifiche desktop: su Windows/Linux non tentano più comandi macOS-only.
-- Import CSV pagamenti: riconoscimento automatico separatore, colonne Entrate/Uscite separate, esclusione righe di saldo iniziale/finale.
-- Vari fix minori su import XML FatturaPA, polling ricevute SDI, PDF timesheet.

@@ -10,7 +10,7 @@ import path from 'node:path';
 import keytar from 'keytar';
 
 const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
-const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL', 'GROQ_MODEL', 'CLAUDE_MODEL', 'CLAUDE_WORKSPACE_ID'];
+const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL', 'GROQ_MODEL', 'CLAUDE_MODEL', 'CLAUDE_WORKSPACE_ID', 'LLM_LOCALE_URL', 'AI_PROVIDER_DISABILITATI'];
 const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
 const KEYTAR_ACCOUNT_GOOGLE_SECRET = 'oauth.googleClientSecret';
 const KEYTAR_ACCOUNT_GEMINI_KEY = 'gemini.apiKey';
@@ -48,11 +48,13 @@ export async function leggiCredenzialiOAuth() {
     claudeApiKeyImpostata: Boolean(claudeApiKey),
     claudeModello: valori.CLAUDE_MODEL || '',
     claudeWorkspaceId: valori.CLAUDE_WORKSPACE_ID || '',
+    llmLocaleUrl: valori.LLM_LOCALE_URL || '',
+    aiProviderDisabilitati: (valori.AI_PROVIDER_DISABILITATI || '').split(',').map((s) => s.trim()).filter(Boolean),
   };
 }
 
 // Aggiorna solo le righe delle chiavi gestite, preservando il resto del file (commenti, PORT, ecc.).
-export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey, groqApiKey, claudeApiKey, claudeWorkspaceId }) {
+export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey, groqApiKey, claudeApiKey, claudeWorkspaceId, llmLocaleUrl, aiProviderDisabilitati }) {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
 
@@ -62,6 +64,8 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
   if (googleClientId !== undefined) nuoviValori.GOOGLE_CLIENT_ID = googleClientId;
   if (allowedEmail !== undefined) nuoviValori.ALLOWED_EMAIL = allowedEmail;
   if (claudeWorkspaceId !== undefined) nuoviValori.CLAUDE_WORKSPACE_ID = claudeWorkspaceId;
+  if (llmLocaleUrl !== undefined) nuoviValori.LLM_LOCALE_URL = llmLocaleUrl;
+  if (aiProviderDisabilitati !== undefined) nuoviValori.AI_PROVIDER_DISABILITATI = Array.isArray(aiProviderDisabilitati) ? aiProviderDisabilitati.join(',') : aiProviderDisabilitati;
   // Il secret/la key si aggiornano solo se l'utente ne ha digitato uno nuovo (campo password vuoto = non toccare),
   // e vanno nel Keychain, mai nel file .env.
   if (googleClientSecret) await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET, googleClientSecret);
@@ -163,4 +167,20 @@ export async function salvaClaudeModello(modello) {
 export async function leggiClaudeWorkspaceId() {
   const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.CLAUDE_WORKSPACE_ID || '';
+}
+
+// URL custom per LLM locale (Ollama/LM Studio o server remoto OpenAI-compat).
+// Vuoto = usa i default (localhost:11434 e localhost:1234).
+export async function leggiLlmLocaleUrl() {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  return parseEnv(contenuto).valori.LLM_LOCALE_URL || '';
+}
+
+export async function salvaLlmLocaleUrl(url) {
+  await salvaChiaveEnv('LLM_LOCALE_URL', url);
+}
+
+export async function leggiProviderDisabilitati() {
+  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  return (parseEnv(contenuto).valori.AI_PROVIDER_DISABILITATI || '').split(',').map((s) => s.trim()).filter(Boolean);
 }

@@ -30,11 +30,11 @@ test('scadenzeBaseAnno sposta il 30 giugno (2026 cade di martedì, resta invaria
   assert.equal(saldo.data, '2026-06-30');
 });
 
-test('scadenzeBaseAnno sposta scadenza che cade di sabato al lunedì successivo (16 giugno 2029)', () => {
-  // 16 giugno 2029 è sabato: INPS gestione separata (saldo + I acconto) deve slittare a lunedì 18.
+test('scadenzeBaseAnno sposta scadenza che cade di sabato al lunedì successivo (30 giugno 2029)', () => {
+  // 30 giugno 2029 è sabato: INPS gestione separata (saldo + I acconto) deve slittare a lunedì 2 luglio.
   const scadenze = scadenzeBaseAnno(2029);
   const inps = scadenze.find((s) => s.tipo === 'INPS gestione separata' && s.descrizione.includes('Saldo'));
-  assert.equal(inps.data, '2029-06-18');
+  assert.equal(inps.data, '2029-07-02');
 });
 
 test('nessuna scadenza calcolata cade di sabato o domenica', () => {

@@ -19,6 +19,38 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 }
 $NodeBin = (Get-Command node).Source
 
+# ── Google Antigravity CLI (agy) ─────────────────────────────────────────────
+if (-not (Get-Command agy -ErrorAction SilentlyContinue)) {
+  Write-Host "Installazione Google Antigravity CLI..."
+  try {
+    iex (irm https://antigravity.google/cli/install.ps1)
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Host "Google Antigravity CLI installato."
+  } catch {
+    Write-Host "  Installazione agy non riuscita — scarica manualmente da antigravity.google"
+  }
+} else { Write-Host "Google Antigravity CLI già installato." }
+
+# ── GitHub CLI + estensione Copilot ──────────────────────────────────────────
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+  Write-Host "GitHub CLI non trovato."
+  if (Get-Command winget -ErrorAction SilentlyContinue) {
+    Write-Host "Installazione tramite winget..."
+    winget install -e --id GitHub.cli --accept-source-agreements --accept-package-agreements
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+  } else {
+    Write-Host "  winget non disponibile — scarica manualmente da cli.github.com"
+  }
+} else { Write-Host "GitHub CLI già installato." }
+if (Get-Command gh -ErrorAction SilentlyContinue) {
+  $ext = gh extension list 2>$null
+  if ($ext -notmatch "gh-copilot") {
+    Write-Host "Installazione estensione GitHub Copilot..."
+    gh extension install github/gh-copilot 2>$null
+    if ($LASTEXITCODE -ne 0) { Write-Host "  Impossibile installare gh-copilot (potrebbe richiedere login GitHub prima)." }
+  }
+}
+
 Write-Host "Installazione build frontend e dipendenze backend..."
 Push-Location "$ProjectDir\frontend"
 npm install --silent; if ($LASTEXITCODE -ne 0) { exit 1 }

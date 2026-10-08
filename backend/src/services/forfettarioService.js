@@ -1,6 +1,7 @@
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta/INPS.
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 import { regoleAnno } from './regoleFiscaliService.js';
+import { contributiInpsVersati } from './versamentiF24Service.js';
 
 // Aliquota agevolata nei primi N anni solari (anno di inizio incluso), poi ordinaria.
 // requisitiAliquotaRidotta: L. 190/2014 c. 65 (nessuna attività nei 3 anni precedenti,
@@ -86,6 +87,31 @@ function fattureACavalloAnno(tutte) {
   return righe;
 }
 
+// Helper riusabile per stimaVersamentiService: calcola imposta e INPS per cassa su un anno.
+// Restituisce { redditoForfettario, imposta, inps } — imposta deduce i contributi INPS versati.
+export async function impostaCassaAnno(anno, tutte, config, versamenti, regole) {
+  const { coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false,
+    gestionePrevidenziale = '', altraCoperturaPrevidenziale = false } = config.forfettario;
+  const { ricaviCumulati: ricaviCassa } = await ricaviAnnoCassa(anno, tutte);
+  const redditoForfettario = Number((ricaviCassa * coefficenteRedditivita / 100).toFixed(2));
+  const aliquota = await aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta);
+
+  let inps = null;
+  if (gestionePrevidenziale === 'gestioneSeparata') {
+    const aliquotaGs = altraCoperturaPrevidenziale
+      ? (regole?.inpsGestioneSeparata?.aliquotaAltreAttivita ?? 24)
+      : (regole?.inpsGestioneSeparata?.aliquota ?? 26.07);
+    const massimale = regole?.inpsGestioneSeparata?.massimale ?? 119650;
+    inps = Number((Math.min(redditoForfettario, massimale) * aliquotaGs / 100).toFixed(2));
+  }
+
+  const contributiDedotti = contributiInpsVersati(versamenti, anno);
+  const baseTassabile = Math.max(0, redditoForfettario - contributiDedotti);
+  const imposta = Number((baseTassabile * aliquota / 100).toFixed(2));
+
+  return { redditoForfettario, imposta, inps };
+}
+
 // Riepilogo incassi BTC (FP-011) a partire dalle rate cassa dell'anno: filtra le rate
 // con `.btc` valorizzato e aggrega totali/cambio medio/elenco per la card dashboard.
 export function riepilogoBtc(incassateAnno) {
@@ -140,12 +166,14 @@ function statoSogliaCompetenza(ricaviCumulati, sogliaAnnua, sogliaUscitaImmediat
 }
 
 export async function calcolaDashboardForfettario(config, { anno = new Date().getFullYear(), meseCorrente = new Date().getMonth() + 1 } = {}) {
-  const { sogliaAnnua, coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false, soggettoIsa = true, limitePersonale = 0 } = config.forfettario;
+  const { sogliaAnnua, coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false, soggettoIsa = true, limitePersonale = 0,
+    gestionePrevidenziale = '', altraCoperturaPrevidenziale = false } = config.forfettario;
 
   let sogliaUscitaImmediata = 100000;
+  let regoleCorrenti = null;
   try {
-    const regole = await regoleAnno(anno);
-    sogliaUscitaImmediata = regole.forfettario.sogliaUscitaImmediata ?? 100000;
+    regoleCorrenti = await regoleAnno(anno);
+    sogliaUscitaImmediata = regoleCorrenti.forfettario.sogliaUscitaImmediata ?? 100000;
   } catch { /* usa fallback */ }
 
   const { fatture, mesiFatturati, risolteValide } = await ricaviAnno(anno);
@@ -183,13 +211,33 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
   const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
   const { ricaviCumulati: ricaviCumulatiCassa, incassateAnno, nonIncassateEmesseAnno } = await ricaviAnnoCassa(anno, tutte);
   const redditoImponibileCassa = Number((ricaviCumulatiCassa * coefficenteRedditivita / 100).toFixed(2));
-  const impostaStimataCassa = Number((redditoImponibileCassa * aliquota / 100).toFixed(2));
+
+  // INPS gestione separata (solo se configurata)
+  let inpsStimato = null;
+  if (gestionePrevidenziale === 'gestioneSeparata') {
+    const aliquotaGs = altraCoperturaPrevidenziale
+      ? (regoleCorrenti?.inpsGestioneSeparata?.aliquotaAltreAttivita ?? 24)
+      : (regoleCorrenti?.inpsGestioneSeparata?.aliquota ?? 26.07);
+    const massimale = regoleCorrenti?.inpsGestioneSeparata?.massimale ?? 119650;
+    inpsStimato = Number((Math.min(redditoImponibileCassa, massimale) * aliquotaGs / 100).toFixed(2));
+  }
+
+  // Deduzione contributi INPS versati (L. 190/2014 c. 64: solo quelli effettivamente pagati).
+  const { listVersamenti } = await import('./versamentiF24Service.js');
+  const versamentiAnno = await listVersamenti(anno);
+  const contributiDedotti = contributiInpsVersati(versamentiAnno, anno);
+  const baseTassabileCassa = Math.max(0, redditoImponibileCassa - contributiDedotti);
+  const impostaStimataCassa = Number((baseTassabileCassa * aliquota / 100).toFixed(2));
   const percentualeSogliaCassa = sogliaAnnua > 0 ? Number((ricaviCumulatiCassa / sogliaAnnua * 100).toFixed(1)) : 0;
+  const nettoStimatoCassa = Number((ricaviCumulatiCassa - impostaStimataCassa - (inpsStimato ?? 0)).toFixed(2));
 
   const cassa = {
     ricaviCumulati: ricaviCumulatiCassa,
     redditoImponibile: redditoImponibileCassa,
     impostaStimata: impostaStimataCassa,
+    inpsStimato,
+    nettoStimato: nettoStimatoCassa,
+    contributiDedotti,
     percentualeSoglia: percentualeSogliaCassa,
     superamentoSoglia: ricaviCumulatiCassa > sogliaAnnua,
     statoSoglia: statoSogliaCompetenza(ricaviCumulatiCassa, sogliaAnnua, sogliaUscitaImmediata),
@@ -214,6 +262,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     coefficenteRedditivita,
     aliquota,
     soggettoIsa,
+    gestionePrevidenziale,
     ricaviCumulati,
     redditoImponibile,
     impostaStimata,

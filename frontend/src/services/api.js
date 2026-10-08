@@ -52,6 +52,10 @@ export const api = {
   getOAuthConfig: () => richiesta('/oauth-config'),
   saveOAuthConfig: (dati) => richiesta('/oauth-config', { method: 'PUT', body: JSON.stringify(dati) }),
 
+  // Stato provider CLI + LLM locale per il router AI
+  aiRouterStato: () => richiesta('/oauth-config/ai-router-stato'),
+  aiRouterLogin: (provider) => richiesta('/oauth-config/ai-router-login', { method: 'POST', body: JSON.stringify({ provider }) }),
+
   // Ricevute/notifiche SDI (ricezione via PEC, ping manuale oltre al polling automatico)
   controllaRicevuteSdi: () => richiesta('/sdi/controlla', { method: 'POST' }),
   cronologiaPec: () => richiesta('/sdi/cronologia'),
@@ -160,6 +164,10 @@ export const api = {
   anteprimaImportVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo/anteprima', { method: 'POST', body: JSON.stringify({ testo }) }),
   importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
   urlExportVersamentiF24: (anno) => `${BASE_URL}/forfettario/versamenti/export${anno ? `?anno=${anno}` : ''}`,
+  versamentiStimati: (anno) => richiesta(`/forfettario/versamenti-stimati${anno ? `?anno=${anno}` : ''}`),
+  urlF24Pdf: (anno, indice) => `${BASE_URL}/forfettario/versamenti-stimati/${anno}/f24/${indice}/pdf`,
+  bolloTrimestrale: (anno) => richiesta(`/forfettario/bollo/${anno}`),
+  urlBolloF24Pdf: (anno, trim) => `${BASE_URL}/forfettario/bollo/${anno}/trim/${trim}/f24/pdf`,
 
   // Data di incasso fatture da CSV home banking (mapping colonne via Gemini)
   analizzaCsvPagamenti: (file) => {

@@ -9,6 +9,10 @@ import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamenti
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
 import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
 import { prossimeScadenzeFiscali, scadenzeIntrastatAnno } from '../services/scadenzeFiscaliService.js';
+import { stimaVersamenti } from '../services/stimaVersamentiService.js';
+import { generaF24Pdf } from '../services/f24PdfService.js';
+import { listF24, creaF24DaPiano, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
+import { scadenzeBollo } from '../services/bolloTrimestrale.js';
 
 export const forfettarioRoutes = Router();
 
@@ -175,9 +179,120 @@ forfettarioRoutes.get('/versamenti/export', async (req, res) => {
 forfettarioRoutes.post('/versamenti/importa-testo', async (req, res) => {
   const { testo } = req.body;
   if (!testo) return res.status(400).json({ errore: 'Testo mancante' });
-  const versamenti = estraiVersamentiDaTesto(testo);
+  let versamenti = estraiVersamentiDaTesto(testo);
   if (!versamenti.length) return res.status(400).json({ errore: 'Nessun versamento riconosciuto nel testo incollato' });
+  versamenti = await filtraGiaPresentiInF24(versamenti);
   res.json(await importaVersamenti(versamenti));
+});
+
+// Stima versamenti F24 per l'anno fiscale (imposta sostitutiva + INPS gestione separata).
+forfettarioRoutes.get('/versamenti-stimati', async (req, res) => {
+  try {
+    const anno = req.query.anno ? Number(req.query.anno) : new Date().getFullYear();
+    const config = await getConfig();
+    res.json(await stimaVersamenti(config, anno));
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+// PDF F24 precompilato per una scadenza del piano versamenti stimati.
+// FP-023: stesura F24 sul modello ufficiale AdE.
+// :anno = anno fiscale, :indice = indice della scadenza nell'array (0 = giugno, 1 = novembre).
+forfettarioRoutes.get('/versamenti-stimati/:anno/f24/:indice/pdf', async (req, res) => {
+  try {
+    const anno   = Number(req.params.anno);
+    const indice = Number(req.params.indice);
+    const config = await getConfig();
+    const piano  = await stimaVersamenti(config, anno);
+    const sc = piano.scadenze?.[indice];
+    if (!sc) return res.status(404).json({ errore: `Nessuna scadenza all\'indice ${indice} per l\'anno ${anno}.` });
+    const pdf = await generaF24Pdf(sc, config);
+    const nomeFile = `F24-${anno}-scad${indice + 1}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nomeFile}"`);
+    res.send(pdf);
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+// Stato F24: lista, creazione da piano, cambio stato, eliminazione.
+// FP-024 · FEATURES_GAP_ANALISI_ESTERNA.md voce 8.
+forfettarioRoutes.get('/f24', async (req, res) => {
+  try {
+    const anno = req.query.anno ? Number(req.query.anno) : undefined;
+    res.json(await listF24(anno));
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.post('/f24', async (req, res) => {
+  try {
+    const config = await getConfig();
+    const { anno, indice } = req.body;
+    if (anno == null || indice == null) return res.status(400).json({ errore: 'anno e indice obbligatori' });
+    const piano = await stimaVersamenti(config, Number(anno));
+    const sc = piano.scadenze?.[Number(indice)];
+    if (!sc) return res.status(404).json({ errore: `Nessuna scadenza all'indice ${indice} per l'anno ${anno}.` });
+    const f24 = await creaF24DaPiano(sc, sc.tipo ?? `F24 ${anno}`);
+    res.status(201).json(f24);
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.patch('/f24/:id/stato', async (req, res) => {
+  try {
+    const { stato } = req.body;
+    if (!stato) return res.status(400).json({ errore: 'stato obbligatorio' });
+    const f24 = await aggiornaStatoF24(req.params.id, stato);
+    res.json(f24);
+  } catch (err) {
+    const status = err.message.includes('non trovato') ? 404 : err.message.includes('non valido') ? 400 : 500;
+    res.status(status).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.delete('/f24/:id', async (req, res) => {
+  try {
+    await eliminaF24(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(err.message.includes('non trovato') ? 404 : 500).json({ errore: err.message });
+  }
+});
+
+// Bollo trimestrale: scadenze e importi per anno.
+// FP-025 · FEATURES_GAP_ANALISI_ESTERNA.md voce 10.
+forfettarioRoutes.get('/bollo/:anno', async (req, res) => {
+  try {
+    const anno = Number(req.params.anno);
+    res.json(await scadenzeBollo(anno));
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+// PDF F24 bollo per un trimestre specifico.
+// :anno = anno fiscale, :trim = numero trimestre (1-4).
+forfettarioRoutes.get('/bollo/:anno/trim/:trim/f24/pdf', async (req, res) => {
+  try {
+    const anno = Number(req.params.anno);
+    const trim = Number(req.params.trim);
+    const config = await getConfig();
+    const dati = await scadenzeBollo(anno);
+    const sc = dati.scadenze.find((s) => s.trimestre === trim);
+    if (!sc) return res.status(404).json({ errore: `Nessuna scadenza bollo per il trimestre ${trim} dell'anno ${anno}.` });
+    const pdf = await generaF24Pdf(sc, config);
+    const nomeFile = `F24-bollo-${anno}-Q${trim}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${nomeFile}"`);
+    res.send(pdf);
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
 });
 
 // Data di incasso fatture da CSV home banking: solo i nomi colonna vengono inviati a Gemini

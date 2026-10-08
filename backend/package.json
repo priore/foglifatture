@@ -24,6 +24,10 @@
     "nodemailer": "^10.0.10",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pdf-lib": "^1.17.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "pdf2json": "^4.1.0"
   }
 }
