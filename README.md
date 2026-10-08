@@ -53,6 +53,8 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Regole fiscali versionate** — aliquote, soglie, codici tributo e causali INPS del regime forfettario raccolti in un pacchetto per anno, con la fonte normativa e link al documento ufficiale per ogni valore. La dashboard mostra il tab "Regole fiscali" con le variazioni rispetto all'anno precedente in tabella; il bottone "Spiega con AI" genera una spiegazione in linguaggio semplice delle differenze.
 - **Regime forfettario avanzato** — flag aliquota agevolata 5% (con verifica automatica dei requisiti d'età dell'attività) e flag ISA per la ripartizione degli acconti (50/50 o 40/60).
 - **Scadenze fiscali con AI** — calcolo locale delle scadenze del regime forfettario, con supporto AI (Gemini) solo per casi particolari come le proroghe.
+- **Dashboard F24** — tab dedicata con bollo trimestrale (rinvii legge automatici per importi ≤ 5.000 €), stima versamenti saldo/acconti imposta e INPS con scadenze calcolate, rateizzazione INPS con interessi (D.Lgs. 33/2025), piano versamenti con stati (da pagare/programmato/pagato/annullato) e righe F24 inserite automaticamente al pagamento, PDF F24 precompilato su modello ufficiale AdE.
+- **Router AI a cascata** — supporto AI senza configurazione obbligatoria: 6 provider con fallback automatico (Gemini API, Google Antigravity CLI, GitHub Copilot CLI, Claude API, Groq API, LLM locale Ollama/LM Studio). Chi ha un account Google o GitHub non deve configurare nulla.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
 
@@ -96,8 +98,8 @@ Il modo più semplice: scarica l'installer per il tuo sistema dalla [pagina Rele
 
 | Sistema | File da scaricare |
 |---|---|
-| macOS (Universal) | `FogliFatture-1.5.0-mac-universal.pkg` |
-| Windows 10/11 (64-bit) | `FogliFatture-1.5.0-win-x64.exe` |
+| macOS (Universal) | `FogliFatture-1.6.0-mac-universal.pkg` |
+| Windows 10/11 (64-bit) | `FogliFatture-1.6.0-win-x64.exe` |
 
 **macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
 
