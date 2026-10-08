@@ -182,6 +182,22 @@ function selezionaCodice(c) {
                 </div>
                 <small class="note-legal" style="margin-top:6px">L. 662/96 art. 1 c. 212: aggiunge in fattura il 4% del compenso a carico del cliente. Facoltativa, da concordare. Il 4% conta come ricavo ai fini della soglia. Disabilitabile per singolo cliente nelle impostazioni clienti.</small>
               </div>
+              <div class="field" style="margin:0">
+                <label for="gestione-previdenziale">Gestione previdenziale</label>
+                <select id="gestione-previdenziale" v-model="forfettario.gestionePrevidenziale">
+                  <option value="">Non configurata (INPS non stimato)</option>
+                  <option value="gestioneSeparata">INPS gestione separata</option>
+                  <option value="altra">Altra (artigiani/commercianti/cassa professionale — non stimata)</option>
+                </select>
+                <small class="note-legal" style="margin-top:6px">Necessaria per stimare i contributi INPS nelle scadenze F24. Per i liberi professionisti senza altra copertura obbligatoria si applica la gestione separata INPS (aliquota 26,07%).</small>
+              </div>
+              <div class="field" style="margin:0" v-if="forfettario.gestionePrevidenziale === 'gestioneSeparata'">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input id="altra-copertura-previdenziale" type="checkbox" v-model="forfettario.altraCoperturaPrevidenziale" class="checkbox-app">
+                  <label for="altra-copertura-previdenziale" style="margin:0">Pensionato o iscritto ad altra previdenza obbligatoria (aliquota GS ridotta 24%)</label>
+                </div>
+                <small class="note-legal" style="margin-top:6px">Circ. INPS 62/2026 §2.1: chi ha un'altra copertura previdenziale obbligatoria paga il 24% invece del 26,07%.</small>
+              </div>
             </div>
           </div>
         </div>

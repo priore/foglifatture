@@ -14,7 +14,8 @@ const ricerca = ref('');
 const filtroTipo = ref('');
 const tipiVersamento = ['Imposta sostitutiva', 'INPS', 'Altro'];
 
-const nuovoVersamento = ref({ data: '', tipo: tipiVersamento[0], importo: null });
+const codiciTributo = ['', '1790', '1791', '1792', 'PXX', 'P10'];
+const nuovoVersamento = ref({ data: '', tipo: tipiVersamento[0], importo: null, codice: '' });
 
 const testoIncollato = ref('');
 const anteprimaImport = ref(null);
@@ -64,7 +65,7 @@ async function carica() {
 async function salvaVersamento() {
   try {
     await api.aggiungiVersamentoF24(nuovoVersamento.value);
-    nuovoVersamento.value = { data: '', tipo: tipiVersamento[0], importo: null };
+    nuovoVersamento.value = { data: '', tipo: tipiVersamento[0], importo: null, codice: '' };
     await carica();
   } catch (err) {
     errore.value = err.message;
@@ -133,15 +134,16 @@ function formattaEuro(valore) {
         </div>
 
         <table class="data-table" style="margin-top:16px">
-          <thead><tr><th>Data</th><th>Tipo</th><th>Importo</th><th></th></tr></thead>
+          <thead><tr><th>Data</th><th>Tipo</th><th>Codice</th><th>Importo</th><th></th></tr></thead>
           <tbody>
             <tr v-for="v in versamentiFiltrati" :key="v.id">
               <td>{{ v.data }}</td>
               <td>{{ v.tipo }}</td>
+              <td>{{ v.codice || '—' }}</td>
               <td>{{ formattaEuro(v.importo) }}</td>
               <td><button class="btn-icon" @click="rimuoviVersamento(v.id)" title="Elimina" aria-label="Elimina versamento">✕</button></td>
             </tr>
-            <tr v-if="!versamentiFiltrati.length"><td colspan="4" class="note-legal">Nessun versamento.</td></tr>
+            <tr v-if="!versamentiFiltrati.length"><td colspan="5" class="note-legal">Nessun versamento.</td></tr>
           </tbody>
         </table>
 
@@ -151,6 +153,13 @@ function formattaEuro(valore) {
             <label>Tipo</label>
             <select v-model="nuovoVersamento.tipo">
               <option v-for="t in tipiVersamento" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Codice (opzionale)</label>
+            <select v-model="nuovoVersamento.codice">
+              <option value="">—</option>
+              <option v-for="c in codiciTributo.filter(x => x)" :key="c" :value="c">{{ c }}</option>
             </select>
           </div>
           <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoVersamento.importo" required></div>

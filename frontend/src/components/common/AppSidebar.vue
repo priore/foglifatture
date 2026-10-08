@@ -33,6 +33,8 @@ function toggleTheme() {
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
+      <router-link to="/clienti"><span class="dot"></span>Clienti</router-link>
+      <router-link to="/pec-cronologia"><span class="dot"></span>Cronologia PEC</router-link>
       <router-link to="/impostazioni" :class="{ 'router-link-active': route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }"><span class="dot"></span>Impostazioni<svg class="accordion-caret" :class="{ open: route.path.startsWith('/impostazioni') || route.path === '/importa-storico' }" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></router-link>
       <div v-if="route.path.startsWith('/impostazioni') || route.path === '/importa-storico'" class="nav-sub">
         <template v-for="(passo, i) in PASSI_IMPOSTAZIONI" :key="passo">
@@ -41,11 +43,6 @@ function toggleTheme() {
             active-class="" exact-active-class=""
             :class="{ 'router-link-active': route.path === '/impostazioni' && Number(route.query.passo || 0) === i }"
           >{{ passo }}</router-link>
-          <router-link
-            v-if="passo === 'PEC'" to="/impostazioni/pec-cronologia" class="nav-sub-sub"
-            active-class="" exact-active-class=""
-            :class="{ 'router-link-active': route.path === '/impostazioni/pec-cronologia' }"
-          >Cronologia</router-link>
           <template v-if="passo === 'Percorso dati'">
             <router-link
               to="/importa-storico"

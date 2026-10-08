@@ -40,6 +40,8 @@ const fattureAperte = ref([]);
 const scadenzeFiscali = ref([]);
 const fonteScadenzeFiscali = ref('base');
 const statoRegoleFiscali = ref(null);
+const versamentiStimati = ref(null);
+const bolloTrimestrale = ref(null);
 
 async function carica() {
   errore.value = '';
@@ -81,14 +83,24 @@ async function caricaStatoRegole() {
   statoRegoleFiscali.value = await api.statoRegoleFiscali().catch(() => null);
 }
 
+async function caricaVersamentiStimati() {
+  versamentiStimati.value = await api.versamentiStimati(annoSelezionato.value).catch(() => null);
+}
+
+async function caricaBolloTrimestrale() {
+  bolloTrimestrale.value = await api.bolloTrimestrale(annoSelezionato.value).catch(() => null);
+}
+
 onMounted(() => {
   carica();
   caricaFattureAperte();
   caricaScadenzeFiscali();
   caricaMercatoBtc();
   caricaStatoRegole();
+  caricaVersamentiStimati();
+  caricaBolloTrimestrale();
 });
-watch(annoSelezionato, carica);
+watch(annoSelezionato, () => { carica(); caricaVersamentiStimati(); caricaBolloTrimestrale(); });
 
 const barreRicaviMensili = computed(() => {
   if (!dashboard.value) return [];
@@ -249,11 +261,13 @@ async function caricaMercatoBtc() {
 
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
-// Due viste (Dashboard/Bitcoin), ognuna col proprio ordine e la propria chiave localStorage.
+// Tre viste (Dashboard/Bitcoin/F24), ognuna col proprio ordine e la propria chiave localStorage.
 const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
 const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale', 'btc-mercato'];
+const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
+const CHIAVE_ORDINE_F24 = 'dashboardOrdineCardF24';
 const CHIAVE_TAB = 'dashboardTabAttivo';
 
 function caricaOrdineSalvato(chiave, ordineDefault) {
@@ -273,6 +287,7 @@ function caricaTabSalvato() {
   try {
     const salvato = localStorage.getItem(CHIAVE_TAB);
     if (salvato === 'Bitcoin') return 'Bitcoin';
+    if (salvato === 'F24') return 'F24';
     if (salvato === 'Regole fiscali') return 'Regole fiscali';
     return 'Dashboard';
   } catch {
@@ -292,28 +307,38 @@ function cambiaTab(tab) {
 
 const ordineCard = ref(caricaOrdineSalvato(CHIAVE_ORDINE, ORDINE_DEFAULT));
 const ordineCardBtc = ref(caricaOrdineSalvato(CHIAVE_ORDINE_BTC, ORDINE_DEFAULT_BTC));
+const ordineCardF24 = ref(caricaOrdineSalvato(CHIAVE_ORDINE_F24, ORDINE_DEFAULT_F24));
 const trascinata = ref(null);
 
 function salvaOrdine() {
   try {
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordineCard.value));
     localStorage.setItem(CHIAVE_ORDINE_BTC, JSON.stringify(ordineCardBtc.value));
+    localStorage.setItem(CHIAVE_ORDINE_F24, JSON.stringify(ordineCardF24.value));
   } catch {
     // storage non disponibile (privato/pieno): ordine resta solo in memoria per questa sessione.
   }
 }
 
 function ordinePer(id) {
-  return (ORDINE_DEFAULT.includes(id) ? ordineCard.value : ordineCardBtc.value).indexOf(id);
+  if (ORDINE_DEFAULT.includes(id)) return ordineCard.value.indexOf(id);
+  if (ORDINE_DEFAULT_F24.includes(id)) return ordineCardF24.value.indexOf(id);
+  return ordineCardBtc.value.indexOf(id);
 }
 
 function dragStart(id) {
   trascinata.value = id;
 }
 
+function refPerId(id) {
+  if (ORDINE_DEFAULT.includes(id)) return ordineCard;
+  if (ORDINE_DEFAULT_F24.includes(id)) return ordineCardF24;
+  return ordineCardBtc;
+}
+
 function drop(idTarget) {
   if (!trascinata.value || trascinata.value === idTarget) return;
-  const target = ORDINE_DEFAULT.includes(idTarget) ? ordineCard : ordineCardBtc;
+  const target = refPerId(idTarget);
   const lista = [...target.value];
   const daIndex = lista.indexOf(trascinata.value);
   const aIndex = lista.indexOf(idTarget);
@@ -326,7 +351,7 @@ function drop(idTarget) {
 }
 
 function spostaConTastiera(id, delta) {
-  const target = ORDINE_DEFAULT.includes(id) ? ordineCard : ordineCardBtc;
+  const target = refPerId(id);
   const lista = [...target.value];
   const daIndex = lista.indexOf(id);
   const aIndex = daIndex + delta;
@@ -338,14 +363,16 @@ function spostaConTastiera(id, delta) {
 }
 
 const layoutModificato = computed(() => {
-  const ordineAttuale = tabAttivo.value === 'Bitcoin' ? ordineCardBtc.value : ordineCard.value;
-  const ordineDefault = tabAttivo.value === 'Bitcoin' ? ORDINE_DEFAULT_BTC : ORDINE_DEFAULT;
-  return ordineAttuale.some((id, i) => id !== ordineDefault[i]);
+  if (tabAttivo.value === 'Bitcoin') return ordineCardBtc.value.some((id, i) => id !== ORDINE_DEFAULT_BTC[i]);
+  if (tabAttivo.value === 'F24') return ordineCardF24.value.some((id, i) => id !== ORDINE_DEFAULT_F24[i]);
+  return ordineCard.value.some((id, i) => id !== ORDINE_DEFAULT[i]);
 });
 
 function ripristinaLayout() {
   if (tabAttivo.value === 'Bitcoin') {
     ordineCardBtc.value = [...ORDINE_DEFAULT_BTC];
+  } else if (tabAttivo.value === 'F24') {
+    ordineCardF24.value = [...ORDINE_DEFAULT_F24];
   } else {
     ordineCard.value = [...ORDINE_DEFAULT];
   }
@@ -408,6 +435,7 @@ function ripristinaLayout() {
       <div class="tab-toggle">
         <button type="button" :class="tabAttivo === 'Dashboard' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Dashboard')">Dashboard</button>
         <button type="button" :class="tabAttivo === 'Bitcoin' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Bitcoin')">Bitcoin</button>
+        <button type="button" :class="tabAttivo === 'F24' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('F24')">F24</button>
         <button type="button" :class="tabAttivo === 'Regole fiscali' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Regole fiscali')">Regole fiscali</button>
       </div>
 
@@ -575,9 +603,10 @@ function ripristinaLayout() {
             <p v-if="fonteScadenzeFiscali === 'base'" class="nota-piede">Date ordinarie standard; eventuali proroghe non ancora verificate (Gemini/Claude non configurati o quota esaurita).</p>
           </div>
         </div>
+
       </div>
 
-      <div v-else class="griglia-card">
+      <div v-else-if="tabAttivo === 'Bitcoin'" class="griglia-card">
         <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -697,6 +726,86 @@ function ripristinaLayout() {
               </div>
               <LineChart v-if="storicoMercatoBtc.length > 1" :punti="storicoMercatoBtc" scala-relativa sparkline />
               <p class="note-legal" style="margin-top:12px">Prezzo di mercato BTC/EUR, indipendente dagli incassi registrati — fonte CoinGecko.</p>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="griglia-card">
+        <!-- Card versamenti stimati F24 (FP-015) -->
+        <div class="card" :style="{ order: ordinePer('versamenti-stimati') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('versamenti-stimati')" @dragover.prevent @drop="drop('versamenti-stimati')"
+            @keydown.alt.up.prevent="spostaConTastiera('versamenti-stimati', -1)" @keydown.alt.down.prevent="spostaConTastiera('versamenti-stimati', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Versamenti stimati F24</h2></span>
+            <span v-if="versamentiStimati?.regole?.aggiornate === false" class="badge-fonte" style="color:var(--warn)" title="Regole non confermate per quest'anno">regole non confermate</span>
+          </div>
+          <div class="card-body">
+            <div v-if="!versamentiStimati" class="note-legal">Caricamento…</div>
+            <template v-else>
+              <div v-if="!versamentiStimati.scadenze?.length" class="note-legal">Nessuna scadenza calcolata.</div>
+              <div v-for="(sc, scIdx) in versamentiStimati.scadenze" :key="sc.data" style="margin-bottom:16px">
+                <div style="font-weight:600;margin-bottom:6px">{{ formattaData(sc.data) }}</div>
+                <table class="data-table" style="font-size:.85rem">
+                  <thead><tr><th>Sezione</th><th>Codice</th><th>Anno rif.</th><th style="text-align:right">Importo</th></tr></thead>
+                  <tbody>
+                    <tr v-for="r in sc.righe" :key="`${r.sezione}-${r.codice}-${r.annoRiferimento}`">
+                      <td>{{ r.sezione }}</td>
+                      <td>{{ r.codice }}</td>
+                      <td>{{ r.annoRiferimento }}</td>
+                      <td style="text-align:right">{{ formattaEuro(r.importo) }}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr><td colspan="3" style="font-weight:600">Totale</td><td style="text-align:right;font-weight:600">{{ formattaEuro(sc.totale) }}</td></tr>
+                    <tr v-if="sc.totaleConMaggiorazione !== sc.totale"><td colspan="3" style="font-size:.8rem;color:var(--ink-faint)">Con maggiorazione +0,40%</td><td style="text-align:right;font-size:.8rem;color:var(--ink-faint)">{{ formattaEuro(sc.totaleConMaggiorazione) }}</td></tr>
+                  </tfoot>
+                </table>
+                <div style="margin-top:8px">
+                  <a :href="api.urlF24Pdf(annoSelezionato, scIdx)" target="_blank" class="btn btn-primary">Scarica F24 (precompilato)</a>
+                </div>
+              </div>
+              <div v-if="versamentiStimati.crediti?.length" style="margin-top:10px">
+                <div style="font-weight:600;margin-bottom:4px">Crediti</div>
+                <div v-for="c in versamentiStimati.crediti" :key="`${c.sezione}-${c.descrizione}`" class="note-legal">{{ c.descrizione }}: {{ formattaEuro(c.importo) }}</div>
+              </div>
+              <p v-if="versamentiStimati.avvisi?.length" class="note-legal" style="margin-top:12px">
+                <span v-for="a in versamentiStimati.avvisi" :key="a" style="display:block">⚠ {{ a }}</span>
+              </p>
+              <p class="nota-piede">Stima basata su regole{{ versamentiStimati.regole?.verificatoIl ? ' verificate il ' + versamentiStimati.regole.verificatoIl.slice(0,10) : '' }}. Importi calcolati automaticamente — <u>verificare con il commercialista prima di pagare</u>.</p>
+            </template>
+          </div>
+        </div>
+
+        <!-- Card bollo trimestrale (FP-025) -->
+        <div class="card" :style="{ order: ordinePer('bollo-trimestrale') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('bollo-trimestrale')" @dragover.prevent @drop="drop('bollo-trimestrale')"
+            @keydown.alt.up.prevent="spostaConTastiera('bollo-trimestrale', -1)" @keydown.alt.down.prevent="spostaConTastiera('bollo-trimestrale', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Bollo trimestrale</h2></span>
+          </div>
+          <div class="card-body">
+            <div v-if="!bolloTrimestrale" class="note-legal">Caricamento…</div>
+            <template v-else>
+              <div v-if="!bolloTrimestrale.scadenze?.length" class="note-legal">Nessun bollo da versare nell'anno {{ annoSelezionato }}.</div>
+              <template v-else>
+                <div v-for="sc in bolloTrimestrale.scadenze" :key="sc.trimestre" style="margin-bottom:14px">
+                  <div style="font-weight:600;margin-bottom:4px">{{ formattaData(sc.data) }} — {{ sc.righe[0]?.descrizione }}</div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="font-size:1.1rem;font-weight:700">{{ formattaEuro(sc.importo) }}</span>
+                    <span class="badge-fonte">cod. {{ sc.righe[0]?.codice }}</span>
+                    <a :href="api.urlBolloF24Pdf(annoSelezionato, sc.trimestre)" target="_blank" class="btn btn-primary" style="font-size:.82rem;padding:3px 10px">F24</a>
+                  </div>
+                </div>
+                <p v-if="bolloTrimestrale.scadenze.some(s => s.righe[0]?.descrizione?.includes('rinvio'))" class="note-legal" style="margin-top:6px">
+                  ⓘ Importi sotto 5.000 € rinviati al trimestre successivo (guida AdE bollo FE, giugno 2026).
+                </p>
+              </template>
+              <p class="nota-piede">{{ bolloTrimestrale.nota }}</p>
             </template>
           </div>
         </div>

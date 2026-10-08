@@ -11,13 +11,37 @@ export async function listVersamenti(anno) {
   return anno ? versamenti.filter((v) => new Date(v.data).getFullYear() === anno) : versamenti;
 }
 
-export async function aggiungiVersamento({ data, tipo, importo }) {
+const CODICI_VALIDI = ['1790', '1791', '1792', 'PXX', 'P10', ''];
+
+export async function aggiungiVersamento({ data, tipo, importo, codice = '' }) {
   if (!data || !tipo || !(importo > 0)) throw new Error('Dati versamento non validi');
+  if (!CODICI_VALIDI.includes(codice)) throw new Error(`Codice tributo non valido: ${codice}`);
   const versamenti = await readJson(FILE, []);
-  const versamento = { id: randomUUID(), data, tipo, importo: Number(importo) };
+  const versamento = { id: randomUUID(), data, tipo, importo: Number(importo), ...(codice ? { codice } : {}) };
   versamenti.push(versamento);
   await writeJson(FILE, versamenti);
   return versamento;
+}
+
+// Somma dei contributi INPS versati nell'anno (tipo 'INPS'): quota deducibile (L. 190/2014 c. 64).
+export function contributiInpsVersati(versamenti, anno) {
+  return Number(
+    versamenti
+      .filter((v) => v.tipo === 'INPS' && new Date(v.data).getFullYear() === anno)
+      .reduce((tot, v) => tot + v.importo, 0)
+      .toFixed(2)
+  );
+}
+
+// Acconti d'imposta versati PER l'anno N (codici 1790/1791 pagati con anno di riferimento N).
+// Restituisce null se nessun versamento ha il codice: il chiamante usa la stima come ripiego.
+export function accontiImpostaVersati(versamenti, anno) {
+  const conCodice = versamenti.filter(
+    (v) => (v.codice === '1790' || v.codice === '1791') && new Date(v.data).getFullYear() === anno
+  );
+  if (!conCodice.length) return null;
+  // A5: la maggiorazione del differimento non conta come acconto versato (Istr. Redditi PF 2026 fasc. 3, rigo LM45).
+  return Number(conCodice.reduce((tot, v) => tot + v.importo - (v.maggiorazione ?? 0), 0).toFixed(2));
 }
 
 export async function eliminaVersamento(id) {

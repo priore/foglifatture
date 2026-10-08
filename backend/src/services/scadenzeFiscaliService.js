@@ -8,14 +8,9 @@
 // Claude con ricerca web, ma solo 1 volta l'anno (cache 365gg) e mai bloccante: se l'AI non è
 // configurata o fallisce, la dashboard mostra comunque le date ordinarie invece di un errore.
 import { readJson, writeJson } from '../lib/jsonStore.js';
-import {
-  leggiGeminiApiKey, leggiGeminiModello,
-  leggiClaudeApiKey, leggiClaudeModello, leggiClaudeWorkspaceId,
-} from './envService.js';
+import { chiamaAI } from './aiRouterService.js';
 
 const FILE = 'scadenzeFiscali.json';
-const MODELLO_DEFAULT = 'gemini-2.0-flash';
-const MODELLO_CLAUDE_DEFAULT = 'claude-haiku-4-5';
 const GIORNI_VALIDITA_CACHE = 365;
 
 // Festività nazionali italiane fisse (mese, giorno). Pasquetta è calcolata a parte (algoritmo
@@ -71,7 +66,7 @@ function slittamentoAgosto(data) {
 
 // Sposta al primo giorno lavorativo successivo se la data cade di sabato/domenica/festivo.
 // Applica prima lo slittamento di agosto (D.Lgs. 33/2025 art. 11).
-function primoGiornoLavorativo(anno, mese, giorno) {
+export function primoGiornoLavorativo(anno, mese, giorno) {
   const festivitaMobili = [pasquetta(anno)];
   let data = slittamentoAgosto(new Date(anno, mese - 1, giorno));
   while (eFestivo(data, festivitaMobili)) data = new Date(data.getFullYear(), data.getMonth(), data.getDate() + 1);
@@ -97,7 +92,7 @@ export function scadenzeBaseAnno(anno) {
   return [
     { data: primoGiornoLavorativo(anno, 6, 30), tipo: 'Saldo + I acconto imposta sostitutiva', descrizione: `Saldo ${anno - 1} + I acconto ${anno} (termine ordinario, verificare proroghe)` },
     { data: primoGiornoLavorativo(anno, 11, 30), tipo: 'II acconto imposta sostitutiva', descrizione: `II acconto ${anno}` },
-    { data: primoGiornoLavorativo(anno, 6, 16), tipo: 'INPS gestione separata', descrizione: `Saldo ${anno - 1} + I acconto ${anno}` },
+    { data: primoGiornoLavorativo(anno, 6, 30), tipo: 'INPS gestione separata', descrizione: `Saldo ${anno - 1} + I acconto ${anno}` },
     { data: primoGiornoLavorativo(anno, 11, 30), tipo: 'INPS gestione separata', descrizione: `II acconto ${anno}` },
     { data: primoGiornoLavorativo(anno, 5, 16), tipo: 'INPS artigiani/commercianti', descrizione: `I rata fissa ${anno}` },
     { data: primoGiornoLavorativo(anno, 8, 20), tipo: 'INPS artigiani/commercianti', descrizione: `II rata fissa ${anno}` },
@@ -122,7 +117,7 @@ const PROMPT = `Per un libero professionista italiano in regime forfettario (per
 no dipendenti), per l'anno ${new Date().getFullYear()} verifica con ricerca web:
 1. Eventuali proroghe ufficiali (DPCM o decreto) ai termini ordinari di versamento di imposta
    sostitutiva o contributi INPS gestione separata/artigiani-commercianti rispetto alle scadenze
-   standard (30 giugno, 30 novembre, 16 giugno, 16 maggio, 20 agosto, 16 novembre, 16 febbraio).
+   standard (30 giugno, 30 novembre, 16 maggio, 20 agosto, 16 novembre, 16 febbraio).
 2. L'importo del contributo fisso INPS artigiani/commercianti (minimale) per l'anno corrente,
    pubblicato dall'INPS a inizio anno, se disponibile.
 
@@ -146,91 +141,24 @@ function cacheValida(cache, anno) {
   return giorni < GIORNI_VALIDITA_CACHE;
 }
 
-async function ritentareDopoErrore(cache) {
+function ritentareDopoErrore(cache) {
   if (!cache?.ultimoErroreIl) return true;
-  // Il gate sul reset giornaliero riguarda solo Gemini: se Claude è configurato può tentare
-  // subito il fallback, non deve aspettare la mezzanotte Pacific della quota Gemini.
-  if (await leggiClaudeApiKey()) return true;
+  // Attende il reset quota Gemini solo se l'ultimo errore era da Gemini; il router
+  // tenterà automaticamente gli altri provider se disponibili.
   return Date.now() >= prossimoResetQuotaGemini(new Date(cache.ultimoErroreIl)).getTime();
 }
 
-async function interrogaGemini() {
-  const apiKey = await leggiGeminiApiKey();
-  if (!apiKey) throw new Error('GEMINI_API_KEY non configurata (Impostazioni → Google → Gemini)');
-  const modello = (await leggiGeminiModello()) || MODELLO_DEFAULT;
-
-  const risposta = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modello}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: PROMPT }] }],
-        tools: [{ google_search: {} }],
-      }),
-    },
-  );
-  if (!risposta.ok) {
-    const testoErrore = await risposta.text();
-    if (risposta.status === 429 || /RESOURCE_EXHAUSTED|quota/i.test(testoErrore)) {
-      const errore = new Error('Quota Gemini esaurita per oggi (free tier): riprova più tardi.');
-      errore.quotaEsaurita = true;
-      throw errore;
-    }
-    throw new Error(`Gemini API ha risposto ${risposta.status}`);
-  }
-
-  const dati = await risposta.json();
-  const testo = dati.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';
-  const proroghe = estraiArrayJson(testo);
-  if (!Array.isArray(proroghe)) throw new Error('Risposta Gemini non è un array');
-  return proroghe;
-}
-
-// Fallback (dopo Gemini) quando la quota gratuita Gemini è esaurita: stessa ricerca web
-// (tool web_search), stesso prompt.
-async function interrogaClaude() {
-  const apiKey = await leggiClaudeApiKey();
-  if (!apiKey) throw new Error('Quota Gemini esaurita e CLAUDE_API_KEY non configurata (Impostazioni → AI → Claude AI) per il fallback.');
-  const modello = (await leggiClaudeModello()) || MODELLO_CLAUDE_DEFAULT;
-  const workspaceId = await leggiClaudeWorkspaceId();
-
-  const risposta = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {}),
-    },
-    body: JSON.stringify({
-      model: modello,
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: PROMPT }],
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 3 }],
-    }),
-  });
-  if (!risposta.ok) {
-    const testoErrore = await risposta.text();
-    let messaggio = testoErrore;
-    try { messaggio = JSON.parse(testoErrore).error?.message || testoErrore; } catch { /* risposta non JSON, tieni il testo grezzo */ }
-    throw new Error(`Claude: ${messaggio}`);
-  }
-
-  const dati = await risposta.json();
-  const testo = dati.content?.filter((b) => b.type === 'text').map((b) => b.text).join('') || '';
-  const proroghe = estraiArrayJson(testo);
-  if (!Array.isArray(proroghe)) throw new Error('Risposta Claude non è un array');
-  return proroghe;
-}
-
 async function interrogaAI() {
-  try {
-    return { proroghe: await interrogaGemini(), fonte: 'gemini' };
-  } catch (err) {
-    if (!err.quotaEsaurita) throw err;
-    return { proroghe: await interrogaClaude(), fonte: 'claude' };
-  }
+  // Questa ricerca richiede web search: usiamo solo provider API (soloApiKey) con i tool
+  // specifici per Gemini e Claude, che supportano grounding/web search.
+  const { testo, fonte } = await chiamaAI(PROMPT, {
+    soloApiKey: true,
+    strumentiGemini: [{ google_search: {} }],
+    strumentiClaude: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 3 }],
+  });
+  const proroghe = estraiArrayJson(testo);
+  if (!Array.isArray(proroghe)) throw new Error('Risposta AI non è un array');
+  return { proroghe, fonte };
 }
 
 // Applica eventuali proroghe (stesso "tipo") sopra le date base, sostituendone la data/descrizione.
@@ -259,7 +187,7 @@ export async function prossimeScadenzeFiscali() {
   const base = scadenzeBaseAnno(anno);
 
   let cache = await readJson(FILE, null);
-  if (!cacheValida(cache, anno) && (await ritentareDopoErrore(cache))) {
+  if (!cacheValida(cache, anno) && ritentareDopoErrore(cache)) {
     try {
       const { proroghe, fonte } = await interrogaAI();
       cache = { anno, aggiornatoIl: new Date().toISOString(), proroghe, fonte };
