@@ -14,6 +14,7 @@ const oggi = new Date();
 const anno = ref(oggi.getFullYear());
 const mese = ref(oggi.getMonth() + 1);
 const config = ref(null);
+const valuteLista = ref([]);
 const clienteId = ref(null);
 const anteprima = ref(null);
 const fatturaGenerata = ref(null);
@@ -119,11 +120,44 @@ async function aggiornaMeseMinimo() {
   meseMinimo.value = chiavi.length ? chiavi.sort()[0] : null;
 }
 
+// Valuta fattura: codice ISO (es. USD) e cambio Banca d'Italia da congelare alla generazione.
+const valutaFatturaCodice = ref('');
+const valutaFatturaCambio = ref(null);
+const valutaFatturaFonte = ref('');
+const valutaFatturaDataQuotazione = ref('');
+const caricandoCambioFattura = ref(false);
+const erroreCambioFattura = ref('');
+
+async function recuperaCambioFattura() {
+  const codice = valutaFatturaCodice.value.toUpperCase();
+  if (!codice || codice === 'EUR') return;
+  const data = dataFattura.value || new Date().toISOString().slice(0, 10);
+  caricandoCambioFattura.value = true;
+  erroreCambioFattura.value = '';
+  try {
+    const risultato = await api.cambioValuta(data, codice);
+    valutaFatturaCambio.value = risultato.cambio;
+    valutaFatturaFonte.value = risultato.fonte;
+    valutaFatturaDataQuotazione.value = risultato.data;
+  } catch (err) {
+    erroreCambioFattura.value = err.message;
+  } finally {
+    caricandoCambioFattura.value = false;
+  }
+}
+
 async function generaFattura(confermaSoglia = false) {
   const dati = modoManuale.value
     ? { importo: Number(importoManuale.value), descrizione: descrizioneManuale.value, data: dataFattura.value }
     : { data: dataFattura.value };
   if (confermaSoglia) dati.confermaSoglia = true;
+  const codice = valutaFatturaCodice.value.toUpperCase();
+  if (codice && codice !== 'EUR' && valutaFatturaCambio.value > 0) {
+    dati.valutaCodice = codice;
+    dati.valutaCambio = valutaFatturaCambio.value;
+    dati.valutaFonte = valutaFatturaFonte.value;
+    dati.valutaDataQuotazione = valutaFatturaDataQuotazione.value;
+  }
   try {
     fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
     dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
@@ -157,6 +191,61 @@ function formattaData(valore) {
 async function eliminaPagamento(indice) {
   await api.eliminaPagamentoFattura(fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId, indice);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
+}
+
+// Incasso in valuta estera (es. USD, GBP): importo EUR calcolato dal backend (importoValuta / cambio).
+const mostraFormValuta = ref(false);
+const valutaForm = ref({ codice: 'USD', importoValuta: null, cambio: null, fonte: '', dataQuotazione: '' });
+const registrandoValuta = ref(false);
+const erroreValuta = ref('');
+const caricandoCambioValuta = ref(false);
+
+function apriFormValuta() {
+  if (motivoBtcDisabilitato.value) { avvisoModale.value = motivoBtcDisabilitato.value; return; }
+  mostraFormValuta.value = true;
+  valutaForm.value = { codice: 'USD', importoValuta: null, cambio: null, fonte: '', dataQuotazione: '' };
+  erroreValuta.value = '';
+}
+
+async function recuperaCambioIncasso() {
+  const codice = valutaForm.value.codice?.toUpperCase();
+  if (!codice) return;
+  const data = fatturaGenerata.value?.data || new Date().toISOString().slice(0, 10);
+  caricandoCambioValuta.value = true;
+  erroreValuta.value = '';
+  try {
+    const risultato = await api.cambioValuta(data, codice);
+    valutaForm.value.cambio = risultato.cambio;
+    valutaForm.value.fonte = risultato.fonte;
+    valutaForm.value.dataQuotazione = risultato.data;
+  } catch (err) {
+    erroreValuta.value = err.message;
+  } finally {
+    caricandoCambioValuta.value = false;
+  }
+}
+
+async function registraPagamentoValuta() {
+  registrandoValuta.value = true;
+  erroreValuta.value = '';
+  try {
+    const risultato = await api.confermaPagamentoValutaFattura(
+      fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId,
+      new Date().toISOString().slice(0, 10), {
+        codiceValuta: valutaForm.value.codice?.toUpperCase(),
+        importoValuta: valutaForm.value.importoValuta,
+        cambio: valutaForm.value.cambio,
+        fonte: valutaForm.value.fonte,
+        dataQuotazione: valutaForm.value.dataQuotazione,
+      },
+    );
+    fatturaGenerata.value = risultato.fattura;
+    mostraFormValuta.value = false;
+  } catch (err) {
+    erroreValuta.value = err.message;
+  } finally {
+    registrandoValuta.value = false;
+  }
 }
 
 // Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
@@ -384,7 +473,7 @@ async function inviaEmail() {
 
 watch([anno, mese, clienteId], caricaAnteprima);
 onMounted(async () => {
-  config.value = await api.getConfig();
+  [config.value, valuteLista.value] = await Promise.all([api.getConfig(), api.valuteSupportate()]);
   inizializzaClienteId();
   await caricaAnteprima();
   await aggiornaMeseMinimo();
@@ -476,6 +565,9 @@ onMounted(async () => {
                     <template v-if="p.btc">
                       — ₿ <a :href="`https://mempool.space/tx/${p.btc.txid}`" target="_blank" rel="noopener">{{ p.btc.txid.slice(0, 10) }}…</a>
                     </template>
+                    <template v-if="p.valuta">
+                      — {{ p.valuta.importoValuta }} {{ p.valuta.codice }} (cambio {{ p.valuta.cambio }}, {{ p.valuta.fonte }})
+                    </template>
                   </span>
                   <button class="btn btn-ghost" @click="eliminaPagamento(i)">Elimina</button>
                 </li>
@@ -536,6 +628,58 @@ onMounted(async () => {
                   <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormBtc = false">Annulla</button>
                 </div>
               </div>
+            </div>
+            <div class="field">
+              <button v-if="!mostraFormValuta" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormValuta">€ Registra incasso in valuta estera</button>
+              <small v-if="!mostraFormValuta && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
+              <div v-if="mostraFormValuta" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+                <label>Valuta</label>
+                <select v-model="valutaForm.codice">
+                  <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
+                </select>
+
+                <label>Importo ricevuto (nella valuta)</label>
+                <input v-model.number="valutaForm.importoValuta" type="number" min="0" step="0.01" />
+
+                <label>Cambio (quantità di valuta per 1 EUR)</label>
+                <div style="display:flex;gap:6px">
+                  <input v-model.number="valutaForm.cambio" type="number" min="0" step="0.0001" style="flex:1" />
+                  <button class="btn btn-ghost" :disabled="!valutaForm.codice || caricandoCambioValuta" @click="recuperaCambioIncasso">{{ caricandoCambioValuta ? '…' : 'Recupera cambio' }}</button>
+                </div>
+                <small class="note-legal">Invia la data della fattura a Banca d'Italia. Il valore resta modificabile. Convenzione: quantità di {{ valutaForm.codice?.toUpperCase() || 'valuta' }} per 1 EUR.</small>
+
+                <label>Fonte cambio</label>
+                <input v-model="valutaForm.fonte" placeholder="es. Banca d'Italia" />
+
+                <label>Data quotazione</label>
+                <input v-model="valutaForm.dataQuotazione" type="date" />
+
+                <span v-if="valutaForm.importoValuta && valutaForm.cambio && valutaForm.cambio > 0" class="badge-mono">
+                  ≈ {{ formattaEuro(valutaForm.importoValuta / valutaForm.cambio) }}
+                </span>
+                <span v-if="erroreValuta" class="note-legal" style="color:var(--warn)">{{ erroreValuta }}</span>
+
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-primary" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoValuta" @click="registraPagamentoValuta">{{ registrandoValuta ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormValuta = false">Annulla</button>
+                </div>
+              </div>
+            </div>
+            <div v-if="!fatturaAccettataSdi" class="field">
+              <label>Valuta fattura</label>
+              <div style="display:flex;gap:6px">
+                <select v-model="valutaFatturaCodice" style="flex:1">
+                  <option value="">EUR (default)</option>
+                  <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
+                </select>
+                <button v-if="valutaFatturaCodice" class="btn btn-ghost" :disabled="caricandoCambioFattura" @click="recuperaCambioFattura">{{ caricandoCambioFattura ? '…' : 'Recupera cambio' }}</button>
+              </div>
+              <div v-if="valutaFatturaCambio && valutaFatturaCodice" style="display:flex;gap:6px;align-items:center;margin-top:4px">
+                <input v-model.number="valutaFatturaCambio" type="number" min="0" step="0.0001" style="flex:1" />
+                <small class="note-legal" style="flex:2">{{ valutaFatturaFonte }} del {{ valutaFatturaDataQuotazione }} — quantità di {{ valutaFatturaCodice }} per 1 EUR. Modificabile.</small>
+              </div>
+              <span v-if="erroreCambioFattura" class="note-legal" style="color:var(--warn)">{{ erroreCambioFattura }}</span>
+              <small class="note-legal">Lascia EUR per fatture in euro. Il cambio viene incluso nell'XML (Causale) e congelato alla generazione. Invia la data a Banca d'Italia (servizio esterno).</small>
             </div>
             <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura()">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}

@@ -1,7 +1,7 @@
 // Promemoria fine mese: se abilitato, avvisa solo l'ultimo giorno lavorativo del mese
 // (non ogni giorno) elencando i giorni feriali senza ore registrate. Stesso pattern
 // setInterval di sdiRicevuteService.js/backupService.js: rilegge la config ad ogni giro.
-import { notificaMac } from '../lib/macNotifier.js';
+import { notifica } from '../lib/notifier.js';
 import { getGiorniMancanti } from './timesheetService.js';
 import { saveConfig } from './configService.js';
 import { logger } from '../lib/logger.js';
@@ -46,7 +46,7 @@ export function avviaPromemoria(getConfig, intervalloMinuti = 60) {
         }
       }
       if (righe.length > 0) {
-        notificaMac('Promemoria timesheet', `Giorni senza ore registrate questo mese —\n${righe.join('\n')}`);
+        notifica('Promemoria timesheet', `Giorni senza ore registrate questo mese —\n${righe.join('\n')}`);
       }
       await saveConfig({ reminder: { ...config.reminder, ultimaNotifica: chiaveOggi } });
     } catch (err) {

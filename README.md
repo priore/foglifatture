@@ -35,26 +35,68 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Features
 
-- **Incasso fatture in Bitcoin** — nessun altro gestionale forfettario italiano noto lo offre: registra un incasso in BTC (datio in solutum) con TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione, dati pronti per un eventuale controllo fiscale. Dicitura opzionale in fattura/XML per i clienti abilitati, lettura opzionale da blockchain e cambio storico, colonne dedicate nell'export per il commercialista.
+- **Incasso fatture in Bitcoin** — nessun altro gestionale forfettario italiano noto lo offre.
+  - Registra un incasso in BTC (datio in solutum) con TXID, cambio EUR/BTC applicato (fonte e ora) e indirizzo di destinazione.
+  - Dati pronti per un eventuale controllo fiscale.
+  - Dicitura opzionale in fattura/XML per i clienti abilitati.
+  - Lettura opzionale dati transazione da blockchain e cambio storico.
+  - Colonne dedicate nell'export per il commercialista.
 - **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
-- **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, regime forfettario (`RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia), validato prima dell'invio.
-- **Clienti esteri** — gestione IVA automatica per clienti UE e extra-UE (inversione contabile N2.1, art. 7-ter/7-septies DPR 633/72), XML FatturaPA adattivo (CodiceDestinatario, CAP, IdPaese), scadenze Intrastat trimestrali se iscritto al VIES.
-- **Rivalsa INPS 4% facoltativa** — addebito al cliente del contributo INPS (L. 662/96 art. 1 c. 212), con blocco `DatiCassaPrevidenziale TC22` in XML; configurabile globalmente o per singolo cliente.
-- **Avviso soglia forfettaria** — conferma obbligatoria prima di emettere una fattura che supera 85.000€ (uscita dal regime l'anno prossimo) o 100.000€ (uscita immediata); limite personale configurabile.
+- **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, validato prima dell'invio.
+  - Regime forfettario: `RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia.
+- **Clienti esteri** — gestione IVA automatica per clienti UE e extra-UE.
+  - Inversione contabile N2.1 (art. 7-ter/7-septies DPR 633/72).
+  - XML FatturaPA adattivo: CodiceDestinatario, CAP, IdPaese dal paese del cliente.
+  - Scadenze Intrastat trimestrali se iscritto al VIES.
+- **Rivalsa INPS 4% facoltativa** — addebito al cliente del contributo INPS (L. 662/96 art. 1 c. 212).
+  - Blocco `DatiCassaPrevidenziale TC22` aggiunto nell'XML FatturaPA quando attiva.
+  - Configurabile globalmente o per singolo cliente.
+- **Avviso soglia forfettaria** — conferma obbligatoria prima di emettere una fattura che supera le soglie del regime.
+  - Oltre 85.000 €: conferma richiesta (uscita dal regime l'anno prossimo).
+  - Oltre 100.000 €: conferma richiesta (uscita immediata dal regime).
+  - Limite personale configurabile per una conferma anticipata.
 - **Email separata per timesheet e fattura** — ogni cliente può avere indirizzi email distinti per l'invio del timesheet e della fattura, con supporto più destinatari per indirizzo.
 - **Invio PEC automatico** — fattura inviata al Sistema di Interscambio (SDI) direttamente dall'app, via la tua casella PEC.
-- **Ricezione ricevute SDI automatica** — polling della casella PEC via IMAP, riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...), notifica desktop.
+- **Ricezione ricevute SDI automatica**:
+  - Polling della casella PEC via IMAP.
+  - Riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...).
+  - Notifica desktop.
 - **Fatturazione a importo libero** — anche senza passare dal timesheet, per fatture a corpo o extra.
 - **Dashboard regime forfettario** — totali e soglie del regime aggiornati in tempo reale.
 - **Numerazione fatture unica e progressiva** — condivisa correttamente tra tutti i clienti, come richiesto dalla normativa (legata alla partita IVA, non al singolo cliente).
 - **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
-- **Backup automatico ed esportazione cifrata** — copia periodica programmabile, esportazione manuale protetta da password.
+- **Backup automatico ed esportazione cifrata**:
+  - Copia periodica programmabile.
+  - Esportazione manuale protetta da password.
 - **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
-- **Regole fiscali versionate** — aliquote, soglie, codici tributo e causali INPS del regime forfettario raccolti in un pacchetto per anno, con la fonte normativa e link al documento ufficiale per ogni valore. La dashboard mostra il tab "Regole fiscali" con le variazioni rispetto all'anno precedente in tabella; il bottone "Spiega con AI" genera una spiegazione in linguaggio semplice delle differenze.
+- **Regole fiscali versionate** — aliquote, soglie, codici tributo e causali INPS del regime forfettario raccolti in un pacchetto per anno.
+  - Fonte normativa e link al documento ufficiale per ogni valore.
+  - La dashboard mostra il tab "Regole fiscali" con le variazioni rispetto all'anno precedente in tabella.
+  - Il bottone "Spiega con AI" genera una spiegazione in linguaggio semplice delle differenze.
 - **Regime forfettario avanzato** — flag aliquota agevolata 5% (con verifica automatica dei requisiti d'età dell'attività) e flag ISA per la ripartizione degli acconti (50/50 o 40/60).
 - **Scadenze fiscali con AI** — calcolo locale delle scadenze del regime forfettario, con supporto AI (Gemini) solo per casi particolari come le proroghe.
-- **Dashboard F24** — tab dedicata con bollo trimestrale (rinvii legge automatici per importi ≤ 5.000 €), stima versamenti saldo/acconti imposta e INPS con scadenze calcolate, rateizzazione INPS con interessi (D.Lgs. 33/2025), piano versamenti con stati (da pagare/programmato/pagato/annullato) e righe F24 inserite automaticamente al pagamento, PDF F24 precompilato su modello ufficiale AdE.
-- **Router AI a cascata** — supporto AI senza configurazione obbligatoria: 6 provider con fallback automatico (Gemini API, Google Antigravity CLI, GitHub Copilot CLI, Claude API, Groq API, LLM locale Ollama/LM Studio). Chi ha un account Google o GitHub non deve configurare nulla.
+- **Dashboard F24** — tab dedicata con:
+  - Bollo trimestrale con rinvii di legge automatici per importi ≤ 5.000 €.
+  - Stima versamenti saldo/acconti imposta e INPS con scadenze calcolate.
+  - Rateizzazione INPS con interessi (D.Lgs. 33/2025).
+  - Piano versamenti con stati: da pagare, programmato, pagato, annullato.
+  - Righe F24 inserite automaticamente al pagamento.
+  - PDF F24 precompilato su modello ufficiale AdE.
+  - **Rateizzazione saldo F24** — da 1 a 7 rate con date, interessi (codice 1668) e causali INPS rateizzate calcolati automaticamente.
+  - **Compensazione crediti fiscali** — registrazione crediti con codice tributo e compensazione verticale/orizzontale con avvisi sui limiti di legge (DL 124/2019).
+- **Fatture in valuta estera** — USD, GBP, CHF e altre valute Banca d'Italia; cambio ufficiale recuperato automaticamente e congelato nell'XML FatturaPA.
+- **Registro fonti normative** — ogni valore nelle Regole fiscali mostra il testo di legge archiviato localmente, con la citazione evidenziata e link a Normattiva.
+- **Monitoraggio fonti normative** — controllo periodico automatico delle fonti; proposte AI applicabili o scartabili selettivamente dalle Impostazioni.
+- **Toggle notifiche desktop** — abilita/disabilita tutte le notifiche dell'app da un'unica impostazione; deduplicazione automatica (stessa notifica silenziata per 24 ore).
+- **AI ausilio normativo** — spiegazioni in linguaggio semplice dei requisiti dell'aliquota agevolata 5% e dell'art. 7-septies per clienti extra-UE (richiede provider AI configurato).
+- **Router AI a cascata** — supporto AI senza configurazione obbligatoria: 6 provider con fallback automatico.
+  - Gemini API
+  - Google Antigravity CLI
+  - GitHub Copilot CLI
+  - Claude API
+  - Groq API
+  - LLM locale (Ollama/LM Studio)
+  - Chi ha un account Google o GitHub non deve configurare nulla.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
 
@@ -63,7 +105,11 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - Nessuna credenziale hardcoded: chiavi API, secret OAuth e dati PEC vivono solo in `backend/.env` locale, mai versionato né distribuito.
 - La chiave API Gemini non viene mai esposta al frontend né scritta nei log — usata server-side solo per la chiamata a `generativelanguage.googleapis.com`.
 - Avvio path-indipendente: l'app funziona da qualsiasi cartella, su Mac e Windows.
-- Repository sotto scansione automatica continua: secret scanning (gitleaks), analisi statica del codice (CodeQL), controllo licenze delle dipendenze, monitoraggio CVE note (Dependabot).
+- Repository sotto scansione automatica continua:
+  - Secret scanning (gitleaks).
+  - Analisi statica del codice (CodeQL).
+  - Controllo licenze delle dipendenze.
+  - Monitoraggio CVE note (Dependabot).
 - Dettagli completi e canale di segnalazione responsabile: [SECURITY.md](SECURITY.md).
 
 **Trasparenza dati verso servizi AI esterni**: la funzione di lookup codice ATECO e il calcolo di alcune scadenze fiscali con proroga usano l'API Gemini (Google). Solo i dati strettamente necessari a quella specifica elaborazione (es. descrizione attività, date di scadenza) vengono inviati a Google — mai l'intero storico fatture/timesheet. La funzione è opzionale e disattivabile.
@@ -88,22 +134,24 @@ Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di u
 
 ![Timesheet mensile](docs/screenshots/timesheet-mensile.png)
 
-<!-- TODO: altri screenshot in arrivo a scaglioni (wizard clienti, vista mobile/dark mode — vedi AI-Workspace/Plans/PUBBLICAZIONE_GITHUB_PUBLICO.md §2.4) -->
-
 ## Installazione
 
 ### Installer 1-click (consigliato)
 
-Il modo più semplice: scarica l'installer per il tuo sistema dalla [pagina Release](https://github.com/priore/foglifatture/releases/latest), aprilo e segui la procedura guidata. Non servono terminale né Node.js — l'installer scarica e configura tutto da solo.
+Il modo più semplice: scarica l'installer per il tuo sistema, aprilo e segui la procedura guidata. Non servono terminale né Node.js — l'installer scarica e installa automaticamente l'ultima versione disponibile.
 
-| Sistema | File da scaricare |
+| Sistema | Download |
 |---|---|
-| macOS (Universal) | `FogliFatture-1.6.0-mac-universal.pkg` |
-| Windows 10/11 (64-bit) | `FogliFatture-1.6.0-win-x64.exe` |
+| macOS (Universal) | [FogliFatture-mac-universal.pkg](https://github.com/priore/foglifatture/raw/main/installer/FogliFatture-mac-universal.pkg) |
+| Windows 10/11 (64-bit) | [FogliFatture-win-x64.exe](https://github.com/priore/foglifatture/raw/main/installer/FogliFatture-win-x64.exe) |
 
 **macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
 
 **Windows**: esegui il `.exe` e segui il wizard. Se Windows Defender SmartScreen mostra un avviso, clicca "Ulteriori informazioni" → "Esegui comunque".
+
+> **Versione specifica** (avanzato): per installare una versione precisa anziché l'ultima, lancia l'installer da terminale con il numero di versione:
+> - macOS: `FOGLIFATTURE_VERSION=1.5.0 installer -pkg FogliFatture-mac-universal.pkg -target CurrentUserHomeDirectory`
+> - Windows: `FogliFatture-win-x64.exe /Version=1.5.0`
 
 Al termine dell'installazione l'app:
 - parte da sola ad ogni avvio del computer,

@@ -10,7 +10,7 @@
     "fonti": {
       "sogliaAnnua": {
         "id": "l190-2014",
-        "citazione": "i contribuenti persone fisiche esercenti attività d'impresa, arti o professioni applicano il regime forfetario di cui al presente comma e ai commi da 55 a 89 se, al contempo, nell'anno precedente: a) hanno conseguito ricavi ovvero hanno percepito compensi, ragguagliati ad anno, non superiori a 85.000 euro",
+        "citazione": "hanno conseguito ricavi ovvero hanno percepito compensi, ragguagliati ad anno, non superiori a euro 85.000",
         "riferimento": "L. 190/2014 art. 1 c. 54 lett. a)",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
       },
@@ -28,7 +28,7 @@
       },
       "aliquotaRidotta": {
         "id": "l190-2014",
-        "citazione": "L'imposta sostitutiva di cui al comma 64 è stabilita nella misura del 5 per cento per il periodo d'imposta in cui l'attività è iniziata e per i quattro successivi",
+        "citazione": "l'aliquota di cui al comma 64 è stabilita nella misura del 5 per cento, a condizione che:",
         "riferimento": "L. 190/2014 art. 1 c. 65",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:2014-12-23;190!vig=2026-01-01~art1"
       }
@@ -41,14 +41,14 @@
     "sogliaUnicaSoluzione": 103,
     "fonti": {
       "ripartizioneSoggettoIsa": {
-        "id": "dpr435-2001",
-        "citazione": "I soggetti che esercitano attività per le quali sono stati elaborati gli indici sintetici di affidabilità fiscale versano in due rate di pari importo ciascuna pari al 50 per cento",
-        "riferimento": "DPR 435/2001 art. 17 c. 3 (mod. DL 124/2019 art. 58)",
-        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
+        "id": "dl124-2019",
+        "citazione": "i versamenti di acconto...sono effettuati...in due rate ciascuna nella misura del 50 per cento",
+        "riferimento": "DL 124/2019 art. 58 c. 1",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2019-10-26;124!vig=2026-01-01~art58"
       },
       "sogliaUnicaSoluzione": {
         "id": "dpr435-2001",
-        "citazione": "il versamento non è dovuto se l'importo risultante dal calcolo non supera 103 euro",
+        "citazione": "non superi euro 103",
         "riferimento": "DPR 435/2001 art. 17 c. 2",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
       }
@@ -76,7 +76,7 @@
     "fonti": {
       "saldoPrimoAcconto": {
         "id": "dpr435-2001",
-        "citazione": "il versamento del saldo dovuto in base alla dichiarazione dei redditi e del primo acconto delle imposte sui redditi... è effettuato entro il 30 giugno",
+        "citazione": "Il versamento del saldo dovuto con riferimento alla dichiarazione dei redditi ed a quella dell'imposta regionale sulle attività produttive da parte delle persone fisiche ... è effettuato entro il 30 giugno dell'anno di presentazione della dichiarazione stessa",
         "riferimento": "DPR 435/2001 art. 17 c. 1",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:2001-11-22;435!vig=2026-01-01~art17"
       }
@@ -91,13 +91,13 @@
     "fonti": {
       "tassoInteresse": {
         "id": "dm21-05-2009",
-        "citazione": "il tasso di interesse per la rateazione è stabilito nella misura del 4 per cento annuo",
+        "citazione": "Gli interessi per i pagamenti rateali, previsti dall'art. 20 del decreto legislativo 9 luglio 1997, n. 241, sono dovuti nella misura del 4 per cento annuo",
         "riferimento": "DM 21/5/2009 art. 5",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:ministero.dell.economia.e.delle.finanze:decreto:2009-05-21!vig=2026-01-01~art5"
       },
       "normativa": {
         "id": "dlgs33-2025",
-        "citazione": "i versamenti possono essere eseguiti in rate mensili di uguale importo, con esclusione dell'ultima rata il cui importo può essere diverso",
+        "citazione": "Le somme dovute a titolo di saldo e di acconto delle imposte e dei contributi ... possono essere versate, in rate mensili di uguale importo, con la maggiorazione degli interessi",
         "riferimento": "D.Lgs. 33/2025 art. 10",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2025;33!vig=2026-01-01~art10"
       }
@@ -106,25 +106,25 @@
   "inpsGestioneSeparata": {
     "aliquota": 26.07,
     "aliquotaAltreAttivita": 24.0,
-    "massimale": 119650,
+    "massimale": 122295,
     "rivalsaAliquota": 4,
     "fonti": {
       "rivalsaAliquota": {
         "id": "l662-1996",
-        "citazione": "il professionista può addebitare in fattura, a titolo di rivalsa, un importo pari al 4 per cento dei compensi lordi",
+        "citazione": "hanno titolo ad addebitare ai committenti, con effetto dal 26 settembre 1996, in via definitiva, una percentuale nella misura del 4 per cento dei compensi lordi",
         "riferimento": "L. 662/96 art. 1 c. 212",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1996-12-23;662!vig=2026-01-01~art1"
       },
       "aliquota": {
-        "id": "circ-inps-62-2026",
+        "id": "circ-inps-8-2026",
         "citazione": "l'aliquota contributiva per i soggetti non pensionati e non iscritti ad altra forma pensionistica obbligatoria è pari al 26,07 per cento",
-        "riferimento": "Circ. INPS 62/2026 §2.1",
+        "riferimento": "Circ. INPS 8/2026 §2.1",
         "url": "https://www.inps.it/"
       },
       "massimale": {
-        "id": "circ-inps-62-2026",
-        "citazione": "il massimale di reddito previsto dall'articolo 2, comma 18, della legge 8 agosto 1995, n. 335, è pari a 119.650 euro",
-        "riferimento": "Circ. INPS 62/2026 §2.2",
+        "id": "circ-inps-8-2026",
+        "citazione": "il massimale di reddito previsto dall'articolo 2, comma 18, della legge 8 agosto 1995, n. 335, è pari a 122.295 euro",
+        "riferimento": "Circ. INPS 8/2026 §2.2",
         "url": "https://www.inps.it/"
       }
     }
@@ -222,27 +222,55 @@
     "fonti": {
       "art7ter": {
         "id": "dpr633-72",
-        "citazione": "Le prestazioni di servizi si considerano effettuate nel territorio dello Stato quando sono rese a soggetti passivi stabiliti nel territorio dello Stato",
+        "citazione": "Le prestazioni di servizi si considerano effettuate nel territorio dello Stato: a) quando sono rese a soggetti passivi stabiliti nel territorio dello Stato",
         "riferimento": "DPR 633/72 art. 7-ter c. 1 lett. a)",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art7ter"
       },
       "art7septies": {
         "id": "dpr633-72",
-        "citazione": "In deroga a quanto stabilito dall'articolo 7-ter, le seguenti prestazioni di servizi, quando rese a committenti non soggetti passivi domiciliati o residenti fuori dalla Comunità europea, si considerano effettuate fuori dal territorio della Comunità europea",
+        "citazione": "In deroga a quanto stabilito dall'articolo 7-ter, comma 1, lettera b), non si considerano effettuate nel territorio dello Stato le seguenti prestazioni di servizi, quando sono rese a committenti non soggetti passivi domiciliati e residenti fuori della Comunità",
         "riferimento": "DPR 633/72 art. 7-septies c. 1",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art7septies"
       },
       "art21c6bis": {
         "id": "dpr633-72",
-        "citazione": "Per le cessioni intracomunitarie di beni e per le prestazioni di servizi rese a soggetti passivi stabiliti in un altro Stato membro... la fattura è emessa entro il giorno 15 del mese successivo a quello di effettuazione dell'operazione",
-        "riferimento": "DPR 633/72 art. 21 c. 4 lett. b)",
+        "citazione": "I soggetti passivi stabiliti nel territorio dello Stato emettono la fattura anche per le tipologie di operazioni sotto elencate quando non sono soggette all'imposta ai sensi degli articoli da 7 a 7-septies",
+        "riferimento": "DPR 633/72 art. 21 c. 6-bis",
         "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art21"
       },
       "intrastat": {
         "id": "dpr633-72",
-        "citazione": "I soggetti passivi iscritti al VIES presentano elenchi riepilogativi delle prestazioni di servizi rese a soggetti passivi stabiliti in un altro Stato membro",
-        "riferimento": "DPR 633/72 art. 50 c. 6 (D.Lgs. 18/2010)",
-        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/comunicazioni/intrastat"
+        "citazione": "per le prestazioni di servizi rese a soggetti passivi stabiliti nel territorio di un altro Stato membro dell'Unione europea non soggette all'imposta ai sensi dell'articolo 7-ter, la fattura è emessa entro il giorno 15 del mese successivo a quello di effettuazione dell'operazione",
+        "riferimento": "DPR 633/72 art. 21 c. 4 lett. c",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633!vig=2026-01-01~art21"
+      }
+    }
+  },
+  "compensazione": {
+    "sogliaOrizzontale": 5000,
+    "limiteAnnuoOrizzontale": 2000000,
+    "sogliaDebitiRuoloBloccante": 50000,
+    "verticaleEsenteVisto": true,
+    "inpsEsenteDalLimite": true,
+    "giornoUtilizzoDopoDichiarazione": 10,
+    "fonti": {
+      "sogliaOrizzontale": {
+        "id": "dl124-2019",
+        "citazione": "La compensazione del credito annuale o relativo a periodi inferiori all'anno dell'imposta sul valore aggiunto, dei crediti relativi alle imposte sui redditi e alle relative addizionali, alle imposte sostitutive delle imposte sui redditi e all'imposta regionale sulle attività produttive, per importi superiori a 5.000 euro annui, può essere effettuata a partire dal decimo giorno successivo a quello di presentazione della dichiarazione",
+        "riferimento": "DL 124/2019 art. 3 (che modifica D.Lgs. 241/97 art. 17-bis)",
+        "url": "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legge:2019-10-26;124!vig=2026-01-01~art3"
+      },
+      "verticaleEsenteVisto": {
+        "id": "ris110e2019",
+        "citazione": "il limite di 5.000 euro, superato il quale scatta l'obbligo di apporre il visto di conformità, è riferibile esclusivamente alla compensazione orizzontale dei crediti e non alla compensazione verticale",
+        "riferimento": "Ris. AdE 110/E/2019 richiamata da Circ. AdE 29/E/2010",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/pagamentieversamenti/f24-ordinario"
+      },
+      "sogliaDebitiRuolo": {
+        "id": "legge-bilancio-2026",
+        "citazione": "riduzione da 100.000 a 50.000 euro della soglia prevista dall'articolo 37, comma 49-quinquies, del decreto-legge 4 luglio 2006, n. 223, oltre la quale è vietata la compensazione F24 per contribuenti con debiti iscritti a ruolo",
+        "riferimento": "L. di Bilancio 2026 art. 1 c. ... (modifica DL 223/2006 art. 37 c. 49-quinquies)",
+        "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/pagamentieversamenti/f24-ordinario"
       }
     }
   }

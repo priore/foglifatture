@@ -74,7 +74,7 @@ async function salvaUrl() {
           </div>
         </div>
         <div style="margin-top:12px">
-          <button class="btn" @click="emit('refresh')">Verifica stato</button>
+          <button class="btn btn-ghost" @click="emit('refresh')">Verifica stato</button>
         </div>
         <span class="badge-mono" v-if="messaggio" style="display:inline-block;margin-top:8px">{{ messaggio }}</span>
       </div>
@@ -100,7 +100,7 @@ async function salvaUrl() {
           <button class="btn btn-primary" :disabled="salvandoUrl" @click="salvaUrl">
             {{ salvandoUrl ? 'Salvo…' : 'Salva URL' }}
           </button>
-          <button class="btn" v-if="urlCustom" :disabled="salvandoUrl" @click="urlCustom = ''; salvaUrl()">
+          <button class="btn btn-ghost" v-if="urlCustom" :disabled="salvandoUrl" @click="urlCustom = ''; salvaUrl()">
             Rimuovi (torna ad auto)
           </button>
           <span class="badge-mono" v-if="messaggioUrl">{{ messaggioUrl }}</span>

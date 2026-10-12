@@ -28,6 +28,7 @@ import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
 import { avviaPromemoria } from './services/reminderService.js';
 import { avviaPromemoriaScartoSdi } from './services/sdiScartoReminderService.js';
+import { avviaMonitoraggioFonti } from './services/monitoraggioFontiService.js';
 
 const PORT = process.env.PORT || 1969;
 const app = express();
@@ -104,4 +105,7 @@ app.listen(PORT, async () => {
 
   avviaPromemoriaScartoSdi(getConfig);
   logger.info('Promemoria fatture scartate da SDI attivo');
+
+  avviaMonitoraggioFonti();
+  logger.info('Monitoraggio periodico fonti normative avviato');
 });

@@ -9,7 +9,7 @@ import { simpleParser } from 'mailparser';
 import { mkdir, writeFile, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { sdiLogger } from '../lib/logger.js';
-import { notificaMac } from '../lib/macNotifier.js';
+import { notifica } from '../lib/notifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
 import { generaNomeFileXml } from './fatturaPaXmlGenerator.js';
 import { listMesiFatturati, getInvoice } from './invoiceService.js';
@@ -62,6 +62,24 @@ const SOTTOCARTELLE = {
 function esitoNotificaEsito(contenutoXml) {
   const match = contenutoXml.toString('utf8').match(/<Esito>\s*(EC0[12])\s*<\/Esito>/i);
   return match?.[1]?.toUpperCase() === 'EC02' ? 'rifiutata' : 'accettata';
+}
+
+// E-AI.1: estrae il testo libero di <Descrizione> da una NE (Notifica Esito).
+function estraiDescrizioneNE(contenutoXml) {
+  const m = contenutoXml.toString('utf8').match(/<Descrizione>\s*([\s\S]+?)\s*<\/Descrizione>/i);
+  return m?.[1]?.trim() || null;
+}
+
+// E-AI.1/2/3: chiama l'AI con un prompt dato, ma solo se autorizzaAiPec è true in config.
+// Restituisce { testo } oppure null se AI non configurata o non autorizzata.
+async function chiamaAISeAutorizzata(config, prompt) {
+  if (!config?.sdi?.autorizzaAiPec) return null;
+  try {
+    const { chiamaAI } = await import('./aiRouterService.js');
+    return await chiamaAI(prompt);
+  } catch {
+    return null;
+  }
 }
 
 // Determina la sottocartella di destinazione in base al tipo di ricevuta/notifica e,
@@ -205,7 +223,7 @@ function creaClientImap(pecConfig) {
  * li salva nella cartella archivio configurata e notifica l'utente.
  * @returns {Promise<{ nuove: number, errore?: string }>}
  */
-export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
+export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config = null) {
   if (!pecConfig.imapHost || !pecConfig.casellaMittente || !pecConfig.passwordMittente) {
     const errore = 'Configurazione IMAP incompleta: compila i dati PEC in Impostazioni.';
     await sdiLogger.error(`Controllo ricevute bloccato: ${errore}`);
@@ -258,8 +276,24 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
           return risultati;
         };
         const tuttiGliAllegati = await estraiAllegati(email.attachments);
+        const xmlAllegati = tuttiGliAllegati.filter(a => a.filename?.toLowerCase().endsWith('.xml'));
 
-        for (const allegato of tuttiGliAllegati) {
+        // E-AI.3: email SDI senza allegati XML — valuta rilevanza con AI.
+        if (xmlAllegati.length === 0) {
+          const corpo = email.text
+            ?? (email.html ? email.html.replace(/<[^>]+>/g, ' ').slice(0, 2000) : '');
+          await sdiLogger.info(`Email SDI senza allegati XML: ${email.subject}`, { da: email.from?.text });
+          const aiRisposta = await chiamaAISeAutorizzata(config,
+            `Sei un assistente per la fatturazione elettronica italiana. Hai ricevuto un'email dalla casella PEC dello SDI senza allegati XML. Valuta la rilevanza e rispondi in italiano con:\n1. Rilevanza: "ignorabile", "informativa" o "richiede attenzione".\n2. Sommario di una riga.\n\nOggetto: ${email.subject ?? '(vuoto)'}\nCorpo:\n${corpo.slice(0, 2000)}`);
+          if (aiRisposta?.testo) {
+            await sdiLogger.info(`E-AI.3 — valutazione AI email SDI: ${aiRisposta.testo}`);
+            const rilevanza = /richiede attenzione/i.test(aiRisposta.testo) ? 'attenzione'
+              : /informativ/i.test(aiRisposta.testo) ? 'informativa' : null;
+            if (rilevanza) notifica('Email SDI non standard', aiRisposta.testo.slice(0, 200));
+          }
+        }
+
+        for (const allegato of xmlAllegati) {
           const nomeFile = allegato.filename?.toLowerCase();
           if (!nomeFile?.endsWith('.xml')) continue;
 
@@ -269,6 +303,14 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
               await sdiLogger.debug(`Scartato metadato trasporto: ${allegato.filename} (${classificazione.motivo})`);
             } else {
               await sdiLogger.warn(`Scartato allegato XML non riconosciuto: ${allegato.filename} (${classificazione.motivo})`);
+              // E-AI.2: allegato XML non classificabile — chiedi all'AI cosa contiene.
+              const xmlTesto = allegato.content.toString('utf8').slice(0, 4000);
+              const aiRisposta = await chiamaAISeAutorizzata(config,
+                `Sei un assistente per la fatturazione elettronica italiana. Analizza questo documento XML ricevuto via PEC dallo SDI (Sistema di Interscambio) e rispondi in italiano con:\n1. Tipo di documento riconosciuto.\n2. Se richiede un'azione da parte del mittente della fattura (sì/no e perché).\n3. Un sommario di massimo 2 righe.\n\nDocumento:\n${xmlTesto}`);
+              if (aiRisposta?.testo) {
+                await sdiLogger.info(`E-AI.2 — classificazione AI allegato ${allegato.filename}: ${aiRisposta.testo}`);
+                notifica('Messaggio SDI non standard', aiRisposta.testo.slice(0, 200));
+              }
             }
             continue;
           }
@@ -276,7 +318,20 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
           const { tipo, destinazione } = await archiviaRicevuta(percorsoArchivio, allegato.filename, allegato.content);
           nuove += 1;
           await sdiLogger.info(`Archiviato ${allegato.filename} (${tipo.descrizione})`, { destinazione });
-          notificaMac('Ricevuta SDI', `${tipo.descrizione}: ${allegato.filename}`);
+          notifica('Ricevuta SDI', `${tipo.descrizione}: ${allegato.filename}`);
+
+          // E-AI.1: NE con esito rifiuto (EC02) — interpreta la Descrizione libera del committente.
+          if (tipo.codice === 'NE' && esitoNotificaEsito(allegato.content) === 'rifiutata') {
+            const descrizione = estraiDescrizioneNE(allegato.content);
+            if (descrizione) {
+              const aiRisposta = await chiamaAISeAutorizzata(config,
+                `Sei un assistente per la fatturazione elettronica italiana. Il committente ha rifiutato una fattura con il seguente motivo dichiarato:\n"${descrizione}"\nIn italiano, proponi in 2-3 righe l'azione correttiva più probabile (es. aggiungere dati di pagamento, correggere un numero d'ordine, ecc.). Sii conciso e pratico.`);
+              if (aiRisposta?.testo) {
+                await sdiLogger.info(`E-AI.1 — proposta AI su NE rifiutata ${allegato.filename}: ${aiRisposta.testo}`);
+                notifica('Fattura rifiutata dal committente', aiRisposta.testo.slice(0, 200));
+              }
+            }
+          }
         }
         // Segna come letta la sola email SDI appena processata (nessun'altra email toccata).
         await client.messageFlagsAdd(uid, ['\\Seen'], { uid: true });
@@ -286,13 +341,13 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio) {
     }
   } catch (err) {
     await sdiLogger.error('Errore durante il controllo ricevute SDI', { errore: err.message, stack: err.stack });
-    notificaMac('Errore ricezione SDI', err.message);
+    notifica('Errore ricezione SDI', err.message);
     return { nuove, errore: err.message };
   } finally {
     await client.logout().catch(() => {});
   }
 
-  if (nuove > 0) notificaMac('Ricevute SDI', `${nuove} nuovo/i documento/i archiviato/i`);
+  if (nuove > 0) notifica('Ricevute SDI', `${nuove} nuovo/i documento/i archiviato/i`);
   return { nuove };
 }
 
@@ -424,7 +479,7 @@ export function avviaPollingSdi(getConfig, minuti) {
     const config = await getConfig();
     if (!config.sdi.pollingAbilitato) return;
     if (!(await inAttesaRispostaRecente(config))) return;
-    await controllaRicevuteSdi(config.pec, config.sdi.percorsoArchivio);
+    await controllaRicevuteSdi(config.pec, config.sdi.percorsoArchivio, config);
   }, intervalloMs);
 }
 

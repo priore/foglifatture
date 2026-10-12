@@ -41,7 +41,13 @@ const scadenzeFiscali = ref([]);
 const fonteScadenzeFiscali = ref('base');
 const statoRegoleFiscali = ref(null);
 const versamentiStimati = ref(null);
+const rateSaldoSelezionato = ref(1);
+const salvatoreRate = ref(false);
 const bolloTrimestrale = ref(null);
+const creditiResidui = ref([]);
+const nuovoCredito = ref({ sezione: 'erario', codice: '', annoRiferimento: new Date().getFullYear() - 1, importo: null, utilizzabileDal: '', descrizione: '' });
+const erroreCrediti = ref('');
+const eliminandoCredito = ref(null);
 
 async function carica() {
   errore.value = '';
@@ -85,10 +91,52 @@ async function caricaStatoRegole() {
 
 async function caricaVersamentiStimati() {
   versamentiStimati.value = await api.versamentiStimati(annoSelezionato.value).catch(() => null);
+  if (versamentiStimati.value?._dettagli?.nRate != null) {
+    rateSaldoSelezionato.value = versamentiStimati.value._dettagli.nRate;
+  }
+}
+
+async function cambiaRateSaldo(n) {
+  rateSaldoSelezionato.value = n;
+  salvatoreRate.value = true;
+  try {
+    await api.salvaRateSaldo(n);
+    await caricaVersamentiStimati();
+  } finally {
+    salvatoreRate.value = false;
+  }
 }
 
 async function caricaBolloTrimestrale() {
   bolloTrimestrale.value = await api.bolloTrimestrale(annoSelezionato.value).catch(() => null);
+}
+
+async function caricaCreditiResidui() {
+  creditiResidui.value = await api.creditiResiduiF24().catch(() => []);
+}
+
+async function aggiungiCreditoF24() {
+  erroreCrediti.value = '';
+  try {
+    await api.aggiungiCreditoF24(nuovoCredito.value);
+    nuovoCredito.value = { sezione: 'erario', codice: '', annoRiferimento: new Date().getFullYear() - 1, importo: null, utilizzabileDal: '', descrizione: '' };
+    await caricaCreditiResidui();
+  } catch (err) {
+    erroreCrediti.value = err.message;
+  }
+}
+
+async function eliminaCreditoF24(id) {
+  erroreCrediti.value = '';
+  eliminandoCredito.value = id;
+  try {
+    await api.eliminaCreditoF24(id);
+    await caricaCreditiResidui();
+  } catch (err) {
+    erroreCrediti.value = err.message;
+  } finally {
+    eliminandoCredito.value = null;
+  }
 }
 
 onMounted(() => {
@@ -99,6 +147,7 @@ onMounted(() => {
   caricaStatoRegole();
   caricaVersamentiStimati();
   caricaBolloTrimestrale();
+  caricaCreditiResidui();
 });
 watch(annoSelezionato, () => { carica(); caricaVersamentiStimati(); caricaBolloTrimestrale(); });
 
@@ -264,7 +313,7 @@ async function caricaMercatoBtc() {
 // Tre viste (Dashboard/Bitcoin/F24), ognuna col proprio ordine e la propria chiave localStorage.
 const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
 const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale', 'btc-mercato'];
-const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale'];
+const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale', 'crediti-f24'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
 const CHIAVE_ORDINE_F24 = 'dashboardOrdineCardF24';
@@ -745,36 +794,114 @@ function ripristinaLayout() {
           <div class="card-body">
             <div v-if="!versamentiStimati" class="note-legal">Caricamento…</div>
             <template v-else>
+              <!-- Selettore rate -->
+              <div class="f24-rate-row">
+                <label for="rate-saldo" class="f24-rate-label">Rateizza saldo + I acconto:</label>
+                <select
+                  id="rate-saldo"
+                  class="input-incasso"
+                  :value="rateSaldoSelezionato"
+                  :disabled="(versamentiStimati._dettagli?.maxRate ?? 1) <= 1 || salvatoreRate"
+                  :title="(versamentiStimati._dettagli?.maxRate ?? 1) <= 1 ? 'Rateizzazione non disponibile con questa scadenza' : ''"
+                  @change="cambiaRateSaldo(Number($event.target.value))"
+                >
+                  <option v-for="n in (versamentiStimati._dettagli?.maxRate ?? 1)" :key="n" :value="n">
+                    {{ n === 1 ? '1 rata (unica soluzione)' : n + ' rate' }}
+                  </option>
+                </select>
+                <span v-if="salvatoreRate" class="f24-saving">Salvataggio…</span>
+              </div>
+
               <div v-if="!versamentiStimati.scadenze?.length" class="note-legal">Nessuna scadenza calcolata.</div>
-              <div v-for="(sc, scIdx) in versamentiStimati.scadenze" :key="sc.data" style="margin-bottom:16px">
-                <div style="font-weight:600;margin-bottom:6px">{{ formattaData(sc.data) }}</div>
-                <table class="data-table" style="font-size:.85rem">
-                  <thead><tr><th>Sezione</th><th>Codice</th><th>Anno rif.</th><th style="text-align:right">Importo</th></tr></thead>
-                  <tbody>
-                    <tr v-for="r in sc.righe" :key="`${r.sezione}-${r.codice}-${r.annoRiferimento}`">
-                      <td>{{ r.sezione }}</td>
-                      <td>{{ r.codice }}</td>
-                      <td>{{ r.annoRiferimento }}</td>
-                      <td style="text-align:right">{{ formattaEuro(r.importo) }}</td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr><td colspan="3" style="font-weight:600">Totale</td><td style="text-align:right;font-weight:600">{{ formattaEuro(sc.totale) }}</td></tr>
-                    <tr v-if="sc.totaleConMaggiorazione !== sc.totale"><td colspan="3" style="font-size:.8rem;color:var(--ink-faint)">Con maggiorazione +0,40%</td><td style="text-align:right;font-size:.8rem;color:var(--ink-faint)">{{ formattaEuro(sc.totaleConMaggiorazione) }}</td></tr>
-                  </tfoot>
-                </table>
-                <div style="margin-top:8px">
-                  <a :href="api.urlF24Pdf(annoSelezionato, scIdx)" target="_blank" class="btn btn-primary">Scarica F24 (precompilato)</a>
+
+              <!-- Timeline -->
+              <div v-else class="f24-timeline">
+                <div
+                  v-for="(sc, scIdx) in versamentiStimati.scadenze"
+                  :key="sc.data"
+                  class="f24-tl-item"
+                >
+                  <div class="f24-tl-dot" :class="{ nov: sc.isNovembre }"></div>
+                  <div class="f24-tl-card" :class="{ open: scIdx === 0 }">
+                    <!-- Intestazione cliccabile -->
+                    <div
+                      class="f24-tl-head"
+                      role="button"
+                      tabindex="0"
+                      @click="$event.currentTarget.closest('.f24-tl-card').classList.toggle('open')"
+                      @keydown.enter.prevent="$event.currentTarget.closest('.f24-tl-card').classList.toggle('open')"
+                      @keydown.space.prevent="$event.currentTarget.closest('.f24-tl-card').classList.toggle('open')"
+                    >
+                      <span class="f24-tl-data">{{ formattaData(sc.data) }}</span>
+                      <span v-if="sc.rateazione" class="f24-tl-badge f24-badge-saldo">
+                        Rata {{ parseInt(sc.rateazione.slice(0,2)) }}/{{ parseInt(sc.rateazione.slice(2,4)) }}
+                      </span>
+                      <span v-if="sc.isNovembre" class="f24-tl-badge f24-badge-nov">II acconto</span>
+                      <span class="f24-tl-totale">{{ formattaEuro(sc.totale) }}</span>
+                      <span v-if="Math.abs(sc.totaleConMaggiorazione - sc.totale) >= 0.01" class="f24-tl-magg">
+                        +0,40% {{ formattaEuro(sc.totaleConMaggiorazione) }}
+                      </span>
+                      <span class="f24-tl-caret" aria-hidden="true">▶</span>
+                    </div>
+                    <!-- Corpo espandibile -->
+                    <div class="f24-tl-body">
+                      <div style="overflow-x:auto">
+                        <table class="data-table f24-table">
+                          <thead>
+                            <tr>
+                              <th>Sezione</th><th>Codice</th><th>Anno</th>
+                              <th style="text-align:right">Importo</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              v-for="r in sc.righe"
+                              :key="`${r.sezione}-${r.codice}-${r.annoRiferimento}`"
+                              :class="{ 'f24-riga-interessi': r.codice === '1668' }"
+                            >
+                              <td>{{ r.sezione }}</td>
+                              <td class="f24-mono">{{ r.codice }}</td>
+                              <td>{{ r.annoRiferimento }}</td>
+                              <td style="text-align:right;font-variant-numeric:tabular-nums">{{ formattaEuro(r.importo) }}</td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="3" style="font-weight:600">Totale</td>
+                              <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">{{ formattaEuro(sc.totale) }}</td>
+                            </tr>
+                            <tr v-if="Math.abs(sc.totaleConMaggiorazione - sc.totale) >= 0.01" class="f24-magg-row">
+                              <td colspan="3">Con maggiorazione +0,40%</td>
+                              <td style="text-align:right;font-variant-numeric:tabular-nums">{{ formattaEuro(sc.totaleConMaggiorazione) }}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                      <a :href="api.urlF24Pdf(annoSelezionato, scIdx)" target="_blank" class="btn btn-primary f24-dl-btn">
+                        Scarica F24 (precompilato)
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- Crediti -->
               <div v-if="versamentiStimati.crediti?.length" style="margin-top:10px">
                 <div style="font-weight:600;margin-bottom:4px">Crediti</div>
-                <div v-for="c in versamentiStimati.crediti" :key="`${c.sezione}-${c.descrizione}`" class="note-legal">{{ c.descrizione }}: {{ formattaEuro(c.importo) }}</div>
+                <div v-for="c in versamentiStimati.crediti" :key="`${c.sezione}-${c.descrizione}`" class="note-legal">
+                  {{ c.descrizione }}: {{ formattaEuro(c.importo) }}
+                </div>
               </div>
+
+              <!-- Avvisi -->
               <p v-if="versamentiStimati.avvisi?.length" class="note-legal" style="margin-top:12px">
                 <span v-for="a in versamentiStimati.avvisi" :key="a" style="display:block">⚠ {{ a }}</span>
               </p>
-              <p class="nota-piede">Stima basata su regole{{ versamentiStimati.regole?.verificatoIl ? ' verificate il ' + versamentiStimati.regole.verificatoIl.slice(0,10) : '' }}. Importi calcolati automaticamente — <u>verificare con il commercialista prima di pagare</u>.</p>
+
+              <p class="nota-piede">
+                Stima basata su regole{{ versamentiStimati.regole?.verificatoIl ? ' verificate il ' + versamentiStimati.regole.verificatoIl.slice(0,10) : '' }}.
+                Importi calcolati automaticamente — <u>verificare con il commercialista prima di pagare</u>.
+              </p>
             </template>
           </div>
         </div>
@@ -807,6 +934,74 @@ function ripristinaLayout() {
               </template>
               <p class="nota-piede">{{ bolloTrimestrale.nota }}</p>
             </template>
+          </div>
+        </div>
+
+        <!-- Card crediti fiscali compensabili (FP-016) -->
+        <div class="card" :style="{ order: ordinePer('crediti-f24') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('crediti-f24')" @dragover.prevent @drop="drop('crediti-f24')"
+            @keydown.alt.up.prevent="spostaConTastiera('crediti-f24', -1)" @keydown.alt.down.prevent="spostaConTastiera('crediti-f24', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Crediti compensabili F24</h2></span>
+          </div>
+          <div class="card-body">
+            <p class="note-legal" style="margin-bottom:10px">
+              Crediti fiscali da usare in compensazione nell'F24 (es. imposta sostitutiva pagata in eccesso).
+              La compensazione si applica al momento di creare l'F24 — non modifica la stima.
+            </p>
+
+            <p v-if="erroreCrediti" class="note-legal" style="color:var(--danger);margin-bottom:8px">{{ erroreCrediti }}</p>
+
+            <template v-if="creditiResidui.length">
+              <table class="data-table" style="margin-bottom:14px">
+                <thead><tr><th>Codice</th><th>Anno rif.</th><th>Importo orig.</th><th>Usato</th><th>Residuo</th><th>Disponibile dal</th><th></th></tr></thead>
+                <tbody>
+                  <tr v-for="c in creditiResidui" :key="c.id" :style="{ opacity: c.disponibile ? 1 : 0.6 }">
+                    <td>{{ c.codice }}<span v-if="c.tipoCompensazione === 'verticale'" class="badge-fonte" style="margin-left:4px" title="Compensazione verticale — esente dal limite 5.000 €">vert.</span></td>
+                    <td>{{ c.annoRiferimento ?? '—' }}</td>
+                    <td>{{ formattaEuro(c.importo) }}</td>
+                    <td>{{ formattaEuro(c.usato) }}</td>
+                    <td style="font-weight:600">{{ formattaEuro(c.residuo) }}</td>
+                    <td>{{ c.utilizzabileDal ?? 'subito' }}<span v-if="!c.disponibile" class="badge-fonte" style="margin-left:4px;color:var(--warn)">in attesa</span></td>
+                    <td>
+                      <button
+                        class="btn-icon" title="Elimina credito" aria-label="Elimina credito"
+                        :disabled="eliminandoCredito === c.id"
+                        @click="eliminaCreditoF24(c.id)"
+                      >✕</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+            <p v-else class="note-legal" style="margin-bottom:14px">Nessun credito registrato.</p>
+
+            <details style="margin-top:4px">
+              <summary style="cursor:pointer;font-size:.82rem;color:var(--accent)">Aggiungi credito</summary>
+              <form @submit.prevent="aggiungiCreditoF24" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
+                <div class="field">
+                  <label>Sezione</label>
+                  <select v-model="nuovoCredito.sezione">
+                    <option value="erario">Erario</option>
+                    <option value="inps">INPS</option>
+                  </select>
+                </div>
+                <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required style="width:90px"></div>
+                <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento" style="width:75px"></div>
+                <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required style="width:100px"></div>
+                <div class="field"><label>Disponibile dal</label><input type="date" v-model="nuovoCredito.utilizzabileDal"></div>
+                <div class="field"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito" style="width:180px"></div>
+                <button type="submit" class="btn btn-ok">Aggiungi</button>
+              </form>
+            </details>
+
+            <p class="nota-piede" style="margin-top:12px">
+              Compensazione orizzontale &gt; 5.000 € richiede visto di conformità (DL 124/2019 art. 3).
+              Compensazione verticale (stesso codice tributo) esente dal limite (Ris. AdE 110/E/2019).
+              F24 a saldo zero: solo via telematica (Entratel/F24 web).
+            </p>
           </div>
         </div>
       </div>
@@ -896,4 +1091,85 @@ function ripristinaLayout() {
   text-decoration: underline; cursor: pointer;
 }
 .regole-fiscali-wrapper { padding: 4px 0; }
+
+/* F24 timeline (card versamenti stimati) */
+.f24-rate-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.f24-rate-label { font-size: .8rem; color: var(--ink-soft); }
+.f24-saving { font-size: .78rem; color: var(--muted); }
+
+.f24-timeline { position: relative; }
+.f24-timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: var(--line);
+  border-radius: 1px;
+}
+.f24-tl-item { position: relative; padding-left: 36px; margin-bottom: 14px; }
+.f24-tl-item:last-child { margin-bottom: 0; }
+
+.f24-tl-dot {
+  position: absolute;
+  left: 4px;
+  top: 11px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--card);
+  background: var(--accent);
+  z-index: 1;
+}
+.f24-tl-dot.nov { background: var(--info, #0ea5e9); }
+
+.f24-tl-card {
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.f24-tl-head {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  flex-wrap: wrap;
+}
+.f24-tl-head:hover { background: color-mix(in srgb, var(--accent) 5%, var(--ground)); }
+.f24-tl-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 10px; }
+
+.f24-tl-data { font-weight: 600; font-size: .85rem; flex: 1; min-width: 120px; }
+.f24-tl-totale { font-size: .88rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.f24-tl-magg { font-size: .72rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.f24-tl-caret { font-size: .72rem; color: var(--ink-faint); transition: transform .2s; flex-shrink: 0; }
+.f24-tl-card.open .f24-tl-caret { transform: rotate(90deg); }
+
+.f24-tl-badge {
+  font-size: .68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .02em;
+  flex-shrink: 0;
+}
+.f24-badge-saldo { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+.f24-badge-nov { background: color-mix(in srgb, var(--info, #0ea5e9) 15%, transparent); color: var(--info, #0ea5e9); }
+
+.f24-tl-body { display: none; padding: 0 14px 12px; }
+.f24-tl-card.open .f24-tl-body { display: block; }
+
+.f24-table { font-size: .81rem; }
+.f24-table th { font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); padding: 3px 4px 6px; border-bottom: 1px solid var(--line); }
+.f24-table td { padding: 5px 4px; color: var(--ink-soft); border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); font-variant-numeric: tabular-nums; }
+.f24-table tr:last-child td { border-bottom: none; }
+.f24-mono { font-family: var(--font-mono, monospace); font-size: .77rem; color: var(--ink); }
+.f24-riga-interessi td { color: var(--ink-faint); font-style: italic; }
+.f24-table tfoot td { padding-top: 7px; border-top: 2px solid var(--line); }
+.f24-magg-row td { font-size: .77rem; color: var(--ink-faint); }
+
+.f24-dl-btn { margin-top: 10px; font-size: .8rem; }
 </style>

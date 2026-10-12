@@ -2,12 +2,21 @@
 # Eseguito da macOS Installer dopo la copia dei file del .pkg
 set -euo pipefail
 
-REPO_URL="http://localhost:3000/danilo/Timesheet.git"
+REPO_URL="https://github.com/priore/foglifatture.git"
 # macOS Installer esegue postinstall come root; recupera la home dell'utente reale
 REAL_USER="$(stat -f '%Su' /dev/console)"
 REAL_HOME="$(dscl . -read /Users/$REAL_USER NFSHomeDirectory | awk '{print $2}')"
 INSTALL_DIR="$REAL_HOME/Library/Application Support/FogliFatture"
 APP_BUNDLE="$REAL_HOME/Applications/FogliFatture.app"
+
+# Versione target: da variabile env (es. FOGLIFATTURE_VERSION=1.5.0 installer -pkg ...)
+# oppure ultimo tag vX.Y.Z su GitHub
+if [ -n "${FOGLIFATTURE_VERSION:-}" ]; then
+  TARGET_REF="v${FOGLIFATTURE_VERSION#v}"
+else
+  TARGET_REF="$(curl -fsSL https://api.github.com/repos/priore/foglifatture/releases/latest 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+  [ -z "$TARGET_REF" ] && TARGET_REF="main"
+fi
 
 # Verifica Git
 if ! command -v git >/dev/null 2>&1; then
@@ -18,11 +27,12 @@ fi
 # Clona o aggiorna il repo
 if [ -d "$INSTALL_DIR/.git" ]; then
   git -C "$INSTALL_DIR" fetch origin
-  git -C "$INSTALL_DIR" checkout main
-  git -C "$INSTALL_DIR" pull --ff-only origin main
+  git -C "$INSTALL_DIR" checkout "$TARGET_REF"
+  git -C "$INSTALL_DIR" pull --ff-only origin "$TARGET_REF" 2>/dev/null || true
 else
   rm -rf "$INSTALL_DIR"
   git clone "$REPO_URL" "$INSTALL_DIR"
+  git -C "$INSTALL_DIR" checkout "$TARGET_REF"
 fi
 
 # Lancia install.sh come utente reale (non root) — install.sh usa $HOME per launchd plist
@@ -64,7 +74,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.4.1</string>
+  <string>${TARGET_REF#v}</string>
   $ICON_KEY
 </dict>
 </plist>

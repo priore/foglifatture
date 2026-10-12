@@ -165,9 +165,13 @@ export const api = {
   importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
   urlExportVersamentiF24: (anno) => `${BASE_URL}/forfettario/versamenti/export${anno ? `?anno=${anno}` : ''}`,
   versamentiStimati: (anno) => richiesta(`/forfettario/versamenti-stimati${anno ? `?anno=${anno}` : ''}`),
+  salvaRateSaldo: (rateSaldo) => richiesta('/forfettario/versamenti-stimati/rate-saldo', { method: 'PUT', body: JSON.stringify({ rateSaldo }) }),
   urlF24Pdf: (anno, indice) => `${BASE_URL}/forfettario/versamenti-stimati/${anno}/f24/${indice}/pdf`,
   bolloTrimestrale: (anno) => richiesta(`/forfettario/bollo/${anno}`),
   urlBolloF24Pdf: (anno, trim) => `${BASE_URL}/forfettario/bollo/${anno}/trim/${trim}/f24/pdf`,
+  creditiResiduiF24: () => richiesta('/forfettario/crediti/residui'),
+  aggiungiCreditoF24: (dati) => richiesta('/forfettario/crediti', { method: 'POST', body: JSON.stringify(dati) }),
+  eliminaCreditoF24: (id) => richiesta(`/forfettario/crediti/${id}`, { method: 'DELETE' }),
 
   // Data di incasso fatture da CSV home banking (mapping colonne via Gemini)
   analizzaCsvPagamenti: (file) => {
@@ -235,6 +239,21 @@ export const api = {
   differenzeRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/differenze`),
   confermaRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/conferma`, { method: 'POST' }),
   spiegaDiffRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/spiega-diff`, { method: 'POST' }),
+  spiegaRequisitiAliquotaRidotta: () => richiesta('/regole-fiscali/ai/spiega-requisiti', { method: 'POST' }),
+  spiegaSepties: (descrizioneAttivita) => richiesta('/regole-fiscali/ai/spiega-7-septies', { method: 'POST', body: JSON.stringify({ descrizioneAttivita }) }),
+  estrattoFonte: (id, citazione) => richiesta(`/regole-fiscali/fonti/${encodeURIComponent(id)}/estratto?citazione=${encodeURIComponent(citazione)}`),
+  statoMonitoraggioFonti: () => richiesta('/regole-fiscali/monitoraggio/stato'),
+  controllaFontiOra: () => richiesta('/regole-fiscali/monitoraggio/controlla-ora', { method: 'POST' }),
+  confermaProposteRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/conferma-proposte`, { method: 'POST' }),
+  scartaProposteRegoleFiscali: (anno) => richiesta(`/regole-fiscali/${anno}/scarta-proposte`, { method: 'POST' }),
+
+  // Cambio valuta da Banca d'Italia
+  cambioValuta: (data, valuta) => richiesta(`/forfettario/cambi/${data}/${valuta}`),
+  valuteSupportate: () => richiesta('/forfettario/cambi/valute'),
+  confermaPagamentoValutaFattura: (anno, mese, clienteId, dataPagamento, dati) => richiesta(
+    '/forfettario/pagamenti/conferma-valuta',
+    { method: 'POST', body: JSON.stringify({ anno, mese, clienteId, dataPagamento, ...dati }) },
+  ),
 };
 
 export const updateApi = {

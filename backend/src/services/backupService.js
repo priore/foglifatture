@@ -8,7 +8,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import { randomBytes, scryptSync, createCipheriv, createDecipheriv } from 'node:crypto';
 import { DATA_DIR } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
-import { notificaMac } from '../lib/macNotifier.js';
+import { notifica } from '../lib/notifier.js';
 
 const MAGIC = 'TSBK1'; // firma file di backup + versione formato
 const SALT_LEN = 16;
@@ -117,7 +117,7 @@ export function avviaBackupAutomatico(getConfig, minuti) {
       logger.info(`Backup automatico creato: ${nomeFile}`);
     } catch (err) {
       logger.error('Errore backup automatico', { errore: err.message });
-      notificaMac('Backup fallito', err.message);
+      notifica('Backup fallito', err.message);
     }
   }, intervalloMs);
 }

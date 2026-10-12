@@ -1,9 +1,9 @@
 ---
 name: changelog_readable_format
-description: voci CHANGELOG/Release con più aspetti vanno spezzate in bullet, non un unico paragrafo lungo
+description: voci CHANGELOG/Release/README e qualsiasi doc Markdown con più aspetti vanno spezzate in bullet, non un unico paragrafo lungo
 ---
 
-Una voce del CHANGELOG (o delle note di una GitHub Release) che copre più aspetti della stessa feature non va scritta come un unico paragrafo lungo. Formato: **titolo breve in grassetto** sulla riga principale, seguito da un sotto-elenco puntato con un aspetto per riga.
+Una voce del CHANGELOG, del README, delle note di una GitHub Release, o di qualsiasi documento Markdown del progetto che copre più aspetti della stessa feature non va scritta come un unico paragrafo lungo. Formato: **titolo breve in grassetto** sulla riga principale, seguito da un sotto-elenco puntato con un aspetto per riga.
 
 Esempio (da com'era a come deve essere):
 
@@ -24,7 +24,13 @@ Dopo (leggibile):
 
 **Perché:** un paragrafo unico con più frasi concatenate da virgole/punti è difficile da scansionare velocemente; un elenco puntato si legge a colpo d'occhio.
 
-**Come applicare:** vale sia per `CHANGELOG.md` (regola esistente "una riga per cambiamento" resta per cambiamenti distinti tra loro; questo si applica dentro una singola voce complessa) sia per il corpo di `gh release create --notes`. Una voce semplice a una sola frase resta su una riga, non serve spezzarla artificialmente.
+**Come applicare:** vale per tutti i documenti Markdown del progetto:
+- `CHANGELOG.md` — regola "una riga per cambiamento" resta per voci distinte; questo si applica dentro una singola voce complessa.
+- `README.md` — sezione `## Features` e qualsiasi altra sezione con elenchi di funzionalità.
+- Note di `gh release create --notes`.
+- Qualsiasi altro `.md` scritto o aggiornato nel progetto (AI-Workspace, docs/, ecc.).
+
+Una voce semplice a una sola frase resta su una riga, non serve spezzarla artificialmente.
 
 **Esplosione obbligatoria — casi specifici:** ogni volta che si scrive o modifica una voce, controllare e spezzare con stile ricco (sotto-titolo bold + bullet figli indentati):
 - **Frase con `;`** che unisce due concetti distinti → due bullet separati.

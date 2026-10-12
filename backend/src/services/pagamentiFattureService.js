@@ -231,6 +231,32 @@ export async function confermaPagamentoBtc(anno, mese, clienteId, dataPagamento,
   return arricchisciStatoPagamento(fattura);
 }
 
+// Registra un incasso in valuta estera come rata: l'importo EUR è calcolato qui dal cambio
+// dichiarato (stesso pattern di confermaPagamentoBtc). Il cambio è "quantità di valuta per 1 euro"
+// (convenzione Banca d'Italia): importoValuta / cambio = euro.
+export async function confermaPagamentoValuta(anno, mese, clienteId, dataPagamento, datiValuta) {
+  const { codiceValuta, importoValuta, cambio, fonte, dataQuotazione } = datiValuta || {};
+  const codice = (codiceValuta ?? '').toUpperCase();
+  if (!codice || codice.length !== 3) throw new Error('Codice valuta non valido (attesi 3 caratteri ISO)');
+  if (codice === 'EUR') throw new Error('Per incassi in EUR usa il modulo pagamento standard');
+  if (!Number.isFinite(importoValuta) || importoValuta <= 0) throw new Error('Importo in valuta non valido');
+  if (!Number.isFinite(cambio) || cambio <= 0) throw new Error('Cambio non valido');
+
+  const fattura = await getInvoice(anno, mese, clienteId);
+  if (!fattura) throw new Error('Fattura non trovata');
+  const importo = Number((importoValuta / cambio).toFixed(2));
+  if (importo <= 0) throw new Error('Importo calcolato in EUR non valido');
+
+  const arricchita = arricchisciStatoPagamento(fattura);
+  fattura.pagamenti = [...arricchita.pagamenti, {
+    data: dataPagamento,
+    importo,
+    valuta: { codice, importoValuta, cambio, fonte, dataQuotazione },
+  }];
+  await saveInvoice(anno, mese, clienteId, fattura);
+  return arricchisciStatoPagamento(fattura);
+}
+
 // Elimina un pagamento registrato (solo cancellazione, non editing — vedi piano §7).
 export async function eliminaPagamento(anno, mese, clienteId, indice) {
   const fattura = await getInvoice(anno, mese, clienteId);

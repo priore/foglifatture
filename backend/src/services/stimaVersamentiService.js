@@ -1,6 +1,6 @@
 // Stima delle scadenze F24 (imposta sostitutiva + INPS gestione separata) per l'anno fiscale N.
 // Funzioni pure: nessuna lettura da disco, tutti gli input arrivano dal chiamante (step 5 F24_STEP3).
-import { scadenzeBaseAnno } from './scadenzeFiscaliService.js';
+import { scadenzeBaseAnno, primoGiornoLavorativo } from './scadenzeFiscaliService.js';
 import { impostaCassaAnno } from './forfettarioService.js';
 import { listVersamenti, accontiImpostaVersati } from './versamentiF24Service.js';
 import { tutteLeFattureRisolte } from './forfettarioService.js';
@@ -20,12 +20,16 @@ function giorniCommerciali(da, a) {
     + (d2.getDate() - d1.getDate());
 }
 
-// Percentuale interessi per la rata `i` (1-based) a partire dalla scadenza `dataBase`.
-// Rata 2: 4% × giorni_comm / 360; rata k>2: percentuale rata k-1 + 0.33 pp.
-function percentualeInteressi(i, dataBase, dataRata) {
+// Percentuale interessi per la rata `i` (1-based).
+// P2 = round2(4 × gg_comm(base, nominale rata 2) / 360); Pk = P2 + (k-2) × 0.33.
+// DM 21/5/2009 art. 5 + tabella AdE: 30/6 → 0.18%, 0.51%, 0.84%, 1.17%, 1.50%, 1.83%.
+function percentualeInteressi(i, dataBase) {
   if (i <= 1) return 0;
-  const base4Pct = Number((4 * giorniCommerciali(dataBase, dataRata) / 360).toFixed(4));
-  return Number((base4Pct + (i - 2) * 0.33).toFixed(4));
+  // Data nominale rata 2 = 16 del mese successivo alla data base.
+  const base = typeof dataBase === 'string' ? new Date(dataBase) : new Date(dataBase);
+  const r2 = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 16));
+  const p2 = Number((4 * giorniCommerciali(base, r2) / 360).toFixed(2));
+  return Number((p2 + (i - 2) * 0.33).toFixed(2));
 }
 
 // A4: maggiorazione 0,40% — Erario: importo riga += maggiorazione; INPS: riga DPPI separata.
@@ -64,6 +68,9 @@ export function applicaMaggiorazioneRighe(righe, maggiorazionePct, causaleIntere
 // Output: array di scadenze con righe splittate, causali INPS aggiornate (PXXR/P10R),
 //         interessi erario su 1668, interessi INPS su DPPI (pre-req A3 / A9).
 // Limite: ultima rata ≤ 16 dicembre dell'anno di pagamento (A9).
+// `rateizzaScadenza` riceve le righe PRIMA della maggiorazione (righeGiugno, non righeMagg).
+// Le date nominali usano UTC per evitare il timezone bug (advisor fix 3).
+// Il pagamento passa per primoGiornoLavorativo; gli interessi si calcolano sulle date nominali (A9).
 export function rateizzaScadenza(scadenza, n, regole, config) {
   if (n <= 1) return [scadenza];
 
@@ -76,45 +83,50 @@ export function rateizzaScadenza(scadenza, n, regole, config) {
   const codiceInteressiErario = codiciErario.interessiRateazione ?? '1668';
   const causaleInteressiInps = causaliInps.interessi ?? 'DPPI';
 
-  // Calcola date rate: prima alla data base, poi 16 del mese successivo per n-1 mesi.
-  const dataBase = new Date(scadenza.data);
-  const date = [dataBase];
+  // Date nominali in UTC (rata 1 = data base, rata k = 16 del mese k-1 successivo).
+  const baseStr = scadenza.data; // 'AAAA-MM-GG'
+  const [ay, am, ad] = baseStr.split('-').map(Number);
+  const baseUtc = new Date(Date.UTC(ay, am - 1, ad));
+
+  const dateNominali = [baseStr];
+  const datePagamento = [baseStr]; // rata 1: non serve spostamento (già giorno lavorativo)
   for (let i = 1; i < n; i++) {
-    const d = new Date(dataBase);
-    d.setMonth(d.getMonth() + i);
-    d.setDate(16);
-    date.push(d);
+    const d = new Date(Date.UTC(ay, am - 1 + i, 16));
+    const nomStr = d.toISOString().slice(0, 10); // 'AAAA-MM-16'
+    dateNominali.push(nomStr);
+    const [ny, nm, nd] = nomStr.split('-').map(Number);
+    datePagamento.push(primoGiornoLavorativo(ny, nm, nd));
   }
 
-  // Controllo A9: ultima rata ≤ 16 dicembre
-  const anno = dataBase.getFullYear();
-  const limite = new Date(anno, 11, 16); // 16 dicembre
-  const dateValide = date.filter((d) => d <= limite);
-  const nEffettivo = dateValide.length;
-  if (nEffettivo < n) {
-    // ponytail: tronca silenziosamente, il chiamante deve avvertire l'utente
-  }
+  // A9: tronca al 16 dicembre (confronto su stringhe, come maxRateConsentite).
+  const limiteStr = `${ay}-12-16`;
+  const nEffettivo = dateNominali.filter((d) => d <= limiteStr).length;
 
   const result = [];
   for (let i = 0; i < nEffettivo; i++) {
-    const dataRata = dateValide[i];
-    const label = `${i + 1}/${nEffettivo}`;
-    const pctInteressi = percentualeInteressi(i + 1, dataBase, dataRata);
+    // Format NNRR (es. prima di 3 rate = '0103'), come il modello F24.
+    const label = String(i + 1).padStart(2, '0') + String(nEffettivo).padStart(2, '0');
+    const pctInteressi = percentualeInteressi(i + 1, baseUtc);
     const righe = [];
 
+    // Quota base: le prime nEffettivo-1 rate sono uguali, l'ultima prende il resto.
     for (const riga of scadenza.righe) {
-      const quota = Number((riga.importo / nEffettivo).toFixed(2));
+      const quotaBase = Number((riga.importo / nEffettivo).toFixed(2));
+      const isUltima = i === nEffettivo - 1;
+      const sommaAltre = Number((quotaBase * (nEffettivo - 1)).toFixed(2));
+      const quota = isUltima ? Number((riga.importo - sommaAltre).toFixed(2)) : quotaBase;
+
       if (riga.sezione === 'inps') {
         righe.push({ ...riga, codice: causaleRateInps, importo: quota, rateazione: label });
         if (pctInteressi > 0) {
           const interessi = Number((quota * pctInteressi / 100).toFixed(2));
-          if (interessi >= 1.03) { // soglia minima A10
+          if (interessi >= F24_MIN_RIGA) {
             righe.push({
               sezione: 'inps',
               codice: causaleInteressiInps,
               annoRiferimento: riga.annoRiferimento,
               importo: interessi,
-              descrizione: `Interessi rateazione INPS rata ${label}`,
+              descrizione: `Interessi rateazione INPS rata ${i + 1}/${nEffettivo}`,
               rateazione: label,
             });
           }
@@ -123,13 +135,13 @@ export function rateizzaScadenza(scadenza, n, regole, config) {
         righe.push({ ...riga, importo: quota, rateazione: label });
         if (pctInteressi > 0) {
           const interessi = Number((quota * pctInteressi / 100).toFixed(2));
-          if (interessi >= 1.03) {
+          if (interessi >= F24_MIN_RIGA) {
             righe.push({
               sezione: 'erario',
               codice: codiceInteressiErario,
               annoRiferimento: riga.annoRiferimento,
               importo: interessi,
-              descrizione: `Interessi rateazione erario rata ${label}`,
+              descrizione: `Interessi rateazione erario rata ${i + 1}/${nEffettivo}`,
               rateazione: label,
             });
           }
@@ -138,7 +150,7 @@ export function rateizzaScadenza(scadenza, n, regole, config) {
     }
 
     const totale = Number(righe.reduce((t, r) => t + r.importo, 0).toFixed(2));
-    result.push({ ...scadenza, data: dataRata.toISOString().slice(0, 10), righe, totale, totaleConMaggiorazione: totale });
+    result.push({ ...scadenza, data: datePagamento[i], dataNominale: dateNominali[i], righe, totale, totaleConMaggiorazione: totale });
   }
 
   return result;
@@ -307,18 +319,30 @@ export async function stimaVersamenti(config, anno) {
     }
   }
 
+  // --- Rateizzazione saldo + I acconto (Step 7) ---
+  // nRate letto da config (persistente tra route GET, PDF e POST /f24).
+  const nRateRichieste = config.forfettario?.rateSaldo ?? 1;
+  const maxRate = dataGiugno ? maxRateConsentite(dataGiugno) : 1;
+  const nRate = Math.min(Math.max(1, nRateRichieste), maxRate);
+  if (nRate < nRateRichieste) {
+    avvisi.push(`Numero di rate richiesto (${nRateRichieste}) supera il massimo consentito (${maxRate}) con scadenza ${dataGiugno}: applicate ${maxRate} rate.`);
+  }
+
   const scadenze = [];
   if (righeGiugno.length) {
-    const righeMagg = applicaMaggiorazioneRighe(righeGiugno, maggiorazionePct, causaleInteressiInps);
-    const totale = Number(righeGiugno.reduce((t, r) => t + r.importo, 0).toFixed(2));
-    const totaleConMaggiorazione = Number(righeMagg.reduce((t, r) => t + r.importo, 0).toFixed(2));
-    scadenze.push({
-      data: dataGiugno,
-      dataInps: dataInpsGiugno,
-      righe: righeMagg,
-      totale,
-      totaleConMaggiorazione,
-    });
+    // Rateizzazione PRIMA della maggiorazione: ogni rata ha la propria maggiorazione.
+    const scadenzeGiugno = rateizzaScadenza(
+      { data: dataGiugno, dataInps: dataInpsGiugno, righe: righeGiugno, totale: Number(righeGiugno.reduce((t, r) => t + r.importo, 0).toFixed(2)), totaleConMaggiorazione: 0 },
+      nRate,
+      regole,
+      config,
+    );
+    for (const sc of scadenzeGiugno) {
+      const righeMagg = applicaMaggiorazioneRighe(sc.righe, maggiorazionePct, causaleInteressiInps);
+      const totale = Number(sc.righe.reduce((t, r) => t + r.importo, 0).toFixed(2));
+      const totaleConMaggiorazione = Number(righeMagg.reduce((t, r) => t + r.importo, 0).toFixed(2));
+      scadenze.push({ ...sc, righe: righeMagg, totale, totaleConMaggiorazione });
+    }
   }
   if (righeNovembre.length) {
     const totale = Number(righeNovembre.reduce((t, r) => t + r.importo, 0).toFixed(2));
@@ -327,7 +351,8 @@ export async function stimaVersamenti(config, anno) {
       dataInps: dataInpsNovembre,
       righe: righeNovembre,
       totale,
-      totaleConMaggiorazione: totale, // il secondo acconto non si rateizza, nessuna maggiorazione
+      totaleConMaggiorazione: totale,
+      isNovembre: true,
     });
   }
 
@@ -342,6 +367,6 @@ export async function stimaVersamenti(config, anno) {
     scadenze,
     crediti,
     avvisi: avvisi.filter(Boolean),
-    _dettagli: { impostaN, impostaNm1, saldoImposta, accontoTotaleN1, saldoInps, accontoInpsTotaleN1 },
+    _dettagli: { impostaN, impostaNm1, saldoImposta, accontoTotaleN1, saldoInps, accontoInpsTotaleN1, nRate, maxRate },
   };
 }

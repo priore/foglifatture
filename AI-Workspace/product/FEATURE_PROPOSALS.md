@@ -227,7 +227,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-015 — Piano F24 automatico (saldo, acconti, rateazione, interessi)
 
-**Stato:** 🚧 in corso (Step 2-6 implementati, Step 7 opzionale) · **Impatto:** Alto · **Sforzo:** L
+**Stato:** ✅ implementata 2026-10-09 (tutti gli step, incluso Step 7 rateizzazione) · **Impatto:** Alto · **Sforzo:** L
 
 🟢 `versamentiF24Service.js` registra solo i versamenti già effettuati (import da testo del Cassetto Fiscale): oggi Timesheet non calcola né genera un F24 da pagare, solo la stima grezza di imposta/acconto in dashboard.
 
@@ -242,7 +242,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-016 — Compensazione crediti fiscali nell'F24
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata (2026-10-09) · **Impatto:** Medio · **Sforzo:** M
 
 🟡 Un credito fiscale residuo da un anno precedente (IRPEF, IVA) oggi non ha modo di essere usato a scomputo di un debito nell'F24: va gestito interamente a mano/dal commercialista. Serve un registro dei crediti disponibili, la loro applicazione automatica a copertura dei debiti (imposta sostitutiva, INPS), e un avviso quando l'uso nell'anno supera la soglia di 5.000€, oltre la quale serve il visto di conformità prima di poter compensare — usarlo oltre soglia senza visto è sanzionabile.
 
@@ -283,22 +283,18 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-019 — Registro delle fonti normative con testo archiviato
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata (2026-10-10) · **Impatto:** Medio · **Sforzo:** M
 
-🟡 Estende FP-006 (fonte come URL): oltre al link, archiviare nel progetto il testo esatto della norma (circolare, decreto, provvedimento) e la frase precisa da cui deriva ogni valore usato nei calcoli (aliquota INPS, scadenza, importo minimo F24). Un link può rompersi o essere aggiornato senza preavviso dall'ente; un testo salvato in locale resta la prova verificabile di cosa dicesse la norma nel momento del calcolo, e rende visibile subito quando una norma cambia da un anno all'altro.
-
-🟡 Si archivia solo il testo estratto, non il PDF, per tenere il repository leggero; l'impronta del file originale resta nel registro. Un test automatico controlla che ogni citazione compaia davvero nel testo archiviato: una citazione "a memoria" non passa.
-
-**Perché non è urgente da solo**: ha senso soprattutto insieme a FP-021 (regole versionate per anno) e come fondamento di FP-015, per non avere aliquote/scadenze sparse nel codice senza una fonte verificabile allegata.
+🟢 Implementata: registro fonti con testi archiviati in `backend/src/data/fonti/` (file `registro.json` + `testi/<id>.txt`). Ogni valore nelle Regole fiscali mostra un pulsante 📄 che apre un popup con l'estratto del testo normativo archiviato, con la citazione evidenziata in giallo. Test automatico verifica che ogni citazione sia trovabile nel testo archiviato (`fontiNormative.test.js`). Citazioni corrette e verificate rispetto ai testi ufficiali Normattiva (DPR 633/72, L. 190/2014, DL 124/2019, ecc.).
 
 **Riferimenti:** dipende in parte da FP-006; propedeutico a FP-015, FP-021, FP-022
-**Piano di dettaglio:** — (da redigere quando passa a 🔍) · piano di massima: [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) voce 2
+**Piano di dettaglio:** [FEATURES_GAP_ANALISI_ESTERNA.md](../Plans/FEATURES_GAP_ANALISI_ESTERNA.md) sez. G voce 11
 
 ---
 
 ## FP-020 — Fatture e incassi in valuta estera, con cambio ufficiale
 
-**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S-M
+**Stato:** ✅ implementata 2026-10-09 · **Impatto:** Basso · **Sforzo:** S-M
 
 🟢 Per gli incassi in BTC (FP-011) lo schema c'è già tutto: in `FatturaView.vue:203-248` un pulsante recupera i dati della transazione da mempool.space, dal TXID oppure, senza TXID, dall'ultima ricevuta sull'indirizzo di destinazione (`api.js:157-166`). Un altro pulsante prende il cambio storico EUR/BTC da CoinGecko alla data del pagamento (`api.js:167-174`). Il valore resta sempre modificabile a mano e c'è una nota privacy su cosa viene inviato al servizio esterno.
 
@@ -337,7 +333,7 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 
 ## FP-022 — Controllo periodico delle fonti ufficiali, con proposta e conferma
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** ✅ implementata (2026-10-11, branch `feature/fp-022-wip`) · **Impatto:** Medio · **Sforzo:** M
 
 🟢 `scadenzeFiscaliService.js` cerca le proroghe via AI una volta l'anno, ma non conserva la fonte e non verifica la risposta.
 
@@ -395,9 +391,15 @@ Resta una proposta, non un impegno di roadmap: da valutare solo se il volume di 
 🟢 Il bollo da 2 € viene applicato alle fatture sopra 77,47 € (`fatturaPaXmlGenerator.js:36-40`), ma il suo versamento trimestrale non è in calendario: `scadenzeBaseAnno` non ha le scadenze del bollo.
 
 🟡 Come funziona:
-- totale dei bolli per trimestre;
-- scadenze nel calendario: 31/5, 30/9, 30/11, 28/2 dell'anno dopo, codici 2521-2524;
-- rinvii di legge applicati da soli per importi piccoli: 1° trimestre fino a 5.000 € ⇒ insieme al 2°; 1° + 2° fino a 5.000 € ⇒ insieme al 3°;
+- Totale dei bolli per trimestre.
+- **Scadenze nel calendario** (codici 2521–2524):
+  - 31 maggio (1° trimestre).
+  - 30 settembre (2° trimestre).
+  - 30 novembre (3° trimestre).
+  - 28 febbraio dell'anno dopo (4° trimestre).
+- **Rinvii di legge automatici per importi piccoli**:
+  - Bollo 1° trimestre fino a 5.000 € → versa insieme al 2°.
+  - Bollo 1°+2° trimestre fino a 5.000 € → versa insieme al 3°.
 - F24 del bollo con il motore di FP-023.
 
 🟡 La norma lega il trimestre alla data di consegna SDI: nella prima versione si usa la data della fattura, segnata come stima, poi la data della ricevuta di consegna già disponibile. Fatture scartate escluse.

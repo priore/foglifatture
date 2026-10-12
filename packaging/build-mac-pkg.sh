@@ -4,12 +4,11 @@
 # Per test senza firma: commenta le sezioni SIGN e NOTARIZE
 set -euo pipefail
 
-VERSION="${1:-1.4.1}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$REPO_ROOT/packaging/build/mac"
 PKG_ROOT="$BUILD_DIR/pkgroot"
 SCRIPTS_DIR="$REPO_ROOT/packaging/mac/scripts"
-OUTPUT="$REPO_ROOT/packaging/dist/FogliFatture-${VERSION}-mac-universal.pkg"
+OUTPUT="$REPO_ROOT/packaging/dist/FogliFatture-mac-universal.pkg"
 
 # --- Icona: genera .icns da favicon.svg se non già presente ---
 ICNS_OUT="$REPO_ROOT/packaging/mac/FogliFatture.icns"
@@ -47,7 +46,7 @@ pkgbuild \
   --root "$PKG_ROOT" \
   --scripts "$SCRIPTS_DIR" \
   --identifier "com.prioregroup.foglifatture" \
-  --version "$VERSION" \
+  --version "1.0" \
   --install-location "/" \
   "$BUILD_DIR/FogliFatture-unsigned.pkg"
 

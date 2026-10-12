@@ -76,10 +76,16 @@ describe('rateizzaScadenza', () => {
     assert.ok(interessi1668.length >= 1, 'almeno una riga 1668 attesa');
   });
 
-  it('campo rateazione nel formato N/R', () => {
+  it('campo rateazione nel formato NNRR (es. "0103" = prima di 3)', () => {
     const result = rateizzaScadenza(scadenzaBase, 3, regole, config);
     const prima = result[0].righe.find((r) => r.sezione === 'erario');
-    assert.equal(prima.rateazione, '1/3');
+    assert.equal(prima.rateazione, '0103');
+  });
+
+  it('la somma degli importi delle rate erario = totale originale', () => {
+    const result = rateizzaScadenza(scadenzaBase, 3, regole, config);
+    const sommEr = result.flatMap((s) => s.righe.filter((r) => r.sezione === 'erario' && r.codice !== '1668')).reduce((t, r) => t + r.importo, 0);
+    assert.equal(Number(sommEr.toFixed(2)), 600);
   });
 
   it('tronca rate oltre 16 dicembre', () => {
@@ -87,8 +93,15 @@ describe('rateizzaScadenza', () => {
     const scadenzaNov = { ...scadenzaBase, data: '2026-11-01' };
     const result = rateizzaScadenza(scadenzaNov, 6, regole, config);
     assert.ok(result.length < 6, 'devono essere meno di 6 rate');
-    const ultimo = new Date(result.at(-1).data);
-    assert.ok(ultimo <= new Date('2026-12-16'), 'ultima rata entro 16/12');
+    assert.ok(result.at(-1).dataNominale <= '2026-12-16', 'ultima rata nominale entro 16/12');
+  });
+
+  it('30/6 con 7 rate: tutte e 7 prodotte (nessun timezone bug)', () => {
+    // maxRateConsentite('2026-06-30') = 7; rateizzaScadenza deve concordare
+    const sc = { ...scadenzaBase, data: '2026-06-30' };
+    const result = rateizzaScadenza(sc, 7, regole, config);
+    assert.equal(result.length, 7);
+    assert.equal(result.at(-1).dataNominale, '2026-12-16');
   });
 });
 
@@ -117,23 +130,27 @@ describe('percentualeInteressi A9 — tabella AdE partenza 30/6', () => {
     totaleConMaggiorazione: 100000,
   };
 
+  // Formula corretta: P2 = round2(4 × gg_comm(30/6, 16/7) / 360) = round2(4×16/360) = 0.18%
+  // Pk = P2 + (k-2)×0.33 → P3 = 0.51%, P4 = 0.84%, ...
   it('rata 2 (16/7): interessi = 0.18% di quota', () => {
     const result = rateizzaScadenza(scadenzaGrande, 2, regole, config);
     const quota = Number((100000 / 2).toFixed(2));
     const interessi1668 = result[1].righe.find((r) => r.codice === '1668');
-    // 4 × 16 gg / 360 = 0.1778% → 0.18% su 50000 = 88.89
-    const atteso = Number((quota * 0.1778 / 100).toFixed(2));
-    assert.equal(interessi1668.importo, atteso);
+    assert.equal(interessi1668.importo, Number((quota * 0.18 / 100).toFixed(2)));
   });
 
-  it('rata 3 (16/8): interessi = (0.18 + 0.33)% = 0.51% circa di quota', () => {
+  it('rata 3 (16/8): interessi = (0.18 + 0.33)% = 0.51% di quota', () => {
     const result = rateizzaScadenza(scadenzaGrande, 3, regole, config);
     const quota = Number((100000 / 3).toFixed(2));
     const interessi1668 = result[2].righe.find((r) => r.codice === '1668');
-    // base4Pct(30/6→16/8): 4×46/360 = 0.5111; +0.33 = 0.8411 — ma per rata 3: i=3, base4Pct + (3-2)*0.33
-    // Verifica struttura: riga presente e importo positivo
-    assert.ok(interessi1668, 'riga 1668 rata 3 attesa');
-    assert.ok(interessi1668.importo > 0);
+    assert.equal(interessi1668.importo, Number((quota * 0.51 / 100).toFixed(2)));
+  });
+
+  it('rata 4 (16/9): interessi = 0.84% di quota (tabella AdE 30/6)', () => {
+    const result = rateizzaScadenza(scadenzaGrande, 4, regole, config);
+    const quota = Number((100000 / 4).toFixed(2));
+    const interessi1668 = result[3].righe.find((r) => r.codice === '1668');
+    assert.equal(interessi1668.importo, Number((quota * 0.84 / 100).toFixed(2)));
   });
 });
 

@@ -1,9 +1,9 @@
 ; FogliFatture - Inno Setup script
 ; Compilare con: iscc FogliFatture.iss
-; Oppure: iscc /DAppVersion=1.4.1 FogliFatture.iss
+; Con versione specifica: iscc /DAppVersion=1.5.0 FogliFatture.iss
 
 #ifndef AppVersion
-  #define AppVersion "1.4.1"
+  #define AppVersion "installer"
 #endif
 
 [Setup]
@@ -17,7 +17,7 @@ DefaultGroupName=FogliFatture
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 OutputDir=..\..\packaging\dist
-OutputBaseFilename=FogliFatture-{#AppVersion}-win-x64
+OutputBaseFilename=FogliFatture-win-x64
 Compression=lzma2/max
 SolidCompression=yes
 ; Nessuna firma: SmartScreen mostra avviso ma non blocca (1 click extra)
@@ -47,8 +47,8 @@ Name: "{userdesktop}\FogliFatture"; Filename: "{app}\launcher.vbs"; Comment: "Ap
 ; 1. Installa Git se mancante (winget silenzioso)
 Filename: "powershell.exe"; Parameters: "-NonInteractive -ExecutionPolicy Bypass -Command ""if (-not (Get-Command git -ErrorAction SilentlyContinue)) {{ winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements --silent }}"""; Flags: runhidden waituntilterminated; StatusMsg: "Installazione Git (se mancante)..."
 
-; 2. Clona o aggiorna repo
-Filename: "powershell.exe"; Parameters: "-NonInteractive -ExecutionPolicy Bypass -File ""{app}\bootstrap.ps1"""; Flags: runhidden waituntilterminated; StatusMsg: "Clonazione repository FogliFatture..."
+; 2. Clona o aggiorna repo (passa versione se specificata: installer.exe /Version=1.5.0)
+Filename: "powershell.exe"; Parameters: "-NonInteractive -ExecutionPolicy Bypass -File ""{app}\bootstrap.ps1"" {code:GetVersionParam}"; Flags: runhidden waituntilterminated; StatusMsg: "Clonazione repository FogliFatture..."
 
 ; 3. Apre il browser a installazione completata
 Filename: "{app}\launcher.vbs"; Description: "Avvia FogliFatture"; Flags: postinstall nowait skipifsilent shellexec
@@ -60,4 +60,16 @@ Filename: "powershell.exe"; Parameters: "-NonInteractive -ExecutionPolicy Bypass
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
+end;
+
+// Restituisce "-Version X.Y.Z" se l'exe è stato lanciato con /Version=X.Y.Z, altrimenti stringa vuota
+function GetVersionParam(Param: String): String;
+var
+  v: String;
+begin
+  v := ExpandConstant('{param:Version|}');
+  if v <> '' then
+    Result := '-Version ' + v
+  else
+    Result := '';
 end;

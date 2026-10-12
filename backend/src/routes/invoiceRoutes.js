@@ -233,6 +233,20 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     // Congelato alla generazione (come la clausola BTC): l'XML già trasmesso non cambia se
     // si modifica l'IBAN in Impostazioni. null = né IBAN né indirizzo BTC configurati.
     pagamento: costruisciPagamento(config, cliente),
+    // Valuta della fattura: congelata alla generazione. null = EUR (default).
+    // Il cambio è "quantità di valuta per 1 euro" (convenzione Banca d'Italia).
+    valutaFattura: (() => {
+      const codice = (req.body.valutaCodice ?? '').toUpperCase();
+      if (!codice || codice === 'EUR') return null;
+      const cambio = Number(req.body.valutaCambio);
+      if (!Number.isFinite(cambio) || cambio <= 0) return null;
+      return {
+        codice,
+        cambio,
+        fonte: req.body.valutaFonte ?? 'Banca d\'Italia',
+        dataQuotazione: req.body.valutaDataQuotazione ?? data,
+      };
+    })(),
     // Congelato alla generazione: Natura IVA, diciture e dati anagrafici per clienti esteri.
     // null = cliente IT o regole non disponibili: trattamento ordinario forfettario.
     trattamentoEstero: regole ? (() => {
