@@ -5,6 +5,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import LogoUpload from './LogoUpload.vue';
 import { pivaValida, codiceFiscaleValido } from '../../composables/useValidazioneFiscale.js';
 import { api } from '../../services/api.js';
+import { renderMarkdown } from '../../composables/useMarkdown.js';
 
 const props = defineProps({
   modelValue: { type: Object, required: true }, // config.fornitore
@@ -27,6 +28,8 @@ const codici = ref([]);
 const ricerca = ref('');
 const aggiornando = ref(false);
 const messaggioAggiorna = ref('');
+const spiegaRequisitiInCorso = ref(false);
+const popupAI = ref(null); // { titolo, testo }
 
 onMounted(async () => {
   codici.value = await api.settoriAteco();
@@ -72,6 +75,18 @@ const requisitiEligibili = computed(() => {
 watch(requisitiEligibili, (ok) => {
   if (!ok) props.forfettario.requisitiAliquotaRidotta = false;
 });
+
+async function spiegaRequisitiConAI() {
+  spiegaRequisitiInCorso.value = true;
+  try {
+    const r = await api.spiegaRequisitiAliquotaRidotta();
+    popupAI.value = { titolo: 'Requisiti aliquota 5% — Spiegazione AI', testo: r.spiegazione };
+  } catch (err) {
+    popupAI.value = { titolo: 'Spiegazione AI', testo: err.message };
+  } finally {
+    spiegaRequisitiInCorso.value = false;
+  }
+}
 
 function selezionaCodice(c) {
   props.forfettario.codiceAteco = c.codice;
@@ -166,7 +181,10 @@ function selezionaCodice(c) {
                 <small v-if="!requisitiEligibili" class="note-legal" style="margin-top:6px">
                   {{ forfettario.dataInizioAttivita ? 'Attività avviata da più di 5 anni: aliquota ordinaria 15% applicata.' : 'Inserisci la data di inizio attività per verificare l\'eligibilità.' }}
                 </small>
-                <small v-else class="note-legal" style="margin-top:6px">L. 190/2014 c. 65: nessuna attività d'impresa o professionale nei 3 anni precedenti e l'attività non prosegue un lavoro dipendente. Se non spuntato, l'imposta stimata usa il 15% (scelta prudente).</small>
+                <small class="note-legal" style="margin-top:6px;display:block">L. 190/2014 c. 65: nessuna attività d'impresa o professionale nei 3 anni precedenti e l'attività non prosegue un lavoro dipendente. Se non spuntato, l'imposta stimata usa il 15% (scelta prudente).</small>
+                <div style="display:flex;justify-content:flex-end;margin-top:6px">
+                  <button type="button" class="btn-ai" :disabled="spiegaRequisitiInCorso" @click="spiegaRequisitiConAI">{{ spiegaRequisitiInCorso ? '…' : 'Spiega con AI' }}</button>
+                </div>
               </div>
               <div class="field" style="margin:0">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -229,6 +247,20 @@ function selezionaCodice(c) {
       </div>
     </div>
   </div>
+
+  <!-- Popup spiegazione AI (B.5 requisiti aliquota, riusabile) -->
+  <Teleport to="body">
+    <div v-if="popupAI" class="ai-overlay" @click.self="popupAI = null">
+      <div class="ai-popup" role="dialog" aria-modal="true">
+        <div class="ai-popup-header">
+          <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
+          <button class="btn-chiudi" @click="popupAI = null" aria-label="Chiudi">✕</button>
+        </div>
+        <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
+        <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -247,12 +279,6 @@ function selezionaCodice(c) {
   transform: translate(-50%, -50%) rotate(45deg);
   width: 5px; height: 9px; border: solid var(--accent-ink); border-width: 0 2px 2px 0;
 }
-.btn-icon {
-  border: 1px solid var(--line); background: var(--card); color: var(--ink);
-  border-radius: var(--radius-sm); width: 24px; height: 24px; line-height: 1; cursor: pointer;
-  font-size: .95rem; display: inline-flex; align-items: center; justify-content: center;
-}
-.btn-icon:disabled { opacity: .5; cursor: default; }
 .ateco-risultati {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md);
@@ -262,4 +288,5 @@ function selezionaCodice(c) {
 .ateco-risultati li { padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: .85rem; color: var(--ink); }
 .ateco-risultati li:hover { background: var(--ground); }
 .ateco-settore { display: block; font-size: .74rem; color: var(--muted); margin-top: 2px; }
+/* btn-ai, btn-icon definiti in style.css globale */
 </style>

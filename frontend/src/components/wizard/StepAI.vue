@@ -148,7 +148,7 @@ async function verificaStato() {
   padding: 6px 14px;
   border-radius: var(--radius, 8px);
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--ground);
   color: var(--text);
   cursor: pointer;
   font-size: .88rem;

@@ -8,6 +8,8 @@
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import { randomUUID } from 'node:crypto';
 import { primoGiornoLavorativo } from './scadenzeFiscaliService.js';
+import { creditiConResiduo, compensaCrediti } from './creditiService.js';
+import { regoleAnno } from './regoleFiscaliService.js';
 
 const FILE_F24 = 'f24.json';
 const FILE_VERSAMENTI = 'f24Versamenti.json';
@@ -102,7 +104,8 @@ export async function eliminaF24(id) {
 // Funzione pura: mappa le righe di un F24 in record per f24Versamenti.json.
 // Esportata per i test (senza I/O).
 export function creaVersamentiDaF24(f24) {
-  return (f24.righe ?? []).map((riga) => ({
+  // Le righe con importo negativo sono crediti compensati: non diventano versamenti positivi.
+  return (f24.righe ?? []).filter((r) => r.importo > 0).map((riga) => ({
     id: randomUUID(),
     data: f24.pagatoIl,
     tipo: riga.sezione === 'inps' ? 'INPS' : 'imposta',
@@ -125,6 +128,42 @@ async function rimuoviVersamentiAutomatici(f24Id) {
   await writeJson(FILE_VERSAMENTI, versamenti.filter((v) => v.origine !== f24Id));
 }
 
+// Crea un F24 applicando la compensazione dei crediti disponibili alle righe della scadenza.
+// La compensazione avviene QUI (non in stimaVersamenti) per evitare il double-count:
+// stimaVersamenti è stateless e ricalcola ogni volta; una volta creato l'F24 con le righe
+// ridotte, i crediti usati sono tracciati nelle righe (campo .creditoId) e il residuo si
+// calcola dagli utilizzi in f24.json.
+export async function creaF24DaPianoConCompensazione(scadenza, tipo, annoFiscale) {
+  const oggi = new Date().toISOString().slice(0, 10);
+  const anno = annoFiscale ?? new Date(scadenza.data).getFullYear();
+  const [credDisp, regole] = await Promise.all([creditiConResiduo(oggi), regoleAnno(anno)]);
+
+  // Clona i crediti con campo _residuoDisp per uso interno (consumato progressivamente).
+  const creditiClone = credDisp.map((c) => ({ ...c, _residuoDisp: c.residuo }));
+  const { righeDebito, righeCredito, totaleNetto, f24AZero, avvisi } = compensaCrediti(
+    scadenza.righe ?? [],
+    creditiClone,
+    regole,
+    oggi,
+  );
+
+  const lista = await readJson(FILE_F24, []);
+  const f24 = {
+    id: randomUUID(),
+    tipo: tipo ?? scadenza.tipo ?? '',
+    dataPagamento: scadenza.data,
+    stato: 'da_pagare',
+    righe: [...righeDebito, ...righeCredito.map((r) => ({ ...r, importo: -r.importo }))],
+    avvisiCompensazione: avvisi.length ? avvisi : undefined,
+    f24AZero,
+    annullabileEntro: null,
+    pagatoIl: null,
+  };
+  lista.push(f24);
+  await writeJson(FILE_F24, lista);
+  return f24;
+}
+
 // Rimuove dai candidati (da Cassetto Fiscale) quelli già coperti da un F24 pagato
 // con stessa data e stesso totale righe. Evita doppioni nell'import.
 export async function filtraGiaPresentiInF24(candidati) {
@@ -132,7 +171,8 @@ export async function filtraGiaPresentiInF24(candidati) {
   const pagati = lista.filter((f) => f.stato === 'pagato');
   return candidati.filter((c) => {
     return !pagati.some((f) => {
-      const totale = Number(((f.righe ?? []).reduce((s, r) => s + r.importo, 0)).toFixed(2));
+      // Solo righe positive (debiti); i crediti compensati non contano nel totale versato.
+      const totale = Number(((f.righe ?? []).filter((r) => r.importo > 0).reduce((s, r) => s + r.importo, 0)).toFixed(2));
       return f.dataPagamento === c.data && totale === c.importo;
     });
   });

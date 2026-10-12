@@ -1,17 +1,19 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { readFile } from 'node:fs/promises';
-import { getConfig } from '../services/configService.js';
+import { getConfig, saveConfig } from '../services/configService.js';
 import { calcolaDashboardForfettario } from '../services/forfettarioService.js';
 import { aggiornaAtecoSettoriDaGemini, elencaModelliGemini, verificaESalvaModelloGemini } from '../services/geminiAtecoService.js';
 import { verificaESalvaModelloGroq, verificaESalvaModelloClaude } from '../services/pagamentiFattureService.js';
 import { listVersamenti, aggiungiVersamento, eliminaVersamento, estraiVersamentiDaTesto, importaVersamenti, esportaVersamentiCsv } from '../services/versamentiF24Service.js';
 import { esportaReportCommercialistaCsv } from '../services/exportService.js';
-import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
+import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, confermaPagamentoValuta, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
+import { cambioPer, valuteSupportate } from '../services/cambiValutaService.js';
 import { prossimeScadenzeFiscali, scadenzeIntrastatAnno } from '../services/scadenzeFiscaliService.js';
 import { stimaVersamenti } from '../services/stimaVersamentiService.js';
 import { generaF24Pdf } from '../services/f24PdfService.js';
-import { listF24, creaF24DaPiano, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
+import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
+import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo } from '../services/creditiService.js';
 import { scadenzeBollo } from '../services/bolloTrimestrale.js';
 
 export const forfettarioRoutes = Router();
@@ -185,6 +187,22 @@ forfettarioRoutes.post('/versamenti/importa-testo', async (req, res) => {
   res.json(await importaVersamenti(versamenti));
 });
 
+// Salva il numero di rate per saldo + I acconto (Step 7 F24_STEP3).
+forfettarioRoutes.put('/versamenti-stimati/rate-saldo', async (req, res) => {
+  try {
+    const nRate = Number(req.body.rateSaldo);
+    if (!Number.isInteger(nRate) || nRate < 1 || nRate > 7) {
+      return res.status(400).json({ errore: 'rateSaldo deve essere un intero da 1 a 7' });
+    }
+    const config = await getConfig();
+    config.forfettario = { ...(config.forfettario ?? {}), rateSaldo: nRate };
+    await saveConfig(config);
+    res.json({ rateSaldo: nRate });
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
 // Stima versamenti F24 per l'anno fiscale (imposta sostitutiva + INPS gestione separata).
 forfettarioRoutes.get('/versamenti-stimati', async (req, res) => {
   try {
@@ -264,6 +282,51 @@ forfettarioRoutes.delete('/f24/:id', async (req, res) => {
   }
 });
 
+// Crediti fiscali compensabili (FP-016).
+forfettarioRoutes.get('/crediti', async (req, res) => {
+  try { res.json(await listCrediti()); } catch (err) { res.status(500).json({ errore: err.message }); }
+});
+
+forfettarioRoutes.get('/crediti/residui', async (req, res) => {
+  try { res.json(await creditiConResiduo()); } catch (err) { res.status(500).json({ errore: err.message }); }
+});
+
+forfettarioRoutes.post('/crediti', async (req, res) => {
+  try {
+    const credito = await aggiungiCredito(req.body);
+    res.status(201).json(credito);
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.delete('/crediti/:id', async (req, res) => {
+  try {
+    await eliminaCredito(req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    const status = err.message.includes('non trovato') ? 404 : err.message.includes('già usato') ? 409 : 500;
+    res.status(status).json({ errore: err.message });
+  }
+});
+
+// Crea F24 con compensazione crediti applicata.
+// POST /forfettario/f24/con-compensazione — body: { anno, indice }
+forfettarioRoutes.post('/f24/con-compensazione', async (req, res) => {
+  try {
+    const config = await getConfig();
+    const { anno, indice } = req.body;
+    if (anno == null || indice == null) return res.status(400).json({ errore: 'anno e indice obbligatori' });
+    const piano = await stimaVersamenti(config, Number(anno));
+    const sc = piano.scadenze?.[Number(indice)];
+    if (!sc) return res.status(404).json({ errore: `Nessuna scadenza all'indice ${indice} per l'anno ${anno}.` });
+    const f24 = await creaF24DaPianoConCompensazione(sc, sc.tipo ?? `F24 ${anno}`, Number(anno));
+    res.status(201).json(f24);
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
 // Bollo trimestrale: scadenze e importi per anno.
 // FP-025 · FEATURES_GAP_ANALISI_ESTERNA.md voce 10.
 forfettarioRoutes.get('/bollo/:anno', async (req, res) => {
@@ -336,6 +399,33 @@ forfettarioRoutes.post('/pagamenti/conferma-btc', async (req, res) => {
   } catch (err) {
     res.status(400).json({ errore: err.message });
   }
+});
+
+forfettarioRoutes.post('/pagamenti/conferma-valuta', async (req, res) => {
+  const { anno, mese, clienteId, dataPagamento, codiceValuta, importoValuta, cambio, fonte, dataQuotazione } = req.body;
+  if (!anno || !mese || !clienteId || !dataPagamento) return res.status(400).json({ errore: 'Dati mancanti' });
+  try {
+    const fattura = await confermaPagamentoValuta(Number(anno), Number(mese), clienteId, dataPagamento, {
+      codiceValuta, importoValuta: Number(importoValuta), cambio: Number(cambio), fonte, dataQuotazione,
+    });
+    res.json({ ok: true, fattura });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.get('/cambi/:data/:valuta', async (req, res) => {
+  const { data, valuta } = req.params;
+  try {
+    const risultato = await cambioPer(valuta.toUpperCase(), data);
+    res.json(risultato);
+  } catch (err) {
+    res.status(502).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.get('/cambi/valute', async (_req, res) => {
+  res.json(valuteSupportate());
 });
 
 forfettarioRoutes.delete('/pagamenti/:anno/:mese/:clienteId/:indice', async (req, res) => {

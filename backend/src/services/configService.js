@@ -67,6 +67,7 @@ const DEFAULT_CONFIG = {
     percorsoArchivio: '',
     intervalloPollingMinuti: 15,
     pollingAbilitato: true, // flag on/off del controllo automatico ricevute SDI via IMAP
+    autorizzaAiPec: false, // E-AI: autorizza invio contenuto messaggi SDI/PEC all'AI per interpretazione (default off)
   },
   backup: {
     // Backup automatico cifrato di backend/data/. La password è salvata in chiaro qui
@@ -95,11 +96,15 @@ const DEFAULT_CONFIG = {
     rivalsaInps: false, // L. 662/96 c. 212: rivalsa INPS 4% addebitata al cliente (opt-in, default off)
     gestionePrevidenziale: '', // '' = non configurata | 'gestioneSeparata' | 'altra' (FP-015)
     altraCoperturaPrevidenziale: false, // true ⇒ aliquota GS ridotta (pensionati/altra previdenza obbligatoria)
+    rateSaldo: 1, // numero di rate per saldo + I acconto (1 = unica soluzione; max dipende da data scadenza) (FP-015 Step 7)
   },
   dati: {
     // Override di backend/data/, es. una cartella sincronizzata (Dropbox/iCloud/OneDrive)
     // per avere timesheet e fatture su più macchine. Vuoto = default (data/ nel progetto).
     percorso: '',
+  },
+  notifiche: {
+    abilitate: true, // toggle globale notifiche desktop macOS (OS.0, FP-022 piano sez. G)
   },
   // Indirizzi BTC dell'operatore proposti come destinazione incasso (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2).
   // Un indirizzo è pubblico ma collegato all'identità fiscale: resta solo in config.json (gitignored).
@@ -181,6 +186,7 @@ export async function getConfig() {
       reminder: fondiSezione(DEFAULT_CONFIG.reminder, config.reminder),
       forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
       dati: fondiSezione(DEFAULT_CONFIG.dati, config.dati),
+      notifiche: fondiSezione(DEFAULT_CONFIG.notifiche, config.notifiche),
     }
     : { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
 

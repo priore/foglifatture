@@ -125,4 +125,22 @@ describe('generaF24Pdf', () => {
     };
     await assert.rejects(() => generaF24Pdf(scadenza, { fornitore: {} }), /Troppe righe/);
   });
+
+  test('genera PDF con righe a credito (importo negativo)', { skip: !modelloPresente && 'modello F24 non scaricato' }, async () => {
+    const scadenza = {
+      data: '2026-06-30',
+      righe: [
+        { sezione: 'erario', codice: '1792', annoRiferimento: 2025, importo: 2000.00 },
+        { sezione: 'erario', codice: '4001', annoRiferimento: 2024, importo: -500.00 },
+        { sezione: 'inps',   codice: 'VP01', periodoDa: '01/2025', periodoA: '12/2025', importo: 1000.00 },
+        { sezione: 'inps',   codice: 'VP01', periodoDa: '01/2024', periodoA: '12/2024', importo: -200.00 },
+      ],
+    };
+    const config = { fornitore: { codiceFiscale: 'RSSMRA80A01H501Z', denominazione: 'Mario Rossi', comune: 'Roma', provincia: 'RM' } };
+    const pdf = await generaF24Pdf(scadenza, config);
+    assert.ok(Buffer.isBuffer(pdf));
+    assert.ok(pdf.length > 1000);
+    assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+    // Saldo atteso: (2000-500) + (1000-200) = 2300
+  });
 });

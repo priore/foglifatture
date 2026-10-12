@@ -38,7 +38,7 @@ const H = 841.89;
 // né come stringa unica centrata in uno spazio — sono 2 cifre singole a ridosso
 // della virgola stessa, il modello non ha caselle separate visibili lì, lo spazio
 // è libero). Gap fissi piccoli e proporzionali al font.
-const GAP_PRIMA_VIRGOLA_EM = 0.4;   // em tra fine intero e virgola stampata
+const GAP_PRIMA_VIRGOLA_EM = 0;   // em tra fine intero e virgola stampata
 const GAP_DOPO_VIRGOLA_EM = 1.1;    // em tra virgola stampata e prima cifra decimale
 const GAP_TRA_DECIMALI_EM = 0.75;   // em tra le due cifre decimali (larghezza 1a cifra + margine)
 
@@ -67,10 +67,11 @@ const LAYOUT = {
   erario: {
     firstY: 591.9,   // yBottom riga1 (589.87) + 2pt sopra la linea
     step:   12.0,
-    xCodiceTributo:   158,
-    xRateazione:      223,
-    xAnnoRiferimento: 274,
-    xVirgolaImporto:  380.5,
+    xCodiceTributo:     158,
+    xRateazione:        223,
+    xAnnoRiferimento:   274,
+    xVirgolaImporto:    380.5,
+    xVirgolaCredito:    468.0,  // calibrato empiricamente sul modello AdE
   },
 
   // Sezione INPS — 4 righe (fills i=17,18,19,63,20), passo 12pt, virgola importo a x=380.5
@@ -88,13 +89,14 @@ const LAYOUT = {
     periodoDaAnnoCifre:  [238.6, 246.0, 253.5, 260.9],
     periodoAMeseCentro:  279.2,
     periodoAAnnoCifre:   [290.1, 297.2, 304.3, 311.5],
-    xVirgolaImporto: 380.5,
+    xVirgolaImporto:  380.5,
+    xVirgolaCredito:  468.0,  // calibrato empiricamente sul modello AdE
   },
 
-  // Totale A erario — stesso box decimali delle righe normali (XCIFRE_DECIMALI_ERARIO_INPS).
-  totaleErario:      { y: 519, xVirgolaImporto: 380.5, size: 8 },
-  // Totale C INPS (stesso box decimali)
-  totaleInps:        { y: 436, xVirgolaImporto: 380.5, size: 8 },
+  // Totale A/B erario — A=debiti (colonna sinistra), B=crediti (colonna destra).
+  totaleErario:      { y: 519, xVirgolaImporto: 380.5, xVirgolaCredito: 468.0, size: 8 },
+  // Totale C/D INPS
+  totaleInps:        { y: 436, xVirgolaImporto: 380.5, xVirgolaCredito: 468.0, size: 8 },
 
   // Saldo finale EURO (virgola pre-stampata a x=553.3, box decimali proprio: XCIFRE_DECIMALI_SALDO_FINALE)
   saldoFinale:       { y: 124, xVirgolaImporto: 553.3, size: 9 },
@@ -226,6 +228,8 @@ export async function generaF24Pdf(scadenza, config) {
   if (f.provincia) scriviCaratteriInCaselle(LAYOUT.domicilioProvincia, f.provincia.toUpperCase().split(''));
 
   // --- Sezione ERARIO ---
+  // Righe con importo >= 0 → colonna debito; importo < 0 → colonna credito (valore assoluto).
+  // Il codice tributo va scritto in entrambi i casi (identifica la riga).
   const le = LAYOUT.erario;
   for (let i = 0; i < righeErario.length; i++) {
     const r = righeErario[i];
@@ -234,7 +238,11 @@ export async function generaF24Pdf(scadenza, config) {
     page.drawText(r.codice ?? '',                  { x: le.xCodiceTributo,   y, size: sz, font, color: nero });
     page.drawText(r.rateazione ?? '',              { x: le.xRateazione,      y, size: sz, font, color: nero });
     page.drawText(String(r.annoRiferimento ?? ''), { x: le.xAnnoRiferimento, y, size: sz, font, color: nero });
-    scriviImporto(le.xVirgolaImporto, y, r.importo, sz);
+    if (r.importo < 0) {
+      scriviImporto(le.xVirgolaCredito, y, -r.importo, sz);
+    } else {
+      scriviImporto(le.xVirgolaImporto, y, r.importo, sz);
+    }
   }
 
   // --- Sezione INPS ---
@@ -254,20 +262,30 @@ export async function generaF24Pdf(scadenza, config) {
     page.drawText(r.codice ?? '', { x: li.xCausale, y, size: sz, font, color: nero });
     scriviPeriodo(li.periodoDaMeseCentro, li.periodoDaAnnoCifre, y, sz, r.periodoDa);
     scriviPeriodo(li.periodoAMeseCentro,  li.periodoAAnnoCifre,  y, sz, r.periodoA);
-    scriviImporto(li.xVirgolaImporto, y, r.importo, sz);
+    if (r.importo < 0) {
+      scriviImporto(li.xVirgolaCredito, y, -r.importo, sz);
+    } else {
+      scriviImporto(li.xVirgolaImporto, y, r.importo, sz);
+    }
   }
 
-  // --- Totali ---
-  const totaleErario = righeErario.reduce((s, r) => s + r.importo, 0);
-  const totaleInps   = righeInps.reduce((s, r) => s + r.importo, 0);
-  const totaleSaldo  = Number((totaleErario + totaleInps).toFixed(2));
+  // --- Totali A/B (erario) e C/D (INPS) ---
+  // A = somma debiti erario, B = somma crediti erario (valore assoluto).
+  const totaleAErario = Number(righeErario.filter((r) => r.importo >= 0).reduce((s, r) => s + r.importo, 0).toFixed(2));
+  const totaleBErario = Number(righeErario.filter((r) => r.importo < 0).reduce((s, r) => s - r.importo, 0).toFixed(2));
+  const totaleAInps   = Number(righeInps.filter((r) => r.importo >= 0).reduce((s, r) => s + r.importo, 0).toFixed(2));
+  const totaleDInps   = Number(righeInps.filter((r) => r.importo < 0).reduce((s, r) => s - r.importo, 0).toFixed(2));
+  // Saldo finale = (A - B) + (C - D), non negativo (F24 a zero se compensazione totale).
+  const totaleSaldo = Math.max(0, Number(((totaleAErario - totaleBErario) + (totaleAInps - totaleDInps)).toFixed(2)));
 
-  if (totaleErario > 0) {
-    scriviImporto(LAYOUT.totaleErario.xVirgolaImporto, LAYOUT.totaleErario.y, totaleErario, LAYOUT.totaleErario.size);
-  }
-  if (totaleInps > 0) {
-    scriviImporto(LAYOUT.totaleInps.xVirgolaImporto, LAYOUT.totaleInps.y, totaleInps, LAYOUT.totaleInps.size);
-  }
+  const te = LAYOUT.totaleErario;
+  if (totaleAErario > 0) scriviImporto(te.xVirgolaImporto, te.y, totaleAErario, te.size);
+  if (totaleBErario > 0) scriviImporto(te.xVirgolaCredito,  te.y, totaleBErario, te.size);
+
+  const ti = LAYOUT.totaleInps;
+  if (totaleAInps > 0) scriviImporto(ti.xVirgolaImporto, ti.y, totaleAInps, ti.size);
+  if (totaleDInps > 0) scriviImporto(ti.xVirgolaCredito,  ti.y, totaleDInps, ti.size);
+
   if (totaleSaldo > 0) {
     scriviImporto(LAYOUT.saldoFinale.xVirgolaImporto, LAYOUT.saldoFinale.y, totaleSaldo, LAYOUT.saldoFinale.size);
   }

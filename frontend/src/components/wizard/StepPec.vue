@@ -105,8 +105,14 @@ async function leggiRisposte() {
     Le fatture inviate tramite SDI restano archiviate solo localmente: non equivale a conservazione a norma
     (obbligo di legge, 10 anni). Attiva il servizio gratuito di conservazione dell'Agenzia delle Entrate —
     copre automaticamente e gratuitamente tutte le fatture transitate da SDI, adesione una tantum sul portale.
-    <a href="https://www.agenziaentrate.gov.it/portale/aree-tematiche/fatturazione-elettronica/guida-fatturazione-elettronica/i-servizi-dell-agenzia-fe/servizio-conservazione-elettronica" target="_blank" rel="noopener">Attiva la conservazione su Agenzia Entrate</a>.
   </p>
+  <a
+    href="https://www.agenziaentrate.gov.it/portale/aree-tematiche/fatturazione-elettronica/guida-fatturazione-elettronica/i-servizi-dell-agenzia-fe/servizio-conservazione-elettronica"
+    target="_blank"
+    rel="noopener"
+    class="btn btn-ok"
+    style="margin-top:8px"
+  >Attiva la conservazione su Agenzia Entrate</a>
 
     </div>
   </div>

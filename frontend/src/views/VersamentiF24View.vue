@@ -206,9 +206,5 @@ function formattaEuro(valore) {
 </template>
 
 <style scoped>
-.btn-icon {
-  border: 1px solid var(--line); background: var(--card); color: var(--ink);
-  border-radius: 6px; width: 24px; height: 24px; line-height: 1; cursor: pointer;
-  font-size: .95rem;
-}
+/* btn-icon definito in style.css globale */
 </style>

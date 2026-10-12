@@ -55,8 +55,10 @@ function formattaImporto(numero) {
 /**
  * Genera l'XML FatturaPA come stringa UTF-8.
  * @param {object} dati - { fornitore, cliente, fattura: { numero, data, descrizione, oreTotali,
- *   tariffaOraria, imponibile, bollo, bolloApplicabile, progressivoInvio, trattamentoEstero } }
+ *   tariffaOraria, imponibile, bollo, bolloApplicabile, progressivoInvio, trattamentoEstero,
+ *   valutaFattura: { codice, cambio, fonte, dataQuotazione } } }
  *   trattamentoEstero: congelato al momento di "Genera fattura" da clienteEsteroService.trattamentoCliente()
+ *   valutaFattura: congelato alla generazione; null/assente = EUR
  */
 export function generaXmlFatturaPA(dati) {
   const { fornitore, cliente, fattura } = dati;
@@ -92,6 +94,14 @@ export function generaXmlFatturaPA(dati) {
   // Causali aggiuntive per clienti esteri (dicitura normativa), precedono la causale bollo e BTC
   const causaliEstereXml = causaliEstere?.length
     ? causaliEstere.map((c) => `\n        <Causale>${escapeXml(c)}</Causale>`).join('')
+    : '';
+
+  // Valuta fattura: congelata alla generazione; null/assente = EUR.
+  // Se diversa da EUR: <Divisa> con il codice ISO, <Causale> con il controvalore in EUR (DPR 633/72 art. 13 c. 4).
+  const valutaFattura = fattura.valutaFattura ?? null;
+  const divisa = valutaFattura?.codice ?? 'EUR';
+  const causaleValuta = (valutaFattura && valutaFattura.codice !== 'EUR')
+    ? `\n        <Causale>Controvalore in EUR: ${formattaImporto(fattura.imponibile)} EUR (cambio ${escapeXml(String(valutaFattura.cambio))} ${escapeXml(valutaFattura.codice)}/EUR del ${escapeXml(valutaFattura.dataQuotazione ?? '')}, fonte: ${escapeXml(valutaFattura.fonte ?? 'Banca d\'Italia')})</Causale>`
     : '';
 
   const datiBollo = fattura.bolloApplicabile
@@ -177,13 +187,13 @@ export function generaXmlFatturaPA(dati) {
     <DatiGenerali>
       <DatiGeneraliDocumento>
         <TipoDocumento>TD01</TipoDocumento>
-        <Divisa>EUR</Divisa>
+        <Divisa>${escapeXml(divisa)}</Divisa>
         <Data>${escapeXml(fattura.data)}</Data>
         <Numero>${escapeXml(fattura.numero)}</Numero>
 ${datiBollo}${datiCassaPrevidenzialeXml}        <ImportoTotaleDocumento>${formattaImporto(importoTotale)}</ImportoTotaleDocumento>
         <Causale>Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario.</Causale>
         <Causale>Operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</Causale>${fattura.bolloApplicabile ? `
-        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaliEstereXml}${causaleBtc}
+        <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaliEstereXml}${causaleValuta}${causaleBtc}
       </DatiGeneraliDocumento>
     </DatiGenerali>
     <DatiBeniServizi>

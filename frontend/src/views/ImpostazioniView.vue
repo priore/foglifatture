@@ -89,7 +89,7 @@ onBeforeRouteUpdate(async (to, from, next) => {
         <StepPec v-else-if="passoAttivo === 2" v-model="config.pec" :sdi="config.sdi" />
         <StepPercorsoDati v-else-if="passoAttivo === 3" v-model="config.dati" />
         <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
-        <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" />
+        <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" :notifiche="config.notifiche" />
         <StepGoogleAuth v-else-if="passoAttivo === 6" />
         <StepAI v-else />
 

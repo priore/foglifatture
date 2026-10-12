@@ -3,7 +3,7 @@
 // altrimenti è considerata non emessa e scattano le sanzioni per tardiva fatturazione.
 // Stesso pattern setInterval di reminderService.js/sdiRicevuteService.js: rilegge la config
 // a ogni giro, sempre attivo (non è una preferenza opzionale, è compliance fiscale).
-import { notificaMac } from '../lib/macNotifier.js';
+import { notifica } from '../lib/notifier.js';
 import { listMesiFatturati, getInvoice, saveInvoice } from './invoiceService.js';
 import { statoSdiFattura } from './sdiRicevuteService.js';
 import { logger } from '../lib/logger.js';
@@ -37,7 +37,7 @@ export function avviaPromemoriaScartoSdi(getConfig, intervalloMinuti = 60) {
         const messaggio = giorniTrascorsi > GIORNI_LIMITE_RIEMISSIONE
           ? `Fattura n.${invoice.numero} scartata da ${giorniTrascorsi} giorni: termine di ${GIORNI_LIMITE_RIEMISSIONE} giorni per la riemissione SUPERATO, rischio sanzione per tardiva fatturazione.`
           : `Fattura n.${invoice.numero} scartata da SDI: ${GIORNI_LIMITE_RIEMISSIONE - giorniTrascorsi} giorni residui per correggere e reinviare.`;
-        notificaMac('Fattura scartata da SDI', messaggio);
+        notifica('Fattura scartata da SDI', messaggio);
 
         await saveInvoice(anno, mese, clienteId, { ...invoice, ultimaNotificaScartoSdi: chiaveOggi });
       }

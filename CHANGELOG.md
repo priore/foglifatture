@@ -6,6 +6,54 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-12
+
+### Added
+- **Monitoraggio fonti normative completo** — il controllo periodico delle fonti ora supporta:
+  - Strategia "finestra di testo" per le proposte AI: i campi con citazioni oltre i primi 8.000 caratteri del documento vengono analizzati con una finestra centrata sulla posizione della citazione (risolve il limite per L. 190/2014 e L. 662/1996).
+  - Conferma/scarto proposte AI: nuovi pulsanti "Applica proposte AI" e "Scarta proposte" in Impostazioni → Regole fiscali applicano o eliminano selettivamente i valori proposti dall'AI, senza toccare il pacchetto versionato.
+  - Nota limite UI: avviso in fondo al pannello che un atto normativo non ancora nel registro non viene rilevato dal monitoraggio (per questo esiste la ricerca AI dedicata).
+- **Toggle globale notifiche desktop** — nuovo campo in Impostazioni → Promemoria: disabilitando "Notifiche desktop abilitate" nessuna notifica viene mostrata (scadenze F24, bollo, ricevute SDI, aggiornamenti regole, promemoria). Il promemoria fine mese è subordinato al toggle principale. Notifiche cross-platform via `node-notifier` (macOS, Windows, Linux).
+- **Deduplicazione notifiche** — `notificaConDedup(chiave, titolo, messaggio)`: un evento con la stessa chiave non genera spam se il backend resta in polling; la stessa notifica è silenziata per 24 ore. `cancellaDedup` permette di ri-abilitarla (usato da OS.6 per il ripristino IMAP).
+- **Compensazione crediti fiscali nell'F24** — nuova card "Crediti compensabili F24" nella tab F24 della dashboard:
+  - Registrazione manuale di crediti fiscali (es. imposta sostitutiva pagata in eccesso, saldo a credito) con codice tributo, anno di riferimento, importo e data di disponibilità.
+  - La compensazione si applica al momento di creare un F24 (non modifica la stima): riduce le righe debitorie e traccia gli utilizzi nelle righe F24.
+  - Compensazione verticale (stesso codice tributo, es. 1792 su 1790/1791): esente dal limite dei 5.000 € e dal visto di conformità (Ris. AdE 110/E/2019).
+  - Compensazione orizzontale: limitata a 5.000 €/anno; l'app avvisa che è richiesta la presentazione della dichiarazione almeno 10 giorni prima e, oltre la soglia, il visto di conformità (DL 124/2019 art. 3).
+  - F24 a saldo zero: avviso che deve essere presentato esclusivamente per via telematica (D.L. 66/2014).
+- **Rateizzazione saldo F24** — nella card "Versamenti stimati F24" è possibile scegliere il numero di rate per saldo + I acconto (da 1 a 7, fino al 16 dicembre):
+  - Il selettore calcola automaticamente le date di pagamento (primo giorno lavorativo, con slittamento di agosto), gli interessi erario (codice `1668`) e INPS (causale `DPPI`), le causali INPS rateizzate (`PXXR`/`P10R`), secondo il DM 21/5/2009 art. 5 e la tabella AdE.
+  - La scelta viene salvata e vale anche per il PDF F24 e la creazione degli F24 programmati.
+- **Fatture in valuta estera** — è possibile emettere fatture in USD, GBP, CHF e altre valute riconosciute dalla Banca d'Italia:
+  - Il campo *Valuta fattura* in Fattura Pro-Forma imposta la divisa della fattura (default EUR); il pulsante *Recupera cambio* ottiene il tasso ufficiale Banca d'Italia per la data della fattura, con ripiego automatico ai giorni precedenti in caso di festività.
+  - Il cambio viene congelato alla generazione e incluso nell'XML FatturaPA come `<Divisa>` e `<Causale>` con il controvalore in EUR (art. 13 c. 4 DPR 633/72).
+  - Il pulsante *€ Registra incasso in valuta estera* registra l'incasso con importo, cambio e fonte; l'EUR equivalente è calcolato dal backend (`importo / cambio`).
+- **Registro fonti normative** — ogni valore nelle Regole fiscali mostra ora un pulsante 📄 accanto al riferimento normativo:
+  - Cliccando si apre un popup con l'estratto del testo di legge archiviato, con la citazione pertinente evidenziata in giallo e contesto circostante.
+  - Il popup include il link "Apri testo integrale" a Normattiva.
+  - I testi sono archiviati localmente in `backend/src/data/fonti/testi/` (verificati e corretti rispetto al testo ufficiale).
+  - Se il testo non è ancora archiviato per quella fonte, il pulsante è silenzioso (nessun errore visibile).
+- **AI ausilio normativo** — pulsanti opzionali (richiedono un provider AI configurato in Impostazioni → AI):
+  - **"Spiega con AI"** accanto alla checkbox *requisiti aliquota agevolata 5%* (Impostazioni → Fornitore): spiega in italiano semplice i requisiti di L. 190/2014 c. 65.
+  - **"Spiega con AI"** accanto alla checkbox *art. 7-septies* nel wizard cliente (visibile solo per privati extra-UE): spiega se le prestazioni rientrano nell'art. 7-septies DPR 633/72.
+  - Risposta in popup con formattazione markdown (titoli, elenchi, grassetto).
+- **Interpretazione AI messaggi SDI non strutturati** — attiva solo con `sdi.autorizzaAiPec: true` in config (default disattivato; i contenuti PEC non vengono mai inviati all'AI senza consenso esplicito):
+  - NE con rifiuto committente (EC02): interpreta il testo libero di `<Descrizione>` e propone un'azione correttiva in notifica desktop.
+  - Allegati XML non classificabili dallo SDI: identifica il tipo di documento e se richiede attenzione.
+  - Email SDI senza allegati XML: valuta la rilevanza e mostra un sommario in notifica desktop se informativa o urgente.
+
+### Fixed
+- **Regole fiscali — pannello aggiornamento**: valori non leggibili nel confronto tra versione attiva e nuova; ora mostrati correttamente.
+- **Bottoni poco visibili in dark mode** — molti bottoni secondari risultavano invisibili o quasi su sfondo scuro in tutta l'app (Clienti, Fattura Pro-Forma, Versamenti F24, Impostazioni e wizard). Ora hanno uno sfondo leggero che li rende riconoscibili come elementi cliccabili.
+
+### Changed
+- **Impostazioni PEC — link conservazione AE trasformato in bottone** — il link "Attiva la conservazione su Agenzia Entrate" è ora un pulsante separato dal testo.
+- **Installer versionless**: `.pkg` e `.exe` diventano file fissi `FogliFatture-*`, senza versione nel nome:
+  - Scaricano automaticamente l'ultima release disponibile su GitHub; nessuna nuova build necessaria ad ogni rilascio.
+  - Versione specifica installabile da terminale:
+    - macOS: `FOGLIFATTURE_VERSION=1.5.0 installer -pkg FogliFatture-mac-universal.pkg -target CurrentUserHomeDirectory`
+    - Windows: `FogliFatture-win-x64.exe /Version=1.5.0`
+
 ## [1.6.0] - 2026-10-08
 
 ### Added
@@ -87,14 +135,19 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 - **Clienti esteri: IVA, diciture legali e Intrastat**:
   - Ogni cliente ha ora i campi "Paese" (ISO 3166-1, es. IT/DE/US) e "Tipo soggetto" (azienda / privato).
-  - Wizard impostazioni clienti adattivo: Provincia nascosta per esteri, codice SDI fisso "XXXXXXX", campo P.IVA accetta identificativi UE fino a 28 caratteri.
+  - **Wizard impostazioni clienti adattivo**:
+    - Provincia nascosta per clienti esteri.
+    - Codice SDI fisso "XXXXXXX".
+    - Campo P.IVA accetta identificativi UE fino a 28 caratteri.
   - Trattamento IVA automatico al momento della generazione:
     - N2.1 inversione contabile per aziende UE (art. 7-ter DPR 633/72).
     - N2.1 non soggetta per aziende extra-UE.
     - N2.1 art. 7-septies per privati extra-UE con servizi specifici.
     - N2.2 per tutti gli altri casi.
   - XML FatturaPA:
-    - CodiceDestinatario XXXXXXX, CAP 00000, nessuna Provincia.
+    - CodiceDestinatario XXXXXXX.
+    - CAP 00000.
+    - Nessuna Provincia.
     - IdPaese/Nazione dal paese del cliente.
     - Blocco AltriDatiGestionali INVCONT per B2B UE.
   - Dicitura legale corrispondente aggiunta come `<Causale>` nell'XML.
@@ -141,7 +194,10 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
     - Rate con TXID.
     - Quadro RW.
     - Valore attuale con grafico andamento cambio EUR/BTC.
-  - Card "Valore BTC di mercato" (prezzo attuale, variazione 24h, andamento ultimi 30gg).
+  - **Card "Valore BTC di mercato"**:
+    - Prezzo attuale.
+    - Variazione 24h.
+    - Andamento ultimi 30 giorni.
   - Card riordinabili con trascinamento (ordine salvato nel browser), sia in Dashboard che in Bitcoin.
 - **Importa storico da ZIP** — archivio ZIP del portale Fatture e Corrispettivi (o SDI) caricabile così com'è, con anteprima dei file riconosciuti (fatture e ricevute SDI) e import dei soli file scelti.
 - **Fatture: blocco data nel futuro** — la data di emissione nel futuro viene bloccata prima della generazione/invio XML, con avviso preciso sul rifiuto SDI 00403.
@@ -208,15 +264,18 @@ Prima release pubblica.
 
 ### Added
 - **Timesheet**:
-  - Griglia giornaliera multi-cliente, formattazione live del tempo, copia/incolla riga.
-  - Export CSV per VMS ed export PDF.
+  - Griglia giornaliera multi-cliente con formattazione live del tempo e copia/incolla riga.
+  - Export CSV per VMS.
+  - Export PDF.
 - **Fatturazione FatturaPA**:
   - Generazione da timesheet (ore × tariffa) o a importo libero.
   - Invio via PEC al Sistema di Interscambio con polling automatico ricevute SDI.
-  - Notifica desktop per ricevute, invio email al cliente via `mailto` con allegato PDF reale.
+  - Notifica desktop per ricevute SDI.
+  - Invio email al cliente via `mailto` con allegato PDF reale.
 - **Dashboard forfettario**:
   - Ricavi cumulati, soglia annua, previsione imposta sostitutiva e acconto anno successivo.
-  - Andamento mensile, fatture da incassare, prossime scadenze fiscali (calcolate localmente, con verifica periodica proroghe via AI).
+  - Andamento mensile e fatture da incassare.
+  - Prossime scadenze fiscali calcolate localmente, con verifica periodica proroghe via AI.
 - **Gestione pagamenti e versamenti**:
   - Sezione "Versamenti F24":
     - Registrazione manuale.
@@ -235,24 +294,35 @@ Prima release pubblica.
   - Personalizzabili per Timesheet e Fattura Pro-Forma, selezionabili per singolo cliente.
   - Anteprima a griglia.
 - **Backup e ripristino**:
-  - Backup/restore cifrato, backup automatico programmabile.
+  - Backup e restore cifrato.
+  - Backup automatico programmabile.
   - Percorso cartella dati configurabile (Dropbox/iCloud/OneDrive).
 - **Autenticazione e sicurezza**:
-  - Login opzionale con Google OAuth, whitelist multi-email.
-  - Dark mode, aggiornamento app da UI con un click (download, build, riavvio).
+  - Login opzionale con Google OAuth con whitelist multi-email.
+  - Dark mode.
+  - Aggiornamento app da UI con un click (download, build, riavvio).
 - **Intelligenza artificiale**:
-  - Aggiornamento codici ATECO assistito da AI (Gemini), fallback su Claude/Groq se quota esaurita.
+  - Aggiornamento codici ATECO assistito da AI (Gemini).
+  - Fallback su Claude/Groq se quota Gemini esaurita.
   - Promemoria desktop:
     - Fine mese per timesheet.
     - Fattura scartata da SDI non ancora reinviata (rischio sanzione dopo 5 giorni).
 - **Conformità normativa**:
   - Blocco rigenerazione fattura già accettata dallo SDI (va corretta con nota di variazione).
-  - Pagina "Privacy e trattamento dati": titolare, dati trattati, comunicazione a terzi (SDI, PEC, Google, AI), conservazione, sicurezza, diritti dell'interessato.
+  - **Pagina "Privacy e trattamento dati"**:
+    - Titolare del trattamento.
+    - Dati trattati.
+    - Comunicazione a terzi (SDI, PEC, Google, AI).
+    - Conservazione.
+    - Sicurezza.
+    - Diritti dell'interessato.
 - **Installazione**:
   - Script multi-piattaforma (macOS `launchd`, Windows Task Scheduler), avvio path-indipendente.
 
 ### Security
 - Credenziali sensibili (password PEC/backup, client secret Google OAuth, API key AI) salvate nel Keychain del sistema operativo, mai in chiaro su file.
-- Libreria di lettura file Excel per l'import storico aggiornata, risolte vulnerabilità note (denial of service, prototype pollution).
+- **Libreria di lettura file Excel per l'import storico aggiornata**:
+  - Risolta vulnerabilità denial of service.
+  - Risolta vulnerabilità prototype pollution.
 - Validazione campi configurazione (P.IVA, PEC, codice destinatario SDI).
 - Controllo integrità numerazione fatture (sequenza unica, obbligo di legge, condivisa correttamente tra più clienti).

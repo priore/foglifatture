@@ -1,7 +1,9 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import LogoUpload from './LogoUpload.vue';
 import { pivaValida, codiceSdiValido } from '../../composables/useValidazioneFiscale.js';
+import { api } from '../../services/api.js';
+import { renderMarkdown } from '../../composables/useMarkdown.js';
 
 const props = defineProps({ modelValue: { type: Object, required: true } });
 
@@ -24,6 +26,23 @@ const mostraServizi7Sep = computed(() =>
   (props.modelValue.tipo ?? 'azienda') === 'privato' &&
   !['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','LT','LU','LV','MT','NL','PL','PT','RO','SE','SI','SK'].includes((props.modelValue.paese ?? 'IT').toUpperCase())
 );
+
+const spiegaSeptiesInCorso = ref(false);
+const popupAI = ref(null); // { titolo, testo }
+
+async function aiutamiCapire7Septies() {
+  spiegaSeptiesInCorso.value = true;
+  try {
+    // descrizioneAttivita non è disponibile in StepCliente (è in StepFornitore);
+    // si passa undefined: l'AI risponde in modo generico.
+    const r = await api.spiegaSepties(undefined);
+    popupAI.value = { titolo: 'Art. 7-septies DPR 633/72 — Spiegazione AI', testo: r.spiegazione };
+  } catch (err) {
+    popupAI.value = { titolo: 'Spiegazione AI', testo: err.message };
+  } finally {
+    spiegaSeptiesInCorso.value = false;
+  }
+}
 </script>
 
 <template>
@@ -125,7 +144,10 @@ const mostraServizi7Sep = computed(() =>
         <input id="servizi-7-septies" type="checkbox" v-model="modelValue.servizi7Septies" class="checkbox-app">
         <label for="servizi-7-septies" style="margin:0">Prestazioni rientranti nell'art. 7-septies DPR 633/72 (consulenza, elaborazione dati, pubblicità, cessione software, ecc.)</label>
       </div>
-      <small class="note-legal" style="margin-top:4px">Se spuntato, la fattura a questo cliente privato extra-UE userà N2.1 + dicitura "non soggetta". Altrimenti trattamento ordinario forfettario (N2.2).</small>
+      <small class="note-legal" style="margin-top:4px;display:block">Se spuntato, la fattura a questo cliente privato extra-UE userà N2.1 + dicitura "non soggetta". Altrimenti trattamento ordinario forfettario (N2.2).</small>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px">
+        <button type="button" class="btn-ai" :disabled="spiegaSeptiesInCorso" @click="aiutamiCapire7Septies">{{ spiegaSeptiesInCorso ? '…' : 'Spiega con AI' }}</button>
+      </div>
     </div>
 
     <div class="field"><label>Figura</label><input v-model="modelValue.figura"></div>
@@ -133,4 +155,22 @@ const mostraServizi7Sep = computed(() =>
     <div class="field"><label>Cliente</label><input v-model="modelValue.clientePdf"></div>
     <div class="field"><label>Progetto</label><input v-model="modelValue.progetto"></div>
   </div>
+
+  <!-- Popup spiegazione AI (D.15 art. 7-septies) -->
+  <Teleport to="body">
+    <div v-if="popupAI" class="ai-overlay" @click.self="popupAI = null">
+      <div class="ai-popup" role="dialog" aria-modal="true">
+        <div class="ai-popup-header">
+          <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
+          <button class="btn-chiudi" @click="popupAI = null" aria-label="Chiudi">✕</button>
+        </div>
+        <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
+        <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>
+      </div>
+    </div>
+  </Teleport>
 </template>
+
+<style scoped>
+/* btn-ai, btn-icon definiti in style.css globale */
+</style>
