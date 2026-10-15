@@ -1,12 +1,7 @@
 {
-  "model": "sonnet",
-  "advisorModel": "opus",
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
   },
-  "effortLevel": "medium",
-  "promptCacheTtl": "1h",
-  "subagentPromptCacheTtl": "1h",
   "permissions": {
     "allow": [
       "mcp__playwright__browser_navigate",
@@ -30,9 +25,11 @@
       "Bash(npm run build*)",
       "Bash(gh run *)",
       "Bash(gh pr list*)",
-      "Bash(lsof -i :1969*)"
+      "Bash(lsof -i :1969*)",
+      "WebFetch(domain:infoprecompilata.agenziaentrate.gov.it)"
     ]
   },
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -51,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.command' | { read -r cmd; if echo \"$cmd\" | grep -qE '\\bgit\\s+(commit|push)\\b'; then hit=$( (git ls-files; git diff --cached --name-only) | grep -E '(^|/)(config\\.json|\\.env|[^/]*\\.key|[^/]*\\.pem)$' ); if [ -n \"$hit\" ]; then printf '{\"decision\":\"block\",\"reason\":\"Sensitive file(s) staged/tracked, blocking commit/push:\\n%s\"}' \"$hit\"; exit 0; fi; fi; exit 0; }",
+            "command": "jq -r '.tool_input.command' | { read -r cmd; if echo \"$cmd\" | grep -qE '\\bgit\\s+commit\\b'; then out=$(\"$CLAUDE_PROJECT_DIR\"/scripts/git-hooks/pre-commit 2>&1) || { jq -n --arg r \"$out\" '{decision:\"block\",reason:$r}'; exit 0; }; fi; exit 0; }",
             "timeout": 15
           },
           {
@@ -73,5 +70,9 @@
       }
     ],
     "PostToolUse": []
-  }
+  },
+  "promptCacheTtl": "1h",
+  "subagentPromptCacheTtl": "1h",
+  "effortLevel": "medium",
+  "advisorModel": "opus"
 }

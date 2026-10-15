@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { generaXmlFatturaPA, generaNomeFileXml } from './fatturaPaXmlGenerator.js';
 
 const fornitore = {
-  denominazione: 'priore', partitaIva: '11111111111', codiceFiscale: 'RSSMRA80A01H501U',
+  denominazione: 'Mario Rossi', partitaIva: '11111111111', codiceFiscale: 'RSSMRA80A01H501U',
   indirizzo: 'Via Esempio', numeroCivico: '12', cap: '00100', comune: 'Roma', provincia: 'RM',
 };
 const cliente = {
@@ -81,7 +81,7 @@ test('cliente con pagamentoBtc attivo ma fattura congelata senza: nessuna Causal
 });
 
 const fatturaBase = { numero: '1', data: '2026-09-01', descrizione: 'x', oreTotali: 1, tariffaOraria: 100, imponibile: 100, bollo: 0, bolloApplicabile: false, progressivoInvio: 1 };
-const pagamento = { modalita: 'MP05', iban: 'IT60X0542811101000000123456', intestatario: 'priore', istitutoFinanziario: '', giorniScadenza: 30 };
+const pagamento = { modalita: 'MP05', iban: 'IT60X0542811101000000123456', intestatario: 'Mario Rossi', istitutoFinanziario: '', giorniScadenza: 30 };
 
 test('DatiPagamento: bonifico con IBAN e scadenza = data + giorni', () => {
   const xml = generaXmlFatturaPA({ fornitore, cliente, fattura: { ...fatturaBase, pagamento } });

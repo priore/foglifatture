@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocca file sensibili e dati personali nello staging.
+# Uso CI: scripts/git-hooks/pre-commit --range BASE..HEAD
+. "$(dirname "$0")/lib.sh"
+VIOLATIONS=$(mktemp); export VIOLATIONS
+trap 'rm -f "$VIOLATIONS"' EXIT
+[ "${FOGLIFATTURE_HOOKS_MODE:-}" = off ] && exit 0
+if [ "$1" = "--range" ]; then
+  FOGLIFATTURE_HOOKS_MODE=force; check_diff "${2%%..*}" "${2##*..}"
+else
+  check_diff --cached
+fi
+rc=$?
+[ $rc -eq 0 ] || echo "Hook pre-commit: correggi (o '# hooks:allow' per falsi positivi) prima di committare." >&2
+exit $rc

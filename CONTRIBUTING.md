@@ -4,7 +4,7 @@ Grazie per l'interesse a contribuire. Questo documento vale per qualunque forma 
 
 ## Licenza dei contributi
 
-Contribuendo, accetti i termini del [CLA](CLA.md): il tuo contributo viene rilasciato sotto la licenza del progetto ([PolyForm Noncommercial 1.0.0](LICENSE)) e concedi all'autore (priore) licenza a usarlo/rilicenziarlo, incluso per eventuali accordi commerciali futuri.
+Contribuendo, accetti i termini del [CLA](CLA.md): il tuo contributo viene rilasciato sotto la licenza del progetto ([PolyForm Noncommercial 1.0.0](LICENSE)) e concedi all'autore ([priore](https://github.com/priore)) licenza a usarlo/rilicenziarlo, incluso per eventuali accordi commerciali futuri.
 
 Per le Pull Request, la firma del CLA è gestita automaticamente da **CLA Assistant**: al primo contributo, il bot chiede la firma in un commento sulla PR. Firmato una volta, non va rifirmato per PR successive. Il merge resta bloccato finché il CLA non è firmato.
 
@@ -37,3 +37,13 @@ Apri una issue usando il template appropriato. Per vulnerabilità di sicurezza, 
 ## Codice di condotta
 
 Partecipando a questo progetto accetti il [Codice di Condotta](CODE_OF_CONDUCT.md).
+
+## Hook git locali (opzionali)
+
+Per evitare di committare per errore file sensibili o dati personali (percorsi assoluti, indirizzi email personali, chiavi), attiva gli hook del repository:
+
+```bash
+sh scripts/git-hooks/install.sh
+```
+
+I controlli sono comunque ripetuti dalla CI.

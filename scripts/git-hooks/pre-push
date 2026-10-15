@@ -1,0 +1,18 @@
+#!/bin/sh
+# Blocca il push di commit con dati personali o identita' non consentite (solo remote github.com).
+. "$(dirname "$0")/lib.sh"
+case "$2" in *github.com*) ;; *) [ "${FOGLIFATTURE_HOOKS_MODE:-}" = force ] || exit 0 ;; esac
+[ "${FOGLIFATTURE_HOOKS_MODE:-}" = off ] && exit 0
+VIOLATIONS=$(mktemp); export VIOLATIONS
+trap 'rm -f "$VIOLATIONS"' EXIT
+zero=0000000000000000000000000000000000000000
+FOGLIFATTURE_HOOKS_MODE=force
+while read -r lref lsha rref rsha; do
+  [ "$lsha" = "$zero" ] && continue
+  if [ "$rsha" = "$zero" ]; then range="$lsha"; base=$(git hash-object -t tree /dev/null)
+  else range="$rsha..$lsha"; base=$rsha; fi
+  check_diff "$base" "$lsha"
+  check_identity "$range"
+done
+[ ! -s "$VIOLATIONS" ] || { echo "Hook pre-push: push bloccato." >&2; exit 1; }
+exit 0

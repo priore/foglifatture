@@ -1,0 +1,12 @@
+#!/bin/sh
+# Avvisa (non blocca) se l'ultimo commit contiene dati personali o un'identita' non consentita.
+. "$(dirname "$0")/lib.sh"
+VIOLATIONS=$(mktemp); export VIOLATIONS
+trap 'rm -f "$VIOLATIONS"' EXIT
+[ "${FOGLIFATTURE_HOOKS_MODE:-}" = off ] && exit 0
+base=$(git rev-parse -q --verify HEAD~1 || git hash-object -t tree /dev/null)
+check_diff "$base" HEAD >&2 || echo "Attenzione: l'ultimo commit viola i controlli. Correggi con 'git commit --amend' prima del push." >&2
+if content_checks_enabled; then
+  check_identity "$base..HEAD" >&2 || echo "Attenzione: identita' non consentita. Usa 'git commit --amend --reset-author' dopo aver impostato user.name/user.email del repo." >&2
+fi
+exit 0

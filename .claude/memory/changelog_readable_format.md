@@ -59,4 +59,4 @@ Una voce semplice a una sola frase resta su una riga, non serve spezzarla artifi
 - Gestione pagamenti: Versamenti F24 con registrazione manuale, confronto con imposta stimata, import da Cassetto Fiscale, export CSV per anno; Pagamenti fatture con riconoscimento automatico e abbinamento per importo.
 ```
 
-**Niente riferimenti a documenti interni non pubblici:** il CHANGELOG è pubblico (GitHub-facing). Non citare `FP-XXX`, nomi di file di piano (`FEATURES_GAP_ANALISI_ESTERNA.md`), o qualsiasi altro identificatore interno che non ha significato per un lettore esterno. Descrivere la funzione con parole, non con il ticket.
+**Niente riferimenti a documenti interni non pubblici:** il CHANGELOG è pubblico (GitHub-facing). Non citare `FP-XXX`, nomi di file di piano interni, o qualsiasi altro identificatore interno che non ha significato per un lettore esterno. Descrivere la funzione con parole, non con il ticket.

@@ -4,7 +4,7 @@ Contribuendo a questo progetto (Pull Request via fork, patch inviata fuori GitHu
 
 ## 1. Concessione di licenza
 
-Dichiari di avere il diritto di sottomettere il contributo e concedi all'autore del repository (priore) una licenza perpetua, mondiale, non esclusiva, gratuita, irrevocabile a usare, riprodurre, modificare, sublicenziare, distribuire e rilicenziare il tuo contributo, incluso nell'ambito di eventuali accordi commerciali futuri relativi al progetto.
+Dichiari di avere il diritto di sottomettere il contributo e concedi all'autore del repository ([priore](https://github.com/priore)) una licenza perpetua, mondiale, non esclusiva, gratuita, irrevocabile a usare, riprodurre, modificare, sublicenziare, distribuire e rilicenziare il tuo contributo, incluso nell'ambito di eventuali accordi commerciali futuri relativi al progetto.
 
 ## 2. Licenza del progetto
 

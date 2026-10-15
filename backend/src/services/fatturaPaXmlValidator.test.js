@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { validaDatiFatturaPA } from './fatturaPaXmlValidator.js';
 
 const fornitore = {
-  denominazione: 'priore', partitaIva: '11111111111', codiceFiscale: 'RSSMRA80A01H501U',
+  denominazione: 'Mario Rossi', partitaIva: '11111111111', codiceFiscale: 'RSSMRA80A01H501U',
   indirizzo: 'Via Esempio', cap: '00100', comune: 'Roma', provincia: 'RM',
 };
 const cliente = {

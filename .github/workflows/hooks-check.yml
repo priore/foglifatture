@@ -1,0 +1,16 @@
+name: hooks-check
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Controlla file sensibili e dati personali nel diff della PR
+        run: sh scripts/git-hooks/pre-commit --range "origin/${{ github.base_ref }}..HEAD"
