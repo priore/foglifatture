@@ -25,7 +25,9 @@ function parseChiave(chiave) {
 export function calcolaBollo(imponibile, sogliaBolloVirtuale, importoBollo, rivalsaAliquota = 0) {
   const rivalsaInps = rivalsaAliquota > 0 ? Number((imponibile * rivalsaAliquota / 100).toFixed(2)) : 0;
   const totaleConRivalsa = Number((imponibile + rivalsaInps).toFixed(2));
-  const bolloApplicabile = imponibile > sogliaBolloVirtuale;
+  // La soglia (DPR 642/72, Tariffa all. A parte I art. 13) vale sul totale del documento:
+  // la rivalsa INPS è parte dell'importo e concorre, il bollo stesso no.
+  const bolloApplicabile = totaleConRivalsa > sogliaBolloVirtuale;
   const bollo = bolloApplicabile ? importoBollo : 0;
   return { imponibile, bolloApplicabile, bollo, rivalsaInps, nettoAPagare: totaleConRivalsa };
 }

@@ -1,7 +1,7 @@
 // Stima delle scadenze F24 (imposta sostitutiva + INPS gestione separata) per l'anno fiscale N.
 // Funzioni pure: nessuna lettura da disco, tutti gli input arrivano dal chiamante (step 5 F24_STEP3).
 import { scadenzeBaseAnno, primoGiornoLavorativo } from './scadenzeFiscaliService.js';
-import { impostaCassaAnno } from './forfettarioService.js';
+import { impostaCassaAnno, roundEuro, accontoInpsAnnoSuccessivo } from './forfettarioService.js';
 import { listVersamenti, accontiImpostaVersati } from './versamentiF24Service.js';
 import { tutteLeFattureRisolte } from './forfettarioService.js';
 import { arricchisciStatoPagamento } from './invoiceService.js';
@@ -193,7 +193,8 @@ export async function stimaVersamenti(config, anno) {
 
   // Soglia: oltre 100.000 € il regime cessa nell'anno stesso, F24 forfettario non applicabile.
   const sogliaUscita = regole.forfettario.sogliaUscitaImmediata ?? 100000;
-  if (datiN.redditoForfettario > sogliaUscita) {
+  // La soglia vale sui ricavi/compensi incassati (L. 190/2014 c. 71), non sul reddito.
+  if (datiN.ricavi > sogliaUscita) {
     return {
       annoFiscale: anno,
       regole: { anno: regole.anno, verificatoIl: regole.verificatoIl, aggiornate: regole.aggiornate ?? true, banner: regole.banner ?? null },
@@ -228,7 +229,7 @@ export async function stimaVersamenti(config, anno) {
   if (accontiVersatiN === null) {
     avvisi.push('Acconti imposta 2026 non registrati con codice tributo: usata la stima dell\'anno precedente.');
   }
-  const saldoImposta = Number((impostaN - accontiEffettiviN).toFixed(2));
+  const saldoImposta = roundEuro(impostaN - accontiEffettiviN);
 
   // Acconto anno N+1
   const accontoTotaleN1 = impostaN <= sogliaNonDovuto ? 0 : Number((impostaN * percentualeAccontoN / 100).toFixed(2));
@@ -241,8 +242,13 @@ export async function stimaVersamenti(config, anno) {
     // Acconti INPS = 80% dell'INPS anno N-1 (stima; i versamenti INPS non hanno codice separato)
     const percentualeAccontoInps = regole.inpsGestioneSeparata ? 80 : 80;
     const accontiInpsNm1 = Number((inpsNm1 * percentualeAccontoInps / 100).toFixed(2));
-    saldoInps = Number((inpsN - accontiInpsNm1).toFixed(2));
-    accontoInpsTotaleN1 = Number((inpsN * percentualeAccontoInps / 100).toFixed(2));
+    saldoInps = roundEuro(inpsN - accontiInpsNm1);
+    // Acconti N+1: reddito di N con l'aliquota di N+1 (Circ. INPS 8/2026 §4.2).
+    const regoleN1 = await regoleAnno(anno + 1);
+    accontoInpsTotaleN1 = accontoInpsAnnoSuccessivo(datiN.redditoForfettario, regoleN1, altraCoperturaPrevidenziale);
+    if (regoleN1.aggiornate === false) {
+      avvisi.push(`Regole ${anno + 1} non ancora disponibili: acconti INPS ${anno + 1} calcolati con l'aliquota ${regoleN1.anno}.`);
+    }
     avvisi.push('Acconti INPS stimati dall\'anno precedente (non è possibile distinguere i versamenti INPS senza il codice tributo).');
   }
 

@@ -1,90 +1,81 @@
 # Workspace Manifest
 
-Index of the AI Workspace Knowledge Base. Source of truth for what exists, why, in what order, and when each document counts as done.
+Indice della knowledge base AI Workspace. Fonte di verità su cosa esiste, in che ordine e quando un documento è completo.
 
-Confidence levels used throughout the workspace: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Livelli di confidenza: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
 ---
 
-## Document Registry
+## Registro documenti
 
-| Document | Path | Purpose | Depends on | Status | Priority | Recommended model |
+| Documento | Percorso | Scopo | Dipende da | Stato | Priorità | Modello consigliato |
 |---|---|---|---|---|---|---|
-| README | [README.md](AI-Workspace/README.md) | Entry point: what the workspace is, how to navigate it | — | 🟢 complete | High | Any |
-| PROJECT_CONTEXT | [architecture/PROJECT_CONTEXT.md](AI-Workspace/architecture/PROJECT_CONTEXT.md) | Product purpose, users, domain (fatturazione/invoicing), business goals | — | 🟢 complete | Critical | Claude Opus |
-| PROJECT_ANALYSIS | [architecture/PROJECT_ANALYSIS.md](AI-Workspace/architecture/PROJECT_ANALYSIS.md) | Codebase inventory: stack, folder map, entry points, scripts, env config | PROJECT_CONTEXT | 🟢 complete | Critical | Claude Opus |
-| ARCHITECTURE | [architecture/ARCHITECTURE.md](AI-Workspace/architecture/ARCHITECTURE.md) | System architecture: frontend/backend boundary, data flow, integrations (IMAP/mail, OAuth, XLSX, PDF export) | PROJECT_ANALYSIS | 🟢 complete | Critical | Claude Opus |
-| UI_ANALYSIS | [architecture/UI_ANALYSIS.md](AI-Workspace/architecture/UI_ANALYSIS.md) | Vue views/components inventory, routing, state, user flows | ARCHITECTURE | 🟢 complete | High | Claude Sonnet |
-| DESIGN_SYSTEM | [design/DESIGN_SYSTEM.md](AI-Workspace/design/DESIGN_SYSTEM.md) | Visual language as implemented: light glass + dark mode, accessibility posture | UI_ANALYSIS | 🟢 complete | Medium | Claude Sonnet |
-| DESIGN_TOKENS | [design/DESIGN_TOKENS.md](AI-Workspace/design/DESIGN_TOKENS.md) | Concrete tokens (color, spacing, radius, typography, shadow/glass values) extracted from CSS | DESIGN_SYSTEM | 🟢 complete | Medium | Claude Sonnet |
-| COMPONENT_LIBRARY | [design/COMPONENT_LIBRARY.md](AI-Workspace/design/COMPONENT_LIBRARY.md) | Catalog of reusable Vue components, props, variants, usage sites | DESIGN_TOKENS, UI_ANALYSIS | 🟢 complete | Medium | Claude Sonnet |
-| ROADMAP | [product/ROADMAP.md](AI-Workspace/product/ROADMAP.md) | Planned/likely future work inferred from code state and stated intent | ARCHITECTURE | 🟢 complete (🔴 speculative content — no roadmap exists in-repo) | Low | Any |
-| DECISIONS | [product/DECISIONS.md](AI-Workspace/product/DECISIONS.md) | Architectural/product decisions log (ADR-style) as observed or told | ARCHITECTURE | 🟢 complete | Low | Any |
-| KNOWN_ISSUES | [product/KNOWN_ISSUES.md](AI-Workspace/product/KNOWN_ISSUES.md) | Observed bugs, gaps, tech debt — documented only, never fixed here | ARCHITECTURE, UI_ANALYSIS | 🟢 complete | Medium | Any |
-| CHANGELOG | [product/CHANGELOG.md](AI-Workspace/product/CHANGELOG.md) | Running log of what changed in the codebase over time | PROJECT_ANALYSIS | 🟢 complete (baseline entry only — no git history) | Low | Any |
-| GLOSSARY | [product/GLOSSARY.md](AI-Workspace/product/GLOSSARY.md) | Domain and codebase terms (invoicing terminology, internal naming) | PROJECT_CONTEXT | 🟢 complete | Low | Any |
-| FEATURE_PROPOSALS | [product/FEATURE_PROPOSALS.md](AI-Workspace/product/FEATURE_PROPOSALS.md) | Numbered backlog of proposed features, status-tracked to implementation | ARCHITECTURE, KNOWN_ISSUES | 🟡 draft | High | Any |
-| DESIGN_PATTERNS_AS_IS | [documentation/DESIGN_PATTERNS_AS_IS.md](AI-Workspace/documentation/DESIGN_PATTERNS_AS_IS.md) | Factual architectural/design pattern inventory (backend + frontend) | PROJECT_ANALYSIS | 🟢 complete | Medium | Claude Sonnet |
+| README | [README.md](AI-Workspace/README.md) | Punto di ingresso: cos'è il workspace e come navigarlo | — | 🟢 completo | Alta | Qualsiasi |
+| PROJECT_CONTEXT | [architecture/PROJECT_CONTEXT.md](AI-Workspace/architecture/PROJECT_CONTEXT.md) | Scopo del prodotto, utenti, dominio (fatturazione e fiscale forfettario), flusso | — | 🟢 completo | Critica | Claude Opus |
+| PROJECT_ANALYSIS | [architecture/PROJECT_ANALYSIS.md](AI-Workspace/architecture/PROJECT_ANALYSIS.md) | Inventario del codice: stack, cartelle, entry point, script, config, storage, test | PROJECT_CONTEXT | 🟢 completo | Critica | Claude Opus |
+| ARCHITECTURE | [architecture/ARCHITECTURE.md](AI-Workspace/architecture/ARCHITECTURE.md) | Architettura: pipeline, job, flusso fattura, AI/MCP, integrazioni | PROJECT_ANALYSIS | 🟢 completo | Critica | Claude Opus |
+| UI_ANALYSIS | [architecture/UI_ANALYSIS.md](AI-Workspace/architecture/UI_ANALYSIS.md) | Viste, rotte, navigazione, passi dei wizard, tema | ARCHITECTURE | 🟢 completo | Alta | Claude Sonnet |
+| DESIGN_SYSTEM | [design/DESIGN_SYSTEM.md](AI-Workspace/design/DESIGN_SYSTEM.md) | Linguaggio visivo come implementato, dark mode, template di stampa | UI_ANALYSIS | 🟢 completo | Media | Claude Sonnet |
+| DESIGN_TOKENS | [design/DESIGN_TOKENS.md](AI-Workspace/design/DESIGN_TOKENS.md) | Token CSS con valori esatti | DESIGN_SYSTEM | 🟢 completo | Media | Claude Sonnet |
+| COMPONENT_LIBRARY | [design/COMPONENT_LIBRARY.md](AI-Workspace/design/COMPONENT_LIBRARY.md) | Catalogo componenti Vue, primitive globali, composables | DESIGN_TOKENS, UI_ANALYSIS | 🟢 completo | Media | Claude Sonnet |
+| DECISIONS | [product/DECISIONS.md](AI-Workspace/product/DECISIONS.md) | Decisioni architetturali e di prodotto | ARCHITECTURE | 🟢 completo | Bassa | Qualsiasi |
+| KNOWN_ISSUES | [product/KNOWN_ISSUES.md](AI-Workspace/product/KNOWN_ISSUES.md) | Limiti e incoerenze osservati, solo documentati | ARCHITECTURE, UI_ANALYSIS | 🟢 completo | Media | Qualsiasi |
+| GLOSSARY | [product/GLOSSARY.md](AI-Workspace/product/GLOSSARY.md) | Termini di dominio e nomi del codice | PROJECT_CONTEXT | 🟢 completo | Bassa | Qualsiasi |
+| FEATURE_PROPOSALS | [product/FEATURE_PROPOSALS.md](AI-Workspace/product/FEATURE_PROPOSALS.md) | Backlog numerato delle proposte non ancora realizzate | ARCHITECTURE, KNOWN_ISSUES | 🟡 bozza (backlog vivo) | Alta | Qualsiasi |
+| DESIGN_PATTERNS_AS_IS | [documentation/DESIGN_PATTERNS_AS_IS.md](AI-Workspace/documentation/DESIGN_PATTERNS_AS_IS.md) | Inventario fattuale dei pattern (backend + frontend) | PROJECT_ANALYSIS | 🟢 completo | Media | Claude Sonnet |
 
-Support directories (no fixed document set, populated incrementally as work happens):
+Cartelle di supporto:
 
-| Directory | Purpose |
+| Cartella | Scopo |
 |---|---|
-| [prompts/](AI-Workspace/prompts/) | Reusable prompts for generating/updating specific documents |
-| [templates/](AI-Workspace/templates/) | Document templates (section skeletons, review checklist template) |
-| [workflows/](AI-Workspace/workflows/) | Repeatable AI workflows for maintaining the workspace |
-| [reviews/](AI-Workspace/reviews/) | Point-in-time review outputs against the Review Checklist |
-| [tasks/](AI-Workspace/tasks/) | Task briefs, one per incremental documentation task |
-| [documentation/](AI-Workspace/documentation/) | Overflow/reference material that doesn't fit the fixed documents above |
+| [Plans/](AI-Workspace/Plans/) | Piani di dettaglio e analisi, una nota per tema; non seguono le regole dei documenti sopra |
+| [Output/](AI-Workspace/Output/) | Export locali di debug (per esempio CSV bancari), ignorati da git |
+| prompts/, templates/, workflows/, reviews/, tasks/ | Vuote, segnaposto per materiale futuro |
 
 ---
 
-## Recommended Generation Order
+## Ordine di generazione consigliato
 
 ```
-Phase 1  PROJECT_CONTEXT
+Fase 1  PROJECT_CONTEXT
    ↓
-Phase 2  PROJECT_ANALYSIS
+Fase 2  PROJECT_ANALYSIS
    ↓
-Phase 3  ARCHITECTURE
+Fase 3  ARCHITECTURE
    ↓
-Phase 4  UI_ANALYSIS
+Fase 4  UI_ANALYSIS
    ↓
-Phase 5  DESIGN_SYSTEM
+Fase 5  DESIGN_SYSTEM
    ↓
-Phase 6  DESIGN_TOKENS
+Fase 6  DESIGN_TOKENS
    ↓
-Phase 7  COMPONENT_LIBRARY
+Fase 7  COMPONENT_LIBRARY
    ↓
-Phase 8  ROADMAP, DECISIONS, KNOWN_ISSUES, GLOSSARY (parallel, any order)
+Fase 8  DECISIONS, KNOWN_ISSUES, GLOSSARY (in parallelo, qualsiasi ordine)
    ↓
-Phase 8b FEATURE_PROPOSALS (depends on ARCHITECTURE + KNOWN_ISSUES, not parallel with Phase 8)
-   ↓
-Phase 9  CHANGELOG (ongoing, updated after each phase)
+Fase 8b FEATURE_PROPOSALS (dipende da ARCHITECTURE e KNOWN_ISSUES)
 ```
 
-Rationale: each phase reads only documents already produced by earlier phases, never the reverse. Design docs (5–7) depend on UI_ANALYSIS having already named the components and views they describe. Product docs (8) depend on architecture being settled so decisions/issues reference real structure, not guesses.
+Ogni fase legge solo documenti prodotti dalle fasi precedenti, mai il contrario.
 
 ---
 
-## Rules for Every Document
+## Regole per ogni documento
 
-- One document per task. Never batch-generate.
-- Every claim tagged 🟢/🟡/🔴.
-- No code changes, no fixes, no refactors — analysis and documentation only.
-- Every document ends with the Review Checklist: Completeness, Accuracy, Consistency, TODO, Missing information, Open questions, Confidence level.
-- Documents are living — update in place as the codebase evolves, don't fork new versions.
+- Un documento per task. Mai generazione in blocco.
+- Ogni affermazione taggata 🟢/🟡/🔴.
+- Nessuna modifica al codice, nessun fix, nessun refactor: solo analisi e documentazione.
+- I documenti descrivono lo stato attuale e si aggiornano sul posto: niente storia, niente voci su ciò che non esiste più.
+- Ogni documento termina con la Review Checklist: Completeness, Accuracy, Consistency, TODO, Missing information, Open questions, Confidence level.
 
-## Completion Criteria (per document)
+## Criteri di completezza (per documento)
 
-A document is "done" for its current pass when:
-1. Every section in its template is filled or explicitly marked TODO.
-2. Every factual claim carries a confidence tag.
-3. Review Checklist is filled out, not left as a header.
-4. No unresolved dependency on a document that doesn't exist yet (i.e., it doesn't assume facts only a later-phase document would establish).
+Un documento è «fatto» per il passaggio corrente quando:
+1. Ogni sezione del suo template è compilata o marcata TODO.
+2. Ogni affermazione fattuale ha un tag di confidenza.
+3. La Review Checklist è compilata.
+4. Nessuna dipendenza da un documento che non esiste ancora.
 
-## Status Legend
+## Legenda stato
 
-🔴 empty — file created, no content yet
-🟡 draft — partially filled or inferred, needs verification
-🟢 complete — filled, reviewed, confidence levels assigned
+🔴 vuoto · 🟡 bozza (parziale o da verificare) · 🟢 completo (compilato, riletto, confidenze assegnate)

@@ -10,6 +10,7 @@ import StepCopilotAI from './StepCopilotAI.vue';
 import StepClaudeAI from './StepClaudeAI.vue';
 import StepGroqAI from './StepGroqAI.vue';
 import StepLocaleLLM from './StepLocaleLLM.vue';
+import StepMcp from './StepMcp.vue';
 
 // Mappa scheda → provider interni del router (uno per scheda tranne Gemini che ne ha due)
 const PROVIDER_PER_SCHEDA = {
@@ -35,7 +36,16 @@ const messaggioVerifica = ref('');
 // Set dei provider disabilitati — caricato al mount, aggiornato ad ogni toggle
 const disabilitati = ref(new Set());
 
+// G-AI C.9: consenso permanente all'invio di dati fiscali personali all'AI (default off).
+const autorizzaDatiFiscali = ref(false);
+async function salvaAutorizzazione() {
+  await api.saveConfig({ ai: { autorizzaDatiFiscali: autorizzaDatiFiscali.value } });
+}
+
 onMounted(async () => {
+  try {
+    autorizzaDatiFiscali.value = !!(await api.getConfig()).ai?.autorizzaDatiFiscali;
+  } catch { /* silenzioso */ }
   try {
     const oauthDati = await api.getOAuthConfig();
     claudeConfigurato.value = oauthDati.claudeApiKeyImpostata;
@@ -92,6 +102,20 @@ async function verificaStato() {
       (Gemini o GitHub Copilot) per avere l'AI sempre disponibile senza costi.
     </p>
 
+    <div class="ai-cards">
+    <div class="ai-card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="autorizza-dati-fiscali-ai" type="checkbox" class="checkbox-app" v-model="autorizzaDatiFiscali" @change="salvaAutorizzazione">
+        <label for="autorizza-dati-fiscali-ai" style="margin:0">Consenti l'invio all'AI di importi e codici tributo</label>
+      </div>
+      <small class="note-legal" style="margin-top:6px;display:block">Usato dal suggerimento d'ordine dei crediti F24. Se disattivo, l'app chiede conferma a ogni richiesta.</small>
+    </div>
+
+    <div class="ai-card">
+      <StepMcp />
+    </div>
+    </div>
+
     <div class="tab-row">
       <button class="tab-btn" :class="{ attiva: schedaAttiva === 'gemini' }" @click="schedaAttiva = 'gemini'">
         <span class="dot-stato" :class="{ attivo: geminiOk }"></span>Gemini
@@ -135,6 +159,23 @@ async function verificaStato() {
 </template>
 
 <style scoped>
+.ai-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+@media (max-width: 800px) {
+  .ai-cards { grid-template-columns: 1fr; }
+}
+.ai-card {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--ground);
+}
 .tab-row {
   display: flex;
   flex-wrap: wrap;

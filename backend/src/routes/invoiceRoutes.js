@@ -46,6 +46,18 @@ async function calcolaPrevisione(config, annoFattura, imponibile) {
   } catch { return null; }
 }
 
+// Rivalsa INPS: cliente override (true/false) > impostazione globale forfettario.
+// Restituisce l'aliquota % (0 se non attiva), dalle regole fiscali dell'anno.
+async function aliquotaRivalsa(config, cliente, anno) {
+  const attiva = cliente.rivalsaInps !== null && cliente.rivalsaInps !== undefined
+    ? Boolean(cliente.rivalsaInps)
+    : Boolean(config.forfettario.rivalsaInps);
+  if (!attiva) return 0;
+  let regole = null;
+  try { regole = await regoleAnno(Number(anno)); } catch { /* usa fallback */ }
+  return regole?.inpsGestioneSeparata?.rivalsaAliquota ?? 4;
+}
+
 invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
@@ -58,6 +70,7 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima', async (req, res) => {
     tariffaOraria: cliente.tariffaOraria,
     sogliaBolloVirtuale: config.fatturazione.sogliaBolloVirtuale,
     importoBollo: config.fatturazione.importoBollo,
+    rivalsaAliquota: await aliquotaRivalsa(config, cliente, anno),
   });
   const previsione = await calcolaPrevisione(config, Number(anno), compenso.imponibile);
   res.json({ anno: Number(anno), mese: Number(mese), totaleOre: riepilogo.totaleOreDecimale, ...compenso, previsione });
@@ -70,10 +83,13 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/anteprima-manuale', async (req, res) 
     return res.status(400).json({ errore: 'Importo non valido' });
   }
   const config = await getConfig();
+  const cliente = risolviCliente(config, req.params.clienteId);
+  if (!cliente) return clienteNonTrovato(res);
   const compenso = calcolaBollo(
     Number(importo.toFixed(2)),
     config.fatturazione.sogliaBolloVirtuale,
-    config.fatturazione.importoBollo
+    config.fatturazione.importoBollo,
+    await aliquotaRivalsa(config, cliente, req.params.anno)
   );
   const previsione = await calcolaPrevisione(config, Number(req.params.anno), compenso.imponibile);
   res.json({ anno: Number(req.params.anno), mese: Number(req.params.mese), ...compenso, previsione });
@@ -112,13 +128,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
   let regole = null;
   try { regole = await regoleAnno(Number(anno)); } catch { /* usa fallback */ }
 
-  // Rivalsa INPS: cliente override (true/false) > impostazione globale forfettario.
-  const rivalsaAttiva = cliente.rivalsaInps !== null && cliente.rivalsaInps !== undefined
-    ? Boolean(cliente.rivalsaInps)
-    : Boolean(config.forfettario.rivalsaInps);
-  const rivalsaAliquota = rivalsaAttiva
-    ? (regole?.inpsGestioneSeparata?.rivalsaAliquota ?? 4)
-    : 0;
+  const rivalsaAliquota = await aliquotaRivalsa(config, cliente, anno);
 
   if (manuale) {
     const importo = Number(req.body.importo);

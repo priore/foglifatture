@@ -372,7 +372,7 @@ async function riavvia() {
           <thead><tr><th></th><th>File</th><th>Tipo</th><th>Dettaglio</th></tr></thead>
           <tbody>
             <tr v-for="v in vociZip" :key="v.nome">
-              <td><input type="checkbox" :checked="selezionatiZip.has(v.nome)" :disabled="v.tipo === 'ignorato'" @change="alternaZip(v.nome)"></td>
+              <td><input type="checkbox" class="checkbox-app" :checked="selezionatiZip.has(v.nome)" :disabled="v.tipo === 'ignorato'" @change="alternaZip(v.nome)"></td>
               <td class="cella-descrizione">{{ v.nome }}</td>
               <td>{{ DESCRIZIONE_TIPO_ZIP[v.tipo] }}{{ v.codiceTipo ? ` (${v.codiceTipo})` : '' }}</td>
               <td>{{ v.anteprima ? `n.${v.anteprima.numero} del ${v.anteprima.data}` : v.motivo || '' }}</td>

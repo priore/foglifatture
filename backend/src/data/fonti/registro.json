@@ -61,7 +61,7 @@
     "titolo": "D.Lgs. 24 marzo 2025, n. 33 — artt. 10-11 (Testo unico versamenti e riscossione)",
     "tipo": "decreto-legislativo",
     "url": "https://www.normattiva.it/eli/id/2025/03/26/25G00044/CONSOLIDATED/20260807",
-    "urlDownload": "https://dirittobancario.it/wp-content/uploads/2025/03/Decreto-legislativo-24-marzo-2025-n.-33-estratto-delal-Gazzetta-Ufficiale.pdf",
+    "urlDownload": "https://www.gazzettaufficiale.it/eli/gu/2025/03/26/71/so/8/sg/pdf",
     "formato": "pdf",
     "selettoreContenuto": null,
     "file": "testi/dlgs33-2025.txt",
@@ -89,13 +89,13 @@
     "titolo": "Circolare INPS 8 del 3 febbraio 2026 — Gestione Separata: aliquote 2026",
     "tipo": "circolare",
     "url": "https://www.inps.it/",
-    "urlDownload": null,
+    "urlDownload": "https://www.inps.it/content/dam/inps-site/it/scorporati/circolari-e-messaggi/2026/02/Circolare_15153/Allegati/16573_Circolare-numero-8-del-03-02-2026.pdf",
     "formato": "pdf",
     "selettoreContenuto": null,
     "file": null,
     "sha256Originale": null,
     "consultatoIl": null,
-    "note": "Testo non archiviato — URL definitivo da trovare su inps.it/archivio. Aliquota 26,07%, massimale 122.295 euro per il 2026."
+    "note": "Testo non archiviato (monitorata solo l'impronta del PDF). Aliquota 26,07%, massimale 122.295 euro per il 2026."
   },
   {
     "id": "guida-ade-bollo-fe-2026",
@@ -145,13 +145,13 @@
     "titolo": "Specifiche tecniche FatturaPA versione 1.9.1 — Allegato A (Nature IVA)",
     "tipo": "specifiche-tecniche",
     "url": "https://www.fatturapa.gov.it/it/norme-e-regole/",
-    "urlDownload": null,
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/d/guest/allegato-a-specifiche-tecniche-vers-1-9-1",
     "formato": "pdf",
     "selettoreContenuto": null,
     "file": null,
     "sha256Originale": null,
     "consultatoIl": null,
-    "note": "Testo non ancora archiviato — da scaricare da fatturapa.gov.it"
+    "note": "Testo non archiviato (monitorata solo l'impronta del PDF) — Allegato A pubblicato su agenziaentrate.gov.it"
   },
   {
     "id": "dpr633-72",
@@ -187,13 +187,13 @@
     "titolo": "Risoluzione AdE 110/E/2019 — Compensazione verticale esente dal limite 5.000 euro",
     "tipo": "risoluzione",
     "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/pagamentieversamenti/f24-ordinario",
-    "urlDownload": null,
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/20143/2215556/Risoluzione+compensazioni+F24+2020+def+-+pub.pdf/a1c5b793-e6b5-78fe-3c1b-58305553724e",
     "formato": "pdf",
     "selettoreContenuto": null,
     "file": null,
     "sha256Originale": null,
     "consultatoIl": null,
-    "note": "Testo non ancora archiviato — cercare su archivio circolari AdE 2019"
+    "note": "Testo non archiviato (monitorata solo l'impronta del PDF)"
   },
   {
     "id": "legge-bilancio-2026",

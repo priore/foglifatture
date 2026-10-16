@@ -127,7 +127,7 @@ async function leggiRisposte() {
   </p>
   <div class="form-grid" style="margin-top:8px">
     <div class="field field-full full" style="flex-direction:row;align-items:center;gap:8px">
-      <input id="sdi-polling-abilitato" type="checkbox" v-model="sdi.pollingAbilitato" style="width:auto">
+      <input id="sdi-polling-abilitato" type="checkbox" class="checkbox-app" v-model="sdi.pollingAbilitato">
       <label for="sdi-polling-abilitato" style="margin:0">Controllo ricevute SDI attivo (automatico e ping manuale)</label>
     </div>
     <div class="field"><label>Server IMAP PEC</label><input v-model="modelValue.imapHost" placeholder="imaps.pec-provider.it" :disabled="!sdi.pollingAbilitato"></div>

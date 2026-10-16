@@ -95,3 +95,8 @@ test('calcolaBollo: senza rivalsa (default), nettoAPagare = imponibile', () => {
   assert.equal(r.rivalsaInps, 0);
   assert.equal(r.nettoAPagare, 500);
 });
+
+test('calcolaBollo: la rivalsa concorre alla soglia del bollo (77 + 4% = 80,08 > 77,47)', () => {
+  assert.equal(calcolaBollo(77, 77.47, 2, 4).bolloApplicabile, true);
+  assert.equal(calcolaBollo(77, 77.47, 2).bolloApplicabile, false);
+});

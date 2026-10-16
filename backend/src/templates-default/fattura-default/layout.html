@@ -38,6 +38,7 @@
 
   <table class="doc-table compenso">
     <tr><td>Compenso professionale</td><td>{{imponibileFormattato}} &euro;</td></tr>
+    {{#if rivalsaInps}}<tr><td>Rivalsa INPS 4%</td><td>{{rivalsaInpsFormattato}} &euro;</td></tr>{{/if}}
     <tr><td>NETTO A PAGARE</td><td>{{nettoAPagareFormattato}} &euro;</td></tr>
   </table>
   <div class="doc-gap-lg"></div>

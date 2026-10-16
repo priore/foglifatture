@@ -130,7 +130,7 @@ function riattivaCliente(cliente) {
             <option :value="true">Attiva per questo cliente</option>
             <option :value="false">Disattiva per questo cliente</option>
           </select>
-          <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente.</small>
+          <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente. La rivalsa concorre al totale del documento ai fini dell'imposta di bollo.</small>
         </div>
         <div style="display:flex;gap:20px;margin-top:12px">
           <div class="field" style="flex:1">
@@ -159,17 +159,5 @@ function riattivaCliente(cliente) {
 .clienti-cerca-input {
   flex: 1; border: 1px solid var(--line); border-radius: var(--radius-md);
   padding: 9px 11px; font-size: var(--font-size-base); background: var(--ground); color: var(--ink);
-}
-.checkbox-app {
-  appearance: none; width: 18px; height: 18px; margin: 0;
-  border: 1px solid var(--line); border-radius: var(--radius-sm); background: transparent;
-  cursor: pointer; position: relative; flex-shrink: 0;
-}
-.checkbox-app:checked { background: var(--accent); border-color: var(--accent); }
-.checkbox-app:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.checkbox-app:checked::after {
-  content: ''; position: absolute; left: 50%; top: 45%; width: 5px; height: 9px;
-  border: solid var(--accent-ink); border-width: 0 2px 2px 0;
-  transform: translate(-50%, -50%) rotate(45deg);
 }
 </style>

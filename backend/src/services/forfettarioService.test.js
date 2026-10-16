@@ -45,10 +45,11 @@ test('proiezione fine anno usa i mesi civili distinti, non le entry', async () =
   assert.equal(risultato.ricaviProiettati, 15000);
 });
 
-test('accontoStimato usa metodo storico su ricavi proiettati fine anno, non sul consuntivo parziale', async () => {
+test('accontoStimato usa la base cassa del piano F24 (incassi proiettati, non fatturato emesso)', async () => {
   const risultato = await calcolaDashboardForfettario(configBase, { anno: 2026, meseCorrente: 12 });
-  // ricaviProiettati 15000, coefficiente 78%, aliquota 15% (nessuna dataInizioAttivita) -> 15000*0.78*0.15 = 1755
-  assert.equal(risultato.accontoStimato, 1755);
+  // cassa 2026 = 1000 incassati in 1 solo mese (marzo) -> proiezione 12000, coefficiente 78%,
+  // aliquota 15% (nessuna dataInizioAttivita), nessun INPS versato -> 12000*0.78*0.15 = 1404
+  assert.equal(risultato.accontoStimato, 1404);
   assert.notEqual(risultato.accontoStimato, risultato.impostaStimata);
 });
 
@@ -151,4 +152,36 @@ test('calcolaDashboardForfettario: requisitiAliquotaRidotta false (default) usa 
   };
   const risultato = await calcolaDashboardForfettario(configSenzaRequisiti, { anno: 2026, meseCorrente: 12 });
   assert.equal(risultato.aliquota, 15);
+});
+
+test('impostaCassaAnno espone i ricavi di cassa, distinti dal reddito forfettario', async () => {
+  const { impostaCassaAnno } = await import('./forfettarioService.js');
+  const tutte = [{ anno: 2026, pagamenti: [{ data: '2026-05-10', importo: 100000 }], residuo: 0 }];
+  const r = await impostaCassaAnno(2026, tutte, configBase, [], {});
+  assert.equal(r.ricavi, 100000);
+  assert.equal(r.redditoForfettario, 78000);
+});
+
+test('roundEuro: euro interi, da 50 centesimi per eccesso', async () => {
+  const { roundEuro } = await import('./forfettarioService.js');
+  assert.equal(roundEuro(100.49), 100);
+  assert.equal(roundEuro(100.5), 101);
+});
+
+test('accontoInpsAnnoSuccessivo: 80% del reddito N con aliquota N+1, tetto al massimale', async () => {
+  const { accontoInpsAnnoSuccessivo } = await import('./forfettarioService.js');
+  const regoleN1 = { inpsGestioneSeparata: { aliquota: 27, aliquotaAltreAttivita: 24, massimale: 100000 } };
+  assert.equal(accontoInpsAnnoSuccessivo(50000, regoleN1), 10800); // 0,8 × 50000 × 27%
+  assert.equal(accontoInpsAnnoSuccessivo(150000, regoleN1), 21600); // tetto 100000
+  assert.equal(accontoInpsAnnoSuccessivo(50000, regoleN1, true), 9600); // aliquota ridotta 24%
+});
+
+test('impostaCassaAnno: reddito, contributo INPS e imposta in euro interi', async () => {
+  const { impostaCassaAnno } = await import('./forfettarioService.js');
+  const tutte = [{ anno: 2026, pagamenti: [{ data: '2026-05-10', importo: 1234.56 }], residuo: 0 }];
+  const config = { forfettario: { ...configBase.forfettario, gestionePrevidenziale: 'gestioneSeparata' } };
+  const r = await impostaCassaAnno(2026, tutte, config, [], { inpsGestioneSeparata: { aliquota: 26.07, massimale: 119650 } });
+  assert.equal(r.redditoForfettario, 963); // 962,96
+  assert.equal(r.inps, 251); // 963 × 26,07% = 251,05
+  assert.equal(Number.isInteger(r.imposta), true);
 });

@@ -1,6 +1,6 @@
 // Invio della fattura elettronica al Sistema di Interscambio (SDI) tramite PEC.
-// Predisposto e funzionante lato codice, ma non testato con invio reale: richiede
-// una casella PEC vera configurata in Impostazioni > PEC prima di poter essere usato.
+// Richiede una casella PEC vera configurata in Impostazioni > PEC. L'invio reale si prova
+// a mano con pecService.e2e.js (fuori da `npm test`).
 import nodemailer from 'nodemailer';
 import { pecLogger } from '../lib/logger.js';
 

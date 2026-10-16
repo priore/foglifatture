@@ -1,10 +1,9 @@
 <script setup>
-// Wizard di configurazione: fornitore, cliente, tariffa/dati fiscali, PEC.
+// Wizard di configurazione: fornitore (anagrafica, fiscali, pagamento), PEC.
 // I dati vengono salvati sul backend (config.json) ad ogni "Avanti"/"Salva".
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import StepFornitore from '../components/wizard/StepFornitore.vue';
-import StepFatturazione from '../components/wizard/StepFatturazione.vue';
 import StepPec from '../components/wizard/StepPec.vue';
 import StepBackup from '../components/wizard/StepBackup.vue';
 import StepPercorsoDati from '../components/wizard/StepPercorsoDati.vue';
@@ -84,13 +83,12 @@ onBeforeRouteUpdate(async (to, from, next) => {
     <div class="card">
       <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
-        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :wallet-btc="config.walletBtc" />
-        <StepFatturazione v-else-if="passoAttivo === 1" v-model="config.fatturazione" />
-        <StepPec v-else-if="passoAttivo === 2" v-model="config.pec" :sdi="config.sdi" />
-        <StepPercorsoDati v-else-if="passoAttivo === 3" v-model="config.dati" />
-        <StepBackup v-else-if="passoAttivo === 4" v-model="config.backup" />
-        <StepPromemoria v-else-if="passoAttivo === 5" v-model="config.reminder" :notifiche="config.notifiche" />
-        <StepGoogleAuth v-else-if="passoAttivo === 6" />
+        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :fatturazione="config.fatturazione" :wallet-btc="config.walletBtc" />
+        <StepPec v-else-if="passoAttivo === 1" v-model="config.pec" :sdi="config.sdi" />
+        <StepPercorsoDati v-else-if="passoAttivo === 2" v-model="config.dati" />
+        <StepBackup v-else-if="passoAttivo === 3" v-model="config.backup" />
+        <StepPromemoria v-else-if="passoAttivo === 4" v-model="config.reminder" :notifiche="config.notifiche" />
+        <StepGoogleAuth v-else-if="passoAttivo === 5" />
         <StepAI v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">

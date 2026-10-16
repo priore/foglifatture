@@ -13,7 +13,7 @@ import { prossimeScadenzeFiscali, scadenzeIntrastatAnno } from '../services/scad
 import { stimaVersamenti } from '../services/stimaVersamentiService.js';
 import { generaF24Pdf } from '../services/f24PdfService.js';
 import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
-import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo } from '../services/creditiService.js';
+import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo, suggerisciOrdineCrediti } from '../services/creditiService.js';
 import { scadenzeBollo } from '../services/bolloTrimestrale.js';
 
 export const forfettarioRoutes = Router();
@@ -21,10 +21,17 @@ export const forfettarioRoutes = Router();
 const uploadCsv = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const percorsoAteco = new URL('../data/atecoSettori.json', import.meta.url);
+const percorsoSediInps = new URL('../data/sediInps.json', import.meta.url);
 
 // Elenco codici ATECO (codice, descrizione, settore, coefficiente di redditività) per la select in Impostazioni.
 forfettarioRoutes.get('/settori-ateco', async (req, res) => {
   const json = await readFile(percorsoAteco, 'utf-8');
+  res.type('application/json').send(json);
+});
+
+// Elenco ufficiale codici sede INPS (tabella AdE) per il popup di ricerca in Impostazioni.
+forfettarioRoutes.get('/sedi-inps', async (req, res) => {
+  const json = await readFile(percorsoSediInps, 'utf-8');
   res.type('application/json').send(json);
 });
 
@@ -289,6 +296,21 @@ forfettarioRoutes.get('/crediti', async (req, res) => {
 
 forfettarioRoutes.get('/crediti/residui', async (req, res) => {
   try { res.json(await creditiConResiduo()); } catch (err) { res.status(500).json({ errore: err.message }); }
+});
+
+// G-AI C.9 — body: { anno?, conferma?: boolean, ricorda?: boolean }. 403 se l'utente non ha autorizzato l'invio dati.
+forfettarioRoutes.post('/crediti/suggerisci-ordine', async (req, res) => {
+  try {
+    const { conferma, ricorda } = req.body ?? {};
+    let config = await getConfig();
+    if (ricorda === true && conferma === true) config = await saveConfig({ ai: { autorizzaDatiFiscali: true } });
+    const piano = await stimaVersamenti(config, Number(req.body?.anno) || new Date().getFullYear()).catch(() => ({ scadenze: [] }));
+    const oggi = new Date().toISOString().slice(0, 10);
+    const scadenze = (piano.scadenze ?? []).filter((s) => !s.data || s.data >= oggi);
+    res.json(await suggerisciOrdineCrediti({ config, scadenze, soglia: piano.regole?.compensazione?.sogliaOrizzontale, conferma }));
+  } catch (err) {
+    res.status(err.codice === 'AUTORIZZAZIONE_RICHIESTA' ? 403 : 400).json({ errore: err.message, codice: err.codice });
+  }
 });
 
 forfettarioRoutes.post('/crediti', async (req, res) => {

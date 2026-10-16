@@ -73,6 +73,7 @@ export function preparaDatiFattura(props) {
     dataFormattata: formattaData(props.data),
     imponibileFormattato: formattaEuro(props.imponibile),
     nettoAPagareFormattato: formattaEuro(props.nettoAPagare),
+    rivalsaInpsFormattato: formattaEuro(props.rivalsaInps ?? 0),
   };
 }
 

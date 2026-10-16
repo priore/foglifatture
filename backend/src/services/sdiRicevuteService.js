@@ -9,7 +9,7 @@ import { simpleParser } from 'mailparser';
 import { mkdir, writeFile, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { sdiLogger } from '../lib/logger.js';
-import { notifica } from '../lib/notifier.js';
+import { notifica, notificaConDedup, cancellaDedup } from '../lib/notifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
 import { generaNomeFileXml } from './fatturaPaXmlGenerator.js';
 import { listMesiFatturati, getInvoice } from './invoiceService.js';
@@ -20,6 +20,11 @@ import { listMesiFatturati, getInvoice } from './invoiceService.js';
 const FINESTRA_ATTESA_RISPOSTA_MS = 72 * 60 * 60 * 1000;
 
 const MITTENTE_SDI_DOMINIO = '@pec.fatturapa.it';
+
+// OS.6: contatore errori IMAP consecutivi (in memoria, si azzera al riavvio).
+let imapErroriConsecutivi = 0;
+const SOGLIA_IMAP_ERRORI = 3;
+const CHIAVE_DEDUP_IMAP = 'imap-errore';
 
 // Tipo di ricevuta riconosciuto dal prefisso standard del nome file XML allegato.
 const PREFISSI_TIPO_RICEVUTA = {
@@ -341,12 +346,21 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
     }
   } catch (err) {
     await sdiLogger.error('Errore durante il controllo ricevute SDI', { errore: err.message, stack: err.stack });
-    notifica('Errore ricezione SDI', err.message);
+    // OS.6: notifica solo al 3° errore consecutivo, non ad ogni ciclo.
+    imapErroriConsecutivi++;
+    if (imapErroriConsecutivi >= SOGLIA_IMAP_ERRORI) {
+      await notificaConDedup(CHIAVE_DEDUP_IMAP, 'Ricezione SDI interrotta', 'Login PEC fallito da 3 cicli — apri Impostazioni');
+    }
     return { nuove, errore: err.message };
   } finally {
     await client.logout().catch(() => {});
   }
 
+  // OS.6: ciclo completato senza errori — azzera il contatore e riabilita la notifica.
+  if (imapErroriConsecutivi > 0) {
+    imapErroriConsecutivi = 0;
+    await cancellaDedup(CHIAVE_DEDUP_IMAP);
+  }
   if (nuove > 0) notifica('Ricevute SDI', `${nuove} nuovo/i documento/i archiviato/i`);
   return { nuove };
 }

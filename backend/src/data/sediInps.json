@@ -1,0 +1,1321 @@
+{
+ "fonteUrl": "https://www.agenziaentrate.gov.it/portale/strumenti/codici-attivita-e-tributo/f24-codici-tributo-per-i-versamenti/tabelle-dei-codici-tributo-e-altri-codici-per-il-modello-f24/tabelle-codici-inps-e-enti-previdenziali-ed-assicurativi/tabella-codici-sede-inps",
+ "aggiornamentoFonte": "2025-06-23",
+ "verificatoIl": "2026-10-13",
+ "sedi": [
+  {
+   "codice": "0100",
+   "nome": "Agrigento",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0101",
+   "nome": "Sciacca",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0200",
+   "nome": "Alessandria",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0300",
+   "nome": "Ancona",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0391",
+   "nome": "Jesi",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "0400",
+   "nome": "Aosta",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0500",
+   "nome": "Arezzo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0600",
+   "nome": "Ascoli Piceno",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0690",
+   "nome": "Fermo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0700",
+   "nome": "Asti",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0800",
+   "nome": "Avellino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0890",
+   "nome": "Ariano Irpino",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "0900",
+   "nome": "Bari",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0901",
+   "nome": "Andria",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "0993",
+   "nome": "Gioia del Colle",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1000",
+   "nome": "Belluno",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1100",
+   "nome": "Benevento",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1200",
+   "nome": "Bergamo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1300",
+   "nome": "Bologna",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1301",
+   "nome": "Imola",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1393",
+   "nome": "San Lazzaro di Savena",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1400",
+   "nome": "Bolzano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1491",
+   "nome": "Merano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1500",
+   "nome": "Brescia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1594",
+   "nome": "Manerbio",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1595",
+   "nome": "Chiari",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1600",
+   "nome": "Brindisi",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1700",
+   "nome": "Cagliari",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1701",
+   "nome": "Iglesias",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1791",
+   "nome": "Quartu Sant'Elena",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "1800",
+   "nome": "Caltanissetta",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1900",
+   "nome": "Campobasso",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "1990",
+   "nome": "Termoli",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "2000",
+   "nome": "Caserta",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2001",
+   "nome": "Aversa",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2100",
+   "nome": "Catania",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2190",
+   "nome": "Caltagirone",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2200",
+   "nome": "Catanzaro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2201",
+   "nome": "Lamezia Terme",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2202",
+   "nome": "Vibo Valenzia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2203",
+   "nome": "Crotone",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2300",
+   "nome": "Chieti",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2391",
+   "nome": "Vasto",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "2400",
+   "nome": "Como",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2401",
+   "nome": "Lecco",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2490",
+   "nome": "Cantù",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "2500",
+   "nome": "Cosenza",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2501",
+   "nome": "Rossano Calabro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2590",
+   "nome": "Paola",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "2591",
+   "nome": "Castrovillari",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "2600",
+   "nome": "Cremona",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2700",
+   "nome": "Cuneo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2791",
+   "nome": "Alba C.O",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2792",
+   "nome": "Mondovì",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "2800",
+   "nome": "Enna",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "2900",
+   "nome": "Ferrara",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3000",
+   "nome": "Firenze",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3001",
+   "nome": "Prato",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3090",
+   "nome": "Empoli C.O",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3093",
+   "nome": "Scandicci",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "3094",
+   "nome": "Sesto Fiorentino",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "3100",
+   "nome": "Foggia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3191",
+   "nome": "San Severo",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "3200",
+   "nome": "Forli'",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3201",
+   "nome": "Rimini",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3290",
+   "nome": "Cesena C.O.",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3300",
+   "nome": "Frosinone",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3301",
+   "nome": "Cassino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3400",
+   "nome": "Genova",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3401",
+   "nome": "Sestri Levante",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3402",
+   "nome": "Sestri Ponente",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3500",
+   "nome": "Gorizia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3600",
+   "nome": "Grosseto",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3700",
+   "nome": "Imperia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3800",
+   "nome": "L'Aquila",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3801",
+   "nome": "Sulmona",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3802",
+   "nome": "Avezzano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "3900",
+   "nome": "La Spezia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4000",
+   "nome": "Latina",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4091",
+   "nome": "Terracina",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "4100",
+   "nome": "Lecce",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4101",
+   "nome": "Casarano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4190",
+   "nome": "Nardò",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "4200",
+   "nome": "Livorno",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4201",
+   "nome": "Piombino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4300",
+   "nome": "Lucca",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4400",
+   "nome": "Macerata",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4500",
+   "nome": "Mantova",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4600",
+   "nome": "Massa Carrara",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4700",
+   "nome": "Matera",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4800",
+   "nome": "Messina",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4891",
+   "nome": "Santa Teresa di Riva",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "4892",
+   "nome": "Barcellona Pozzo di Gotto",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "4894",
+   "nome": "Milazzo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4900",
+   "nome": "Milano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4901",
+   "nome": "Monza",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4902",
+   "nome": "Milano Nord",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4903",
+   "nome": "Milano Missori",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4904",
+   "nome": "Milano Fiori",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4905",
+   "nome": "Milano Corvetto",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4908",
+   "nome": "Milano Legnano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4909",
+   "nome": "Milano Seregno (C.O.)",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4927",
+   "nome": "Lodi",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4955",
+   "nome": "Sesto San Giovanni",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "4979",
+   "nome": "Vimercate",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "4991",
+   "nome": "Melegnano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "4995",
+   "nome": "Desio (C.O.)",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5000",
+   "nome": "Modena",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5094",
+   "nome": "Sassuolo",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "5100",
+   "nome": "Napoli",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5101",
+   "nome": "Castellammare di Stabia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5102",
+   "nome": "Nola",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5103",
+   "nome": "Napoli Arzano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5104",
+   "nome": "Napoli Soccavo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5105",
+   "nome": "Napoli Vomero",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5106",
+   "nome": "Pozzuoli",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5199",
+   "nome": "Giugliano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "5200",
+   "nome": "Novara",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5290",
+   "nome": "V.C.O. - Verbano Cusio Ossola",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5300",
+   "nome": "Nuoro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5400",
+   "nome": "Padova",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5490",
+   "nome": "Cittadella",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "5500",
+   "nome": "Palermo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5502",
+   "nome": "Palermo Sud Ovest",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5503",
+   "nome": "Carini",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5593",
+   "nome": "Bagheria",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5600",
+   "nome": "Parma",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5700",
+   "nome": "Pavia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5791",
+   "nome": "Vigevano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "5800",
+   "nome": "Perugia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5801",
+   "nome": "Citta' di Castello",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5890",
+   "nome": "Foligno",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "5900",
+   "nome": "Pesaro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "5992",
+   "nome": "Fano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6000",
+   "nome": "Pescara",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6100",
+   "nome": "Piacenza",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6200",
+   "nome": "Pisa",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6300",
+   "nome": "Pistoia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6400",
+   "nome": "Potenza",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6490",
+   "nome": "Melfi",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6500",
+   "nome": "Ragusa",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6590",
+   "nome": "Modica",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6600",
+   "nome": "Ravenna",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6691",
+   "nome": "Lugo",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6700",
+   "nome": "Reggio Calabria",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6790",
+   "nome": "Palmi",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6791",
+   "nome": "Locri",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6800",
+   "nome": "Reggio Emilia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "6891",
+   "nome": "Guastalla",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "6900",
+   "nome": "Rieti",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7000",
+   "nome": "Roma",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7001",
+   "nome": "Roma Eur",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7002",
+   "nome": "Roma Monteverde",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7003",
+   "nome": "Roma Ostia Lido",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7004",
+   "nome": "Roma Montesacro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7005",
+   "nome": "Roma Centro",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7006",
+   "nome": "Civitavecchia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7009",
+   "nome": "Roma Casilino Prenestino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7010",
+   "nome": "Roma Tuscolano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7012",
+   "nome": "Roma Aurelio",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7013",
+   "nome": "Roma Tiburtino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7014",
+   "nome": "Roma Flaminio",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7015",
+   "nome": "Pomezia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7074",
+   "nome": "Grottaferrata",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "7091",
+   "nome": "Tivoli",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "7092",
+   "nome": "Velletri",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "7094",
+   "nome": "Monterotondo",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "7095",
+   "nome": "Anzio",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "7096",
+   "nome": "Palestrina",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "7099",
+   "nome": "Guidonia",
+   "artigianiCommercianti": true,
+   "altriContributi": false
+  },
+  {
+   "codice": "7100",
+   "nome": "Rovigo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7200",
+   "nome": "Salerno",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7201",
+   "nome": "Nocera Inferiore",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7202",
+   "nome": "Battipaglia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7300",
+   "nome": "Sassari",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7390",
+   "nome": "Olbia",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "7400",
+   "nome": "Savona",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7500",
+   "nome": "Siena",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7600",
+   "nome": "Siracusa",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7601",
+   "nome": "Noto",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7700",
+   "nome": "Sondrio",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7800",
+   "nome": "Taranto",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "7890",
+   "nome": "Manduria",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "7900",
+   "nome": "Teramo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8000",
+   "nome": "Terni",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8100",
+   "nome": "Torino",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8101",
+   "nome": "Moncalieri",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8102",
+   "nome": "Ivrea",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8103",
+   "nome": "Torino Nord",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8103",
+   "nome": "Torino Sud",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8105",
+   "nome": "Pinerolo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8106",
+   "nome": "Collegno",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8110",
+   "nome": "Torino Lingotto",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8191",
+   "nome": "Orbassano",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8192",
+   "nome": "Chieri",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8193",
+   "nome": "Chivasso",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8200",
+   "nome": "Trapani",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8290",
+   "nome": "Marsala",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8300",
+   "nome": "Trento",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8400",
+   "nome": "Treviso",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8490",
+   "nome": "Conegliano C.O.",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8500",
+   "nome": "Trieste",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8600",
+   "nome": "Udine",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8691",
+   "nome": "Cervignano del Friuli",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8700",
+   "nome": "Varese",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8790",
+   "nome": "Busto Arsizio C.O.",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8800",
+   "nome": "Venezia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8801",
+   "nome": "San Dona' di Piave",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8891",
+   "nome": "Chioggia",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8894",
+   "nome": "Mestre1",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "8900",
+   "nome": "Vercelli",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "8901",
+   "nome": "Biella",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9000",
+   "nome": "Verona",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9090",
+   "nome": "Legnago",
+   "artigianiCommercianti": false,
+   "altriContributi": false
+  },
+  {
+   "codice": "9100",
+   "nome": "Vicenza",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9200",
+   "nome": "Viterbo",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9300",
+   "nome": "Pordenone",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9400",
+   "nome": "Isernia",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  },
+  {
+   "codice": "9500",
+   "nome": "Oristano",
+   "artigianiCommercianti": true,
+   "altriContributi": true
+  }
+ ]
+}

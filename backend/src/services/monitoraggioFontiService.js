@@ -1,7 +1,7 @@
 // Controllo periodico delle fonti normative: confronta l'impronta SHA-256 di ogni fonte
 // del registro con quella dell'ultima run. Se diversa, scrive fonti-cambiate.json e notifica.
-// Per fonti HTML con testo archiviato, propone nuovi valori via AI (verifica citazione).
-// PDF e XLS: solo avviso hash, nessuna proposta AI (estrazione testo rinviata a piano separato).
+// Per fonti HTML e PDF con testo archiviato, propone nuovi valori via AI (verifica citazione).
+// XLS: solo avviso hash, nessuna proposta AI.
 // Fonti senza URL (es. dl89-2026): saltate senza errore.
 //
 // Pattern setInterval uguale a backupService/reminderService: tick ogni 30 min,
@@ -14,6 +14,7 @@ import path from 'node:path';
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
 import { notifica } from '../lib/notifier.js';
+import PDFParser from 'pdf2json';
 
 const TICK_MS = 30 * 60 * 1000; // 30 minuti
 
@@ -69,8 +70,24 @@ export function estraiTestoDaHtml(html) {
     .trim();
 }
 
-// Scarica una fonte e restituisce { hash, testo } o lancia un errore.
-// testo è valorizzato solo per HTML con selettoreContenuto non nullo.
+// Estrae il testo da un PDF digitale (pdf2json, puro JS). Spazi/righe collassati per hash stabile.
+// PDF scansionati (solo immagini) danno testo vuoto: l'errore evita una baseline hash di niente.
+export async function estraiTestoDaPdf(buffer) {
+  const raw = await new Promise((resolve, reject) => {
+    const parser = new PDFParser(null, 1);
+    parser.on('pdfParser_dataError', e => reject(new Error(e?.parserError?.message ?? String(e?.parserError ?? e))));
+    parser.on('pdfParser_dataReady', () => resolve(parser.getRawTextContent()));
+    // pdf2json.parseBuffer legge dall'offset 0 del pool se il Buffer è una slice: serve un ArrayBuffer esatto
+    parser.parseBuffer(Buffer.from(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.length)));
+  });
+  const testo = raw.replace(/\s+/g, ' ').trim();
+  if (!testo) throw new Error('PDF senza testo estraibile');
+  return testo;
+}
+
+// Scarica una fonte e restituisce { hash, hashByte, testo } o lancia un errore.
+// testo è valorizzato per HTML con selettoreContenuto e per PDF; hashByte serve solo
+// a riconoscere la vecchia baseline PDF (impronta sui byte) senza falso "fonte cambiata".
 async function scaricaFonte(voce) {
   const url = voce.urlDownload || voce.url;
   if (!url) throw new Error('URL non disponibile');
@@ -101,7 +118,12 @@ async function scaricaFonte(voce) {
     const testo = estraiTestoDaHtml(buf.toString('utf-8'));
     return { hash: sha256(testo), testo };
   }
-  // PDF, XLS o HTML senza selettore: hash dei byte raw
+  const isPdf = voce.formato === 'pdf' || buf.subarray(0, 5).toString() === '%PDF-';
+  if (isPdf) {
+    const testo = await estraiTestoDaPdf(buf);
+    return { hash: sha256(testo), hashByte: sha256(buf), testo };
+  }
+  // XLS o HTML senza selettore: hash dei byte raw
   return { hash: sha256(buf), testo: null };
 }
 
@@ -239,6 +261,7 @@ export async function controllaFonti() {
       if (!hashPrecedente) continue; // prima run: salva baseline, nessun allarme
 
       if (risultato.hash === hashPrecedente) continue;
+      if (risultato.hashByte === hashPrecedente) continue; // migrazione baseline PDF byte→testo, file invariato
 
       // Hash cambiato rispetto all'ultima run
       // Se già noto (stesso newHash): skip — evita di ri-chiamare l'AI ad ogni tick
@@ -247,7 +270,7 @@ export async function controllaFonti() {
       nuoveCambiate++;
       fonteCambiate[voce.id] = { rilevatoIl: new Date().toISOString(), oldHash: hashPrecedente, newHash: risultato.hash };
 
-      // AI solo per HTML con testo archiviato (PDF e XLS: hash-only)
+      // AI solo per fonti con testo estratto e archiviato (HTML e PDF; XLS: hash-only)
       if (risultato.testo && voce.file) {
         try {
           // Leggi il pacchetto regole dell'anno corrente per trovare i campi citanti questa fonte

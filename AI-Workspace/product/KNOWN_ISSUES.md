@@ -1,21 +1,33 @@
 # Known Issues
 
-Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
-Observed gaps and inconsistencies. Documentation only — nothing here is fixed by this workspace.
+Limiti e incoerenze osservati. Solo documentazione: nulla qui viene corretto da questo workspace.
 
-## Sparse backend test coverage
+## Acconti INPS stimati dall'anno precedente
 
-🟢 Only one test file exists (`backend/src/services/pecService.test.js`), using Node's built-in `--test` runner (see `code-quality.md`). Most `backend/src/services/*Service.js` have no tests. `.claude/rules/dev-workflow.md` now asks for a test on every non-trivial backend service change going forward, but existing services remain uncovered.
+🟢 In `forfettarioService.js` gli acconti INPS sono stimati all'80% dell'INPS dell'anno N-1, perché i versamenti INPS non hanno codice tributo distinguibile. L'app emette un avviso nel risultato.
+
+## Solo la gestione separata è calcolata
+
+🟢 Artigiani/commercianti e casse professionali non hanno calcolo: le righe INPS del piano sono omesse con avviso, mentre il calendario mostra comunque le rate fisse artigiani/commercianti. Vedi FP-007.
+
+## Copertura test incompleta
+
+🟢 35 file `*.test.js` (servizi di calcolo e lib), ma senza test: `configService`, `envService`, `backupService`, `mailService`, `reminderService`, `sdiScartoReminderService`, `templateService`, `timesheetService`, `updateService`, `vmsTimesheetExporter`, `xmlInvoiceImporter`, `geminiAtecoService`, `lib/auth`, `lib/jsonStore`, `lib/logger`. Il frontend non ha alcun test.
+
+## Accessibilità minima
+
+🟢 `aria-*`/`role=` presenti solo su alcuni elementi (card trascinabili), `alt` solo sui loghi. Nessun audit dedicato.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** captures issues surfaced during architecture, UI, and design passes. Not an exhaustive bug hunt (out of scope — documentation only).
-- **Accuracy:** each item traces to a confirmed source document listed inline.
-- **Consistency:** confidence tags match originating documents.
-- **TODO:** re-scan after a data-schema note (config.json/invoices/timesheets shapes) is written — may surface more issues.
-- **Missing information:** no runtime/production incident history available in-repo to cross-check against.
-- **Open questions:** which of these are acceptable-as-is vs. genuinely worth fixing — product decision, not answered here.
-- **Confidence level:** mixed 🟢/🟡, each tagged individually above.
+- **Completeness:** non è una caccia ai bug esaustiva, solo limiti confermati leggendo il codice.
+- **Accuracy:** ogni voce verificata su `forfettarioService.js` e sui file di test (2026-10-13).
+- **Consistency:** coerente con `FEATURE_PROPOSALS.md` e `ARCHITECTURE.md`.
+- **TODO:** rileggere dopo ogni feature che tocca il calcolo fiscale.
+- **Missing information:** nessuna storia di incidenti in produzione.
+- **Open questions:** quali limiti vale la pena correggere è una decisione di prodotto.
+- **Confidence level:** 🟢.

@@ -88,6 +88,7 @@ const datiFattura = computed(() => {
     descrizione: descrizioneVisualizzata.value,
     imponibile: anteprimaEffettiva.value.imponibile,
     bollo: anteprimaEffettiva.value.bollo,
+    rivalsaInps: anteprimaEffettiva.value.rivalsaInps ?? 0,
     bolloApplicabile: anteprimaEffettiva.value.bolloApplicabile,
     nettoAPagare: anteprimaEffettiva.value.nettoAPagare,
     // Se già generata, usa i valori congelati in fattura (immutabili dopo l'emissione,

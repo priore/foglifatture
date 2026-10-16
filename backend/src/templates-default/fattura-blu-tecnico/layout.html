@@ -33,6 +33,7 @@
 
     <table class="amounts">
       <tr><td>Compenso professionale</td><td>&euro; {{imponibileFormattato}}</td></tr>
+      {{#if rivalsaInps}}<tr><td>Rivalsa INPS 4%</td><td>&euro; {{rivalsaInpsFormattato}}</td></tr>{{/if}}
       <tr class="total"><td>Netto a pagare</td><td>&euro; {{nettoAPagareFormattato}}</td></tr>
     </table>
 

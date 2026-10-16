@@ -1,7 +1,7 @@
 // Test per creditiService: funzione pura compensaCrediti + regole limite.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compensaCrediti } from './creditiService.js';
+import { compensaCrediti, costruisciPromptOrdineCrediti, suggerisciOrdineCrediti } from './creditiService.js';
 
 const REGOLE_BASE = { compensazione: { sogliaOrizzontale: 5000 } };
 
@@ -75,4 +75,18 @@ test('senza crediti: righe invariate', () => {
   assert.strictEqual(righeDebito[0].importo, 1000);
   assert.strictEqual(righeCredito.length, 0);
   assert.strictEqual(totaleNetto, 1000);
+});
+
+test('prompt ordine crediti: include codici, residui, scadenze e soglia', () => {
+  const crediti = [{ codice: '1792', sezione: 'erario', annoRiferimento: 2024, residuo: 300, utilizzabileDal: null, disponibile: true }];
+  const scadenze = [{ tipo: 'Saldo', data: '2026-06-30', righe: [{ codice: '1790', importo: 1000 }] }];
+  const p = costruisciPromptOrdineCrediti(crediti, scadenze, 5000);
+  assert.ok(p.includes('1792') && p.includes('300.00') && p.includes('1790 1000.00') && p.includes('5000'));
+});
+
+test('suggerisciOrdineCrediti: senza autorizzazione né conferma non chiama l\'AI', async () => {
+  await assert.rejects(
+    suggerisciOrdineCrediti({ config: { ai: { autorizzaDatiFiscali: false } }, scadenze: [] }),
+    (e) => e.codice === 'AUTORIZZAZIONE_RICHIESTA',
+  );
 });

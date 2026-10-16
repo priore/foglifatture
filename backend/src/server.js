@@ -23,12 +23,15 @@ import { sistemaRoutes } from './routes/sistemaRoutes.js';
 import { updateRoutes } from './routes/updateRoutes.js';
 import { templateRoutes } from './routes/templateRoutes.js';
 import { regoleFiscaliRoutes } from './routes/regoleFiscaliRoutes.js';
+import { mcpRoutes, mcpConfigRoutes } from './routes/mcpRoutes.js';
+import { chatRoutes } from './routes/chatRoutes.js';
 import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
 import { avviaPromemoria } from './services/reminderService.js';
 import { avviaPromemoriaScartoSdi } from './services/sdiScartoReminderService.js';
 import { avviaMonitoraggioFonti } from './services/monitoraggioFontiService.js';
+import { avviaNotificheFiscali } from './services/notificheFiscaliService.js';
 
 const PORT = process.env.PORT || 1969;
 const app = express();
@@ -69,6 +72,10 @@ app.use('/api/sistema', richiedeAutenticazione, sistemaRoutes);
 app.use('/api/update', richiedeAutenticazione, updateRoutes);
 app.use('/api/templates', richiedeAutenticazione, templateRoutes);
 app.use('/api/regole-fiscali', richiedeAutenticazione, regoleFiscaliRoutes);
+app.use('/api/mcp', richiedeAutenticazione, mcpConfigRoutes);
+app.use('/api/chat', richiedeAutenticazione, chatRoutes);
+// Fuori da richiedeAutenticazione: i client MCP non hanno sessione, autenticano col token.
+app.use('/mcp', mcpRoutes);
 
 // Serve il frontend Vue buildato (npm run build in ../frontend genera dist/).
 const frontendDist = path.join(import.meta.dirname, '..', '..', 'frontend', 'dist');
@@ -108,4 +115,7 @@ app.listen(PORT, async () => {
 
   avviaMonitoraggioFonti();
   logger.info('Monitoraggio periodico fonti normative avviato');
+
+  avviaNotificheFiscali();
+  logger.info('Notifiche fiscali in background avviate');
 });

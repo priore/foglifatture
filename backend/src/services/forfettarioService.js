@@ -87,13 +87,28 @@ function fattureACavalloAnno(tutte) {
   return righe;
 }
 
+// Righi della dichiarazione in euro interi, arrotondati per eccesso da 50 centesimi
+// (Istr. Redditi PF fasc. 1, "Modalità di arrotondamento"). Acconti e rate restano al centesimo.
+export function roundEuro(x) {
+  return Math.round(x);
+}
+
+// Acconti INPS GS per N+1: 80% del reddito di N (tetto al massimale) con l'aliquota di N+1
+// (Circ. INPS 8/2026 §4.2). `regoleN1` è il pacchetto regole dell'anno N+1.
+export function accontoInpsAnnoSuccessivo(reddito, regoleN1, altraCopertura = false) {
+  const gs = regoleN1?.inpsGestioneSeparata;
+  const aliquota = altraCopertura ? (gs?.aliquotaAltreAttivita ?? 24) : (gs?.aliquota ?? 26.07);
+  const massimale = gs?.massimale ?? 119650;
+  return Number((0.8 * Math.min(reddito, massimale) * aliquota / 100).toFixed(2));
+}
+
 // Helper riusabile per stimaVersamentiService: calcola imposta e INPS per cassa su un anno.
-// Restituisce { redditoForfettario, imposta, inps } — imposta deduce i contributi INPS versati.
+// Restituisce { ricavi, redditoForfettario, imposta, inps } — imposta deduce i contributi INPS versati.
 export async function impostaCassaAnno(anno, tutte, config, versamenti, regole) {
   const { coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false,
     gestionePrevidenziale = '', altraCoperturaPrevidenziale = false } = config.forfettario;
   const { ricaviCumulati: ricaviCassa } = await ricaviAnnoCassa(anno, tutte);
-  const redditoForfettario = Number((ricaviCassa * coefficenteRedditivita / 100).toFixed(2));
+  const redditoForfettario = roundEuro(ricaviCassa * coefficenteRedditivita / 100);
   const aliquota = await aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta);
 
   let inps = null;
@@ -102,14 +117,14 @@ export async function impostaCassaAnno(anno, tutte, config, versamenti, regole) 
       ? (regole?.inpsGestioneSeparata?.aliquotaAltreAttivita ?? 24)
       : (regole?.inpsGestioneSeparata?.aliquota ?? 26.07);
     const massimale = regole?.inpsGestioneSeparata?.massimale ?? 119650;
-    inps = Number((Math.min(redditoForfettario, massimale) * aliquotaGs / 100).toFixed(2));
+    inps = roundEuro(Math.min(redditoForfettario, massimale) * aliquotaGs / 100);
   }
 
   const contributiDedotti = contributiInpsVersati(versamenti, anno);
-  const baseTassabile = Math.max(0, redditoForfettario - contributiDedotti);
-  const imposta = Number((baseTassabile * aliquota / 100).toFixed(2));
+  const baseTassabile = roundEuro(Math.max(0, redditoForfettario - contributiDedotti));
+  const imposta = roundEuro(baseTassabile * aliquota / 100);
 
-  return { redditoForfettario, imposta, inps };
+  return { ricavi: ricaviCassa, redditoForfettario, imposta, inps };
 }
 
 // Riepilogo incassi BTC (FP-011) a partire dalle rate cassa dell'anno: filtra le rate
@@ -198,13 +213,6 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     ? Number((ricaviProiettati / sogliaAnnua * 100).toFixed(1))
     : 0;
 
-  // Acconto anno successivo, metodo storico (100% dell'imposta sull'intero anno
-  // corrente): a differenza di impostaStimata (calcolata sul consuntivo parziale
-  // a oggi), qui la base è il reddito imponibile proiettato a fine anno — è la stima
-  // di quanto si verserà davvero come acconto, non l'imposta maturata finora.
-  const redditoImponibileProiettato = Number((ricaviProiettati * coefficenteRedditivita / 100).toFixed(2));
-  const accontoStimato = Number((redditoImponibileProiettato * aliquota / 100).toFixed(2));
-
   // Fatturato/imposta per cassa (regola fiscale reale del forfettario): affiancato al
   // calcolo per competenza sopra, mai in sua sostituzione — la numerazione/FatturaPA restano
   // per competenza, solo soglia/imposta rilevanti ai fini fiscali seguono l'incasso.
@@ -228,6 +236,19 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
   const contributiDedotti = contributiInpsVersati(versamentiAnno, anno);
   const baseTassabileCassa = Math.max(0, redditoImponibileCassa - contributiDedotti);
   const impostaStimataCassa = Number((baseTassabileCassa * aliquota / 100).toFixed(2));
+  // Acconto anno successivo: stessa base del piano F24 (stimaVersamentiService): imposta per
+  // cassa con deduzione INPS versati, soglia di non dovuto, percentuale da regole. L'unica
+  // differenza è la proiezione lineare a fine anno sui mesi con incassi (anno in corso).
+  const mesiIncasso = new Set(incassateAnno.map((r) => r.dataPagamento.slice(0, 7))).size;
+  const mesiProiezione = anno < new Date().getFullYear() ? 12 : mesiIncasso;
+  const ricaviCassaProiettati = mesiProiezione > 0 ? ricaviCumulatiCassa / mesiProiezione * 12 : 0;
+  const baseAccontoProiettata = Math.max(0, ricaviCassaProiettati * coefficenteRedditivita / 100 - contributiDedotti);
+  const impostaCassaProiettata = Number((baseAccontoProiettata * aliquota / 100).toFixed(2));
+  const sogliaAcconto = regoleCorrenti?.acconti?.sogliaUnicaSoluzione ?? 103;
+  const percentualeAcconto = regoleCorrenti?.acconti?.percentualeAcconto ?? 100;
+  const accontoStimato = impostaCassaProiettata <= sogliaAcconto
+    ? 0
+    : Number((impostaCassaProiettata * percentualeAcconto / 100).toFixed(2));
   const percentualeSogliaCassa = sogliaAnnua > 0 ? Number((ricaviCumulatiCassa / sogliaAnnua * 100).toFixed(1)) : 0;
   const nettoStimatoCassa = Number((ricaviCumulatiCassa - impostaStimataCassa - (inpsStimato ?? 0)).toFixed(2));
 

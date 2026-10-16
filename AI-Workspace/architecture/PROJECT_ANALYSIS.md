@@ -1,59 +1,86 @@
 # Project Analysis
 
-Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
-## Stack versions
+## Stack e dipendenze
 
-🟢 **Backend** (`backend/package.json`, ESM `type: module`): express ^5.2.1, express-session ^1.19.0, passport ^0.7.0, passport-google-oauth20 ^2.0.0, cors ^2.8.6, dotenv ^17.4.2, fast-xml-parser ^5.11.1, imapflow ^1.7.6, mailparser ^3.9.17, multer ^2.3.0, nodemailer ^9.0.6, xlsx ^0.18.5. No devDependencies.
+🟢 **Backend** (`backend/package.json`, ESM): express ^5.2.1, express-session, passport + passport-google-oauth20, dotenv, fast-xml-parser, imapflow, mailparser, multer, nodemailer, keytar, node-notifier, pdf-lib, pdf2json, xlsx (tarball SheetJS 0.20.3). Nessuna devDependency.
 
-🟢 **Frontend** (`frontend/package.json`, ESM): vue ^3.5.41, vue-router ^4.6.4, html2pdf.js ^0.14.0. Dev-only: @vitejs/plugin-vue ^6.0.8, vite ^8.2.2.
+🟢 **Frontend** (`frontend/package.json`, ESM): vue ^3.5, vue-router ^4.6, handlebars (rendering template di stampa), html2pdf.js, qrcode-generator. Dev: vite, @vitejs/plugin-vue.
 
-## Entry points
+## Entry point
 
-🟢 `backend/src/server.js` — port `process.env.PORT || 1969`. Middleware order: `express.json()` → `/api` request logger → `express-session` → `passport.initialize()` → `passport.session()`. Routes: `/auth` (unguarded) then `richiedeAutenticazione`-guarded `/api/config`, `/api/timesheet`, `/api/invoice`, `/api/oauth-config`, `/api/sdi`, `/api/import`, `/api/backup`, `/api/reminder`, `/api/forfettario`, `/api/mail`. Falls through to static `frontend/dist` + SPA catch-all, then global error handler. On listen: logs auth status, loads config, starts SDI polling (`avviaPollingSdi`).
+🟢 `backend/src/server.js` — porta `PORT || 1969`. Serve `frontend/dist` e le API (dettaglio in `ARCHITECTURE.md`). All'avvio avvia i job in background: polling SDI, backup automatico (se abilitato), promemoria fine mese (se abilitato), promemoria scarti SDI, monitoraggio fonti normative, notifiche fiscali.
 
-🟢 `frontend/src/main.js` — creates Vue app, installs router, mounts `#app`. `frontend/index.html` — single `<div id="app">`, title "Timesheet & Fatturazione".
+🟢 `backend/src/mcpStdio.js` — entry point alternativo del server MCP via stdio, lanciato dal client AI come processo figlio. Non avvia Express né polling.
 
-## NPM scripts
+🟢 `frontend/src/main.js` — monta l'app Vue con router su `#app`.
 
-🟢 **Backend**: `start` → `node src/server.js`; `dev` → `node --watch src/server.js`; `test` → `node --experimental-test-module-mocks --test src/**/*.test.js`. No build step (plain Node).
+## Script npm
 
-🟢 **Frontend**: `dev` → `vite`; `build` → `vite build`; `preview` → `vite preview`. No test script.
+🟢 **Backend**: `start` (`node src/server.js`), `dev` (`node --watch`), `test` (`node --experimental-test-module-mocks --test` su tutti i `*.test.js` sotto `src`).
 
-## Environment configuration (`backend/.env.example`)
+🟢 **Frontend**: `dev` (vite, proxy di `/api` e `/auth` su `localhost:1969`), `build`, `preview`. Nessun test.
 
-🟢 `PORT=1969` — app/API port. `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth credentials, empty disables login. `ALLOWED_EMAIL` — single-email access whitelist. `SESSION_SECRET` — express-session cookie signing secret. 🟡 A Gemini API key is also read by `envService.js`/`geminiAtecoService.js` for the optional ATECO-lookup wizard step — exact env var name not verified line-by-line.
+## Configurazione
 
-## Folder map
+🟢 `backend/.env` (da `.env.example`): `PORT`, `GOOGLE_CLIENT_ID`, `ALLOWED_EMAIL`, `SESSION_SECRET`, `GEMINI_MODEL`, `GROQ_MODEL`. `envService.js` gestisce anche `CLAUDE_MODEL`, `CLAUDE_WORKSPACE_ID`, `LLM_LOCALE_URL`, `AI_PROVIDER_DISABILITATI`.
 
-🟢 `backend/src/lib/` — auth.js (passport/OAuth), jsonStore.js (flat-file persistence), logger.js (file+console logging), macNotifier.js (native mac notifications).
+🟢 Segreti nel Keychain OS via `keytar`, servizio `Timesheet-Fatturazione`: client secret Google, API key Gemini/Groq/Claude, password PEC, password backup. Non finiscono in `config.json`, `.env` o backup.
 
-🟢 `backend/src/routes/` — one Express router per domain: auth, backup, config, forfettario, import, invoice, mail, oauth-config, reminder, sdi, timesheet.
+🟢 Dati di dominio in `backend/data/config.json` (gitignored). Il percorso dati è sovrascrivibile da Impostazioni (`config.dati.percorso`, applicato all'avvio da `applicaPercorsoDatiAllAvvio`).
 
-🟢 `backend/src/services/` — backupService, configService, envService, fatturaPaXmlGenerator (+test), fatturaPaXmlValidator (+test), forfettarioService (+test), geminiAtecoService, invoiceService (+test), mailService, pecService (+test, +e2e test), reminderService, scartoSuggerimenti, sdiRicevuteService (+test), timeCalculator (+test), timesheetService, vmsTimesheetExporter, xlsTimesheetImporter, xmlInvoiceImporter.
+## Mappa cartelle
 
-🟢 `frontend/src/components/` — subfolders `common/` (AppSidebar, ClienteSwitcher, LogoPlaceholder, MonthSwitcher), `fattura/`, `timesheet/`, `wizard/` (by feature), plus top-level `DonutChart.vue`. `frontend/src/views/` — TimesheetView, FatturaView, DashboardView, ImportaStoricoView, ImpostazioniView, CronologiaPecView. `frontend/src/composables/` — useMailto, usePdfExport, useTimeCalculator, useValidazioneFiscale. `frontend/src/services/api.js` — HTTP client. `frontend/src/router/index.js` — route table.
+🟢 `backend/src/lib/` — `auth.js`, `jsonStore.js`, `logger.js`, `notifier.js` (node-notifier cross-platform), `iban.js`, `email.js`, `pagamento.js`, `zipReader.js` (ZIP minimale, solo stdlib).
 
-## Data storage
+🟢 `backend/src/routes/` — un router per dominio: auth, config, timesheet, invoice, oauthConfig, sdi, pec, import, backup, reminder, forfettario, mail, sistema, update, template, regoleFiscali, mcp, chat.
 
-🟢 `backend/src/lib/jsonStore.js`: `DATA_DIR = backend/data`, flat JSON per collection via `readJson`/`writeJson`/`listKeys`. Layout: `config.json` (root app config, `clienti[]` array), `invoices/<anno>-<mese>-<clienteId>.json`, `timesheets/<anno>-<mese>-<clienteId>.json`, `mail-outbox/` (generated PDF attachments for outgoing mail). No database.
+🟢 `backend/src/services/` — logica di dominio, raggruppabile così:
+- **Fatturazione**: `invoiceService`, `fatturaPaXmlGenerator`, `fatturaPaXmlValidator`, `scartoSuggerimenti`, `clienteEsteroService`, `cambiValutaService`, `templateService`, `exportService`
+- **PEC/SDI**: `pecService`, `pecProvaService`, `sdiRicevuteService`, `sdiScartoReminderService`, `mailService`
+- **Timesheet**: `timesheetService`, `timeCalculator`, `vmsTimesheetExporter`
+- **Fiscale**: `forfettarioService`, `stimaVersamentiService`, `versamentiF24Service`, `f24StateService`, `f24PdfService`, `bolloTrimestrale`, `creditiService`, `scadenzeFiscaliService`, `pagamentiFattureService`
+- **Regole e fonti**: `regoleFiscaliService`, `fontiNormativeService`, `monitoraggioFontiService`, `notificheFiscaliService`
+- **AI**: `aiRouterService`, `geminiAtecoService`, `chatService`, `mcpService`, `envService`
+- **Import/backup**: `xlsTimesheetImporter`, `xmlInvoiceImporter`, `importZipService`, `backupService`
+- **Sistema**: `configService`, `reminderService`, `updateService`
 
-## Test setup
+🟢 `backend/src/data/` (versionata) — `atecoSettori.json`, `sediInps.json`, `gestoriPec.json`, `regole/<anno>.json`, `fonti/registro.json` + `fonti/testi/`.
 
-🟢 Runner: Node built-in `node:test` (`node --experimental-test-module-mocks --test src/**/*.test.js`), assertions via `node:assert/strict`. Test files: `timeCalculator.test.js`, `fatturaPaXmlGenerator.test.js`, `fatturaPaXmlValidator.test.js`, `forfettarioService.test.js`, `invoiceService.test.js`, `pecService.test.js`, `pecService.e2e.js` (real-mailbox end-to-end, not run by default CI), `sdiRicevuteService.test.js`.
+🟢 `backend/src/templates-default/` — 10 template di stampa (5 fattura, 5 timesheet), ognuno con `layout.html`, `layout.css`, `template.json`.
+
+🟢 `frontend/src/` — `views/` (9 viste), `components/` (`common/`, `timesheet/`, `wizard/` più grafici e chat), `composables/` (8), `services/api.js`, `router/index.js`, `style.css`, `wizardImpostazioniPassi.js`, `wizardImportaStoricoPassi.js`.
+
+🟢 Fuori da `backend/`/`frontend/`: `scripts/` (install/uninstall/update per mac e Windows), `packaging/` (build `.pkg` macOS e installer Windows), `.github/workflows/` (CI, CodeQL, gitleaks, license-check, scorecard, CLA, dependabot), `docs/`.
+
+## Storage
+
+🟢 `jsonStore.js`: `readJson`/`writeJson`/`listKeys` su `DATA_DIR` (default `backend/data/`, mutabile con `setDataDir`). Nessun database. Layout principale:
+- `config.json` — configurazione (fornitore, `clienti[]`, fatturazione, pec, sdi, backup, reminder, forfettario, dati, ai, mcp, notifiche, `walletBtc`)
+- `invoices/<anno>-<mese>-<clienteId>.json`, `timesheets/<anno>-<mese>-<clienteId>.json`
+- `f24Versamenti.json`, `crediti.json`, `scadenzeFiscali.json`, `pagamentiMappingColonne.json`
+- `regole-attive/<anno>.json`, `regole-proposte/<anno>.json`, `fonti-cambiate.json`
+- `cambi/` (cache cambi), `modelli/f24-ordinario.pdf` (modello AdE scaricato al primo uso, impronta SHA-256 verificata), `mail-outbox/` (PDF allegati)
+
+## Test
+
+🟢 Runner built-in `node:test`, asserzioni `node:assert/strict`. 35 file `*.test.js` (servizi e lib). `pecService.e2e.js` è un test su casella reale, escluso dall'esecuzione di default.
+
+🟢 CI (`.github/workflows/ci.yml`): `backend-test` (Node 26, installa libsecret per keytar) e `frontend-build` (Node 20).
 
 ## Logging
 
-🟢 `backend/src/lib/logger.js`: `LOG_DIR = backend/logs`, JSON-lines to file + mirrored console. Three loggers: `logger` → `app.log`, `pecLogger` → `pec.log`, `sdiLogger` → `sdi.log`. All three files are populated in normal operation (PEC has been exercised against a real mailbox).
+🟢 `lib/logger.js`: JSON-lines su `backend/logs/` con tre logger — `logger` (`app.log`), `pecLogger` (`pec.log`), `sdiLogger` (`sdi.log`) — mirror su console.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** stack, entry points, scripts, env vars, folder map, storage, tests, logging all covered.
-- **Accuracy:** all claims read directly from package.json, server.js, .env.example, jsonStore.js, logger.js, and directory listings.
-- **Consistency:** aligns with `PROJECT_CONTEXT.md` workflow description and `DESIGN_PATTERNS_AS_IS.md`.
-- **TODO:** none outstanding.
-- **Missing information:** exact shape/schema of `invoices/*.json`/`timesheets/*.json` not yet documented field-by-field; exact Gemini env var name unverified.
-- **Open questions:** is `cors` dependency actually used anywhere, or vestigial? (See `ARCHITECTURE.md` — confirmed unused in `server.js`.)
-- **Confidence level:** predominantly 🟢, one 🟡 inference (Gemini env var naming).
+- **Completeness:** stack, entry point, script, config, cartelle, storage, test, log.
+- **Accuracy:** verificato su `package.json`, `server.js`, `.env.example`, `jsonStore.js`, `envService.js`, listing directory (2026-10-13).
+- **Consistency:** coerente con `ARCHITECTURE.md` e `PROJECT_CONTEXT.md`.
+- **TODO:** nessuno.
+- **Missing information:** schema campo per campo di `invoices/*.json` e `timesheets/*.json`.
+- **Open questions:** nessuna.
+- **Confidence level:** 🟢.

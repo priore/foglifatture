@@ -31,6 +31,7 @@
   <p class="desc">{{descrizione}}</p>
 
   <div class="amount-row"><span>Compenso professionale</span><span>&euro; {{imponibileFormattato}}</span></div>
+  {{#if rivalsaInps}}<div class="amount-row"><span>Rivalsa INPS 4%</span><span>&euro; {{rivalsaInpsFormattato}}</span></div>{{/if}}
   <div class="amount-row total"><span>Netto a pagare</span><span>&euro; {{nettoAPagareFormattato}}</span></div>
 
   <p class="legal">Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 — Regime forfetario. Non soggetta a ritenuta d'acconto.

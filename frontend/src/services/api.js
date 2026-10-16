@@ -13,6 +13,7 @@ async function richiesta(percorso, opzioni = {}) {
     const errore = new Error(messaggio || `Errore HTTP ${risposta.status}`);
     if (corpo.prossimoRetryIl) errore.prossimoRetryIl = corpo.prossimoRetryIl;
     if (corpo.tipo) errore.tipo = corpo.tipo;
+    if (corpo.codice) errore.codice = corpo.codice;
     if (corpo.previsione) errore.previsione = corpo.previsione;
     throw errore;
   }
@@ -145,11 +146,17 @@ export const api = {
     location.reload();
   },
 
+  // Server MCP in sola lettura (FP-008)
+  statoMcp: () => richiesta('/mcp/stato'),
+  impostaMcpAbilitato: (abilitato) => richiesta('/mcp/abilitato', { method: 'PUT', body: JSON.stringify({ abilitato }) }),
+  rigeneraTokenMcp: () => richiesta('/mcp/rigenera-token', { method: 'POST' }),
+
   // Promemoria timesheet fine mese
   salvaImpostazioniReminder: (dati) => richiesta('/reminder/impostazioni', { method: 'PUT', body: JSON.stringify(dati) }),
 
   // Dashboard regime forfettario (soglia, imposta stimata, settori ATECO)
   settoriAteco: () => richiesta('/forfettario/settori-ateco'),
+  sediInps: () => richiesta('/forfettario/sedi-inps'),
   aggiornaSettoriAteco: () => richiesta('/forfettario/settori-ateco/aggiorna', { method: 'POST' }),
   dashboardForfettario: (anno) => richiesta(`/forfettario/dashboard${anno ? `?anno=${anno}` : ''}`),
   modelliGemini: () => richiesta('/forfettario/gemini/modelli'),
@@ -171,6 +178,8 @@ export const api = {
   urlBolloF24Pdf: (anno, trim) => `${BASE_URL}/forfettario/bollo/${anno}/trim/${trim}/f24/pdf`,
   creditiResiduiF24: () => richiesta('/forfettario/crediti/residui'),
   aggiungiCreditoF24: (dati) => richiesta('/forfettario/crediti', { method: 'POST', body: JSON.stringify(dati) }),
+  suggerisciOrdineCrediti: (opzioni) => richiesta('/forfettario/crediti/suggerisci-ordine', { method: 'POST', body: JSON.stringify(opzioni ?? {}) }),
+  chatAi: (dati) => richiesta('/chat', { method: 'POST', body: JSON.stringify(dati) }),
   eliminaCreditoF24: (id) => richiesta(`/forfettario/crediti/${id}`, { method: 'DELETE' }),
 
   // Data di incasso fatture da CSV home banking (mapping colonne via Gemini)

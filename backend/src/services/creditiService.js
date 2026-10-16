@@ -161,3 +161,38 @@ export function compensaCrediti(righeDebito, creditiDisponibili, regole, oggiStr
 
   return { righeDebito: righeDebitoFinali, righeCredito, totaleNetto, f24AZero, avvisi };
 }
+
+// G-AI C.9: prompt per il suggerimento d'ordine di utilizzo dei crediti.
+// Funzione pura. Invia importi e codici tributo → richiede autorizzazione (vedi suggerisciOrdineCrediti).
+export function costruisciPromptOrdineCrediti(crediti, scadenze, soglia = 5000) {
+  const elCrediti = crediti.map((c, i) => `${i + 1}. codice ${c.codice} (${c.sezione}), anno ${c.annoRiferimento ?? 'n.d.'}, residuo ${c.residuo.toFixed(2)} €, utilizzabile dal ${c.utilizzabileDal ?? 'subito'}${c.disponibile ? '' : ' (non ancora disponibile)'}`).join('\n');
+  const elDebiti = scadenze.map((s) => {
+    const righe = (s.righe ?? []).map((r) => `${r.codice} ${Number(r.importo).toFixed(2)} €`).join(', ');
+    return `- ${s.tipo} il ${s.data}: ${righe}`;
+  }).join('\n') || '- nessuna scadenza stimata';
+  return `Sei un consulente fiscale italiano. Un contribuente forfettario ha questi crediti fiscali compensabili in F24:
+${elCrediti}
+
+Prossime scadenze F24 con debiti:
+${elDebiti}
+
+Regole: compensazione verticale (stesso codice tributo del debito) esente dal limite; compensazione orizzontale (codice diverso) oltre ${soglia} € l'anno richiede visto di conformità e dichiarazione presentata almeno 10 giorni prima (DL 124/2019 art. 3, Ris. AdE 110/E/2019).
+Suggerisci in italiano, massimo 6 righe, in che ordine usare i crediti (prima i verticali, poi gli orizzontali per data di disponibilità) con una motivazione breve per ciascuno. Segnala se qualche credito non è ancora utilizzabile o se si rischia di superare la soglia. Non inventare importi. In caso di dubbio consiglia di sentire il commercialista.`;
+}
+
+// Suggerisce l'ordine di utilizzo dei crediti via AI. I dati inviati (importi, codici tributo) sono
+// fiscali personali: serve config.ai.autorizzaDatiFiscali oppure conferma esplicita per questa chiamata.
+// `scadenze` arriva già calcolato dalla route (stimaVersamenti), per non accoppiare i due service.
+export async function suggerisciOrdineCrediti({ config, scadenze, soglia, conferma = false }) {
+  if (!config?.ai?.autorizzaDatiFiscali && conferma !== true) {
+    const err = new Error('Invio dati fiscali all\'AI non autorizzato');
+    err.codice = 'AUTORIZZAZIONE_RICHIESTA';
+    throw err;
+  }
+  const crediti = await creditiConResiduo();
+  if (!crediti.length) throw new Error('Nessun credito da ordinare');
+  const { chiamaAI } = await import('./aiRouterService.js');
+  const { testo } = await chiamaAI(costruisciPromptOrdineCrediti(crediti, scadenze, soglia));
+  if (!testo) throw new Error('Risposta AI non valida');
+  return { suggerimento: testo };
+}

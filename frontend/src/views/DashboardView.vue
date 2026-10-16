@@ -7,6 +7,7 @@ import BarChart from '../components/BarChart.vue';
 import LineChart from '../components/LineChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
 import StepRegoleFiscali from '../components/wizard/StepRegoleFiscali.vue';
+import ChatAi from '../components/ChatAi.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 
@@ -45,6 +46,7 @@ const rateSaldoSelezionato = ref(1);
 const salvatoreRate = ref(false);
 const bolloTrimestrale = ref(null);
 const creditiResidui = ref([]);
+const regoleAnno = ref(null);
 const nuovoCredito = ref({ sezione: 'erario', codice: '', annoRiferimento: new Date().getFullYear() - 1, importo: null, utilizzabileDal: '', descrizione: '' });
 const erroreCrediti = ref('');
 const eliminandoCredito = ref(null);
@@ -111,6 +113,14 @@ async function caricaBolloTrimestrale() {
   bolloTrimestrale.value = await api.bolloTrimestrale(annoSelezionato.value).catch(() => null);
 }
 
+async function caricaRegoleAnno() {
+  regoleAnno.value = await api.regoleFiscaliAnno(annoSelezionato.value).catch(() => null);
+}
+
+function formattaScadenzaRegola({ mese, giorno }) {
+  return `${giorno} ${MESI_BREVI[mese - 1]}`;
+}
+
 async function caricaCreditiResidui() {
   creditiResidui.value = await api.creditiResiduiF24().catch(() => []);
 }
@@ -120,9 +130,31 @@ async function aggiungiCreditoF24() {
   try {
     await api.aggiungiCreditoF24(nuovoCredito.value);
     nuovoCredito.value = { sezione: 'erario', codice: '', annoRiferimento: new Date().getFullYear() - 1, importo: null, utilizzabileDal: '', descrizione: '' };
+    mostraFormCredito.value = false;
     await caricaCreditiResidui();
   } catch (err) {
     erroreCrediti.value = err.message;
+  }
+}
+
+// G-AI C.9: suggerimento AI sull'ordine di utilizzo. Invia importi/codici tributo: consenso per chiamata o permanente.
+const mostraFormCredito = ref(false);
+const suggerimentoCrediti = ref('');
+const suggerimentoInCorso = ref(false);
+const chiediConsensoAi = ref(false);
+
+async function suggerisciOrdineCrediti(consenso = {}) {
+  erroreCrediti.value = '';
+  chiediConsensoAi.value = false;
+  suggerimentoInCorso.value = true;
+  try {
+    const r = await api.suggerisciOrdineCrediti({ anno: annoSelezionato.value, ...consenso });
+    suggerimentoCrediti.value = r.suggerimento;
+  } catch (err) {
+    if (err.codice === 'AUTORIZZAZIONE_RICHIESTA') chiediConsensoAi.value = true;
+    else erroreCrediti.value = err.message;
+  } finally {
+    suggerimentoInCorso.value = false;
   }
 }
 
@@ -148,8 +180,9 @@ onMounted(() => {
   caricaVersamentiStimati();
   caricaBolloTrimestrale();
   caricaCreditiResidui();
+  caricaRegoleAnno();
 });
-watch(annoSelezionato, () => { carica(); caricaVersamentiStimati(); caricaBolloTrimestrale(); });
+watch(annoSelezionato, () => { carica(); caricaVersamentiStimati(); caricaBolloTrimestrale(); caricaRegoleAnno(); });
 
 const barreRicaviMensili = computed(() => {
   if (!dashboard.value) return [];
@@ -338,6 +371,7 @@ function caricaTabSalvato() {
     if (salvato === 'Bitcoin') return 'Bitcoin';
     if (salvato === 'F24') return 'F24';
     if (salvato === 'Regole fiscali') return 'Regole fiscali';
+    if (salvato === 'AI') return 'AI';
     return 'Dashboard';
   } catch {
     return 'Dashboard';
@@ -470,7 +504,7 @@ function ripristinaLayout() {
             <div class="value">{{ formattaEuro(dashboard.accontoStimato) }}</div>
           </div>
         </div>
-        <div class="nota-stima">Stime, metodo storico (100% imposta su reddito proiettato fine anno) — verificare sempre con il commercialista.</div>
+        <div class="nota-stima">Stime, metodo storico (100% dell'imposta per cassa, incassi proiettati a fine anno, al netto dei contributi INPS versati) — verificare sempre con il commercialista.</div>
       </div>
 
       <div
@@ -480,15 +514,40 @@ function ripristinaLayout() {
         Regole fiscali {{ statoRegoleFiscali.annoDisponibile }} disponibili e non ancora confermate.
         <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
       </div>
+      <div v-if="statoRegoleFiscali?.proposte > 0" class="banner-regole">
+        Proposta di aggiornamento normativo da verificare.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
+      <div v-else-if="statoRegoleFiscali?.fonteCambiate > 0" class="banner-regole">
+        Rilevata una modifica in una fonte normativa ufficiale.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
 
       <div class="tab-toggle">
         <button type="button" :class="tabAttivo === 'Dashboard' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Dashboard')">Dashboard</button>
         <button type="button" :class="tabAttivo === 'Bitcoin' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Bitcoin')">Bitcoin</button>
         <button type="button" :class="tabAttivo === 'F24' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('F24')">F24</button>
         <button type="button" :class="tabAttivo === 'Regole fiscali' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('Regole fiscali')">Regole fiscali</button>
+        <button type="button" :class="tabAttivo === 'AI' ? 'btn btn-primary' : 'btn btn-ghost'" @click="cambiaTab('AI')">AI</button>
       </div>
 
-      <div v-if="tabAttivo === 'Regole fiscali'" class="regole-fiscali-wrapper">
+      <ChatAi v-if="tabAttivo === 'AI'" />
+
+      <div v-else-if="tabAttivo === 'Regole fiscali'" class="regole-fiscali-wrapper">
+        <div v-if="regoleAnno" class="card">
+          <div class="card-head">
+            <span class="card-head-titolo"><h2>Regole fiscali {{ regoleAnno.anno }}</h2></span>
+          </div>
+          <div class="card-body">
+            <div class="mini-stat-row">
+              <div class="mini-stat"><span class="mini-stat-label">Aliquota ordinaria / ridotta</span><span class="mini-stat-value">{{ regoleAnno.forfettario.aliquotaOrdinaria }}% / {{ regoleAnno.forfettario.aliquotaRidotta }}%</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">Soglie ricavi</span><span class="mini-stat-value">{{ formattaEuro(regoleAnno.forfettario.sogliaAnnua) }} / {{ formattaEuro(regoleAnno.forfettario.sogliaUscitaImmediata) }}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">Saldo e I acconto</span><span class="mini-stat-value">{{ formattaScadenzaRegola(regoleAnno.scadenze.saldoPrimoAcconto) }}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">II acconto</span><span class="mini-stat-value">{{ formattaScadenzaRegola(regoleAnno.scadenze.secondoAcconto) }}</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">Gestione separata INPS</span><span class="mini-stat-value">{{ regoleAnno.inpsGestioneSeparata.aliquota }}%</span></div>
+            </div>
+          </div>
+        </div>
         <StepRegoleFiscali @confermata="caricaStatoRegole" />
       </div>
 
@@ -956,7 +1015,7 @@ function ripristinaLayout() {
 
             <template v-if="creditiResidui.length">
               <table class="data-table" style="margin-bottom:14px">
-                <thead><tr><th>Codice</th><th>Anno rif.</th><th>Importo orig.</th><th>Usato</th><th>Residuo</th><th>Disponibile dal</th><th></th></tr></thead>
+                <thead><tr><th>Codice</th><th>Anno</th><th>Importo</th><th>Usato</th><th>Residuo</th><th>Dal</th><th></th></tr></thead>
                 <tbody>
                   <tr v-for="c in creditiResidui" :key="c.id" :style="{ opacity: c.disponibile ? 1 : 0.6 }">
                     <td>{{ c.codice }}<span v-if="c.tipoCompensazione === 'verticale'" class="badge-fonte" style="margin-left:4px" title="Compensazione verticale — esente dal limite 5.000 €">vert.</span></td>
@@ -964,7 +1023,7 @@ function ripristinaLayout() {
                     <td>{{ formattaEuro(c.importo) }}</td>
                     <td>{{ formattaEuro(c.usato) }}</td>
                     <td style="font-weight:600">{{ formattaEuro(c.residuo) }}</td>
-                    <td>{{ c.utilizzabileDal ?? 'subito' }}<span v-if="!c.disponibile" class="badge-fonte" style="margin-left:4px;color:var(--warn)">in attesa</span></td>
+                    <td>{{ c.utilizzabileDal ?? 'subito' }}<span v-if="!c.disponibile" class="badge-fonte" style="display:table;margin-top:4px;color:var(--warn)">in attesa</span></td>
                     <td>
                       <button
                         class="btn-icon" title="Elimina credito" aria-label="Elimina credito"
@@ -978,24 +1037,29 @@ function ripristinaLayout() {
             </template>
             <p v-else class="note-legal" style="margin-bottom:14px">Nessun credito registrato.</p>
 
-            <details style="margin-top:4px">
-              <summary style="cursor:pointer;font-size:.82rem;color:var(--accent)">Aggiungi credito</summary>
-              <form @submit.prevent="aggiungiCreditoF24" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
-                <div class="field">
-                  <label>Sezione</label>
-                  <select v-model="nuovoCredito.sezione">
-                    <option value="erario">Erario</option>
-                    <option value="inps">INPS</option>
-                  </select>
-                </div>
-                <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required style="width:90px"></div>
-                <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento" style="width:75px"></div>
-                <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required style="width:100px"></div>
-                <div class="field"><label>Disponibile dal</label><input type="date" v-model="nuovoCredito.utilizzabileDal"></div>
-                <div class="field"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito" style="width:180px"></div>
-                <button type="submit" class="btn btn-ok">Aggiungi</button>
-              </form>
-            </details>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <button type="button" class="btn btn-ghost" :aria-expanded="mostraFormCredito" @click="mostraFormCredito = !mostraFormCredito">{{ mostraFormCredito ? 'Chiudi' : 'Aggiungi credito' }}</button>
+              <button type="button" class="btn btn-ai" :disabled="suggerimentoInCorso || !creditiResidui.length" :title="creditiResidui.length ? '' : 'Registra almeno un credito per ottenere il suggerimento'" @click="suggerisciOrdineCrediti()">{{ suggerimentoInCorso ? '…' : 'Suggerisci ordine con AI' }}</button>
+            </div>
+
+            <form v-if="mostraFormCredito" @submit.prevent="aggiungiCreditoF24" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+              <div class="field">
+                <label>Sezione</label>
+                <select v-model="nuovoCredito.sezione">
+                  <option value="erario">Erario</option>
+                  <option value="inps">INPS</option>
+                </select>
+              </div>
+              <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required style="width:90px"></div>
+              <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento" style="width:75px"></div>
+              <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required style="width:100px"></div>
+              <div class="field"><label>Disponibile dal</label><input type="date" v-model="nuovoCredito.utilizzabileDal"></div>
+              <div class="field"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito" style="width:180px"></div>
+              <button type="submit" class="btn btn-ok">Aggiungi</button>
+            </form>
+
+            <p v-if="!creditiResidui.length" class="note-legal" style="margin-bottom:14px">Registra almeno un credito per ottenere il suggerimento AI.</p>
+            <div v-if="suggerimentoCrediti" class="note-legal" style="margin-bottom:14px;white-space:pre-wrap">{{ suggerimentoCrediti }}</div>
 
             <p class="nota-piede" style="margin-top:12px">
               Compensazione orizzontale &gt; 5.000 € richiede visto di conformità (DL 124/2019 art. 3).
@@ -1006,6 +1070,18 @@ function ripristinaLayout() {
         </div>
       </div>
     </template>
+
+    <div v-if="chiediConsensoAi" class="modal-overlay" @click.self="chiediConsensoAi = false">
+      <div class="modal-box" role="dialog" aria-modal="true">
+        <h2>Inviare i dati all'AI?</h2>
+        <p class="note-legal">Il suggerimento invia all'AI importi e codici tributo dei tuoi crediti e delle prossime scadenze F24.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" @click="chiediConsensoAi = false">Annulla</button>
+          <button type="button" class="btn btn-ghost" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
+          <button type="button" class="btn btn-ok" @click="suggerisciOrdineCrediti({ conferma: true })">Sì, questa volta</button>
+        </div>
+      </div>
+    </div>
 
     <UpdateModal
       v-if="mostraPopupAggiornamento"

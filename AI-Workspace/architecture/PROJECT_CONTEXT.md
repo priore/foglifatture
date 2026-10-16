@@ -1,52 +1,60 @@
 # Project Context
 
-Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
-## Purpose
+## Scopo
 
-🟢 Local (single-machine) app for monthly timesheet management and Italian electronic invoicing under "regime forfettario" (Italian flat-tax scheme for freelancers/sole proprietors).
+🟢 App locale (singola macchina, macOS/Windows) per timesheet mensile e fatturazione elettronica italiana in regime forfettario. Nome pubblico: **Fogli & Fatture**.
 
-🟢 Supports multiple concurrent clients: each client has its own hourly rate, timesheet, and invoice history, tracked under a shared, legally-mandated single invoice-numbering sequence. Source: `backend/src/services/configService.js` (`clienti: []` array, replaced a single `cliente` object), data files keyed `<anno>-<mese>-<clienteId>.json`.
+🟢 Due flussi di fatturazione indipendenti:
+- da timesheet (ore × tariffa oraria del cliente)
+- a importo e descrizione liberi, senza timesheet (`invoiceRoutes.js`)
 
-🟢 Two independent billing paths: timesheet-driven (hours × rate) and free-form (arbitrary amount + description, no timesheet required) — `invoiceRoutes.js`.
+🟢 Multi-cliente concorrente: `config.clienti[]`, ogni cliente con id stabile, tariffa, template e dati di pagamento propri. Numerazione fattura unica e progressiva sull'intera partita IVA.
 
-## Users
+🟢 Oltre alla fatturazione, l'app copre il ciclo fiscale del forfettario:
+- dashboard soglie (85.000 € / 100.000 €), imposta sostitutiva e INPS stimate
+- piano versamenti F24 con PDF sul modello AdE, bollo trimestrale, crediti compensabili
+- incassi (anche in Bitcoin e valuta estera), regole fiscali versionate per anno con fonti normative
+- assistente AI in sola lettura (chat in dashboard, server MCP)
 
-🟢 Single human operator (freelancer/consultant), multiple clients. Runs locally (README describes a `launchd`/Task Scheduler service on `localhost:1969`).
+## Utenti
 
-🟢 Access control: Google OAuth whitelist of exactly one email (`ALLOWED_EMAIL` in `backend/.env.example`, enforced in `backend/src/lib/auth.js`). If OAuth credentials are blank, auth is fully disabled (`isAuthConfigurato()` false) so the owner can reach Settings on first run — a deliberate bootstrap escape hatch, not a bug.
+🟢 Un solo operatore (freelancer/consulente) con più clienti. Gira su `localhost:1969`.
 
-## Domain concepts (Italian e-invoicing)
+🟢 Accesso: login Google OAuth con whitelist `ALLOWED_EMAIL` (una o più email separate da virgola, `lib/auth.js`). Se `GOOGLE_CLIENT_ID`/secret mancano, il login è disattivato (`isAuthConfigurato()` false): scelta voluta per raggiungere Impostazioni al primo avvio.
 
-- 🟢 **FatturaPA** — mandatory Italian e-invoice XML format. `backend/src/services/fatturaPaXmlGenerator.js` generates schema v1.2.2, `FormatoTrasmissione FPR12`, `RegimeFiscale RF19` (flat-tax), `Natura IVA N2.2` (forfettario — VAT-exempt), virtual stamp duty (`DatiBollo`) above threshold, no INPS rivalsa, no ritenuta d'acconto. `fatturaPaXmlValidator.js` validates generated XML against the schema before send.
-- 🟢 **SDI (Sistema di Interscambio)** — Italy's state invoice-exchange system; routes e-invoices to recipients and returns delivery/outcome receipts. Confirmed via `pecService.js` (official SDI address `sdi01@pec.fatturapa.it`) and `sdiRicevuteService.js` (recognizes receipt types RC/NS/MC/NE/EC/DT/AT).
-- 🟢 **PEC (Posta Elettronica Certificata)** — Italian certified email, the legally required transport channel to submit invoices to SDI and receive receipts. `pecService.js` sends via SMTP; `sdiRicevuteService.js` polls the same mailbox via IMAP (read-only), filtering senders to `@pec.fatturapa.it`. Tested end-to-end against a real mailbox (Postecert) — see `pecService.e2e.js`.
-- 🟢 **Timesheet-based billing** — daily/monthly logged hours drive the hourly-rate calculation feeding the invoice (`TimesheetView.vue`, `timeCalculator.js`), per selected client.
-- 🟢 **Regime forfettario dashboard** — running totals/limits for the flat-tax scheme (`forfettarioService.js`, `DashboardView.vue`).
+## Concetti di dominio
 
-## End-to-end workflow
+- 🟢 **FatturaPA** — XML v1.2.2, `TipoDocumento TD01`, `RegimeFiscale RF19`, Natura `N2.2` (italiani) o `N2.1` (clienti esteri B2B), `DatiBollo` sopra soglia, `DatiPagamento` se configurato, `DatiCassaPrevidenziale TC22` per la rivalsa INPS opzionale. Generatore: `fatturaPaXmlGenerator.js`, validatore: `fatturaPaXmlValidator.js`.
+- 🟢 **SDI / PEC** — invio via SMTP (`pecService.js`), ricezione ricevute via IMAP in sola lettura (`sdiRicevuteService.js`, tipi RC/NS/MC/NE/EC/DT/AT). Aiuti di configurazione e PEC di prova in `pecProvaService.js`.
+- 🟢 **Regime forfettario** — `forfettarioService.js` (soglie, imposta 5%/15%, INPS gestione separata, competenza vs cassa), `stimaVersamentiService.js` (saldo/acconti/rate).
+- 🟢 **Regole fiscali** — pacchetto per anno in `backend/src/data/regole/<anno>.json`, copia confermata dall'utente in `data/regole-attive/`, proposte da monitoraggio fonti in `data/regole-proposte/` (`regoleFiscaliService.js`, `monitoraggioFontiService.js`).
+- 🟢 **Clienti esteri** — `clienteEsteroService.js`: Natura IVA, diciture, dati anagrafici esteri, Intrastat; valuta e cambio Banca d'Italia in `cambiValutaService.js`.
 
-1. 🟢 Configure supplier data, one or more clients (each with own hourly rate), fiscal data, PEC mailbox, optional Google login via a Settings wizard (`ImpostazioniView.vue` → `WizardSteps.vue` → Step components: Fornitore, Clienti, Fatturazione, Forfettario, Pec, GoogleAuth, Backup, Promemoria, Gemini).
-2. 🟢 Pick the active client (`ClienteSwitcher.vue`), log daily hours for the month in the Timesheet view; export/print PDF (`TimesheetView.vue`, `usePdfExport.js`).
-3. 🟢 Generate a "Fattura Pro-Forma" preview — either computed server-side from the timesheet, or entered as a free amount/description — then produce the FatturaPA XML (`FatturaView.vue`, `invoiceService.js`, `fatturaPaXmlGenerator.js`). Invoice numbering stays a single progressive sequence across all clients (legal requirement tied to the VAT number, not the client).
-4. 🟢 Send the XML invoice via PEC to SDI (`pecService.js` — `inviaFatturaViaPec`).
-5. 🟢 Poll the PEC mailbox via IMAP for SDI receipt notifications, archive them locally (`CronologiaPecView.vue` shows history across all clients), trigger a desktop notification (`sdiRicevuteService.js`, `macNotifier.js`).
-6. 🟢 Separate one-off import flow for historical timesheets (XLS) and already-issued invoices (FatturaPA XML) — `ImportaStoricoView.vue`, `xlsTimesheetImporter.js`, `xmlInvoiceImporter.js`.
-7. 🟢 Encrypted data export/backup, optional scheduled automatic backup (`backupService.js`, `StepBackup.vue`).
-8. 🟢 Optional end-of-month timesheet reminder (`reminderService.js`, `StepPromemoria.vue`) and optional Gemini-based ATECO code lookup during setup (`geminiAtecoService.js`, `StepGemini.vue`).
+## Flusso end-to-end
 
-## Business goals
+1. 🟢 Configurazione in Impostazioni (fornitore, PEC, percorso dati, backup, promemoria, login, AI) e anagrafica clienti in `/clienti`.
+2. 🟢 Timesheet del mese per il cliente attivo, stampa PDF da template (`TimesheetView.vue`).
+3. 🟢 Fattura Pro-Forma da timesheet o importo libero, XML validato, invio PEC allo SDI (`FatturaView.vue`).
+4. 🟢 Polling IMAP delle ricevute SDI con notifica desktop e promemoria sugli scarti (`sdiRicevuteService.js`, `sdiScartoReminderService.js`).
+5. 🟢 Registrazione incassi: manuale, da CSV home banking (mapping colonne via AI), BTC o valuta estera (`pagamentiFattureService.js`).
+6. 🟢 Dashboard: soglie, imposta, INPS, netto; piano F24 con stato (da pagare, pagato) e PDF compilato; bollo trimestrale.
+7. 🟢 Import storico: timesheet XLS, fatture XML, archivi ZIP del Cassetto Fiscale, pagamenti CSV, ripristino backup (`ImportaStoricoView.vue`).
+8. 🟢 Backup cifrato manuale e automatico, aggiornamento app via tag Git (`backupService.js`, `updateService.js`).
 
-🟡 Reduce manual effort of producing compliant FatturaPA invoices for a forfettario freelancer serving multiple clients, and close the loop on delivery confirmation (SDI receipts) without manual PEC-mailbox checking. Inferred from the polling/notification/reminder design — no explicit goals statement found in repo.
+## Obiettivi di prodotto
+
+🟡 Ridurre il lavoro manuale di un forfettario multi-cliente: fatture conformi, chiusura del ciclo SDI, stima di imposta e scadenze con fonti verificabili, dati sempre sulla macchina dell'utente. Dedotto da design e README, nessuna dichiarazione esplicita in repo.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** purpose, users, domain concepts, workflow, and multi-client model covered.
-- **Accuracy:** all 🟢 claims read from source files directly (README, auth.js, configService.js, fatturaPaXmlGenerator.js, pecService.js, sdiRicevuteService.js, view files).
-- **Consistency:** terminology matches `AI-Workspace/documentation/DESIGN_PATTERNS_AS_IS.md` and confidence legend in `WORKSPACE_MANIFEST.md`.
-- **TODO:** none outstanding.
-- **Missing information:** none.
-- **Open questions:** none.
-- **Confidence level:** predominantly 🟢, one 🟡 inference (business goals).
+- **Completeness:** scopo, utenti, dominio, flusso coperti.
+- **Accuracy:** verificato su `server.js`, `configService.js`, `fatturaPaXmlGenerator.js`, servizi e viste (2026-10-13).
+- **Consistency:** allineato agli altri documenti di `architecture/`.
+- **TODO:** nessuno.
+- **Missing information:** nessuna.
+- **Open questions:** nessuna.
+- **Confidence level:** prevalentemente 🟢, un 🟡 sugli obiettivi.

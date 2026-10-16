@@ -1,49 +1,65 @@
 # Decisions
 
-Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
-Architectural/product decisions as observed in the codebase (not stated explicitly anywhere as an ADR — reconstructed from implementation choices). No decision here was told to the documenter directly; all are inferred from what was built.
+Decisioni architetturali e di prodotto come emergono dal codice e dai commenti. Non esistono ADR formali: ricostruite dall'implementazione.
 
-## No database — flat JSON files
+## Nessun database, file JSON
 
-🟡 Decision: persist all data (config, invoices, timesheets) as flat JSON files via a custom `jsonStore.js`, not a real database. Consistent with a single-machine local app (`PROJECT_CONTEXT.md`) run by one operator, where transactional integrity and concurrent access aren't concerns. Trade-off: no query capability beyond `listKeys`/`readJson`, no schema enforcement. Scales to multiple clients via file-key composition (`<anno>-<mese>-<clienteId>`) rather than a relational model.
+🟡 Tutti i dati (config, fatture, timesheet, F24, crediti) sono file JSON via `jsonStore.js`. Coerente con un'app locale a operatore singolo, dove transazioni e accessi concorrenti non servono. Il percorso dati è configurabile (`config.dati.percorso`), per esempio su una cartella sincronizzata tra più macchine. Costo: nessuna query oltre `listKeys`/`readJson`, nessuno schema imposto.
 
-## Same-origin deployment (no CORS)
+## Same-origin, nessun CORS
 
-🟢 Decision: Express serves the built Vue frontend itself in production, keeping frontend and API on one origin/port. `cors` is a listed but unused dependency, confirming CORS support was considered but not needed once same-origin was chosen. See `ARCHITECTURE.md`.
+🟢 Express serve il frontend buildato e le API sulla stessa origine e porta. La dipendenza `cors` è stata rimossa.
 
-## Single-email auth via Google OAuth, with a bootstrap escape hatch
+## Login Google a email singola, con bypass al primo avvio
 
-🟢 Decision: rather than building a user/password system, auth is Google OAuth gated by a single allowed email (`ALLOWED_EMAIL`) — one operator, independent of how many clients that operator bills. If OAuth credentials are absent, auth is disabled entirely rather than blocking the app. This is a deliberate first-run/bootstrap design, not an oversight — it lets the owner reach Settings to configure OAuth before auth can be enforced. See `PROJECT_CONTEXT.md`.
+🟢 Niente sistema utente/password: OAuth Google con whitelist (`ALLOWED_EMAIL`). Senza credenziali il login è disattivato per permettere di configurarle da Impostazioni. Un solo operatore, indipendentemente dal numero di clienti fatturati: non evolvere verso multi-utente senza richiesta esplicita.
 
-## Composition API exclusively, no state management library
+## Segreti nel Keychain, non nei file
 
-🟢 Decision: all Vue components use `<script setup>` (Composition API only), and no Pinia/Vuex is present — state is local per-view, re-fetched from the backend as needed. The active-client selection is passed via props/route state rather than a global store. See `DESIGN_PATTERNS_AS_IS.md`.
+🟢 Password PEC, password backup, client secret Google e API key AI vivono nel Keychain OS (`keytar`). `config.json` le tiene vuote, `GET /api/config` restituisce un placeholder mascherato, i backup non le includono. `.env` contiene solo valori non segreti (id client, email, nomi modello).
 
-## Global CSS classes over component-scoped styles
+## Stato locale, nessuno store globale
 
-🟢 Decision: no `.vue` file in the app declares a `<style>` block; all visuals come from global classes in one `style.css` driven by CSS custom properties. This keeps dark-mode support centralized (change tokens once, every surface updates) at the cost of no style encapsulation per component. See `DESIGN_SYSTEM.md`.
+🟢 Composition API con `<script setup>` ovunque, nessun Pinia/Vuex. Stato per vista, rifetch dal backend. Il passo dei wizard sta nella query string.
 
-## Print views isolated from the app's design system
+## Primitive CSS globali, template di stampa a parte
 
-🟢 Decision: `FatturaPrintPreview.vue` and `TimesheetPrintPreview.vue` use separate stylesheets (`print-fattura.css`, `print-timesheet.css`) with independent, hardcoded palettes, because they replicate fixed legacy document layouts (A4 invoice, Excel-style timesheet) rather than the app's own visual identity. See `DESIGN_TOKENS.md`.
+🟢 Bottoni, card, campi, tabelle e checkbox sono classi globali in `style.css` che leggono i token. Gli stili `scoped` coprono layout locale. I documenti stampati sono template Handlebars indipendenti (`templates-default/`), resi in iframe sandboxato: ogni template porta il proprio layout A4.
 
-## Background polling over webhook/push, one shared pattern for every recurring job
+## Un solo schema di polling per ogni job ricorrente
 
-🟢 Decision: SDI receipt checking, scheduled backup, and the end-of-month reminder all use the same `setInterval`-based pattern (re-reading config each tick) instead of a shared scheduler abstraction or a webhook mechanism. Consistent with PEC/SDI's actual protocol (no webhook equivalent exists in the Italian e-invoicing standard) and with keeping each job self-contained. See `DESIGN_PATTERNS_AS_IS.md`.
+🟢 Polling SDI, backup, promemoria, scarti SDI, monitoraggio fonti e notifiche fiscali usano `setInterval` rileggendo la config a ogni tick, senza scheduler astratto né webhook (lo standard PEC/SDI non ne ha).
 
-## Multi-client support via an array + shared invoice numbering
+## Multi-cliente con numerazione condivisa
 
-🟢 Decision: `config.clienti[]` replaced a single `cliente` object; each client gets a stable `id`, its own hourly rate, and its own timesheet/invoice files (`<anno>-<mese>-<clienteId>`), while invoice numbering stays one progressive sequence shared across all clients — a legal requirement tied to the VAT number, not the client. Soft-delete (`attivo:false`) keeps historical invoices/timesheets resolvable after a client is removed from active selectors. See `PROJECT_CONTEXT.md`, `ARCHITECTURE.md`.
+🟢 `config.clienti[]` con id stabile e tariffa propria. File per `<anno>-<mese>-<clienteId>`, numerazione fattura unica sulla partita IVA. La cancellazione è logica (`attivo:false`): fatture e timesheet storici restano risolvibili.
+
+## Regole fiscali per anno, confermate dall'utente
+
+🟢 I valori fiscali (soglie, aliquote, scadenze, codici tributo, INPS, bollo) stanno in un pacchetto per anno versionato in git, con fonte e citazione per ogni valore. Il pacchetto in uso è una copia che l'utente conferma. Gli aggiornamenti proposti dal monitoraggio fonti non si attivano mai da soli. Senza regole per l'anno, ultimo anno confermato con avviso visibile.
+
+## AI facoltativa, a cascata, con consenso
+
+🟢 Nessuna funzione core dipende dall'AI. Il router prova i provider in ordine (Gemini, CLI, Claude, Groq, LLM locale) e passa al successivo su quota esaurita. I dati fiscali personali partono solo con consenso esplicito (per richiesta o permanente). Un LLM locale permette di non far uscire nulla dalla macchina.
+
+## Assistente in sola lettura
+
+🟢 Server MCP e chat espongono solo aggregati tramite allowlist di campi. Nessuna scrittura e nessun invio: un invio SDI errato non è annullabile e si ripara solo con una nota di variazione, che resta un'azione umana in UI.
+
+## Dati verso servizi esterni dal browser, con avviso
+
+🟢 Recupero transazioni BTC (mempool.space) e cambi storici partono dal frontend, con nota privacy accanto al pulsante. Il valore recuperato resta sempre modificabile a mano.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** covers the major structural decisions surfaced across architecture and design docs.
-- **Accuracy:** each decision ties to a confirmed implementation detail in a cited source document.
-- **Consistency:** confidence tags match the originating documents' tags.
-- **TODO:** none for this pass.
-- **Missing information:** no explicit rationale text exists in-repo for any of these decisions — all reconstructed from implementation, not from commit messages or design notes.
-- **Open questions:** were any of these decisions deliberate trade-offs discussed with a stakeholder, or default choices made under time constraints? Cannot be determined from code alone.
-- **Confidence level:** predominantly 🟢, one 🟡 on the "why" behind the no-database choice, which is inferred rather than stated.
+- **Completeness:** decisioni strutturali di architettura, sicurezza, UI, fiscale e AI.
+- **Accuracy:** ognuna legata a un dettaglio verificato nel codice (2026-10-13).
+- **Consistency:** coerente con `ARCHITECTURE.md` e `DESIGN_PATTERNS_AS_IS.md`.
+- **TODO:** nessuno.
+- **Missing information:** nessun rationale scritto in repo: ricostruito dall'implementazione.
+- **Open questions:** nessuna.
+- **Confidence level:** prevalentemente 🟢, 🟡 sul motivo della scelta senza database.

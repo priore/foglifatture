@@ -93,6 +93,7 @@ const DEFAULT_CONFIG = {
     requisitiAliquotaRidotta: false, // L. 190/2014 c. 65: nessuna attività nei 3 anni precedenti, attività non in prosecuzione di lavoro dipendente
     soggettoIsa: true, // DPR 435/2001 art. 17 c. 3: acconti 50/50 se soggetto ISA, 40/60 altrimenti
     limitePersonale: 0, // soglia personale di sicurezza (€); 0 = disabilitato (FP-028)
+    codiceSedeInps: '', // 4 cifre, da backend/src/data/sediInps.json: va nella sezione INPS dell'F24 (J.1)
     rivalsaInps: false, // L. 662/96 c. 212: rivalsa INPS 4% addebitata al cliente (opt-in, default off)
     gestionePrevidenziale: '', // '' = non configurata | 'gestioneSeparata' | 'altra' (FP-015)
     altraCoperturaPrevidenziale: false, // true ⇒ aliquota GS ridotta (pensionati/altra previdenza obbligatoria)
@@ -102,6 +103,16 @@ const DEFAULT_CONFIG = {
     // Override di backend/data/, es. una cartella sincronizzata (Dropbox/iCloud/OneDrive)
     // per avere timesheet e fatture su più macchine. Vuoto = default (data/ nel progetto).
     percorso: '',
+  },
+  ai: {
+    // G-AI C.9: autorizza l'invio all'AI di dati fiscali personali (importi, codici tributo). Default off.
+    autorizzaDatiFiscali: false,
+  },
+  mcp: {
+    // FP-008: server MCP in sola lettura. Il toggle vale come consenso esplicito all'invio di
+    // aggregati fiscali al client AI; il token protegge l'accesso HTTP (stdio non lo usa).
+    abilitato: false,
+    token: '',
   },
   notifiche: {
     abilitate: true, // toggle globale notifiche desktop macOS (OS.0, FP-022 piano sez. G)
@@ -187,6 +198,8 @@ export async function getConfig() {
       forfettario: fondiSezione(DEFAULT_CONFIG.forfettario, config.forfettario),
       dati: fondiSezione(DEFAULT_CONFIG.dati, config.dati),
       notifiche: fondiSezione(DEFAULT_CONFIG.notifiche, config.notifiche),
+      ai: fondiSezione(DEFAULT_CONFIG.ai, config.ai),
+      mcp: fondiSezione(DEFAULT_CONFIG.mcp, config.mcp),
     }
     : { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
 
@@ -221,6 +234,8 @@ export async function getConfigSicura() {
     ...config,
     pec: { ...config.pec, passwordMittente: config.pec.passwordMittente ? PASSWORD_PLACEHOLDER : '' },
     backup: { ...config.backup, password: config.backup.password ? PASSWORD_PLACEHOLDER : '' },
+    // Il token MCP passa solo da /api/mcp/stato, mai dal config generico.
+    mcp: { abilitato: config.mcp.abilitato },
   };
 }
 
@@ -285,6 +300,10 @@ export function validaConfig(partialConfig) {
   if (gp !== undefined && !['', 'gestioneSeparata', 'altra'].includes(gp)) {
     errori.push('forfettario: gestionePrevidenziale deve essere \'\', \'gestioneSeparata\' o \'altra\'');
   }
+  const sede = partialConfig.forfettario?.codiceSedeInps;
+  if (sede !== undefined && !campoValido(sede, /^\d{4}$/)) {
+    errori.push('forfettario: codice sede INPS deve essere di 4 cifre');
+  }
   return errori;
 }
 
@@ -329,6 +348,9 @@ export async function saveConfig(partialConfig) {
     backup: { ...fondiSezione(current.backup, partialConfig.backup), password: '' },
     reminder: fondiSezione(current.reminder, partialConfig.reminder),
     forfettario: fondiSezione(current.forfettario, partialConfig.forfettario),
+    ai: fondiSezione(current.ai, partialConfig.ai),
+    // mcp non passa dal salvataggio generico: solo salvaMcp() (toggle e token).
+    mcp: current.mcp,
     // dati.percorso non passa mai da qui: cambiarlo senza spostare i file lascerebbe
     // config.json a mentire sul percorso reale. Va solo tramite spostaPercorsoDati().
     dati: current.dati,
@@ -336,6 +358,12 @@ export async function saveConfig(partialConfig) {
   // Su disco (config.json) le due password restano sempre vuote: risiedono solo nel Keychain.
   await writeJson(CONFIG_FILE, next);
   return { ...next, pec: { ...next.pec, passwordMittente }, backup: { ...next.backup, password: backupPassword } };
+}
+
+// Persiste la sezione mcp (abilitazione e token) senza toccare il resto di config.json.
+export async function salvaMcp(mcp) {
+  const raw = await readJson(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...raw, mcp });
 }
 
 // Da chiamare una sola volta all'avvio del server: applica l'override di backend/data/

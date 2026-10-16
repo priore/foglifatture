@@ -1,56 +1,58 @@
 # AI Workspace
 
-Evolving Knowledge Base for the **Fatturazione** project (Timesheet & Italian e-invoicing app). Source of truth for any AI agent — or human — working on this codebase.
+Knowledge base evolutiva del progetto **Fogli & Fatture** (timesheet e fatturazione elettronica italiana per il regime forfettario). Fonte di verità per ogni agente AI o persona che lavora sul codice.
 
-Rules governing this workspace: [`CLAUDE.md`](../CLAUDE.md) at repo root.
+Regole che governano il workspace: [`CLAUDE.md`](../CLAUDE.md) nella root del repo.
 
-## Start here
+## Da dove partire
 
-- [`WORKSPACE_MANIFEST.md`](WORKSPACE_MANIFEST.md) — full document registry, dependency order, status, priority.
-- [`architecture/PROJECT_CONTEXT.md`](architecture/PROJECT_CONTEXT.md) — what this app is, who it's for, the end-to-end workflow.
+- [`WORKSPACE_MANIFEST.md`](WORKSPACE_MANIFEST.md) — registro dei documenti, ordine di dipendenza, stato.
+- [`architecture/PROJECT_CONTEXT.md`](architecture/PROJECT_CONTEXT.md) — cos'è l'app, per chi, flusso end-to-end.
 
-## Structure
+## Struttura
 
 ```
 architecture/
-  PROJECT_CONTEXT.md           — purpose, users, domain, workflow
-  PROJECT_ANALYSIS.md          — stack, entry points, scripts, env, folders
-  ARCHITECTURE.md              — system shape, request pipeline, integrations, data flow
-  UI_ANALYSIS.md               — routes, views, components, state
+  PROJECT_CONTEXT.md           — scopo, utenti, dominio, flusso
+  PROJECT_ANALYSIS.md          — stack, entry point, script, config, cartelle, storage, test
+  ARCHITECTURE.md              — pipeline richieste, job, flusso fattura, AI/MCP, integrazioni
+  UI_ANALYSIS.md               — rotte, viste, navigazione, passi impostazioni, tema
 design/
-  DESIGN_SYSTEM.md             — visual language, dark mode, accessibility (as implemented)
-  DESIGN_TOKENS.md             — exact color/shadow/typography values
-  COMPONENT_LIBRARY.md         — reusable Vue components and shared UI primitives
+  DESIGN_SYSTEM.md             — linguaggio visivo, dark mode, template di stampa, accessibilità
+  DESIGN_TOKENS.md             — valori esatti dei token CSS
+  COMPONENT_LIBRARY.md         — componenti Vue, primitive globali, composables
 product/
-  ROADMAP.md                   — candidate next steps (no formal roadmap exists in-repo)
-  DECISIONS.md                 — architectural decisions as observed
-  KNOWN_ISSUES.md              — gaps and inconsistencies found during analysis
-  CHANGELOG.md                 — ongoing log (baseline: 2026-08-29, no prior git history)
-  GLOSSARY.md                  — domain and codebase terminology
-  FEATURE_PROPOSALS.md         — numbered backlog of proposed features
+  DECISIONS.md                 — decisioni architetturali e di prodotto
+  KNOWN_ISSUES.md              — limiti e incoerenze osservati
+  GLOSSARY.md                  — termini di dominio e nomi del codice
+  FEATURE_PROPOSALS.md         — backlog numerato delle proposte non ancora realizzate
 documentation/
-  DESIGN_PATTERNS_AS_IS.md     — factual pattern inventory (backend + frontend)
-prompts/  templates/  workflows/  reviews/  tasks/  — support material, populated as work happens
+  DESIGN_PATTERNS_AS_IS.md     — inventario dei pattern (backend + frontend)
+  BE_SWIFT_MAPPING.md          — registro di mapping backend Node → Swift (documento a sé)
+Plans/                         — piani di dettaglio e analisi (una nota per tema)
+Output/                        — export locali di debug, ignorati da git
+prompts/ templates/ workflows/ reviews/ tasks/  — cartelle vuote, segnaposto
 ```
 
-## Confidence legend
+## Legenda confidenza
 
-🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis — every claim in every document is tagged.
+🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi. Ogni affermazione nei documenti è taggata.
 
-## Maintaining this workspace
+## Manutenzione
 
-- One document per task, never batch-edit unless explicitly told to.
-- Every document ends with a Review Checklist (Completeness, Accuracy, Consistency, TODO, Missing information, Open questions, Confidence level).
-- Update documents in place as the code evolves — this is a living workspace, not a point-in-time snapshot.
+- Un documento per task: niente modifiche in blocco se non richieste.
+- Ogni documento termina con la Review Checklist (Completeness, Accuracy, Consistency, TODO, Missing information, Open questions, Confidence level).
+- I documenti riflettono lo stato attuale del codice: si aggiornano sul posto, non accumulano storia. La storia sta in `CHANGELOG.md` alla radice e in `git log`.
+- Una voce di `FEATURE_PROPOSALS.md` realizzata si rimuove, la numerazione resta stabile.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** links every document currently in the workspace.
-- **Accuracy:** structure matches the actual `AI-Workspace/` tree on disk.
-- **Consistency:** matches `WORKSPACE_MANIFEST.md` registry.
-- **TODO:** update this map if new documents are added to `documentation/`, `prompts/`, `templates/`, `workflows/`, `reviews/`, or `tasks/`.
-- **Missing information:** none for a navigation document.
-- **Open questions:** none.
-- **Confidence level:** 🟢 — structural facts only.
+- **Completeness:** collega ogni documento presente nel workspace.
+- **Accuracy:** struttura uguale all'albero reale di `AI-Workspace/` (2026-10-13).
+- **Consistency:** coerente con `WORKSPACE_MANIFEST.md`.
+- **TODO:** aggiornare la mappa se si aggiungono documenti.
+- **Missing information:** nessuna.
+- **Open questions:** nessuna.
+- **Confidence level:** 🟢, solo fatti strutturali.

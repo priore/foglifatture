@@ -7,7 +7,7 @@ defineProps({
 <template>
   <div class="form-grid">
     <div class="field field-full full" style="flex-direction:row;align-items:center;gap:8px">
-      <input id="backup-abilitato" type="checkbox" v-model="modelValue.abilitato" style="width:auto">
+      <input id="backup-abilitato" type="checkbox" class="checkbox-app" v-model="modelValue.abilitato">
       <label for="backup-abilitato" style="margin:0">Backup automatico attivo</label>
     </div>
     <div class="field field-full full">

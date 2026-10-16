@@ -6,6 +6,64 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-16
+
+### Added
+- **Chat AI nella dashboard** — nuova tab «AI» per interrogare i tuoi dati in linguaggio naturale, senza uscire dall'app:
+  - legge gli stessi dati aggregati del server MCP (fatturato, incassi, scadenze, F24, bollo, crediti, fatture)
+  - sola lettura: non emette fatture, non modifica dati e non invia nulla
+  - anagrafica, codice fiscale, IBAN e credenziali non sono accessibili
+  - domande suggerite sotto la casella di inserimento, cliccabili
+  - chiede il consenso prima di inviare dati fiscali al provider AI (per questa volta o sempre)
+- **Server MCP in sola lettura** — interroga i tuoi dati fiscali dal client AI (Claude Desktop, Claude Code, ChatGPT, Gemini):
+  - esposti solo dati aggregati: riepilogo anno, scadenze, F24, bollo trimestrale, crediti, elenco fatture, regole fiscali
+  - mai esposti anagrafica, codice fiscale, IBAN, password e token
+  - non può emettere fatture, modificare impostazioni né inviare PEC
+  - disattivato di default: si abilita in Impostazioni → AI, che mostra i comandi pronti da incollare
+- **Rivalsa INPS nei template fattura** — la riga «Rivalsa INPS 4%» compare nel PDF quando la rivalsa è attiva:
+  - presente in tutti e 5 i template fattura
+  - nota accanto all'impostazione che spiega l'effetto sul bollo
+- **Suggerimento AI sull'ordine dei crediti F24** — pulsante "Suggerisci ordine con AI" nella card Crediti compensabili:
+  - propone in che ordine usare i crediti (prima i verticali, poi gli orizzontali) con una motivazione breve, tenendo conto delle scadenze e della soglia di 5.000 €
+  - invia all'AI importi e codici tributo: chiede conferma a ogni richiesta ("Sì, questa volta" / "Sì, sempre")
+  - consenso permanente attivabile in Impostazioni → AI
+- **Codice sede INPS nell'F24** — scelta della sede da un elenco ufficiale con ricerca:
+  - disponibile in Impostazioni → Fornitore con gestione separata
+  - il codice viene stampato nella sezione INPS dell'F24 in PDF
+- **Card regole fiscali dell'anno in dashboard** — riepilogo di aliquote, soglie, scadenze di saldo e acconti e aliquota gestione separata, in cima alla tab Regole fiscali
+- **Avvisi in dashboard sulle regole fiscali** — il banner segnala anche una proposta di aggiornamento normativo da verificare e la modifica di una fonte ufficiale
+- **Notifiche fiscali in background** — il backend notifica automaticamente gli eventi fiscali rilevanti mentre l'app è in esecuzione:
+  - F24 in scadenza entro 7 giorni o già scaduto senza pagamento
+  - F24 programmato: ultimo giorno per annullare l'addebito bancario
+  - Bollo trimestrale in scadenza entro 7 giorni (con rinvii già applicati)
+  - Credito F24 che raggiunge la data di utilizzo
+  - Regole fiscali: nessuna regola confermata per l'anno corrente, oppure aggiornamento disponibile
+  - Intrastat trimestrale in scadenza entro 7 giorni (solo se VIES attivo e clienti UE presenti)
+  - Errori IMAP/PEC: notifica una sola volta dopo 3 cicli consecutivi falliti, non ad ogni giro
+  - Tutte le notifiche rispettano il toggle "Notifiche desktop abilitate" e la deduplicazione 24 ore
+
+### Fixed
+- **Stima F24: arrotondamenti e acconti INPS** — la stima dei versamenti segue le regole della dichiarazione:
+  - reddito, imposta, saldi e contributo INPS in euro interi
+  - acconti INPS dell'anno successivo calcolati con l'aliquota dell'anno successivo
+- **Acconto suggerito in dashboard coerente con il piano F24** — l'acconto dell'anno successivo usa ora la stessa base del piano:
+  - imposta per cassa (incassi proiettati a fine anno), al netto dei contributi INPS versati
+  - nessun acconto se l'imposta è sotto la soglia di non dovuto
+- **Uscita dal forfettario oltre 100.000 €** — l'avviso e il blocco del piano F24 scattano ora quando i ricavi incassati superano 100.000 €, non quando il reddito calcolato supera quella cifra
+- **Bollo con rivalsa INPS** — la rivalsa concorre ora alla soglia di 77,47 € per l'imposta di bollo, come indicato nelle impostazioni (prima contava solo il compenso)
+- **Checkbox con stile uniforme** — in Impostazioni (backup, polling SDI) e nella selezione dei file ZIP le checkbox ora hanno lo stesso aspetto dell'app
+- **Descrizione delle notifiche desktop** — il testo del toggle in Impostazioni → Promemoria e la nota di rilascio 1.7.0 elencavano anche notifiche di scadenze F24, bollo e aggiornamenti regole fiscali, non ancora attive. Ora descrivono solo le notifiche realmente presenti: promemoria timesheet, backup, ricevute SDI e monitoraggio fonti normative.
+
+### Changed
+- **Bollo e dati di pagamento nel Fornitore** — il passo «Tariffa & fiscali» di Impostazioni non esiste più:
+  - soglia/importo bollo virtuale e dati di pagamento in fattura (IBAN, modalità, scadenza) sono card separate in Impostazioni → Fornitore
+  - le card del Fornitore sono suddivise in tab (Anagrafica, Fiscale, Fatturazione) con un unico Salva
+- **Card INPS in Impostazioni** — le impostazioni previdenziali (gestione, sede, altra copertura, rivalsa 4%) sono raccolte in una card separata
+- **Monitoraggio fonti: testo dei PDF** — le fonti normative in PDF vengono ora lette come testo:
+  - le modifiche si rilevano sul contenuto, non sui byte del file
+  - le proposte di aggiornamento delle regole fiscali funzionano anche per le fonti PDF con testo archiviato
+  - ora monitorati anche Circolare INPS 8/2026, Risoluzione AdE 110/E/2019, Specifiche tecniche FatturaPA 1.9.1 e D.Lgs. 33/2025 (da fonti ufficiali)
+
 ## [1.7.0] - 2026-10-12
 
 ### Added
@@ -13,8 +71,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   - Strategia "finestra di testo" per le proposte AI: i campi con citazioni oltre i primi 8.000 caratteri del documento vengono analizzati con una finestra centrata sulla posizione della citazione (risolve il limite per L. 190/2014 e L. 662/1996).
   - Conferma/scarto proposte AI: nuovi pulsanti "Applica proposte AI" e "Scarta proposte" in Impostazioni → Regole fiscali applicano o eliminano selettivamente i valori proposti dall'AI, senza toccare il pacchetto versionato.
   - Nota limite UI: avviso in fondo al pannello che un atto normativo non ancora nel registro non viene rilevato dal monitoraggio (per questo esiste la ricerca AI dedicata).
-- **Toggle globale notifiche desktop** — nuovo campo in Impostazioni → Promemoria: disabilitando "Notifiche desktop abilitate" nessuna notifica viene mostrata (scadenze F24, bollo, ricevute SDI, aggiornamenti regole, promemoria). Il promemoria fine mese è subordinato al toggle principale. Notifiche cross-platform via `node-notifier` (macOS, Windows, Linux).
-- **Deduplicazione notifiche** — `notificaConDedup(chiave, titolo, messaggio)`: un evento con la stessa chiave non genera spam se il backend resta in polling; la stessa notifica è silenziata per 24 ore. `cancellaDedup` permette di ri-abilitarla (usato da OS.6 per il ripristino IMAP).
+- **Toggle globale notifiche desktop** — nuovo campo in Impostazioni → Promemoria: disabilitando "Notifiche desktop abilitate" nessuna notifica viene mostrata (promemoria timesheet, backup, ricevute SDI, monitoraggio fonti normative). Il promemoria fine mese è subordinato al toggle principale. Notifiche cross-platform via `node-notifier` (macOS, Windows, Linux).
 - **Compensazione crediti fiscali nell'F24** — nuova card "Crediti compensabili F24" nella tab F24 della dashboard:
   - Registrazione manuale di crediti fiscali (es. imposta sostitutiva pagata in eccesso, saldo a credito) con codice tributo, anno di riferimento, importo e data di disponibilità.
   - La compensazione si applica al momento di creare un F24 (non modifica la stima): riduce le righe debitorie e traccia gli utilizzi nelle righe F24.

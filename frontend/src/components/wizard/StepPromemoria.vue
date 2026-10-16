@@ -13,8 +13,8 @@ defineProps({
     </div>
   </div>
   <p class="note-legal" style="margin-top:8px;margin-bottom:16px">
-    Abilita o disabilita tutte le notifiche desktop (scadenze F24, bollo, ricevute SDI,
-    promemoria, aggiornamenti regole fiscali) su macOS, Windows e Linux. Disabilitando nessuna notifica verrà mostrata.
+    Abilita o disabilita tutte le notifiche desktop (promemoria timesheet, backup, ricevute SDI,
+    monitoraggio fonti normative) su macOS, Windows e Linux. Disabilitando nessuna notifica verrà mostrata.
   </p>
   <div class="form-grid">
     <div class="field field-full full" style="flex-direction:row;align-items:center;gap:8px">

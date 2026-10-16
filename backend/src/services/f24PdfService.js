@@ -259,6 +259,8 @@ export async function generaF24Pdf(scadenza, config) {
     const r = righeInps[i];
     const y = li.firstY - i * li.step;
     const sz = 8;
+    // Il piano non conosce la sede: la riga può portarla, altrimenti vale quella in Impostazioni.
+    page.drawText(r.codiceSede || config.forfettario?.codiceSedeInps || '', { x: li.xCodiceSede, y, size: sz, font, color: nero });
     page.drawText(r.codice ?? '', { x: li.xCausale, y, size: sz, font, color: nero });
     scriviPeriodo(li.periodoDaMeseCentro, li.periodoDaAnnoCifre, y, sz, r.periodoDa);
     scriviPeriodo(li.periodoAMeseCentro,  li.periodoAAnnoCifre,  y, sz, r.periodoA);

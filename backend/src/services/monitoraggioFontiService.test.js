@@ -6,7 +6,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { hostnameConsentito, estraiTestoDaHtml, campiCitantiFonte } from './monitoraggioFontiService.js';
+import { hostnameConsentito, estraiTestoDaHtml, estraiTestoDaPdf, campiCitantiFonte } from './monitoraggioFontiService.js';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -192,5 +192,35 @@ describe('campiCitantiFonte', () => {
   test('fonte inesistente restituisce array vuoto', () => {
     const campi = campiCitantiFonte(pacchettoTest, 'fonte-che-non-esiste');
     assert.equal(campi.length, 0);
+  });
+});
+
+// ── Test: estrazione testo PDF ───────────────────────────────────────────────
+
+// PDF minimale scritto a mano (pdf-lib produce XRef stream che pdf2json rifiuta).
+function pdfMinimo(testo) {
+  const stream = `BT /F1 12 Tf 20 100 Td (${testo}) Tj ET`;
+  const oggetti = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let out = '%PDF-1.4\n';
+  const off = [];
+  oggetti.forEach((o, i) => { off.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = out.length;
+  out += `xref\n0 ${oggetti.length + 1}\n0000000000 65535 f \n` + off.map(o => `${String(o).padStart(10, '0')} 00000 n \n`).join('');
+  out += `trailer\n<< /Size ${oggetti.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(out, 'latin1');
+}
+
+describe('estraiTestoDaPdf', () => {
+  test('Estrae il testo del PDF', async () => {
+    assert.match(await estraiTestoDaPdf(pdfMinimo('interesse annuo 4 per cento')), /interesse annuo 4 per cento/);
+  });
+  test('Buffer non PDF → errore', async () => {
+    await assert.rejects(estraiTestoDaPdf(Buffer.from('non un pdf')));
   });
 });

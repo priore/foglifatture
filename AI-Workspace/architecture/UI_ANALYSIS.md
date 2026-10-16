@@ -1,64 +1,85 @@
 # UI Analysis
 
-Confidence: 🟢 confirmed by code · 🟡 inferred · 🔴 hypothesis
+Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
 ## Routing (`frontend/src/router/index.js`)
 
-🟢 `createWebHistory()`, flat table, no meta fields, no guards:
-- `/` → redirect to `/timesheet`.
-- `/timesheet` (name `timesheet`) → `TimesheetView`.
-- `/fattura` (name `fattura`) → `FatturaView`.
-- `/dashboard` (name `dashboard`) → `DashboardView`.
-- `/importa-storico` (name `importa-storico`) → `ImportaStoricoView`.
-- `/impostazioni` (name `impostazioni`) → `ImpostazioniView`.
-- `/impostazioni/pec-cronologia` (name `pec-cronologia`) → `CronologiaPecView`.
+🟢 `createWebHistory()`, tabella piatta, nessuna guard:
+- `/` → redirect a `/dashboard`
+- `/dashboard` → `DashboardView`
+- `/timesheet` → `TimesheetView`
+- `/fattura` → `FatturaView`
+- `/versamenti-f24` → `VersamentiF24View`
+- `/clienti` → `ClientiView`
+- `/pec-cronologia` → `CronologiaPecView`
+- `/importa-storico` → `ImportaStoricoView`
+- `/impostazioni` → `ImpostazioniView`
+- `/impostazioni/pec-cronologia` → redirect a `/pec-cronologia`
+- `/privacy` → `PrivacyView`
 
-## Views
+## Viste
 
-🟢 **TimesheetView.vue** — monthly timesheet editor + summary + PDF print preview, scoped to the active client (`ClienteSwitcher`). Uses `MonthSwitcher`, `ClienteSwitcher`, `TimesheetGrid`, `TimesheetPrintPreview`. Composables: `useTimeCalculator`, `usePdfExport` (client-side, no backend call).
+🟢 **DashboardView.vue** — cinque tab (`Dashboard`, `Bitcoin`, `F24`, `Regole fiscali`, `AI`), tab attivo persistito in `localStorage`.
+- Dashboard: card su griglia riordinabile (drag, `aria-label="Sposta card"`) con soglie, imposta, INPS, netto, scadenze, fatture aperte
+- Bitcoin: riepilogo incassi BTC, rate con TXID, quadro RW, valore attuale con grafico cambio
+- F24: piano versamenti stimati, F24 con stato, bollo trimestrale, crediti compensabili
+- Regole fiscali: monta `StepRegoleFiscali.vue` (pacchetto per anno, differenze, conferma, fonti)
+- AI: monta `ChatAi.vue`
+- Mostra anche `UpdateModal` quando `useUpdateCheck` rileva una versione nuova
 
-🟢 **FatturaView.vue** — pro-forma invoice screen: calc from timesheet or free amount/description, FatturaPA XML generation + validation, PEC send, SDI receipt polling, scoped to the active client. Uses `MonthSwitcher`, `ClienteSwitcher`, `FatturaPrintPreview`.
+🟢 **TimesheetView.vue** — editor mensile per il cliente attivo (`ClienteSwitcher`, `MonthSwitcher`, `TimesheetGrid`), anteprima/stampa da template (`TemplateStampa`), export CSV per portali VMS, invio al cliente.
 
-🟢 **DashboardView.vue** — regime forfettario dashboard: cumulative yearly income vs. the forfettario threshold, estimated tax, two donut charts (`DonutChart.vue`) — income/taxable-income/estimated-tax split, and threshold-consumed vs. remaining margin. Year picker, calls `api.dashboardForfettario(anno)` (backed by `forfettarioService.js`).
+🟢 **FatturaView.vue** — pro-forma da timesheet o importo libero, avviso soglia prima dell'emissione, dati di pagamento, rivalsa, valuta, incasso BTC con recupero dati da mempool.space e cambio storico, generazione XML, invio PEC, ricevute SDI, anteprima da template.
 
-🟢 **ImpostazioniView.vue** — multi-step settings wizard (fornitore/clienti/tariffa/forfettario/PEC/Gemini/Google login/backup/promemoria); step order driven by `wizardImpostazioniPassi.js`; autosaves on each step advance except the Google-auth step. Uses `WizardSteps`, `StepFornitore`, `StepClienti`, `StepFatturazione`, `StepForfettario`, `StepPec`, `StepGemini`, `StepGoogleAuth`, `StepBackup`, `StepPromemoria`.
+🟢 **VersamentiF24View.vue** — elenco versamenti F24 registrati, inserimento manuale, import da testo del Cassetto Fiscale con anteprima, export.
 
-🟢 **CronologiaPecView.vue** — sub-view of Settings (`/impostazioni/pec-cronologia`): PEC sends to SDI and received SDI receipts/notifications, aggregated across all clients and invoices. Calls `api.cronologiaPec()`.
+🟢 **ClientiView.vue** — gestione clienti: monta `StepClienti` (lista e form per cliente).
 
-🟢 **ImportaStoricoView.vue** — one-off historical import: legacy XLS timesheet, FatturaPA XML invoice; step order driven by `wizardImportaStoricoPassi.js`. No child view components beyond native file inputs.
+🟢 **CronologiaPecView.vue** — invii PEC e ricevute SDI aggregati su tutti i clienti (`api.cronologiaPec()`).
 
-## Wizard step navigation (`WizardSteps.vue`)
+🟢 **ImportaStoricoView.vue** — cinque sezioni, selezionate da `?passo=N`: `Timesheet da Excel`, `Fattura da XML` (anche batch e ZIP del Cassetto Fiscale), `Pagamenti fatture` (CSV home banking), `Esporta backup`, `Ripristina backup`. Usa `FileDrop`.
 
-🟢 Purely presentational: `passoAttivo` (active step index) and step labels are props from the parent view, no local step state. Clicking a step emits `vai` with the clicked index; the parent's `vaiAlPasso` handles navigation (saves current step first unless autosaving, then reassigns `passoAttivo`). Next/prev buttons live in the parent view, not in `WizardSteps` itself. Step lists for both wizards are centralized in `wizardImpostazioniPassi.js` / `wizardImportaStoricoPassi.js`, also consulted by `AppSidebar.vue` to render the sub-nav breadcrumb.
+🟢 **ImpostazioniView.vue** — wizard a sette passi: `Fornitore`, `PEC`, `Percorso dati`, `Backup Automatico`, `Promemoria`, `Login`, `AI`. Il passo attivo vive in `?passo=N`. `Login`, `AI` e `Percorso dati` si salvano da sé (`PASSI_AUTOSALVANTI`), gli altri con il salvataggio generico.
 
-## Sidebar navigation (`AppSidebar.vue`)
+🟢 **PrivacyView.vue** — informativa privacy.
 
-🟢 Top-level links: `/timesheet`, `/fattura`, `/dashboard`, `/importa-storico` (with a step sub-nav when active), `/impostazioni` (with a step sub-nav when active, including a `Cronologia` link to `/impostazioni/pec-cronologia`). Fetches `api.getConfig()` on mount to show the fornitore's name in the footer (falls back to "Consulente" on error). Footer also hosts the dark-mode toggle button.
+## Navigazione e layout
 
-## Root layout (`App.vue`)
+🟢 `App.vue`: `.app-shell` con `AppSidebar` + `.main` con `<router-view />`.
 
-🟢 `.app-shell` div containing `AppSidebar` + `.main` div wrapping `<router-view />`. No separate header — theme toggle lives in the sidebar footer.
+🟢 `AppSidebar.vue` — voci: Dashboard forfettario, Timesheet mensile, Fattura Pro-Forma, Versamenti F24, Clienti, Cronologia PEC, Impostazioni. Sotto Impostazioni, le sotto-voci dei sette passi e la voce `Importa storico` con le sue cinque sezioni. Footer: toggle tema, link Privacy, versione app.
 
-## Dark mode / theme
+🟢 Gli elenchi dei passi sono centralizzati in `wizardImpostazioniPassi.js` (`PASSI_IMPOSTAZIONI`, `PASSI_AUTOSALVANTI`, `DESCRIZIONI_PASSI`) e `wizardImportaStoricoPassi.js`, condivisi tra sidebar e viste.
 
-🟢 JS-driven manual toggle exists: `AppSidebar.vue` reads/writes `document.documentElement`'s `data-theme` attribute and persists the choice to `localStorage['theme']`. `style.css` applies dark rules via `@media (prefers-color-scheme: dark)` combined with `:root:not([data-theme="light"])` (OS-driven default), plus a `:root[data-theme="dark"]` override selector that the toggle now actively drives. Not dead code.
+## Impostazioni — dettaglio passi
 
-## Client scoping (`ClienteSwitcher.vue`)
+- 🟢 **Fornitore** (`StepFornitore.vue`): tre schede `Anagrafica`, `Fiscale`, `Fatturazione` (bollo, dati di pagamento, wallet BTC). Sezione ATECO con aggiornamento via AI, sede INPS da elenco, flag `requisitiAliquotaRidotta` e `soggettoIsa`.
+- 🟢 **PEC** (`StepPec.vue`): gestori preconfigurati, prova passo-passo, PEC di prova allo SDI.
+- 🟢 **Percorso dati** (`StepPercorsoDati.vue`): spostamento fisico dei dati in altra cartella.
+- 🟢 **Backup Automatico** (`StepBackup.vue`), **Promemoria** (`StepPromemoria.vue`, include notifiche desktop).
+- 🟢 **Login** (`StepGoogleAuth.vue`): credenziali OAuth.
+- 🟢 **AI** (`StepAI.vue`): schede Gemini, Copilot, Claude, Groq, LLM locale e pannello MCP (`StepMcp.vue`).
 
-🟢 Custom dropdown (not a native `<select>`) so the selected client's name can wrap onto multiple lines — a native `<select>` can't wrap its displayed value. Props: `clienti` (`[{ id, denominazione }]`, required), `modelValue` (selected id). Includes a search filter over `denominazione`. Used by `TimesheetView` and `FatturaView` to scope data to one client at a time.
+## Tema
 
-## Accessibility
+🟢 Toggle manuale in `AppSidebar.vue`: scrive `data-theme` su `document.documentElement` e lo persiste in `localStorage['theme']`. `style.css` applica il dark con `@media (prefers-color-scheme: dark)` + `:root:not([data-theme="light"])` e con `:root[data-theme="dark"]`.
 
-🟢 Minimal: only 2 `alt=` attributes in the entire `frontend/src` (`LogoUpload.vue`, `LogoPlaceholder.vue`, both `alt="Logo"`). No `aria-*` or explicit `role=` attributes found anywhere. Buttons, nav links, and form inputs rely entirely on native HTML semantics, no ARIA enhancement.
+## Scoping per cliente
+
+🟢 `ClienteSwitcher.vue`: dropdown custom (il valore selezionato deve poter andare a capo) con ricerca su `denominazione`. Usato da `TimesheetView` e `FatturaView`.
+
+## Accessibilità
+
+🟢 Minima: 35 occorrenze di `aria-*`/`role=` e 49 di `alt=` in `frontend/src`, concentrate su card trascinabili e loghi. Il resto usa la semantica HTML nativa.
 
 ---
 
 ## Review Checklist
 
-- **Completeness:** routing, all 6 views, wizard mechanics, sidebar, root layout, theme, client scoping, and a11y covered.
-- **Accuracy:** all 🟢 claims read directly from router/index.js, view files, WizardSteps.vue, AppSidebar.vue, ClienteSwitcher.vue, App.vue, style.css.
-- **Consistency:** view/component names match `DESIGN_PATTERNS_AS_IS.md` and `PROJECT_ANALYSIS.md` folder map.
-- **TODO:** none outstanding.
-- **Missing information:** per-field validation rules inside Step*.vue components not itemized (candidate for `COMPONENT_LIBRARY.md`).
-- **Open questions:** none.
-- **Confidence level:** entirely 🟢.
+- **Completeness:** routing, viste, navigazione, passi impostazioni, tema, scoping, accessibilità.
+- **Accuracy:** verificato su `router/index.js`, viste, `AppSidebar.vue`, `wizardImpostazioniPassi.js` (2026-10-13).
+- **Consistency:** nomi coerenti con `COMPONENT_LIBRARY.md`.
+- **TODO:** nessuno.
+- **Missing information:** regole di validazione campo per campo dei `Step*.vue`.
+- **Open questions:** nessuna.
+- **Confidence level:** 🟢.
