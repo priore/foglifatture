@@ -14,7 +14,7 @@ const ricerca = ref('');
 const filtroTipo = ref('');
 const tipiVersamento = ['Imposta sostitutiva', 'INPS', 'Altro'];
 
-const codiciTributo = ['', '1790', '1791', '1792', 'PXX', 'P10'];
+const codiciTributo = ['', '1790', '1791', '1792', '1715', '1727', '1728', '1729', 'PXX', 'P10'];
 const nuovoVersamento = ref({ data: '', tipo: tipiVersamento[0], importo: null, codice: '' });
 
 const testoIncollato = ref('');

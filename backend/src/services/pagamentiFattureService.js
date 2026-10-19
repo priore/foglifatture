@@ -138,7 +138,7 @@ function parseImporto(valore) {
   return Number(pulito);
 }
 
-function parseData(valore) {
+export function parseData(valore) {
   const testo = String(valore).trim();
   const italiana = testo.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (italiana) return `${italiana[3]}-${italiana[2].padStart(2, '0')}-${italiana[1].padStart(2, '0')}`;

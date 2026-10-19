@@ -2,7 +2,8 @@
 // Funzioni pure: nessuna lettura da disco, tutti gli input arrivano dal chiamante (step 5 F24_STEP3).
 import { scadenzeBaseAnno, primoGiornoLavorativo } from './scadenzeFiscaliService.js';
 import { impostaCassaAnno, roundEuro, accontoInpsAnnoSuccessivo } from './forfettarioService.js';
-import { listVersamenti, accontiImpostaVersati } from './versamentiF24Service.js';
+import { listVersamenti, accontiImpostaVersati, accontiIvcaVersati } from './versamentiF24Service.js';
+import { riepilogoAnnuale, calcolaIvca, costruisciLotti } from './lottiBtcService.js';
 import { tutteLeFattureRisolte } from './forfettarioService.js';
 import { arricchisciStatoPagamento } from './invoiceService.js';
 import { regoleAnno } from './regoleFiscaliService.js';
@@ -174,6 +175,31 @@ export function maxRateConsentite(dataBase) {
   return n;
 }
 
+// Righe F24 cripto (REGISTRO_LOTTI_BTC.md Step 6) per l'anno fiscale `anno`:
+// 1715 plusvalenze (solo saldo, nessun acconto: Circ. 30/E §3.2.1), 1727 saldo IVCA,
+// 1728/1729 acconti IVCA anno+1 (40%/60% sull'IVCA di `anno`, regola IRPEF 🟡 domanda 7).
+// `accontiVersati` null = nessun acconto registrato: si stima con l'IVCA dell'anno precedente.
+export function righeCripto({ anno, plusvalenze, ivca, ivcaNm1, accontiVersati, codici }) {
+  const saldo = [], novembre = [], crediti = [], avvisi = [];
+  const riga = (codice, annoRiferimento, importo, descrizione) => ({ sezione: 'erario', codice, annoRiferimento, importo, descrizione });
+  if (plusvalenze?.applicabile && plusvalenze.imposta > 0) {
+    if (plusvalenze.imposta >= F24_MIN_RIGA) saldo.push(riga(codici.plusvalenzeRegDichiarativo, anno, plusvalenze.imposta, `Imposta sostitutiva plusvalenze cripto ${anno}`));
+    else avvisi.push(`Imposta plusvalenze cripto ${anno} (${plusvalenze.imposta} €) sotto la soglia minima di 1,03 €: riga F24 non dovuta.`);
+  }
+  if (!ivca) return { saldo, novembre, crediti, avvisi };
+  if (ivca.mancaValoreMercato) avvisi.push(`Inserire il valore EUR/BTC al 31/12/${anno} per calcolare l'IVCA ${anno}.`);
+  const accontiEffettivi = accontiVersati ?? ivcaNm1?.impostaDaVersare ?? 0;
+  if (accontiVersati == null && accontiEffettivi > 0) avvisi.push(`Acconti IVCA ${anno} non registrati con codice tributo: usata la stima dell'anno precedente.`);
+  const saldoIvca = roundEuro(ivca.impostaDaVersare - accontiEffettivi);
+  if (saldoIvca >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaSaldo, anno, saldoIvca, `Saldo IVCA ${anno}`));
+  else if (saldoIvca < 0) crediti.push({ sezione: 'erario', importo: Math.abs(saldoIvca), descrizione: `Saldo IVCA ${anno} a credito (acconti > imposta)` });
+  const primo = roundEuro(ivca.impostaDaVersare * 0.40);
+  const secondo = roundEuro(ivca.impostaDaVersare - primo);
+  if (primo >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaAccontoI, anno + 1, primo, `I acconto IVCA ${anno + 1}`));
+  if (secondo >= F24_MIN_RIGA) novembre.push(riga(codici.ivcaAccontoII, anno + 1, secondo, `II acconto IVCA ${anno + 1}`));
+  return { saldo, novembre, crediti, avvisi };
+}
+
 // Calcola il piano F24 per l'anno fiscale `anno`.
 // Restituisce { annoFiscale, regole, scadenze, crediti, avvisi }.
 export async function stimaVersamenti(config, anno) {
@@ -323,6 +349,27 @@ export async function stimaVersamenti(config, anno) {
     } else {
       avvisi.push(`II acconto contributi GS ${anno + 1} (${secondaInps} €) sotto la soglia minima di 1,03 €: riga F24 non dovuta.`);
     }
+  }
+
+  // --- Cripto: plusvalenze (1715) e IVCA (1727/1728/1729) ---
+  if (regole.cripto) {
+    const riepilogo = await riepilogoAnnuale(anno);
+    const accontiIvca = accontiIvcaVersati(versamentiAnno, anno);
+    const cripto = righeCripto({
+      anno,
+      plusvalenze: riepilogo.plusvalenze,
+      ivca: riepilogo.ivca,
+      ivcaNm1: accontiIvca == null ? await calcolaIvca(anno - 1) : null,
+      accontiVersati: accontiIvca,
+      codici: regole.cripto.codiciTributo,
+    });
+    righeGiugno.push(...cripto.saldo);
+    righeNovembre.push(...cripto.novembre);
+    crediti.push(...cripto.crediti);
+    avvisi.push(...cripto.avvisi);
+  } else if ((await costruisciLotti()).length) {
+    // Nessuna riga a 0 €: sarebbe errata nel modello F24. Avviso solo se ci sono BTC registrati.
+    avvisi.push(`Regole cripto assenti per il ${anno}: plusvalenze e imposta IVCA non incluse nel piano. Riconferma le regole fiscali in Impostazioni.`);
   }
 
   // --- Rateizzazione saldo + I acconto (Step 7) ---

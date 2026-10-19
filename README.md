@@ -7,6 +7,7 @@
 ![Invio SDI](https://img.shields.io/badge/SDI-invio%20diretto-blue)
 ![Incasso Bitcoin](https://img.shields.io/badge/Bitcoin-incasso%20fatture-orange?logo=bitcoin)
 [![Security Policy](https://img.shields.io/badge/security-policy-orange)](SECURITY.md)
+[![Feed RSS](https://img.shields.io/badge/RSS-novit%C3%A0%20e%20release-orange?logo=rss)](https://github.com/priore/foglifatture/releases.atom)
 [![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
 [![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
 [![Donate with BITCOIN](https://img.shields.io/badge/BITCOIN-donate-green?logo=bitcoin)](https://github.com/priore/foglifatture#support-development)
@@ -154,23 +155,37 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ## Screenshot
 
+### Incassa in Bitcoin, con i dati pronti per il fisco
+
+Registro dei movimenti BTC con costo di carico LIFO, plusvalenze e import da wallet ed exchange. TXID e cambio applicato restano sempre documentati.
+
+![Registro Bitcoin](docs/screenshots/bitcoin.png)
+
 ### Tieni sotto controllo il regime forfettario
 
-Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000€: tutto in una sola schermata, aggiornato in tempo reale mentre fatturi. Scadenze fiscali comprese, con avviso per la prossima in arrivo.
+Ricavi cumulati, reddito imponibile, proiezione fine anno e distanza dalla soglia degli 85.000 €, aggiornati in tempo reale mentre fatturi.
 
 ![Dashboard forfettario](docs/screenshots/dashboard.png)
 
-### Dalle ore lavorate alla fattura, senza calcolatrice
+### Chiedi ai tuoi dati
 
-Scegli il mese, l'app somma le ore dal timesheet e calcola il compenso in automatico — bollo virtuale incluso quando serve. Anteprima della fattura pronta a fianco, generazione definitiva con un click.
+L'assistente AI risponde in linguaggio naturale su incassi, soglia, scadenze e bollo, leggendo solo aggregati.
 
-![Fattura Pro-Forma](docs/screenshots/fattura-proforma.png)
+![Assistente AI](docs/screenshots/assistente-ai.png)
 
-### Un foglio ore che conosci già
+### F24 e bollo già calcolati
 
-Compila le ore giorno per giorno, cliente per cliente, con la stessa logica di un foglio ore aziendale — nessuna curva di apprendimento. Più clienti attivi insieme, ognuno con la propria tariffa oraria.
+Saldo e acconti con scadenze, bollo trimestrale, crediti compensabili e PDF F24 precompilato.
 
-![Timesheet mensile](docs/screenshots/timesheet-mensile.png)
+![Versamenti F24](docs/screenshots/f24.png)
+
+### Dalle ore lavorate alla fattura
+
+Il timesheet somma le ore, la fattura calcola il compenso (bollo incluso) con anteprima accanto, e la invii al SDI via PEC.
+
+![Timesheet mensile](docs/screenshots/timesheet.png)
+
+![Fattura Pro-Forma](docs/screenshots/fattura.png)
 
 ## Installazione
 
@@ -185,7 +200,25 @@ Il modo più semplice: scarica l'installer per il tuo sistema, aprilo e segui la
 
 **macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
 
-**Windows**: esegui il `.exe` e segui il wizard. Se Windows Defender SmartScreen mostra un avviso, clicca "Ulteriori informazioni" → "Esegui comunque".
+**Windows**: esegui il `.exe` e segui il wizard. L'installer non è firmato digitalmente, quindi Windows può bloccarlo. Se succede, segui il caso che corrisponde a quello che vedi:
+
+- **Avviso blu "Windows ha protetto il PC"** (SmartScreen):
+  1. clicca "Ulteriori informazioni"
+  2. clicca "Esegui comunque"
+- **Errore "Impossibile accedere al dispositivo, al percorso o al file specificato"** (file bloccato perché scaricato da internet):
+  1. clic destro sul file `FogliFatture-win-x64.exe` → "Proprietà"
+  2. in basso nella scheda "Generale" spunta "Annulla blocco" (o "Sblocca")
+  3. clicca "OK" e riapri il file
+- **Il file sparisce o non parte** (l'antivirus lo ha messo in quarantena):
+  1. apri "Sicurezza di Windows" → "Protezione da virus e minacce" → "Cronologia protezione"
+  2. trova la voce relativa a `FogliFatture-win-x64.exe`
+  3. clicca "Azioni" → "Ripristina" (o "Consenti")
+  4. scarica di nuovo il file se necessario e riavvia l'installer
+- **Smart App Control attivo** (blocca ogni programma non firmato, senza possibilità di "Esegui comunque"):
+  1. apri "Sicurezza di Windows" → "Controllo app e browser" → "Impostazioni Smart App Control"
+  2. scegli "Disattivato" (non si può riattivare senza reinstallare Windows)
+  3. riavvia l'installer
+  4. in alternativa usa l'[installazione da terminale](#installazione-da-terminale-alternativa), che non richiede l'`.exe`
 
 > **Versione specifica** (avanzato): per installare una versione precisa anziché l'ultima, lancia l'installer da terminale con il numero di versione:
 > - macOS: `FOGLIFATTURE_VERSION=1.5.0 installer -pkg FogliFatture-mac-universal.pkg -target CurrentUserHomeDirectory`

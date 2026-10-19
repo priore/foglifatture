@@ -67,3 +67,11 @@ test('differenze tra oggetti identici: array vuoto', async () => {
   assert.strictEqual(p.forfettario.sogliaAnnua, 85000, 'soglia annua 85000');
   assert.strictEqual(p.forfettario.sogliaUscitaImmediata, 100000, 'soglia uscita 100000');
 });
+
+test('sezione cripto 2026: aliquota 33, franchigia 0, IVCA 0.2, codici tributo', async () => {
+  const { cripto } = await leggiPacchetto(2026);
+  assert.strictEqual(cripto.aliquotaPlusvalenze, 33);
+  assert.strictEqual(cripto.franchigia, 0);
+  assert.strictEqual(cripto.aliquotaIvca, 0.2);
+  assert.deepStrictEqual(Object.values(cripto.codiciTributo), ['1715', '1727', '1728', '1729']);
+});

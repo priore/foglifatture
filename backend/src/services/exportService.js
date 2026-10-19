@@ -4,6 +4,8 @@
 // on-the-fly (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 import { calcolaDashboardForfettario, tutteLeFattureRisolte, ricaviAnnoCassa } from './forfettarioService.js';
+import { lottiConStato, riepilogoAnnuale } from './lottiBtcService.js';
+import { leggiMovimenti } from './movimentiBtcService.js';
 
 function escapiCsv(valore) {
   const testo = String(valore ?? '');
@@ -101,5 +103,56 @@ export async function esportaReportCommercialistaCsv(config, anno) {
     righe.push(`${etichetta},${valore},,,,,,`);
   }
 
+  righe.push(...await sezioniCripto(anno));
+
   return righe.join('\n');
+}
+
+const btc = (satoshi) => (satoshi / 1e8).toFixed(8);
+const eur = (n) => (n == null ? '' : n.toFixed(2));
+
+// Sezioni cripto (FP-012/013, AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md Step 7), in coda al CSV:
+// senza lotti né uscite non produce nulla e l'export resta identico a prima.
+async function sezioniCripto(anno) {
+  const [lotti, { uscite }] = await Promise.all([lottiConStato(anno), leggiMovimenti()]);
+  const usciteAnno = uscite.filter((u) => u.data.startsWith(`${anno}-`)).sort((a, b) => a.data.localeCompare(b.data));
+  if (!lotti.length && !usciteAnno.length) return [];
+
+  const { plusvalenze, saldo, ivca, rw8 } = await riepilogoAnnuale(anno);
+  const plusPerUscita = new Map(plusvalenze.cessioni.map((c) => [c.uscita.id, c.plusvalenza]));
+
+  const righe = [
+    '',
+    `Registro lotti BTC al 31/12/${anno}`,
+    'Data,Tipo,BTC,Costo EUR,TXID,BTC residui',
+    ...lotti.map((l) => [l.data, l.tipo, btc(l.satoshi), eur(l.costoEur), l.txid ?? '', btc(l.residui)].join(',')),
+    '',
+    `Uscite BTC ${anno}`,
+    'Data,Tipo,BTC,Ricavo EUR,Plusvalenza EUR,TXID',
+    ...usciteAnno.map((u) => [u.data, u.tipo, btc(u.satoshi), eur(u.ricavoEur), eur(plusPerUscita.get(u.id)), u.txid ?? ''].join(',')),
+    '',
+    `Riepilogo cripto ${anno}`,
+  ];
+  const voci = [['Saldo BTC al 31/12', btc(saldo.satoshi)], ['Costo di carico saldo EUR', eur(saldo.costoTotaleEur)], ['Valore saldo al 31/12 EUR', eur(saldo.valoreEur)]];
+  if (plusvalenze.applicabile) {
+    voci.push(
+      ['Plusvalenze nette EUR', eur(plusvalenze.netto)],
+      ['Minusvalenze compensate EUR', eur(plusvalenze.compensate)],
+      ['Base imponibile EUR', eur(plusvalenze.baseImponibile)],
+      [`Imposta sostitutiva ${plusvalenze.aliquota}% EUR`, eur(plusvalenze.imposta)],
+      ...plusvalenze.minusvalenzeRiportabili.map((r) => [`Minusvalenza riportabile ${r.anno} EUR`, eur(r.residuo)]),
+    );
+  } else {
+    voci.push(['Plusvalenze', 'regole cripto non attive per l\'anno']);
+  }
+  if (rw8) {
+    voci.push(
+      ['IVCA lorda EUR', eur(ivca.impostaLorda)],
+      ['RW8 totale imposta EUR', eur(rw8.totaleImposta)],
+      ['RW8 acconti versati EUR', eur(rw8.accontiVersati)],
+      ['RW8 saldo EUR', eur(rw8.saldo)],
+    );
+    if (ivca.mancaValoreMercato) voci.push(['IVCA', 'valore EUR/BTC al 31/12 mancante: importo parziale']);
+  }
+  return [...righe, ...voci.map(([etichetta, valore]) => `${etichetta},${valore}`)];
 }

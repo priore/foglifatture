@@ -32,6 +32,7 @@ function toggleTheme() {
       <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
       <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
+      <router-link to="/bitcoin"><span class="dot"></span>Bitcoin</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
       <router-link to="/clienti"><span class="dot"></span>Clienti</router-link>
       <router-link to="/pec-cronologia"><span class="dot"></span>Cronologia PEC</router-link>

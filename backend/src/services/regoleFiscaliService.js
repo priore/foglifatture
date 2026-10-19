@@ -47,6 +47,11 @@ function validaPacchetto(pacchetto) {
 // Restituisce le regole attive per anno.
 // Se non confermate: usa l'ultimo anno ≤ anno con aggiornate:false + banner.
 export async function regoleAnno(anno) {
+  const regole = await regoleAnnoGrezze(anno);
+  return { ...regole, cripto: regole.cripto ?? null }; // null: anno senza sezione cripto, nessun calcolo
+}
+
+async function regoleAnnoGrezze(anno) {
   const attive = await readJson(`regole-attive/${anno}.json`);
   if (attive) return { ...attive, aggiornate: true, banner: null };
 

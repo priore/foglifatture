@@ -12,6 +12,7 @@ const props = defineProps({
   forfettario: { type: Object, required: true }, // config.forfettario
   fatturazione: { type: Object, required: true }, // config.fatturazione: bollo e dati di pagamento
   walletBtc: { type: Array, required: true }, // config.walletBtc: [{ etichetta, indirizzo }]
+  importBtc: { type: Object, required: true }, // config.importBtc: import automatico transazioni (FP-014)
 });
 // Indirizzo di default proposto negli incassi BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2):
 // un solo indirizzo principale, gestito qui come primo elemento dell'array.
@@ -335,6 +336,33 @@ function selezionaCodice(c) {
         <div style="margin-top:8px">
           <button type="button" class="btn btn-ghost" @click="aggiungiWalletBtc">+ Aggiungi indirizzo</button>
         </div>
+
+        <h3 class="sotto-titolo">Import automatico transazioni</h3>
+        <p class="note-legal">
+          Controlla periodicamente gli indirizzi qui sopra (mai altri) e propone le transazioni nuove nella tab Bitcoin della dashboard:
+          nulla viene registrato senza la tua conferma.
+        </p>
+        <p class="note-legal">
+          Privacy: ogni indirizzo configurato, insieme al tuo indirizzo IP, viene inviato sia al provider primario sia a quello di riserva
+          (per confrontarne le risposte). Per evitarlo indica l'URL del tuo nodo.
+        </p>
+        <div class="field full riga-check">
+          <input id="import-btc-privacy" type="checkbox" class="checkbox-app" v-model="importBtc.avvisoPrivacyAccettato">
+          <label for="import-btc-privacy">Ho letto l'avviso privacy e accetto l'invio degli indirizzi ai provider</label>
+        </div>
+        <div class="field full riga-check">
+          <input id="import-btc-abilitato" type="checkbox" class="checkbox-app" v-model="importBtc.abilitato" :disabled="!importBtc.avvisoPrivacyAccettato || !walletBtc.length">
+          <label for="import-btc-abilitato">Controllo automatico attivo</label>
+        </div>
+        <p v-if="!importBtc.avvisoPrivacyAccettato || !walletBtc.length" class="note-legal">
+          Per attivarlo servono almeno un indirizzo wallet e l'accettazione dell'avviso privacy.
+        </p>
+        <div class="form-grid riga-import">
+          <div class="field"><label for="import-btc-intervallo">Controlla ogni (minuti)</label><input id="import-btc-intervallo" type="number" min="1" v-model.number="importBtc.intervalloMinuti"></div>
+          <div class="field"><label for="import-btc-conferme">Conferme minime</label><input id="import-btc-conferme" type="number" min="1" v-model.number="importBtc.confermeMinime"></div>
+          <div class="field"><label for="import-btc-primario">URL provider primario</label><input id="import-btc-primario" type="url" v-model="importBtc.urlPrimario"></div>
+          <div class="field"><label for="import-btc-riserva">URL provider di riserva</label><input id="import-btc-riserva" type="url" v-model="importBtc.urlFallback"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -407,4 +435,8 @@ function selezionaCodice(c) {
 .ateco-risultati li:hover { background: var(--ground); }
 .ateco-settore { display: block; font-size: .74rem; color: var(--muted); margin-top: 2px; }
 /* btn-ai, btn-icon definiti in style.css globale */
+.sotto-titolo { margin: 20px 0 4px; font-size: var(--font-size-md); }
+.riga-check { flex-direction: row; align-items: center; gap: var(--gap-sm); margin-top: var(--gap-sm); }
+.riga-check label { margin: 0; }
+.riga-import { margin-top: var(--gap-sm); }
 </style>

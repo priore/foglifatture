@@ -208,5 +208,61 @@
     "sha256Originale": null,
     "consultatoIl": null,
     "note": "Testo non ancora archiviato — il numero del comma non è stato trovato. Da verificare su Normattiva."
+  },
+  {
+    "id": "l207-2024",
+    "ente": "Parlamento italiano",
+    "titolo": "L. 207/2024 art. 1 (Legge di Bilancio 2025) — aliquota e franchigia plusvalenze cripto",
+    "tipo": "legge",
+    "url": "https://www.normattiva.it/",
+    "urlDownload": null,
+    "formato": "html",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": null,
+    "consultatoIl": null,
+    "note": "Testo non ancora archiviato — da scaricare (cripto-attività, FP-012/013)"
+  },
+  {
+    "id": "circ-30e-2023",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Circolare 30/E del 27/10/2023 — Trattamento fiscale delle cripto-attività",
+    "tipo": "circolare",
+    "url": "https://www.agenziaentrate.gov.it/portale/documents/20143/5589638/Circolare+criptoattivita+del+27+ottobre+2023.pdf",
+    "urlDownload": null,
+    "formato": "html",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": null,
+    "consultatoIl": null,
+    "note": "Testo non ancora archiviato — da scaricare (cripto-attività, FP-012/013)"
+  },
+  {
+    "id": "pf2026-fasc2",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Istruzioni Redditi PF 2026 Fascicolo 2 — Quadri RW e RT",
+    "tipo": "istruzioni",
+    "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni",
+    "urlDownload": null,
+    "formato": "html",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": null,
+    "consultatoIl": null,
+    "note": "Testo non ancora archiviato — da scaricare (cripto-attività, FP-012/013)"
+  },
+  {
+    "id": "ris-36e-2023-e-10e-2024",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Risoluzioni 36/E del 26/06/2023 e 10/E del 06/02/2024 — Codici tributo cripto",
+    "tipo": "risoluzione",
+    "url": "https://www.agenziaentrate.gov.it/portale/documents/20143/5361482/RIS_n_36_del_26_06_2023.pdf",
+    "urlDownload": null,
+    "formato": "html",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": null,
+    "consultatoIl": null,
+    "note": "Testo non ancora archiviato — da scaricare (cripto-attività, FP-012/013)"
   }
 ]

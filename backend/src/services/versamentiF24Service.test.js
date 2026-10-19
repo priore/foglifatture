@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { contributiInpsVersati, accontiImpostaVersati } from './versamentiF24Service.js';
+import { contributiInpsVersati, accontiImpostaVersati, accontiIvcaVersati } from './versamentiF24Service.js';
 
 const versamenti = [
   { id: '1', data: '2026-06-30', tipo: 'Imposta sostitutiva', importo: 500, codice: '1792' },
@@ -50,4 +50,14 @@ describe('accontiImpostaVersati', () => {
   it('A5: maggiorazione assente trattata come zero (retrocompatibile)', () => {
     assert.equal(accontiImpostaVersati(versamenti, 2026), 800);
   });
+});
+
+describe('accontiIvcaVersati', () => {
+  const v = [
+    { data: '2026-06-30', importo: 40, codice: '1728' },
+    { data: '2026-11-30', importo: 60, codice: '1729' },
+    { data: '2026-06-30', importo: 400, codice: '1790' },
+  ];
+  it('somma 1728 e 1729 senza toccare 1790', () => assert.equal(accontiIvcaVersati(v, 2026), 100));
+  it('null se nessun acconto IVCA', () => assert.equal(accontiIvcaVersati(v, 2025), null));
 });

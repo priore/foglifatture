@@ -32,6 +32,7 @@ import { avviaPromemoria } from './services/reminderService.js';
 import { avviaPromemoriaScartoSdi } from './services/sdiScartoReminderService.js';
 import { avviaMonitoraggioFonti } from './services/monitoraggioFontiService.js';
 import { avviaNotificheFiscali } from './services/notificheFiscaliService.js';
+import { avviaPollingBtc } from './services/importBtcService.js';
 
 const PORT = process.env.PORT || 1969;
 const app = express();
@@ -118,4 +119,7 @@ app.listen(PORT, async () => {
 
   avviaNotificheFiscali();
   logger.info('Notifiche fiscali in background avviate');
+
+  avviaPollingBtc(getConfig);
+  logger.info('Import automatico BTC pronto (attivo solo se abilitato in Impostazioni)');
 });

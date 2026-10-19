@@ -6,6 +6,7 @@ import ImpostazioniView from '../views/ImpostazioniView.vue';
 import CronologiaPecView from '../views/CronologiaPecView.vue';
 import ClientiView from '../views/ClientiView.vue';
 import DashboardView from '../views/DashboardView.vue';
+import BitcoinView from '../views/BitcoinView.vue';
 import VersamentiF24View from '../views/VersamentiF24View.vue';
 import PrivacyView from '../views/PrivacyView.vue';
 
@@ -16,6 +17,7 @@ export const router = createRouter({
     { path: '/timesheet', name: 'timesheet', component: TimesheetView },
     { path: '/fattura', name: 'fattura', component: FatturaView },
     { path: '/dashboard', name: 'dashboard', component: DashboardView },
+    { path: '/bitcoin', name: 'bitcoin', component: BitcoinView },
     { path: '/versamenti-f24', name: 'versamenti-f24', component: VersamentiF24View },
     { path: '/clienti', name: 'clienti', component: ClientiView },
     { path: '/pec-cronologia', name: 'pec-cronologia', component: CronologiaPecView },

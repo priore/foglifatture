@@ -11,7 +11,8 @@ export async function listVersamenti(anno) {
   return anno ? versamenti.filter((v) => new Date(v.data).getFullYear() === anno) : versamenti;
 }
 
-const CODICI_VALIDI = ['1790', '1791', '1792', 'PXX', 'P10', ''];
+// 1715 plusvalenze cripto; 1727/1728/1729 IVCA saldo/acconti (Ris. AdE 36/E 2023 e 10/E 2024).
+const CODICI_VALIDI = ['1790', '1791', '1792', '1715', '1727', '1728', '1729', 'PXX', 'P10', ''];
 
 export async function aggiungiVersamento({ data, tipo, importo, codice = '' }) {
   if (!data || !tipo || !(importo > 0)) throw new Error('Dati versamento non validi');
@@ -41,6 +42,15 @@ export function accontiImpostaVersati(versamenti, anno) {
   );
   if (!conCodice.length) return null;
   // A5: la maggiorazione del differimento non conta come acconto versato (Istr. Redditi PF 2026 fasc. 3, rigo LM45).
+  return Number(conCodice.reduce((tot, v) => tot + v.importo - (v.maggiorazione ?? 0), 0).toFixed(2));
+}
+
+// Acconti IVCA (1728/1729) versati nell'anno `anno`, per l'anno stesso. null se nessuno è registrato.
+export function accontiIvcaVersati(versamenti, anno) {
+  const conCodice = versamenti.filter(
+    (v) => (v.codice === '1728' || v.codice === '1729') && new Date(v.data).getFullYear() === anno
+  );
+  if (!conCodice.length) return null;
   return Number(conCodice.reduce((tot, v) => tot + v.importo - (v.maggiorazione ?? 0), 0).toFixed(2));
 }
 

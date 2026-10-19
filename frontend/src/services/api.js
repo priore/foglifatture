@@ -231,6 +231,32 @@ export const api = {
     if (!r.ok) throw new Error(`CoinGecko ha risposto ${r.status}`);
     return r.json();
   }),
+  // Registro lotti BTC (FP-012/013): movimenti manuali, lotti LIFO, plusvalenze, RW
+  movimentiBtc: () => richiesta('/forfettario/btc/movimenti'),
+  aggiungiIngressoBtc: (dati) => richiesta('/forfettario/btc/movimenti/ingresso', { method: 'POST', body: JSON.stringify(dati) }),
+  aggiungiUscitaBtc: (dati) => richiesta('/forfettario/btc/movimenti/uscita', { method: 'POST', body: JSON.stringify(dati) }),
+  eliminaMovimentoBtc: (id) => richiesta(`/forfettario/btc/movimenti/${id}`, { method: 'DELETE' }),
+  lottiBtc: (anno) => richiesta(`/forfettario/btc/lotti?anno=${anno}`),
+  plusvalenzeBtc: (anno) => richiesta(`/forfettario/btc/plusvalenze?anno=${anno}`),
+  rwBtc: (anno) => richiesta(`/forfettario/btc/rw?anno=${anno}`),
+  anteprimaUscitaBtc: (dati) => richiesta('/forfettario/btc/plusvalenze/anteprima', { method: 'POST', body: JSON.stringify(dati) }),
+  impostaValoreMercatoBtc: (anno, prezzoEurBtc) => richiesta('/forfettario/btc/rw/valore-mercato', { method: 'PUT', body: JSON.stringify({ anno, prezzoEurBtc }) }),
+  proposteImportBtc: () => richiesta('/forfettario/btc/import'),
+  controllaImportBtc: () => richiesta('/forfettario/btc/import/controlla', { method: 'POST' }),
+  azioneProposta: (id, azione, dati = {}) => richiesta(`/forfettario/btc/import/proposte/${id}/${azione}`, { method: 'POST', body: JSON.stringify(dati) }),
+  importaFileBtc: (file, { formato = 'auto', mapping, conferma = false } = {}) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('formato', formato);
+    if (mapping) form.append('mapping', JSON.stringify(mapping));
+    if (conferma) form.append('conferma', 'true');
+    return fetch(`${BASE_URL}/forfettario/btc/import/file`, { method: 'POST', body: form })
+      .then(async (r) => {
+        const corpo = await r.json().catch(() => ({}));
+        if (!r.ok) throw Object.assign(new Error(corpo.errore || `Errore HTTP ${r.status}`), { codice: corpo.codice });
+        return corpo;
+      });
+  },
   urlExportCommercialista: (anno) => `${BASE_URL}/forfettario/export-commercialista${anno ? `?anno=${anno}` : ''}`,
 
   // Widget dashboard: fatture non incassate, prossime scadenze fiscali

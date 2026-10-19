@@ -14,6 +14,10 @@ import { stimaVersamenti } from '../services/stimaVersamentiService.js';
 import { generaF24Pdf } from '../services/f24PdfService.js';
 import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
 import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo, suggerisciOrdineCrediti } from '../services/creditiService.js';
+import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato } from '../services/movimentiBtcService.js';
+import { lottiConStato, calcolaPlusvalenze, riepilogoAnnuale, anteprimaUscita } from '../services/lottiBtcService.js';
+import { importaDaFile } from '../services/importFileBtcService.js';
+import { leggiProposte, confermaProposta, scartaProposta, ripristinaProposta, controllaOra } from '../services/importBtcService.js';
 import { scadenzeBollo } from '../services/bolloTrimestrale.js';
 
 export const forfettarioRoutes = Router();
@@ -459,3 +463,114 @@ forfettarioRoutes.delete('/pagamenti/:anno/:mese/:clienteId/:indice', async (req
     res.status(400).json({ errore: err.message });
   }
 });
+
+// ── Registro lotti BTC (FP-012/013, piano REGISTRO_LOTTI_BTC.md Step 5) ─────
+const annoQuery = (req) => (req.query.anno ? Number(req.query.anno) : new Date().getFullYear());
+
+forfettarioRoutes.get('/btc/movimenti', async (_req, res) => {
+  const { ingressi, uscite } = await leggiMovimenti();
+  res.json({ ingressi, uscite });
+});
+
+forfettarioRoutes.post('/btc/movimenti/ingresso', async (req, res) => {
+  try {
+    res.status(201).json(await aggiungiIngresso(req.body));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.post('/btc/movimenti/uscita', async (req, res) => {
+  try {
+    res.status(201).json(await aggiungiUscita(req.body));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+// L'id distingue il tipo (IN-MAN-… / OUT-…).
+forfettarioRoutes.delete('/btc/movimenti/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json(await (id.startsWith('OUT-') ? eliminaUscita(id) : eliminaIngresso(id)));
+  } catch (err) {
+    res.status(404).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.get('/btc/lotti', async (req, res) => {
+  res.json(await lottiConStato(annoQuery(req)));
+});
+
+forfettarioRoutes.get('/btc/plusvalenze', async (req, res) => {
+  res.json(await calcolaPlusvalenze(annoQuery(req)));
+});
+
+forfettarioRoutes.get('/btc/rw', async (req, res) => {
+  res.json(await riepilogoAnnuale(annoQuery(req)));
+});
+
+forfettarioRoutes.post('/btc/plusvalenze/anteprima', async (req, res) => {
+  try {
+    res.json(await anteprimaUscita(req.body));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.put('/btc/rw/valore-mercato', async (req, res) => {
+  try {
+    const valoriMercato = await impostaValoreMercato(Number(req.body.anno), req.body.prezzoEurBtc);
+    res.json({ valoriMercato });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+// Import da file CSV/JSON (wallet/exchange): multipart come /pagamenti/analizza-csv. Crea solo proposte.
+// Formato CSV sconosciuto: la prima chiamata restituisce il mapping proposto dall'AI, che l'utente
+// conferma rinviando lo stesso file con `mapping` (JSON). `conferma=true` autorizza l'invio all'AI.
+forfettarioRoutes.post('/btc/import/file', uploadCsv.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
+  try {
+    res.json(await importaDaFile(req.file.buffer.toString('utf-8'), {
+      formato: req.body.formato || 'auto',
+      mapping: req.body.mapping ? JSON.parse(req.body.mapping) : undefined,
+      conferma: req.body.conferma === 'true',
+      config: await getConfig(),
+    }));
+  } catch (err) {
+    res.status(err.codice === 'AUTORIZZAZIONE_RICHIESTA' ? 403 : 400).json({ errore: err.message, codice: err.codice });
+  }
+});
+
+// Proposte di import (polling blockchain + file) e stato del polling: la UI le conferma o le scarta.
+forfettarioRoutes.get('/btc/import', async (_req, res) => {
+  const { importBtc, walletBtc } = await getConfig();
+  const { proposte, ultimoControllo, ultimoErrore } = await leggiProposte();
+  res.json({
+    proposte, ultimoControllo, ultimoErrore,
+    impostazioni: { abilitato: importBtc.abilitato, avvisoPrivacyAccettato: importBtc.avvisoPrivacyAccettato, intervalloMinuti: importBtc.intervalloMinuti, walletConfigurati: walletBtc.length > 0 },
+  });
+});
+
+forfettarioRoutes.post('/btc/import/controlla', async (_req, res) => {
+  const config = await getConfig();
+  if (!config.importBtc.avvisoPrivacyAccettato) return res.status(400).json({ errore: 'Accetta prima l\'avviso privacy in Impostazioni → Fornitore' });
+  if (!config.walletBtc.length) return res.status(400).json({ errore: 'Nessun indirizzo wallet configurato' });
+  try {
+    res.json(await controllaOra(config));
+  } catch (err) {
+    res.status(502).json({ errore: err.message });
+  }
+});
+
+for (const [azione, fn] of [['conferma', confermaProposta], ['scarta', scartaProposta], ['ripristina', ripristinaProposta]]) {
+  forfettarioRoutes.post(`/btc/import/proposte/:id/${azione}`, async (req, res) => {
+    try {
+      res.json(await fn(req.params.id, req.body));
+    } catch (err) {
+      res.status(400).json({ errore: err.message });
+    }
+  });
+}

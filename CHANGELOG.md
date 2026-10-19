@@ -2,24 +2,32 @@
 
 Tutte le modifiche rilevanti al progetto sono documentate in questo file.
 
-Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
+Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
+
+## [1.9.0] - 2026-10-19
+
+### Added
+- **Registro BTC e plusvalenze** — tracciamento di ingressi e uscite di bitcoin con calcolo delle plusvalenze da redditi diversi:
+  - lotti di carico ricavati dalle rate incassate in BTC, più ingressi manuali per BTC acquistati o ricevuti altrove
+  - uscite (vendita, spesa, trasferimento) con costo di carico LIFO e anteprima della plusvalenza prima di salvare
+  - tabella movimenti con colonna «Tipo» che indica l'origine di ogni riga (fattura, manuale, import da file o automatico)
+  - minusvalenze riportate negli anni successivi, aliquota e regole lette dalle regole fiscali dell'anno
+  - nuova voce «Bitcoin» nel menu con Registro BTC e Importa BTC; card «Plusvalenze» e riepilogo nella tab Bitcoin della dashboard
+  - valore in tempo reale di 1 BTC e dei BTC detenuti: card in cima alla vista Bitcoin; nella tab Bitcoin della dashboard «Valore BTC di mercato», «Valore BTC detenuti» e «Valore attuale» sono le prime card
+- **Quadro RW e imposta sulle cripto-attività** — calcolo dell'imposta dello 0,2% proporzionale ai giorni di detenzione:
+  - card «Quadro RW» con saldo, valore al 31/12 inserito dall'utente, giorni di possesso e imposta dovuta
+  - righe 1715, 1727, 1728 e 1729 nel piano F24, con acconti già versati sottratti dal saldo
+  - nuove sezioni nell'export per il commercialista: registro lotti, uscite e riepilogo cripto
+- **Import automatico transazioni BTC** — proposte di import da confermare o scartare, mai registrate in automatico:
+  - controllo periodico degli indirizzi configurati, con doppio provider e conferme minime
+  - import da file CSV/JSON (Sparrow, Electrum, Kraken, Binance, Coinbase, One Trading) con mappatura colonne proposta dall'AI per i formati sconosciuti
+  - disattivato di default, si abilita in Impostazioni → Fornitore dopo aver accettato l'avviso privacy
 
 ## [1.8.0] - 2026-10-16
 
 ### Added
-- **Chat AI nella dashboard** — nuova tab «AI» per interrogare i tuoi dati in linguaggio naturale, senza uscire dall'app:
-  - legge gli stessi dati aggregati del server MCP (fatturato, incassi, scadenze, F24, bollo, crediti, fatture)
-  - sola lettura: non emette fatture, non modifica dati e non invia nulla
-  - anagrafica, codice fiscale, IBAN e credenziali non sono accessibili
-  - domande suggerite sotto la casella di inserimento, cliccabili
-  - chiede il consenso prima di inviare dati fiscali al provider AI (per questa volta o sempre)
-- **Server MCP in sola lettura** — interroga i tuoi dati fiscali dal client AI (Claude Desktop, Claude Code, ChatGPT, Gemini):
-  - esposti solo dati aggregati: riepilogo anno, scadenze, F24, bollo trimestrale, crediti, elenco fatture, regole fiscali
-  - mai esposti anagrafica, codice fiscale, IBAN, password e token
-  - non può emettere fatture, modificare impostazioni né inviare PEC
-  - disattivato di default: si abilita in Impostazioni → AI, che mostra i comandi pronti da incollare
 - **Rivalsa INPS nei template fattura** — la riga «Rivalsa INPS 4%» compare nel PDF quando la rivalsa è attiva:
   - presente in tutti e 5 i template fattura
   - nota accanto all'impostazione che spiega l'effetto sul bollo
@@ -41,6 +49,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   - Intrastat trimestrale in scadenza entro 7 giorni (solo se VIES attivo e clienti UE presenti)
   - Errori IMAP/PEC: notifica una sola volta dopo 3 cicli consecutivi falliti, non ad ogni giro
   - Tutte le notifiche rispettano il toggle "Notifiche desktop abilitate" e la deduplicazione 24 ore
+- **Chat AI nella dashboard** — nuova tab «AI» per interrogare i tuoi dati in linguaggio naturale, senza uscire dall'app:
+  - legge gli stessi dati aggregati del server MCP (fatturato, incassi, scadenze, F24, bollo, crediti, fatture)
+  - sola lettura: non emette fatture, non modifica dati e non invia nulla
+  - anagrafica, codice fiscale, IBAN e credenziali non sono accessibili
+  - domande suggerite sotto la casella di inserimento, cliccabili
+  - chiede il consenso prima di inviare dati fiscali al provider AI (per questa volta o sempre)
+- **Server MCP in sola lettura** — interroga i tuoi dati fiscali dal client AI (Claude Desktop, Claude Code, ChatGPT, Gemini):
+  - esposti solo dati aggregati: riepilogo anno, scadenze, F24, bollo trimestrale, crediti, elenco fatture, regole fiscali
+  - mai esposti anagrafica, codice fiscale, IBAN, password e token
+  - non può emettere fatture, modificare impostazioni né inviare PEC
+  - disattivato di default: si abilita in Impostazioni → AI, che mostra i comandi pronti da incollare
 
 ### Fixed
 - **Stima F24: arrotondamenti e acconti INPS** — la stima dei versamenti segue le regole della dichiarazione:

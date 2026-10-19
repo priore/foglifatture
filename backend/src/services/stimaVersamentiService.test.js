@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { rateizzaScadenza, applicaMaggiorazioneRighe, maxRateConsentite } from './stimaVersamentiService.js';
+import { rateizzaScadenza, applicaMaggiorazioneRighe, maxRateConsentite, righeCripto } from './stimaVersamentiService.js';
 
 const regole = {
   codiciTributo: { interessiRateazione: '1668' },
@@ -219,5 +219,50 @@ describe('applicaMaggiorazioneRighe (pre-req A4)', () => {
     const result = applicaMaggiorazioneRighe(piccola, 0.40);
     // 100 × 0.40% = 0.40 < 1.03 → nessun DPPI
     assert.equal(result.find((r) => r.codice === 'DPPI'), undefined);
+  });
+});
+
+describe('righeCripto', () => {
+  const codici = { plusvalenzeRegDichiarativo: '1715', ivcaSaldo: '1727', ivcaAccontoI: '1728', ivcaAccontoII: '1729' };
+  const ivca = (impostaDaVersare, extra = {}) => ({ impostaDaVersare, mancaValoreMercato: false, ...extra });
+  const base = { anno: 2026, codici, plusvalenze: { applicabile: true, imposta: 330 } };
+
+  it('plusvalenze: riga 1715 solo a saldo', () => {
+    const r = righeCripto({ ...base, ivca: null, accontiVersati: null });
+    assert.deepEqual(r.saldo.map((x) => [x.codice, x.annoRiferimento, x.importo]), [['1715', 2026, 330]]);
+    assert.equal(r.novembre.length, 0);
+  });
+
+  it('IVCA: saldo 1727 meno acconti versati, acconti 1728 (40%) e 1729 (60%) per anno+1', () => {
+    const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(100), accontiVersati: 30 });
+    assert.deepEqual(r.saldo.map((x) => [x.codice, x.annoRiferimento, x.importo]), [['1727', 2026, 70], ['1728', 2027, 40]]);
+    assert.deepEqual(r.novembre.map((x) => [x.codice, x.annoRiferimento, x.importo]), [['1729', 2027, 60]]);
+  });
+
+  it('acconti non registrati: stima dall\'anno precedente con avviso', () => {
+    const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(100), ivcaNm1: ivca(40), accontiVersati: null });
+    assert.equal(r.saldo[0].importo, 60);
+    assert.ok(r.avvisi.some((a) => a.includes('stima')));
+  });
+
+  it('acconti > imposta: credito, nessun saldo', () => {
+    const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(20), accontiVersati: 50 });
+    assert.equal(r.saldo.some((x) => x.codice === '1727'), false);
+    assert.equal(r.crediti[0].importo, 30);
+  });
+
+  it('IVCA sotto soglia (impostaDaVersare 0): nessuna riga', () => {
+    const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(0), accontiVersati: null });
+    assert.deepEqual([r.saldo, r.novembre, r.crediti], [[], [], []]);
+  });
+
+  it('valore 31/12 mancante: avviso', () => {
+    const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(0, { mancaValoreMercato: true }), accontiVersati: null });
+    assert.ok(r.avvisi.some((a) => a.includes('31/12/2026')));
+  });
+
+  it('senza movimenti cripto: nessuna riga né avviso', () => {
+    const r = righeCripto({ ...base, plusvalenze: { applicabile: true, imposta: 0 }, ivca: null, accontiVersati: null });
+    assert.deepEqual([r.saldo, r.novembre, r.avvisi], [[], [], []]);
   });
 });

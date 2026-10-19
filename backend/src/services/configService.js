@@ -120,6 +120,16 @@ const DEFAULT_CONFIG = {
   // Indirizzi BTC dell'operatore proposti come destinazione incasso (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2).
   // Un indirizzo è pubblico ma collegato all'identità fiscale: resta solo in config.json (gitignored).
   walletBtc: [],
+  // Import automatico transazioni BTC (AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md, FP-014). Disabilitato di default.
+  importBtc: {
+    abilitato: false,
+    intervalloMinuti: 30,
+    confermeMinime: 3,
+    urlPrimario: 'https://mempool.space/api',
+    urlFallback: 'https://blockstream.info/api',
+    avvisoPrivacyAccettato: false,
+  },
+  metodoPlusvalenze: 'lifo', // unico metodo supportato (Circ. AdE 30/E §3.2.1)
 };
 
 // Fonde una sezione salvata con i suoi default: se in futuro aggiungiamo un nuovo campo
@@ -200,6 +210,7 @@ export async function getConfig() {
       notifiche: fondiSezione(DEFAULT_CONFIG.notifiche, config.notifiche),
       ai: fondiSezione(DEFAULT_CONFIG.ai, config.ai),
       mcp: fondiSezione(DEFAULT_CONFIG.mcp, config.mcp),
+      importBtc: fondiSezione(DEFAULT_CONFIG.importBtc, config.importBtc),
     }
     : { ...DEFAULT_CONFIG, clienti: fondiClienti([]) };
 
@@ -322,7 +333,31 @@ async function applicaPassword(account, valoreInArrivo, valoreAttuale) {
   return valoreInArrivo;
 }
 
+// Valida le chiavi cripto in arrivo da Impostazioni; lancia Error con messaggio utente.
+export function validaConfigCripto({ importBtc, metodoPlusvalenze }) {
+  if (metodoPlusvalenze !== undefined && metodoPlusvalenze !== 'lifo') {
+    throw new Error("Metodo plusvalenze non supportato: solo 'lifo'");
+  }
+  if (!importBtc) return;
+  const { confermeMinime, intervalloMinuti, urlPrimario, urlFallback } = importBtc;
+  if (confermeMinime !== undefined && !(Number.isInteger(confermeMinime) && confermeMinime >= 1)) {
+    throw new Error('Conferme minime: intero >= 1');
+  }
+  if (intervalloMinuti !== undefined && !(Number.isInteger(intervalloMinuti) && intervalloMinuti >= 1)) {
+    throw new Error('Intervallo di controllo: intero >= 1 minuto');
+  }
+  for (const url of [urlPrimario, urlFallback]) {
+    if (url === undefined) continue;
+    try {
+      if (!['http:', 'https:'].includes(new URL(url).protocol)) throw new Error();
+    } catch {
+      throw new Error(`URL provider BTC non valido: ${url}`);
+    }
+  }
+}
+
 export async function saveConfig(partialConfig) {
+  validaConfigCripto(partialConfig);
   const current = await getConfig();
   // clienti[] arriva intero dal frontend (che tiene l'intero elenco in memoria prima di
   // salvare) — non serve merge shallow per-campo come le altre sezioni oggetto; basta
@@ -349,6 +384,7 @@ export async function saveConfig(partialConfig) {
     reminder: fondiSezione(current.reminder, partialConfig.reminder),
     forfettario: fondiSezione(current.forfettario, partialConfig.forfettario),
     ai: fondiSezione(current.ai, partialConfig.ai),
+    importBtc: fondiSezione(current.importBtc, partialConfig.importBtc),
     // mcp non passa dal salvataggio generico: solo salvaMcp() (toggle e token).
     mcp: current.mcp,
     // dati.percorso non passa mai da qui: cambiarlo senza spostare i file lascerebbe

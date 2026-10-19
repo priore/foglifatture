@@ -8,6 +8,7 @@ import LineChart from '../components/LineChart.vue';
 import UpdateModal from '../components/UpdateModal.vue';
 import StepRegoleFiscali from '../components/wizard/StepRegoleFiscali.vue';
 import ChatAi from '../components/ChatAi.vue';
+import BtcValoreLive from '../components/BtcValoreLive.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 
@@ -56,6 +57,7 @@ async function carica() {
   try {
     dashboard.value = await api.dashboardForfettario(annoSelezionato.value);
     caricaValoreAttualeBtc();
+    caricaFiscaleBtc();
   } catch (err) {
     errore.value = err.message;
   }
@@ -294,6 +296,43 @@ async function caricaValoreAttualeBtc() {
   }
 }
 
+// Card fiscali BTC (FP-012/013): un'unica chiamata riepilogo annuale alimenta Quadro RW,
+// Plusvalenze anno e il costo di carico LIFO della card Valore attuale.
+const fiscaleBtc = ref(null);
+const erroreFiscaleBtc = ref('');
+const prezzo1231Btc = ref('');
+const salvandoPrezzoBtc = ref(false);
+async function caricaFiscaleBtc() {
+  erroreFiscaleBtc.value = '';
+  try {
+    fiscaleBtc.value = await api.rwBtc(annoSelezionato.value);
+    prezzo1231Btc.value = fiscaleBtc.value.ivca?.valoreMercato != null ? String(fiscaleBtc.value.ivca.valoreMercato).replace('.', ',') : '';
+  } catch (err) {
+    fiscaleBtc.value = null;
+    erroreFiscaleBtc.value = err.message;
+  }
+}
+async function salvaPrezzo1231Btc() {
+  salvandoPrezzoBtc.value = true;
+  erroreFiscaleBtc.value = '';
+  try {
+    await api.impostaValoreMercatoBtc(annoSelezionato.value, Number(prezzo1231Btc.value.replace(',', '.')));
+    await caricaFiscaleBtc();
+  } catch (err) {
+    erroreFiscaleBtc.value = err.message;
+  } finally {
+    salvandoPrezzoBtc.value = false;
+  }
+}
+// Possesso nell'anno: saldo al 31/12 oppure BTC detenuti e poi ceduti (righe IVCA per periodo).
+const detenzioneBtc = computed(() => !!fiscaleBtc.value && (fiscaleBtc.value.saldo.satoshi > 0 || (fiscaleBtc.value.ivca?.dettaglioPerLotto.length ?? 0) > 0));
+// Plusvalenza latente: BTC detenuti al 31/12 valorizzati al prezzo di mercato attuale meno costo LIFO.
+const latenteBtc = computed(() => {
+  const s = fiscaleBtc.value?.saldo;
+  if (!s || !s.satoshi || !prezzoMercatoBtc.value) return null;
+  return Number((s.satoshi / 1e8 * prezzoMercatoBtc.value.eur - s.costoTotaleEur).toFixed(2));
+});
+
 // Andamento cambio EUR/BTC storico delle rate dell'anno, per il grafico lineare della card.
 const andamentoCambioBtc = computed(() => {
   if (!dashboard.value) return [];
@@ -345,7 +384,7 @@ async function caricaMercatoBtc() {
 // non è un dato di dominio: nessuna sincronizzazione col backend.
 // Tre viste (Dashboard/Bitcoin/F24), ognuna col proprio ordine e la propria chiave localStorage.
 const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
-const ORDINE_DEFAULT_BTC = ['btc-riepilogo', 'btc-rate', 'btc-rw', 'btc-valore-attuale', 'btc-mercato'];
+const ORDINE_DEFAULT_BTC = ['btc-mercato', 'btc-detenuti', 'btc-valore-attuale', 'btc-riepilogo', 'btc-plusvalenze', 'btc-rw', 'btc-rate'];
 const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale', 'crediti-f24'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
@@ -715,6 +754,20 @@ function ripristinaLayout() {
       </div>
 
       <div v-else-if="tabAttivo === 'Bitcoin'" class="griglia-card">
+        <div class="azioni-tab-btc">
+          <router-link to="/bitcoin" class="btn btn-primary">Registro e import Bitcoin</router-link>
+        </div>
+        <div class="card" :style="{ order: ordinePer('btc-detenuti') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-detenuti')" @dragover.prevent @drop="drop('btc-detenuti')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-detenuti', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-detenuti', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore BTC detenuti</h2></span>
+          </div>
+          <div class="card-body"><BtcValoreLive tipo="detenuti" /></div>
+        </div>
+
         <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -743,7 +796,7 @@ function ripristinaLayout() {
           </div>
         </div>
 
-        <div class="card" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('btc-rate') }">
+        <div class="card card-intera" :style="{ display: 'flex', flexDirection: 'column', order: ordinePer('btc-rate') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
             @dragstart="dragStart('btc-rate')" @dragover.prevent @drop="drop('btc-rate')"
@@ -753,7 +806,7 @@ function ripristinaLayout() {
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
             <p v-if="!dashboard.cassa.btc.elenco.length" class="note-legal">Nessuna rata BTC nel {{ dashboard.anno }}.</p>
-            <table v-else class="data-table lista-scroll">
+            <div v-else class="lista-scroll"><table class="data-table">
               <thead>
                 <tr><th>Fattura</th><th>Data</th><th>BTC</th><th>Cambio</th><th>EUR</th><th>TXID</th></tr>
               </thead>
@@ -767,7 +820,39 @@ function ripristinaLayout() {
                   <td><a :href="`https://mempool.space/tx/${r.txid}`" target="_blank" rel="noopener">{{ abbreviaTxid(r.txid) }}</a></td>
                 </tr>
               </tbody>
-            </table>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="card" :style="{ order: ordinePer('btc-plusvalenze') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('btc-plusvalenze')" @dragover.prevent @drop="drop('btc-plusvalenze')"
+            @keydown.alt.up.prevent="spostaConTastiera('btc-plusvalenze', -1)" @keydown.alt.down.prevent="spostaConTastiera('btc-plusvalenze', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Plusvalenze {{ dashboard.anno }}</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="erroreFiscaleBtc" class="avviso-riga avviso-warn" role="alert">{{ erroreFiscaleBtc }}</p>
+            <p v-else-if="!fiscaleBtc" class="note-legal">Caricamento…</p>
+            <template v-else-if="fiscaleBtc.plusvalenze.applicabile">
+              <div v-if="fiscaleBtc.plusvalenze.cessioni.length" class="mini-stat-row">
+                <div class="mini-stat"><span class="mini-stat-label">Plusvalenze</span><span class="mini-stat-value" style="color:var(--ok)">{{ formattaEuro(fiscaleBtc.plusvalenze.plusvalenze) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Minusvalenze</span><span class="mini-stat-value" style="color:var(--warn)">{{ formattaEuro(fiscaleBtc.plusvalenze.minusvalenze) }}</span></div>
+                <div class="mini-stat" title="Netto dell'anno meno minusvalenze riportate dai 4 anni precedenti"><span class="mini-stat-label">Base imponibile</span><span class="mini-stat-value">{{ formattaEuro(fiscaleBtc.plusvalenze.baseImponibile) }}</span></div>
+                <div class="mini-stat"><span class="mini-stat-label">Imposta ({{ fiscaleBtc.plusvalenze.aliquota }}%)</span><span class="mini-stat-value">{{ formattaEuro(fiscaleBtc.plusvalenze.imposta) }}</span></div>
+              </div>
+              <p v-else class="note-legal">Nessuna cessione BTC nel {{ dashboard.anno }}.</p>
+              <p v-if="fiscaleBtc.plusvalenze.minusvalenzeRiportabili.length" class="note-legal" style="margin-top:12px">
+                Minusvalenze riportabili: <span v-for="(r, i) in fiscaleBtc.plusvalenze.minusvalenzeRiportabili" :key="r.anno">{{ i ? ', ' : '' }}{{ r.anno }} {{ formattaEuro(r.residuo) }}</span>.
+              </p>
+              <p v-for="a in fiscaleBtc.plusvalenze.avvisi" :key="a" class="avviso-riga avviso-warn">{{ a }}</p>
+              <p class="nota-piede">Dettaglio per cessione nel Registro BTC (menu Bitcoin). Imposta sostitutiva da versare a saldo (codice 1715), quadro RT.</p>
+            </template>
+            <template v-else>
+              <p class="note-legal">{{ dashboard.anno < 2026 ? 'Plusvalenze cripto calcolate dal 2026.' : 'Regole cripto non attive per il ' + dashboard.anno + '.' }}</p>
+              <router-link v-if="dashboard.anno >= 2026" to="/impostazioni" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+            </template>
           </div>
         </div>
 
@@ -780,10 +865,39 @@ function ripristinaLayout() {
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Quadro RW</h2></span>
           </div>
           <div class="card-body">
-            <p v-if="dashboard.cassa.btc.rate > 0" class="avviso-riga avviso-info">
-              BTC incassati nel {{ dashboard.anno }}: se detenuti al 31/12 vanno indicati nel quadro RW (imposta IC 0,2%) — verificare col commercialista.
-            </p>
-            <p v-else class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}: nessun obbligo RW da questa fonte.</p>
+            <p v-if="erroreFiscaleBtc" class="avviso-riga avviso-warn" role="alert">{{ erroreFiscaleBtc }}</p>
+            <p v-else-if="!fiscaleBtc" class="note-legal">Caricamento…</p>
+            <template v-else-if="fiscaleBtc.ivca">
+              <template v-if="detenzioneBtc">
+                <div class="mini-stat-row">
+                  <div class="mini-stat"><span class="mini-stat-label">Saldo al 31/12</span><span class="mini-stat-value">{{ (fiscaleBtc.saldo.satoshi / 1e8).toFixed(8) }} BTC</span></div>
+                  <div class="mini-stat"><span class="mini-stat-label">Valore RW (fine anno)</span><span class="mini-stat-value">{{ fiscaleBtc.ivca.mancaValoreMercato ? '—' : formattaEuro(fiscaleBtc.ivca.valoreFine) }}</span></div>
+                  <div class="mini-stat" title="Imposta IVCA 0,2% proporzionale ai giorni di possesso; non dovuta se sotto 12 €"><span class="mini-stat-label">IVCA dovuta</span><span class="mini-stat-value">{{ formattaEuro(fiscaleBtc.ivca.impostaDaVersare) }}</span></div>
+                  <div class="mini-stat"><span class="mini-stat-label">Giorni di possesso</span><span class="mini-stat-value">{{ fiscaleBtc.ivca.giorniTotaliPonderati }}</span></div>
+                </div>
+                <p v-if="fiscaleBtc.saldo.satoshi === 0" class="avviso-riga avviso-info">
+                  Saldo al 31/12 = 0, ma BTC detenuti nell'anno: IVCA stimata {{ formattaEuro(fiscaleBtc.ivca.impostaLorda) }}, rigo RW da compilare.
+                </p>
+                <p v-else-if="fiscaleBtc.ivca.impostaLorda > 0 && fiscaleBtc.ivca.impostaDaVersare === 0" class="avviso-riga avviso-info">
+                  IVCA {{ formattaEuro(fiscaleBtc.ivca.impostaLorda) }} sotto 12 €: nessun versamento, rigo RW da compilare.
+                </p>
+                <div v-if="fiscaleBtc.saldo.satoshi > 0" class="field" style="margin-top:12px">
+                  <label for="prezzo-1231">Prezzo EUR/BTC al 31/12/{{ dashboard.anno }}{{ fiscaleBtc.ivca.mancaValoreMercato ? ' (da inserire per calcolare l\'IVCA)' : '' }}</label>
+                  <div style="display:flex;gap:8px">
+                    <input id="prezzo-1231" v-model="prezzo1231Btc" type="text" inputmode="decimal" placeholder="0,00" style="flex:1" @keydown.enter.prevent="salvaPrezzo1231Btc">
+                    <button type="button" class="btn btn-ghost" :disabled="salvandoPrezzoBtc || !prezzo1231Btc" @click="salvaPrezzo1231Btc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
+                  </div>
+                </div>
+                <p v-if="fiscaleBtc.rw8" class="note-legal" style="margin-top:12px">
+                  Rigo RW8: totale imposta {{ formattaEuro(fiscaleBtc.rw8.totaleImposta) }}, acconti versati {{ formattaEuro(fiscaleBtc.rw8.accontiVersati) }}, saldo {{ formattaEuro(fiscaleBtc.rw8.saldo) }}.
+                </p>
+              </template>
+              <p v-else class="note-legal">Nessun BTC detenuto nel {{ dashboard.anno }}.</p>
+            </template>
+            <template v-else>
+              <p class="note-legal">Regole cripto non attive per il {{ dashboard.anno }}.</p>
+              <router-link to="/impostazioni" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+            </template>
           </div>
         </div>
 
@@ -796,20 +910,27 @@ function ripristinaLayout() {
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore attuale</h2></span>
           </div>
           <div class="card-body">
-            <p v-if="dashboard.cassa.btc.rate === 0" class="note-legal">Nessun BTC incassato nel {{ dashboard.anno }}.</p>
-            <p v-else-if="caricandoValoreAttualeBtc" class="note-legal">Verifico cambio attuale…</p>
+            <p v-if="caricandoValoreAttualeBtc" class="note-legal">Verifico cambio attuale…</p>
             <p v-else-if="erroreValoreAttualeBtc" class="note-legal">Errore: {{ erroreValoreAttualeBtc }}</p>
-            <template v-else-if="valoreAttualeBtc">
+            <template v-if="valoreAttualeBtc">
               <div class="mini-stat-row">
                 <div class="mini-stat"><span class="mini-stat-label">Cambio oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.cambioOggi) }}</span></div>
                 <div class="mini-stat"><span class="mini-stat-label">Controvalore oggi</span><span class="mini-stat-value">{{ formattaEuro(valoreAttualeBtc.controvaloreOggi) }}</span></div>
                 <div
-                  class="mini-stat" :title="'Informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati (FP-012)'"
+                  class="mini-stat" :title="'Informativo: non è plusvalenza realizzata, BTC eventualmente già spesi non tracciati'"
                 ><span class="mini-stat-label">Differenza vs registrato</span><span class="mini-stat-value" :style="{ color: valoreAttualeBtc.differenza >= 0 ? 'var(--ok)' : 'var(--warn)' }">{{ formattaEuro(valoreAttualeBtc.differenza) }}</span></div>
               </div>
               <p class="note-legal" style="margin-top:12px">Andamento cambio EUR/BTC delle rate incassate nel {{ dashboard.anno }}:</p>
               <LineChart v-if="andamentoCambioBtc.length > 1" :punti="andamentoCambioBtc" />
             </template>
+            <template v-if="fiscaleBtc && fiscaleBtc.saldo.satoshi > 0">
+              <div class="mini-stat-row">
+                <div class="mini-stat" :title="'Costo di carico LIFO dei BTC detenuti al 31/12/' + dashboard.anno"><span class="mini-stat-label">Costo di carico LIFO</span><span class="mini-stat-value">{{ formattaEuro(fiscaleBtc.saldo.costoTotaleEur) }}</span></div>
+                <div v-if="latenteBtc != null" class="mini-stat" title="Non realizzata: diventa plusvalenza tassabile solo con la cessione"><span class="mini-stat-label">Plusvalenza latente</span><span class="mini-stat-value" :style="{ color: latenteBtc >= 0 ? 'var(--ok)' : 'var(--warn)' }">{{ formattaEuro(latenteBtc) }}</span></div>
+              </div>
+              <p class="avviso-riga avviso-info">Latente = BTC detenuti al 31/12/{{ dashboard.anno }} al prezzo di mercato attuale meno costo LIFO. Non è reddito finché non cedi.</p>
+            </template>
+            <p v-if="!valoreAttualeBtc && !(fiscaleBtc && fiscaleBtc.saldo.satoshi > 0) && !caricandoValoreAttualeBtc && !erroreValoreAttualeBtc" class="note-legal">Nessun BTC detenuto o incassato nel {{ dashboard.anno }}.</p>
           </div>
         </div>
 
@@ -1096,6 +1217,7 @@ function ripristinaLayout() {
 </template>
 
 <style scoped>
+.azioni-tab-btc { grid-column: 1 / -1; order: -1; display: flex; justify-content: flex-end; }
 .summary-row { grid-template-columns: repeat(3, 1fr); }
 .stat-gruppo-stima { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
 .stat-gruppo-riga { display: flex; gap: 32px; }
@@ -1137,15 +1259,13 @@ function ripristinaLayout() {
 .badge-fonte { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px 9px; cursor: help; }
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
-.lista-scroll { max-height: 220px; overflow-y: auto; }
+.lista-scroll { max-height: 220px; overflow: auto; }
 
 .mercato-btc-hero { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .mercato-btc-prezzo { font-size: 1.6rem; font-weight: 700; color: var(--ink); }
-.badge-variazione { font-size: .72rem; font-weight: 700; border-radius: var(--radius-pill); padding: 3px 10px; }
-.badge-variazione.positiva { color: var(--ok); background: var(--ok-bg); }
-.badge-variazione.negativa { color: var(--warn); background: var(--warn-bg); }
 
 .tab-toggle { display: flex; gap: 8px; margin-bottom: 20px; }
+.card-intera { grid-column: 1 / -1; }
 .griglia-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 .card-head-titolo { display: flex; align-items: center; gap: 8px; }
 .maniglia-card { cursor: grab; color: var(--muted); font-size: .9rem; line-height: 1; user-select: none; }

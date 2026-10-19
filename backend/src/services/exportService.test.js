@@ -27,6 +27,25 @@ mock.module('./invoiceService.js', {
   },
 });
 
+// Stato cripto mutabile: ogni test BTC lo imposta, di default nessun movimento.
+const cripto = { lotti: [], uscite: [], applicabile: true };
+mock.module('./lottiBtcService.js', {
+  exports: {
+    lottiConStato: async () => cripto.lotti,
+    riepilogoAnnuale: async () => ({
+      plusvalenze: cripto.applicabile
+        ? { applicabile: true, cessioni: cripto.uscite.filter((u) => u.tipo !== 'trasferimento').map((u) => ({ uscita: u, plusvalenza: 50 })), netto: 50, compensate: 0, baseImponibile: 50, aliquota: 33, imposta: 16.5, minusvalenzeRiportabili: [] }
+        : { applicabile: false, cessioni: [] },
+      saldo: { satoshi: 2000000, costoTotaleEur: 1000, valoreEur: 1900 },
+      ivca: { impostaLorda: 3.8, mancaValoreMercato: false },
+      rw8: { totaleImposta: 0, accontiVersati: 0, saldo: 0 },
+    }),
+  },
+});
+mock.module('./movimentiBtcService.js', {
+  exports: { leggiMovimenti: async () => ({ ingressi: [], uscite: cripto.uscite, valoriMercato: {} }) },
+});
+
 const { esportaReportCommercialistaCsv } = await import('./exportService.js');
 
 const configBase = {
@@ -64,4 +83,33 @@ test('export 2027: la fattura emessa nel 2026 ma incassata nel 2027 compare nell
 test('rata a bonifico (senza btc) ha colonna Metodo=bonifico e colonne BTC vuote', async () => {
   const csv = await esportaReportCommercialistaCsv(configBase, 2026);
   assert.match(csv, /,bonifico,,,,/);
+});
+
+test('senza lotti né uscite BTC non compaiono sezioni cripto', async () => {
+  const csv = await esportaReportCommercialistaCsv(configBase, 2026);
+  assert.doesNotMatch(csv, /Registro lotti BTC|Uscite BTC|Riepilogo cripto/);
+});
+
+test('con movimenti BTC: sezioni lotti, uscite (con plusvalenza, trasferimento vuoto) e riepilogo in coda', async () => {
+  cripto.lotti = [{ data: '2026-03-15', tipo: 'incasso', satoshi: 5000000, residui: 2000000, costoEur: 450, txid: 'b'.repeat(64) }];
+  cripto.uscite = [
+    { id: 'OUT-1', data: '2026-08-20', tipo: 'vendita', satoshi: 3000000, ricavoEur: 350, txid: '' },
+    { id: 'OUT-2', data: '2026-09-01', tipo: 'trasferimento', satoshi: 100000, ricavoEur: 0, txid: '' },
+    { id: 'OUT-3', data: '2025-09-01', tipo: 'vendita', satoshi: 1, ricavoEur: 1, txid: '' },
+  ];
+  const csv = await esportaReportCommercialistaCsv(configBase, 2026);
+  assert.ok(csv.indexOf('Registro lotti BTC') > csv.indexOf('% soglia raggiunta'), 'sezioni cripto in coda');
+  assert.match(csv, /^2026-03-15,incasso,0\.05000000,450\.00,b{64},0\.02000000$/m);
+  assert.match(csv, /^2026-08-20,vendita,0\.03000000,350\.00,50\.00,$/m);
+  assert.match(csv, /^2026-09-01,trasferimento,0\.00100000,0\.00,,$/m);
+  assert.doesNotMatch(csv, /2025-09-01,vendita/);
+  assert.match(csv, /^Imposta sostitutiva 33% EUR,16\.50$/m);
+  assert.match(csv, /^RW8 saldo EUR,0\.00$/m);
+});
+
+test('regole cripto non attive: riepilogo lo segnala senza righe imposta', async () => {
+  cripto.applicabile = false;
+  const csv = await esportaReportCommercialistaCsv(configBase, 2026);
+  assert.match(csv, /regole cripto non attive/);
+  assert.doesNotMatch(csv, /Imposta sostitutiva \d+%/);
 });
