@@ -40,7 +40,7 @@ function rimuovi() {
         style="flex:1"
         @change="files => onFileSelezionato(files[0])"
       />
-      <button v-if="modelValue" type="button" class="btn btn-ghost" @click="rimuovi">Rimuovi</button>
+      <button v-if="modelValue" type="button" class="btn btn-warn" @click="rimuovi">Rimuovi</button>
     </div>
   </div>
 </template>

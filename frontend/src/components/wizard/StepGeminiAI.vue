@@ -124,7 +124,7 @@ async function avviaLoginCli() {
           </div>
         </div>
         <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
-          <button class="btn btn-primary" :disabled="salvandoGemini" @click="salvaGemini">{{ salvandoGemini ? 'Salvo…' : 'Salva API key' }}</button>
+          <button class="btn btn-ok" :disabled="salvandoGemini" @click="salvaGemini">{{ salvandoGemini ? 'Salvo…' : 'Salva API key' }}</button>
           <span class="badge-mono" v-if="messaggioGemini">{{ messaggioGemini }}</span>
         </div>
 
@@ -140,7 +140,7 @@ async function avviaLoginCli() {
                 <option v-for="m in modelliDisponibili" :key="m" :value="m">{{ m }}</option>
               </select>
               <button class="btn btn-ghost" :disabled="caricandoModelli" @click="caricaModelli">{{ caricandoModelli ? 'Carico…' : 'Carica elenco' }}</button>
-              <button class="btn btn-primary" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
+              <button class="btn btn-ok" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
             </div>
           </div>
           <span class="badge-mono" v-if="messaggioModello" style="display:inline-block;margin-top:8px">{{ messaggioModello }}</span>

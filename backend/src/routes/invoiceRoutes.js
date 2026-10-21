@@ -9,6 +9,7 @@ import { validaDatiFatturaPA } from '../services/fatturaPaXmlValidator.js';
 import { costruisciPagamento } from '../lib/pagamento.js';
 import { trattamentoCliente } from '../services/clienteEsteroService.js';
 import { inviaFatturaViaPec } from '../services/pecService.js';
+import { emettiNotaCredito, fatturaDaNotaCredito } from '../services/notaCreditoService.js';
 import { listaRicevutePerFattura, statoSdiFattura } from '../services/sdiRicevuteService.js';
 
 export const invoiceRoutes = Router();
@@ -348,6 +349,80 @@ invoiceRoutes.get('/:anno/:mese/:clienteId/ricevute-sdi', async (req, res) => {
 
   const progressivi = invoice.invii?.length ? invoice.invii.map((i) => i.progressivoInvio) : [];
   const risultati = await Promise.all(progressivi.map((progressivoInvio) => {
+    const prefisso = generaNomeFileXml(config.fornitore, progressivoInvio).replace(/\.xml$/i, '');
+    return listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
+  }));
+  res.json(risultati.flat().sort((a, b) => b.data.localeCompare(a.data)));
+});
+
+// Nota di credito TD04 a storno di una fattura già accettata dallo SDI. Azione fiscale:
+// richiede `conferma: true` esplicito nel body, mai innescabile da automatismi/agenti.
+invoiceRoutes.post('/:anno/:mese/:clienteId/nota-credito', async (req, res) => {
+  const { anno, mese, clienteId } = req.params;
+  if (req.body.conferma !== true) return res.status(400).json({ errore: 'Conferma esplicita richiesta' });
+  const config = await getConfig();
+  const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
+  if (!invoice) return res.status(404).json({ errore: 'Fattura non trovata' });
+  const { stato } = await statoSdiFattura(invoice, config);
+  if (stato !== 'accettata') {
+    return res.status(409).json({ errore: 'La nota di credito si emette solo per una fattura accettata dallo SDI: finché non lo è, rigenera la fattura.' });
+  }
+  try {
+    res.json(await emettiNotaCredito(Number(anno), Number(mese), clienteId, req.body));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+// Carica fattura + nota + cliente, validando i dati FatturaPA della nota. Risponde da sé in caso di errore.
+async function preparaNotaCredito(req, res) {
+  const { anno, mese, clienteId } = req.params;
+  const config = await getConfig();
+  const cliente = risolviCliente(config, clienteId);
+  if (!cliente) { clienteNonTrovato(res); return null; }
+  const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
+  if (!invoice?.notaCredito) { res.status(404).json({ errore: 'Nessuna nota di credito per questa fattura' }); return null; }
+  const nota = fatturaDaNotaCredito(invoice);
+  const validazione = validaDatiFatturaPA({ fornitore: config.fornitore, cliente, fattura: nota });
+  if (!validazione.valido) {
+    res.status(422).json({ errore: 'Dati nota di credito non conformi a FatturaPA', dettagli: validazione.errori });
+    return null;
+  }
+  return { config, cliente, invoice, nota };
+}
+
+invoiceRoutes.get('/:anno/:mese/:clienteId/nota-credito/xml', async (req, res) => {
+  const p = await preparaNotaCredito(req, res);
+  if (!p) return;
+  const progressivoInvio = p.invoice.notaCredito.invii.at(-1)?.progressivoInvio ?? prossimoProgressivoInvio();
+  const xml = generaXmlFatturaPA({ fornitore: p.config.fornitore, cliente: p.cliente, fattura: { ...p.nota, progressivoInvio } });
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${generaNomeFileXml(p.config.fornitore, progressivoInvio)}"`);
+  res.send(xml);
+});
+
+invoiceRoutes.post('/:anno/:mese/:clienteId/nota-credito/invia-pec', async (req, res) => {
+  const p = await preparaNotaCredito(req, res);
+  if (!p) return;
+  const progressivoInvio = prossimoProgressivoInvio();
+  const xml = generaXmlFatturaPA({ fornitore: p.config.fornitore, cliente: p.cliente, fattura: { ...p.nota, progressivoInvio } });
+  const risultato = await inviaFatturaViaPec(p.config.pec, { nomeFile: generaNomeFileXml(p.config.fornitore, progressivoInvio), contenutoXml: xml });
+  p.invoice.notaCredito.invii.push({
+    progressivoInvio,
+    dataInvio: new Date().toISOString(),
+    esito: risultato.inviato ? 'inviata' : 'errore-invio',
+    errore: risultato.errore ?? null,
+  });
+  await saveInvoice(p.invoice.anno, p.invoice.mese, p.invoice.clienteId, p.invoice);
+  res.json(risultato);
+});
+
+invoiceRoutes.get('/:anno/:mese/:clienteId/nota-credito/ricevute-sdi', async (req, res) => {
+  const { anno, mese, clienteId } = req.params;
+  const config = await getConfig();
+  const invoice = await getInvoice(Number(anno), Number(mese), clienteId);
+  if (!invoice?.notaCredito) return res.status(404).json({ errore: 'Nessuna nota di credito per questa fattura' });
+  const risultati = await Promise.all(invoice.notaCredito.invii.map(({ progressivoInvio }) => {
     const prefisso = generaNomeFileXml(config.fornitore, progressivoInvio).replace(/\.xml$/i, '');
     return listaRicevutePerFattura(config.sdi.percorsoArchivio, prefisso);
   }));

@@ -25,6 +25,7 @@ import { templateRoutes } from './routes/templateRoutes.js';
 import { regoleFiscaliRoutes } from './routes/regoleFiscaliRoutes.js';
 import { mcpRoutes, mcpConfigRoutes } from './routes/mcpRoutes.js';
 import { chatRoutes } from './routes/chatRoutes.js';
+import { terminiRoutes } from './routes/terminiRoutes.js';
 import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
@@ -53,6 +54,9 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' },
 }));
 
+// Prima di qualunque lettura da disco: il resto dell'avvio deve vedere la cartella dati vera.
+await applicaPercorsoDatiAllAvvio();
+
 await configuraPassport();
 app.use(passport.initialize());
 app.use(passport.session());
@@ -75,6 +79,7 @@ app.use('/api/templates', richiedeAutenticazione, templateRoutes);
 app.use('/api/regole-fiscali', richiedeAutenticazione, regoleFiscaliRoutes);
 app.use('/api/mcp', richiedeAutenticazione, mcpConfigRoutes);
 app.use('/api/chat', richiedeAutenticazione, chatRoutes);
+app.use('/api/termini', richiedeAutenticazione, terminiRoutes);
 // Fuori da richiedeAutenticazione: i client MCP non hanno sessione, autenticano col token.
 app.use('/mcp', mcpRoutes);
 
@@ -96,7 +101,6 @@ app.listen(PORT, async () => {
   logger.info(`Server avviato su http://localhost:${PORT}`);
   logger.info(`Autenticazione Google: ${await isAuthConfigurato() ? 'attiva' : 'disattivata (configurala in Impostazioni)'}`);
 
-  await applicaPercorsoDatiAllAvvio();
   const config = await getConfig();
   avviaPollingSdi(getConfig, config.sdi.intervalloPollingMinuti);
   logger.info(`Polling ricevute SDI avviato ogni ${config.sdi.intervalloPollingMinuti} minuti`);

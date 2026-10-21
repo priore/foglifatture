@@ -28,3 +28,15 @@ test('fattura leggibile ⇒ anteprima; illeggibile o altro ⇒ ignorato con moti
   assert.match(classificaFile('a.xml', xml('<Altro/>')).motivo, /Altro/);
   assert.match(classificaFile('a.pdf', Buffer.from('%PDF')).motivo, /XML/);
 });
+
+test('fattura ricevuta (cedente diverso dall\'operatore) ⇒ ignorata; senza p.iva operatore non si decide', () => {
+  const fattura = xml(`<p:FatturaElettronica><FatturaElettronicaHeader><DatiTrasmissione><ProgressivoInvio>A1</ProgressivoInvio></DatiTrasmissione><CedentePrestatore><DatiAnagrafici><IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>01234567890</IdCodice></IdFiscaleIVA></DatiAnagrafici></CedentePrestatore></FatturaElettronicaHeader><FatturaElettronicaBody><DatiGenerali><DatiGeneraliDocumento>
+    <Data>2025-03-10</Data><Numero>7</Numero><ImportoTotaleDocumento>100.00</ImportoTotaleDocumento>
+    </DatiGeneraliDocumento></DatiGenerali><DatiBeniServizi><DettaglioLinee><Descrizione>x</Descrizione>
+    <Quantita>1</Quantita><PrezzoUnitario>100</PrezzoUnitario><PrezzoTotale>100</PrezzoTotale></DettaglioLinee>
+    </DatiBeniServizi></FatturaElettronicaBody></p:FatturaElettronica>`);
+  assert.equal(classificaFile('f.xml', fattura, 'IT01234567890').tipo, 'fattura');
+  assert.equal(classificaFile('f.xml', fattura, '1234567890').tipo, 'fattura');
+  assert.match(classificaFile('f.xml', fattura, '09999999999').motivo, /ricevuta/);
+  assert.equal(classificaFile('f.xml', fattura, '').tipo, 'fattura');
+});

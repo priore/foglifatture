@@ -28,8 +28,6 @@ product/
   FEATURE_PROPOSALS.md         — backlog numerato delle proposte non ancora realizzate
 documentation/
   DESIGN_PATTERNS_AS_IS.md     — inventario dei pattern (backend + frontend)
-  BE_SWIFT_MAPPING.md          — registro di mapping backend Node → Swift (documento a sé)
-Plans/                         — piani di dettaglio e analisi (una nota per tema)
 Output/                        — export locali di debug, ignorati da git
 prompts/ templates/ workflows/ reviews/ tasks/  — cartelle vuote, segnaposto
 ```
@@ -50,7 +48,7 @@ prompts/ templates/ workflows/ reviews/ tasks/  — cartelle vuote, segnaposto
 ## Review Checklist
 
 - **Completeness:** collega ogni documento presente nel workspace.
-- **Accuracy:** struttura uguale all'albero reale di `AI-Workspace/` (2026-10-13).
+- **Accuracy:** struttura uguale all'albero dei documenti pubblici di `AI-Workspace/` (2026-10-19).
 - **Consistency:** coerente con `WORKSPACE_MANIFEST.md`.
 - **TODO:** aggiornare la mappa se si aggiungono documenti.
 - **Missing information:** nessuna.

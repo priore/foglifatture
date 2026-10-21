@@ -8,10 +8,12 @@ import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import { mkdir, writeFile, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { readJson, writeJson } from '../lib/jsonStore.js';
 import { sdiLogger } from '../lib/logger.js';
 import { notifica, notificaConDedup, cancellaDedup } from '../lib/notifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
 import { generaNomeFileXml } from './fatturaPaXmlGenerator.js';
+import { radiceXml, RADICE_RICEVUTA } from './importZipService.js';
 import { listMesiFatturati, getInvoice } from './invoiceService.js';
 
 // Finestra massima di attesa risposta SDI dopo un invio: passato questo tempo dall'ultimo
@@ -25,6 +27,9 @@ const MITTENTE_SDI_DOMINIO = '@pec.fatturapa.it';
 let imapErroriConsecutivi = 0;
 const SOGLIA_IMAP_ERRORI = 3;
 const CHIAVE_DEDUP_IMAP = 'imap-errore';
+// Message-ID delle email con fattura ricevuta già viste: se la stessa email torna non letta
+// (riletta dall'operatore, ricaricata) non viene rielaborata. Finché K5 non archivia le fatture.
+const FILE_FATTURE_RICEVUTE = 'fattureRicevutePec.json';
 
 // Tipo di ricevuta riconosciuto dal prefisso standard del nome file XML allegato.
 const PREFISSI_TIPO_RICEVUTA = {
@@ -129,51 +134,15 @@ function decodeEntitaXml(testo) {
   return testo?.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&') ?? null;
 }
 
-// Estrae il tag radice di un documento XML. Ritorna nome tag (senza namespace) o null se parse fallisce.
-export function estraiRadiceXml(contenutoXml) {
-  try {
-    const contenutoStr = contenutoXml?.toString('utf8') ?? '';
-    if (!contenutoStr.trim()) return null;
-
-    // Estrai tag radice con regex (veloce, niente parse profondo completo)
-    const match = contenutoStr.match(/<([^\s/?!>:]+:)?([A-Za-z][A-Za-z0-9_:.-]*)/);
-    if (!match?.[2]) return null;
-    return match[2];
-  } catch (err) {
-    return null;
-  }
-}
-
-// Classifica un allegato XML SDI per radice element. Ignora nome file.
+// Classifica un allegato XML SDI per elemento radice (stessa mappa dell'import ZIP). Ignora il nome file.
 // Ritorna { isValido, tipo, motivo }. isValido=true solo per ricevute SDI effettive.
 export function classificaAllegatoXml(nomeFile, contenutoXml) {
-  // Filtra by filename i metadati ovvi (daticert)
-  if (nomeFile === 'daticert.xml') {
-    return { isValido: false, tipo: null, motivo: 'metadato-trasporto' };
-  }
-
-  const radice = estraiRadiceXml(contenutoXml);
-  if (!radice) {
-    return { isValido: false, tipo: null, motivo: 'xml-malformato' };
-  }
-
-  // Whitelist radici SDI valide
-  const mappe = {
-    'FileMetadati': { isValido: false, motivo: 'metadato-trasporto' },
-    'NotificaEsito': { isValido: true, tipo: 'NE' },
-    'NotificaEsitoCedente': { isValido: true, tipo: 'EC' },
-    'NotificaScarto': { isValido: true, tipo: 'NS' },
-    'Ricevuta': { isValido: true, tipo: 'RC' },
-    'MancataConsegna': { isValido: true, tipo: 'MC' },
-    'AttestazionTrasmissione': { isValido: true, tipo: 'AT' },
-    'DecorrenzaTermini': { isValido: true, tipo: 'DT' },
-  };
-
-  const classificazione = mappe[radice];
-  if (classificazione) {
-    return { ...classificazione, motivo: classificazione.motivo ?? null };
-  }
-
+  if (nomeFile === 'daticert.xml') return { isValido: false, tipo: null, motivo: 'metadato-trasporto' };
+  const radice = radiceXml(contenutoXml);
+  if (!radice) return { isValido: false, tipo: null, motivo: 'xml-malformato' };
+  if (radice === 'MetadatiInvioFile') return { isValido: false, tipo: null, motivo: 'metadato-trasporto' };
+  if (radice === 'FatturaElettronica') return { isValido: false, tipo: null, motivo: 'fattura-ricevuta' };
+  if (RADICE_RICEVUTA[radice]) return { isValido: true, tipo: RADICE_RICEVUTA[radice], motivo: null };
   return { isValido: false, tipo: null, motivo: 'non-riconosciuto' };
 }
 
@@ -255,6 +224,12 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
           continue;
         }
         const email = await simpleParser(content);
+        const fattureViste = await readJson(FILE_FATTURE_RICEVUTE, {});
+        if (email.messageId && fattureViste[email.messageId]) {
+          await sdiLogger.debug(`Fattura ricevuta già vista, ignorata (${email.messageId})`);
+          await client.messageFlagsAdd(uid, ['\\Seen'], { uid: true });
+          continue;
+        }
         await sdiLogger.info(`Email SDI ricevuta: ${email.subject}`, { da: email.from?.text });
 
         // Estrai allegati da email e da matrioske EML ricorsivamente.
@@ -264,7 +239,8 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
           for (const a of attachments || []) {
             if (!a.content) continue; // allegato vuoto: scarta
             const nomeBase = a.filename?.toLowerCase() ?? '';
-            if (nomeBase.endsWith('.eml')) {
+            // Matrioska: email dentro email (anche senza estensione .eml, riconosciuta dal content-type).
+            if (nomeBase.endsWith('.eml') || a.contentType === 'message/rfc822') {
               // EML: estrai allegati interni ricorsivamente
               try {
                 const inner = await simpleParser(a.content);
@@ -282,6 +258,9 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
         };
         const tuttiGliAllegati = await estraiAllegati(email.attachments);
         const xmlAllegati = tuttiGliAllegati.filter(a => a.filename?.toLowerCase().endsWith('.xml'));
+        if (tuttiGliAllegati.length > 0 && xmlAllegati.length === 0) {
+          await sdiLogger.warn(`Email SDI senza XML tra gli allegati: ${tuttiGliAllegati.map(a => a.filename ?? a.contentType).join(', ')}`);
+        }
 
         // E-AI.3: email SDI senza allegati XML — valuta rilevanza con AI.
         if (xmlAllegati.length === 0) {
@@ -298,13 +277,19 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
           }
         }
 
+        // Fattura d'acquisto (.xml o .xml.p7m): non archiviata, si registra solo il Message-ID.
+        let contieneFatturaRicevuta = tuttiGliAllegati.some(a => a.filename?.toLowerCase().endsWith('.xml.p7m'));
+
         for (const allegato of xmlAllegati) {
           const nomeFile = allegato.filename?.toLowerCase();
           if (!nomeFile?.endsWith('.xml')) continue;
 
           const classificazione = classificaAllegatoXml(nomeFile, allegato.content);
           if (!classificazione.isValido) {
-            if (classificazione.motivo === 'metadato-trasporto') {
+            if (classificazione.motivo === 'fattura-ricevuta') {
+              contieneFatturaRicevuta = true;
+              await sdiLogger.debug(`Scartata fattura ricevuta: ${allegato.filename}`);
+            } else if (classificazione.motivo === 'metadato-trasporto') {
               await sdiLogger.debug(`Scartato metadato trasporto: ${allegato.filename} (${classificazione.motivo})`);
             } else {
               await sdiLogger.warn(`Scartato allegato XML non riconosciuto: ${allegato.filename} (${classificazione.motivo})`);
@@ -337,6 +322,14 @@ export async function controllaRicevuteSdi(pecConfig, percorsoArchivio, config =
               }
             }
           }
+        }
+        if (contieneFatturaRicevuta && email.messageId) {
+          fattureViste[email.messageId] = {
+            oggetto: email.subject ?? null,
+            allegati: tuttiGliAllegati.map(a => a.filename).filter(Boolean),
+            data: new Date().toISOString(),
+          };
+          await writeJson(FILE_FATTURE_RICEVUTE, fattureViste);
         }
         // Segna come letta la sola email SDI appena processata (nessun'altra email toccata).
         await client.messageFlagsAdd(uid, ['\\Seen'], { uid: true });

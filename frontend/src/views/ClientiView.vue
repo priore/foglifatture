@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import StepClienti from '../components/wizard/StepClienti.vue';
 import { api } from '../services/api.js';
+import { aggiornaGestioniClienti } from '../composables/useClienteAttivo.js';
 
 const config = ref(null);
 const messaggio = ref('');
@@ -14,6 +15,7 @@ async function salva() {
   messaggio.value = 'Salvataggio…';
   try {
     config.value = await api.saveConfig(config.value);
+    aggiornaGestioniClienti(config.value.clienti);
     messaggio.value = 'Salvato';
   } catch (err) {
     messaggio.value = `Errore: ${err.message}`;

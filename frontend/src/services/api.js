@@ -27,6 +27,10 @@ export const api = {
   saveConfig: (config) => richiesta('/config', { method: 'PUT', body: JSON.stringify(config) }),
   spostaPercorsoDati: (percorso) => richiesta('/config/percorso-dati', { method: 'PUT', body: JSON.stringify({ percorso }) }),
 
+  // Termini d'uso
+  getTermini: () => richiesta('/termini'),
+  accettaTermini: () => richiesta('/termini/accetta', { method: 'POST', body: JSON.stringify({ approvazioneSpecifica: true }) }),
+
   // Timesheet mensile
   listMesiTimesheet: () => richiesta('/timesheet'),
   getTimesheet: (anno, mese, clienteId) => richiesta(`/timesheet/${anno}/${mese}/${clienteId}`),
@@ -47,6 +51,11 @@ export const api = {
   // XML FatturaPA e invio PEC
   urlDownloadXml: (anno, mese, clienteId) => `${BASE_URL}/invoice/${anno}/${mese}/${clienteId}/xml`,
   inviaPec: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/invia-pec`, { method: 'POST' }),
+  // Nota di credito TD04
+  emettiNotaCredito: (anno, mese, clienteId, dati) =>
+    richiesta(`/invoice/${anno}/${mese}/${clienteId}/nota-credito`, { method: 'POST', body: JSON.stringify({ ...dati, conferma: true }) }),
+  urlDownloadXmlNotaCredito: (anno, mese, clienteId) => `${BASE_URL}/invoice/${anno}/${mese}/${clienteId}/nota-credito/xml`,
+  inviaPecNotaCredito: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/nota-credito/invia-pec`, { method: 'POST' }),
   ricevuteSdiFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/ricevute-sdi`),
 
   // Credenziali Google OAuth (whitelist singolo utente)
@@ -171,7 +180,10 @@ export const api = {
   anteprimaImportVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo/anteprima', { method: 'POST', body: JSON.stringify({ testo }) }),
   importaVersamentiF24: (testo) => richiesta('/forfettario/versamenti/importa-testo', { method: 'POST', body: JSON.stringify({ testo }) }),
   urlExportVersamentiF24: (anno) => `${BASE_URL}/forfettario/versamenti/export${anno ? `?anno=${anno}` : ''}`,
+  accantonamento: (anno) => richiesta(`/forfettario/accantonamento${anno ? `?anno=${anno}` : ''}`),
   versamentiStimati: (anno) => richiesta(`/forfettario/versamenti-stimati${anno ? `?anno=${anno}` : ''}`),
+  prospettoDichiarazione: (anno) => richiesta(`/forfettario/dichiarazione${anno ? `?anno=${anno}` : ''}`),
+  urlProspettoDichiarazionePdf: (anno) => `${BASE_URL}/forfettario/dichiarazione/pdf?anno=${anno}`,
   salvaRateSaldo: (rateSaldo) => richiesta('/forfettario/versamenti-stimati/rate-saldo', { method: 'PUT', body: JSON.stringify({ rateSaldo }) }),
   urlF24Pdf: (anno, indice) => `${BASE_URL}/forfettario/versamenti-stimati/${anno}/f24/${indice}/pdf`,
   bolloTrimestrale: (anno) => richiesta(`/forfettario/bollo/${anno}`),

@@ -53,7 +53,11 @@ export function arricchisciStatoPagamento(fattura) {
       : []
   );
   const totalePagato = Number(pagamenti.reduce((s, p) => s + p.importo, 0).toFixed(2));
-  const residuo = Number((fattura.nettoAPagare - totalePagato).toFixed(2));
+  // Nota di credito (TD04) emessa: riduce il dovuto. Se il cliente aveva già pagato di più,
+  // `daRimborsare` lo segnala, ma i ricavi per cassa non si riducono (vedi CONCORRENZA_GAP, K4).
+  const dovuto = Number((fattura.nettoAPagare - (fattura.notaCredito?.nettoAPagare ?? 0)).toFixed(2));
+  const residuo = Number((dovuto - totalePagato).toFixed(2));
+  const daRimborsare = fattura.notaCredito ? Math.max(0, -residuo) : 0;
   const dataPagamento = pagamenti.length ? pagamenti.at(-1).data : null;
   return {
     ...fattura,
@@ -61,7 +65,8 @@ export function arricchisciStatoPagamento(fattura) {
     dataPagamento,
     totalePagato,
     residuo,
-    stato: residuo <= 0 ? 'pagata' : (totalePagato > 0 ? 'parziale' : 'aperta'),
+    daRimborsare,
+    stato: dovuto <= 0 ? 'stornata' : (residuo <= 0 ? 'pagata' : (totalePagato > 0 ? 'parziale' : 'aperta')),
   };
 }
 
@@ -104,6 +109,13 @@ export async function prossimoNumeroFattura(anno, mese, clienteId) {
   return String(fatture.length + 1);
 }
 
+// Numero successivo della sequenza unica (fatture + note di credito), senza riusare quello di
+// alcuna fattura esistente: serve per documenti nuovi come la nota di credito.
+export async function prossimoNumeroInSequenza() {
+  const numeri = (await tutteLeFatture()).map((f) => Number(f.numero));
+  return String(Math.max(0, ...numeri) + 1);
+}
+
 // Legge tutte le fatture esistenti (tutti i mesi, tutti i clienti), ordinate per numero
 // progressivo. clienteId viene letto dal contenuto della fattura deserializzata (dove
 // saveInvoice lo scrive esplicitamente), mai dalla chiave file: questo evita che il
@@ -113,7 +125,9 @@ async function tutteLeFatture() {
   const fatture = await Promise.all(
     chiavi.map(({ anno, mese, clienteId }) => getInvoice(anno, mese, clienteId))
   );
-  return fatture.filter(Boolean).sort((a, b) => Number(a.numero) - Number(b.numero));
+  // Le note di credito condividono la sequenza numerica (progressivo unico per P.IVA).
+  const note = fatture.filter((f) => f?.notaCredito).map((f) => ({ ...f.notaCredito, anno: f.anno, mese: f.mese, clienteId: f.clienteId, nota: true }));
+  return [...fatture.filter(Boolean), ...note].sort((a, b) => Number(a.numero) - Number(b.numero));
 }
 
 // ProgressivoInvio SDI: a differenza del numero fattura (che identifica il documento
@@ -142,7 +156,7 @@ export function prossimoProgressivoInvio() {
 export async function verificaIntegritaNumerazione(anno, mese, clienteId, numero) {
   const tutte = await tutteLeFatture();
   const fatturaCorrente = tutte.find(
-    (f) => f.anno === anno && f.mese === mese && f.clienteId === clienteId
+    (f) => !f.nota && f.anno === anno && f.mese === mese && f.clienteId === clienteId
   );
   // Rigenerare una fattura che riusa esattamente il proprio numero esistente è sempre
   // valido, anche se non è più l'ultima della sequenza globale (con più clienti, altre
@@ -154,7 +168,7 @@ export async function verificaIntegritaNumerazione(anno, mese, clienteId, numero
   }
 
   const fatture = tutte.filter(
-    (f) => !(f.anno === anno && f.mese === mese && f.clienteId === clienteId)
+    (f) => f.nota || !(f.anno === anno && f.mese === mese && f.clienteId === clienteId)
   );
 
   const duplicato = fatture.find((f) => String(f.numero) === String(numero));

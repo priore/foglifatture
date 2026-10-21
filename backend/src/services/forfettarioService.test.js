@@ -185,3 +185,32 @@ test('impostaCassaAnno: reddito, contributo INPS e imposta in euro interi', asyn
   assert.equal(r.inps, 251); // 963 × 26,07% = 251,05
   assert.equal(Number.isInteger(r.imposta), true);
 });
+
+const { calcolaAccantonamento, pianoCassaAccantonamento } = await import('./forfettarioService.js');
+
+test('K1: quota prudente = coefficiente × (imposta + INPS)', () => {
+  const r = calcolaAccantonamento({ incassi: [{ data: '2026-03-10', importo: 1000 }], coefficiente: 67, aliquotaImposta: 15, inps: { aliquota: 26.07, massimale: 122295 } });
+  assert.equal(r.quotaPct, 27.52);
+  assert.equal(r.accantonato, 275.17);
+});
+
+test('K1: oltre il massimale INPS la quota perde la parte contributiva', () => {
+  const r = calcolaAccantonamento({
+    incassi: [{ data: '2026-01-10', importo: 100000 }, { data: '2026-02-10', importo: 100000 }],
+    coefficiente: 100, aliquotaImposta: 15, inps: { aliquota: 26, massimale: 120000 },
+  });
+  // seconda riga: reddito 100k→200k, INPS solo su 100k→120k
+  assert.equal(r.righe[1].quota, 15000 + 5200);
+  assert.equal(r.accantonato, 15000 + 26000 + 15000 + 5200);
+});
+
+test('K1: senza INPS configurata solo imposta', () => {
+  const r = calcolaAccantonamento({ incassi: [{ data: '2026-01-10', importo: 1000 }], coefficiente: 78, aliquotaImposta: 5, inps: null });
+  assert.equal(r.accantonato, 39);
+});
+
+test('K1: piano di cassa segnala lo scoperto (primo anno: saldo + acconto a giugno)', () => {
+  const p = pianoCassaAccantonamento(1000, [{ data: '2027-06-30', totaleConMaggiorazione: 1200 }, { data: '2027-11-30', totale: 300 }]);
+  assert.deepEqual(p.map((x) => [x.residuo, x.scoperto]), [[-200, true], [-500, true]]);
+  assert.equal(pianoCassaAccantonamento(1000, [{ data: '2027-06-30', totale: 400 }])[0].scoperto, false);
+});

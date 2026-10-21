@@ -1,29 +1,21 @@
 // Stesura F24 Ordinario sul modello ufficiale AdE (PDF fillabile).
 // FP-023 · FEATURES_GAP_ANALISI_ESTERNA.md voce 7.
 //
-// Il modello PDF non si ridistribuisce: viene scaricato dal sito AdE al primo uso
-// in backend/data/modelli/f24-ordinario.pdf e verificato con SHA-256.
+// Il modello PDF non si ridistribuisce: URL e impronta SHA-256 stanno nel registro fonti
+// (voce MODELLO_ID) e lib/modelloPdf.js lo scarica al primo uso in backend/data/modelli/.
 // Se l'AdE pubblica una nuova edizione (impronta diversa), la stampa si blocca
 // con un messaggio esplicito — meglio un errore chiaro che numeri nelle caselle sbagliate.
 //
 // COORDINATE: misurate sui rettangoli di riempimento del modello AdE (pdf2json, pagina 1,
 // A4 portrait 595.3×841.9 pt) e sulle virgole pre-stampate che separano intero/decimali
 // in ogni casella importo. Ogni campo è { x, y, size } dove y è dal basso (convenzione pdf-lib).
-// Versione modello: "F24 ordinario" (aggiornamento 2019, sha256 in MODELLO_SHA256).
-// Se cambiano le coordinate: aggiornare LAYOUT e MODELLO_SHA256.
+// Versione modello: "F24 ordinario" (aggiornamento 2019, impronta nel registro fonti).
+// Se cambiano le coordinate: aggiornare LAYOUT e l'impronta della voce nel registro fonti.
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-import { DATA_DIR } from '../lib/jsonStore.js';
+import { caricaModelloPdf } from '../lib/modelloPdf.js';
 
-// URL ufficiale del modello F24 ordinario (Agenzia delle Entrate).
-// ponytail: URL fisso — se l'AdE sposta la pagina, aggiornare qui e MODELLO_SHA256.
-const MODELLO_URL = 'https://www.agenziaentrate.gov.it/portale/documents/20143/250689/Modello+di+versamento+unificato+-+F24+Ordinario_i+Modello+F24+%282%29.pdf';
-
-// SHA-256 del modello AdE scaricato (aggiornare se l'AdE pubblica nuova edizione).
-const MODELLO_SHA256 = 'a5429ca42c7330fdd514a4143734342b1e29dbe66edb27185e3be36a6d51712a';
+// Voce del registro fonti (backend/src/data/fonti/registro.json) con URL di download e impronta del modello.
+const MODELLO_ID = 'f24-ordinario';
 
 // Dimensioni pagina del modello (A4 portrait, 210×297 mm → 595.3×841.9 pt).
 const H = 841.89;
@@ -42,7 +34,7 @@ const GAP_PRIMA_VIRGOLA_EM = 0;   // em tra fine intero e virgola stampata
 const GAP_DOPO_VIRGOLA_EM = 1.1;    // em tra virgola stampata e prima cifra decimale
 const GAP_TRA_DECIMALI_EM = 0.75;   // em tra le due cifre decimali (larghezza 1a cifra + margine)
 
-const LAYOUT = {
+export const LAYOUT = {
   // Intestazione contribuente (fill i=4,5,8,9,6,7 — pagina 1, A4 portrait 595.3×841.9pt)
   // Codice fiscale: 16 caselle a carattere singolo (vlines separatori, passo 14.4pt).
   codiceFiscale: {
@@ -108,43 +100,22 @@ const LAYOUT = {
     size: 9,
     xCifre: [32.4, 48.6, 63.0, 77.4, 91.8, 106.2, 120.6, 135.0],
   },
+
+  // Dicitura "bozza da verificare": centrata sulla pagina, nel margine bianco sopra il logo
+  // Agenzia Entrate. Fuori da ogni rettangolo di riempimento; mai filigrana: il modello può
+  // essere presentato in banca o in posta.
+  dicitura: { y: 824, size: 10 },
 };
+
+// Testo della dicitura a margine; con regole provvisorie si aggiunge l'anno.
+export function testoDicitura({ provvisorie, annoRegole } = {}) {
+  const base = 'Bozza FogliFatture: verificare gli importi prima del pagamento';
+  return provvisorie ? `${base}. Regole ${annoRegole ?? ''} provvisorie`.replace('  ', ' ') : base;
+}
 
 // Limite righe per sezione (struttura del modello ufficiale).
 const MAX_RIGHE_ERARIO = 6;
 const MAX_RIGHE_INPS = 4;
-
-// Percorso del modello scaricato (dato locale, escluso da git con backend/data/).
-function percorsoModello() {
-  return path.join(DATA_DIR, 'modelli', 'f24-ordinario.pdf');
-}
-
-// Scarica il modello AdE se non presente.
-async function assicuraModello() {
-  const dest = percorsoModello();
-  if (!existsSync(dest)) {
-    await mkdir(path.dirname(dest), { recursive: true });
-    const res = await fetch(MODELLO_URL);
-    if (!res.ok) throw new Error(`Impossibile scaricare il modello F24 da AdE (${res.status}). Scaricarlo manualmente da agenziaentrate.gov.it e salvarlo in backend/data/modelli/f24-ordinario.pdf`);
-    const buf = Buffer.from(await res.arrayBuffer());
-    await writeFile(dest, buf);
-  }
-}
-
-// Verifica integrità del modello (solo se MODELLO_SHA256 è impostata).
-async function verificaIntegrita(buf) {
-  if (!MODELLO_SHA256) return; // ponytail: nessuna verifica se impronta non configurata
-  const hash = createHash('sha256').update(buf).digest('hex');
-  if (hash !== MODELLO_SHA256) {
-    throw new Error(
-      `Il modello F24 AdE ha un\'impronta SHA-256 diversa da quella attesa.\n` +
-      `Attesa: ${MODELLO_SHA256}\n` +
-      `Trovata: ${hash}\n` +
-      `L'AdE potrebbe aver pubblicato una nuova edizione: le coordinate potrebbero non corrispondere più alle caselle.\n` +
-      `Aggiornare MODELLO_SHA256 in f24PdfService.js dopo aver ricalibrato le coordinate.`
-    );
-  }
-}
 
 // Formatta un importo come { intero: '1.234', decimali: '56' }.
 function formattaImporto(importo) {
@@ -158,11 +129,10 @@ function formattaImporto(importo) {
 // Genera il PDF F24 compilato a partire da una scadenza del piano versamenti.
 // `scadenza` è un elemento di `stimaVersamenti().scadenze`.
 // `config` è la configurazione fornitore/forfettario.
+// `opzioni.provvisorie` (+ `annoRegole`): le regole usate sono provvisorie, la dicitura lo riporta.
 // Restituisce un Buffer con il PDF.
-export async function generaF24Pdf(scadenza, config) {
-  await assicuraModello();
-  const modelloBuf = await readFile(percorsoModello());
-  await verificaIntegrita(modelloBuf);
+export async function generaF24Pdf(scadenza, config, { provvisorie = false, annoRegole } = {}) {
+  const modelloBuf = await caricaModelloPdf(MODELLO_ID);
 
   // Separa righe per sezione
   const righeErario = scadenza.righe.filter((r) => r.sezione === 'erario');
@@ -291,6 +261,10 @@ export async function generaF24Pdf(scadenza, config) {
   if (totaleSaldo > 0) {
     scriviImporto(LAYOUT.saldoFinale.xVirgolaImporto, LAYOUT.saldoFinale.y, totaleSaldo, LAYOUT.saldoFinale.size);
   }
+
+  const d = LAYOUT.dicitura;
+  const testo = testoDicitura({ provvisorie, annoRegole });
+  page.drawText(testo, { x: (page.getWidth() - font.widthOfTextAtSize(testo, d.size)) / 2, y: d.y, size: d.size, font, color: nero });
 
   // --- Data versamento (GG MM AAAA, una cifra per casella) ---
   const dataIso = scadenza.data?.slice(0, 10); // "AAAA-MM-GG"

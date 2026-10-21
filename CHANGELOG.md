@@ -6,6 +6,83 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-10-21
+
+### Added
+- **Da accantonare** — nella dashboard, quanto mettere da parte per imposta e contributi
+  - Quota prudente costante sugli incassi, mostrata nelle fatture da incassare, nella registrazione di incassi in BTC o valuta estera e nell'import CSV dei pagamenti
+  - Totale accantonato dell'anno e cassa residua dopo ogni scadenza F24, con avviso di scoperto
+- **Nota di credito (TD04)** — nella pagina Fattura, per una fattura già accettata dallo SDI
+  - Storno totale o parziale, con conferma esplicita; una nota per fattura
+  - Prende il prossimo numero della sequenza, con XML collegato alla fattura stornata, download e invio PEC
+  - La fattura stornata esce dal dovuto e dai ricavi per competenza; se era già stata pagata, l'app segnala la somma da rimborsare
+- **Prospetto per la dichiarazione dei redditi** — nel tab F24 una card a larghezza piena con i valori da riportare nel modello Redditi PF
+  - Quadro LM (ricavi, reddito, contributi, imposta sostitutiva, acconti, saldo o credito), quadro RR per la gestione separata e rigo RX31
+  - Caselle disposte come nel modello ufficiale, con colonna e titolo, come nel quadro RW: un clic copia il valore
+  - Le caselle a zero non si mostrano
+  - Perdite pregresse, crediti d'imposta ed eccedenze della dichiarazione precedente non sono noti all'app: le caselle sono evidenziate «da controllare» e rimandano alla nota
+  - PDF del quadro LM compilato sul modello ufficiale dell'Agenzia delle Entrate, con codice fiscale, numero modulo e dicitura «bozza da verificare»
+  - Il modello si scarica dal sito dell'Agenzia al primo uso: se esce una nuova edizione la stampa si blocca con un messaggio chiaro
+- **Card Quadro RW come il modello ufficiale** — le caselle replicano colonne e righi del Redditi PF
+  - RW1 con colonne 1-34 e RW8 con colonne 1-6, ciascuna con numero e titolo
+  - Clic su una casella per copiarne il valore, importi in euro interi
+  - Valore iniziale (colonna 7) calcolato anche per i lotti acquistati nell'anno, con campo per il prezzo al 31/12 dell'anno precedente
+- **Avviso coefficiente unico** — spunta «Ho altre attività con coefficiente di redditività diverso» nel passo Fornitore
+  - Segnala in dashboard e nel piano versamenti che l'app calcola con un solo coefficiente
+- **Stime provvisorie e trasparenza** — le stime fiscali sono marcate come provvisorie se le regole dell'anno non sono confermate o non sono state verificate da oltre 12 mesi
+  - Badge "provvisorio" sui versamenti stimati F24
+  - Sotto il piano: anno delle regole, data di verifica, data di conferma e link alle fonti
+- **PDF F24 con dicitura "bozza da verificare"** — riga a margine, senza coprire i campi del modello; con regole provvisorie riporta anche l'anno
+  - Pulsante di scaricamento attivo solo dopo aver spuntato "Ho verificato gli importi"
+- **Avvisi di verifica** — prima dell'emissione della fattura, nel riepilogo delle plusvalenze BTC e accanto all'export per il commercialista
+  - Le note non entrano mai nel PDF, nell'XML né nel CSV
+- **Termini d'uso** — accettazione esplicita al primo avvio e dopo ogni aggiornamento dei termini
+  - Approvazione specifica separata della clausola di limitazione di responsabilità
+- **Gestione cliente** — nuovo selettore per cliente in Clienti
+  - Timesheet e fatture: fatture a importo calcolato o libero
+  - Solo fatture: importo sempre libero, senza scelta calcolato/libero né tariffa oraria
+  - Con un cliente "solo fatture" selezionato la voce Timesheet sparisce dal menu, dinamicamente al cambio cliente
+  - Se tutti i clienti attivi sono "solo fatture", Timesheet resta sempre nascosto
+
+### Changed
+- **Colori dei pulsanti uniformati** in tutte le viste e i popup
+  - Palette pastello per categoria di azione (avanzamento, salva/conferma, esporta/scarica, AI, elimina/scarta), identica per tutte le azioni della stessa categoria
+  - Tonalità distinguibili anche da chi ha difficoltà con i colori, leggibili in tema chiaro e scuro
+- **Clienti per categoria** — le informazioni di ogni cliente sono suddivise in sotto-card
+  - Anagrafica, sede, regime IVA estero, dati PDF timesheet, gestione, email, pagamento, template
+- **Checkbox in tema scuro** — bordo delle caselle non spuntate più visibile
+- **Pagamenti registrati in Fattura** — ogni incasso è una card con data, importo e pulsante Elimina
+  - Transazione BTC come chip con icona ₿ e TXID abbreviato, che apre mempool.space
+  - Incasso in valuta estera con importo, cambio e fonte in un badge sotto la riga
+
+### Fixed
+- **Fatture ricevute via PEC** — il controllo ricevute SDI ne registra l'email e non le rielabora se tornano non lette
+- **Ricevute SDI da PEC** — riconosciute anche quando arrivano in email annidate dentro altre email, e con le radici XML ufficiali
+  - Le fatture ricevute nella casella non vengono più scambiate per ricevute
+- **Percorso dati** — chi aveva spostato i dati con la versione precedente può ricollegarli indicando la stessa cartella in Impostazioni, senza spostare nulla
+- **Import fatture XML e ZIP** — le fatture ricevute (cedente diverso dall'operatore) non vengono più importate come emesse né creano clienti fittizi; nell'anteprima ZIP risultano ignorate
+- **F24 cripto** — il campo rateazione delle righe 1727 e 1728 riporta 0101 per il pagamento in unica soluzione, come da Risoluzione 10/E del 2024
+- **Nota import BTC in Impostazioni → Fornitore** — indica la vista Bitcoin (Importa BTC) come posizione delle proposte da confermare, al posto della dashboard
+- **Percorso dati spostato** — dopo «Sposta dati qui» e un riavvio l'app ritrova la cartella scelta invece di ripartire vuota
+  - Il percorso scelto è salvato in un file locale fuori dalla cartella dati, quindi non si perde più
+  - Se la cartella non è raggiungibile (disco scollegato) l'avvio si ferma con un messaggio chiaro, senza creare un archivio vuoto
+  - Chi aveva già spostato i dati con la versione precedente deve ripristinare il percorso a mano: i dati sono intatti nella cartella scelta
+    1. Individua la cartella dei dati
+       - È la cartella che avevi scelto in Impostazioni → Percorso dati
+       - Dentro c'è il file `config.json`
+       - Copia il suo percorso completo
+    2. Crea il file di collegamento nella cartella `backend` dell'app
+       - macOS: apri il Terminale e incolla, sostituendo il percorso:
+         `echo '{"percorso":"/percorso/della/cartella/dati"}' > ~/Library/Application\ Support/FogliFatture/backend/.percorso-dati.json`
+       - Windows: apri `%LOCALAPPDATA%\FogliFatture\backend` e crea con il Blocco note un file chiamato `.percorso-dati.json` (salva come «Tutti i file»)
+       - Contenuto del file su Windows, con i percorsi scritti con `/` oppure con `\\`: `{"percorso":"D:/Dati/FogliFatture"}`
+    3. Riavvia l'app
+       - Riavvia il computer, oppure esci e rientra dall'account di sistema
+       - All'apertura ritrovi fornitore, clienti, fatture e timesheet
+- **Installazione da terminale** — Git mancante non blocca più l'installazione
+  - Gli script installano Git e Node.js se assenti: winget su Windows, Homebrew o Command Line Tools su Mac
+  - README: istruzioni Windows 11 riviste (Sicurezza di Windows, Smart App Control) e passo di installazione Git
+
 ## [1.9.0] - 2026-10-19
 
 ### Added

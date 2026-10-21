@@ -46,7 +46,11 @@ async function aiutamiCapire7Septies() {
 </script>
 
 <template>
-  <div class="form-grid">
+  <div class="sub-cards">
+   <section class="card" style="margin-bottom:0">
+    <div class="card-head"><h2>Anagrafica e fiscalità</h2></div>
+    <div class="card-body">
+    <div class="form-grid">
     <div class="field full"><LogoUpload v-model="modelValue.logoDataUrl" etichetta="Logo per la stampa PDF del Timesheet" /></div>
     <div class="field field-full full"><label>Denominazione</label><input v-model="modelValue.denominazione"></div>
     <div class="field">
@@ -126,11 +130,26 @@ async function aiutamiCapire7Septies() {
       </select>
     </div>
 
+    <!-- Avviso VIES e 7-septies sono sotto, dopo la sede -->
+    </div>
+   </div>
+   </section>
+   <section class="card" style="margin-bottom:0">
+    <div class="card-head"><h2>Sede</h2></div>
+    <div class="card-body">
+    <div class="form-grid">
     <div class="field"><label>Indirizzo</label><input v-model="modelValue.indirizzo"></div>
     <div class="field"><label>CAP</label><input v-model="modelValue.cap" :placeholder="clienteEstero ? 'CAP locale (facoltativo)' : '5 cifre'"></div>
     <div class="field"><label>Comune / Città</label><input v-model="modelValue.comune"></div>
     <div class="field" v-if="!clienteEstero"><label>Provincia</label><input v-model="modelValue.provincia" maxlength="2" style="text-transform:uppercase"></div>
 
+    </div>
+   </div>
+   </section>
+   <section v-if="clienteEstero" class="card" style="margin-bottom:0">
+    <div class="card-head"><h2>Regime IVA estero</h2></div>
+    <div class="card-body">
+    <div class="form-grid">
     <!-- Avviso VIES per aziende UE -->
     <div v-if="clienteEstero && modelValue.tipo === 'azienda' && ['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','LT','LU','LV','MT','NL','PL','PT','RO','SE','SI','SK'].includes((modelValue.paese ?? '').toUpperCase())" class="field full">
       <small class="note-legal" style="margin-top:4px">
@@ -150,10 +169,20 @@ async function aiutamiCapire7Septies() {
       </div>
     </div>
 
+    </div>
+   </div>
+   </section>
+   <section class="card" style="margin-bottom:0">
+    <div class="card-head"><h2>Dati per il PDF del timesheet</h2></div>
+    <div class="card-body">
+    <div class="form-grid">
     <div class="field"><label>Figura</label><input v-model="modelValue.figura"></div>
     <div class="field"><label>Commessa</label><input v-model="modelValue.commessa"></div>
     <div class="field"><label>Cliente</label><input v-model="modelValue.clientePdf"></div>
     <div class="field"><label>Progetto</label><input v-model="modelValue.progetto"></div>
+    </div>
+   </div>
+   </section>
   </div>
 
   <!-- Popup spiegazione AI (D.15 art. 7-septies) -->

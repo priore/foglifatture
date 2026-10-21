@@ -115,6 +115,12 @@ test('IVCA: lotto detenuto al 31/12 usa il prezzo di fine anno, anno intero = 36
   assert.equal(ivca.valoreFine, 100000);
 });
 
+test('IVCA: valoreInizio (RW col. 7) = lotti a inizio anno al prezzo 31/12 prec. + costo dei lotti acquistati nell\'anno', () => {
+  const { lotti } = calcolaLifo([lotto('A', '2025-06-01', 1e8, 50000), lotto('B', '2026-03-01', 1e8, 70000)], []);
+  assert.equal(calcolaIvcaDaLotti(lotti, 2026, { prezzoFine: 100000, prezzoInizio: 80000, aliquota: 0.2 }).valoreInizio, 150000);
+  assert.equal(calcolaIvcaDaLotti(lotti, 2026, { prezzoFine: 100000, aliquota: 0.2 }).valoreInizio, null);
+});
+
 test('IVCA: prezzo 31/12 mancante segnalato; sotto 12 EUR non si versa', () => {
   const l = lotto('L', '2026-01-01', 1e8, 1000);
   const { lotti } = calcolaLifo([l], []);
@@ -122,4 +128,23 @@ test('IVCA: prezzo 31/12 mancante segnalato; sotto 12 EUR non si versa', () => {
   const piccolo = calcolaIvcaDaLotti(lotti, 2026, { prezzoFine: 3000, aliquota: 0.2 });
   assert.equal(piccolo.impostaLorda, 6);
   assert.equal(piccolo.impostaDaVersare, 0);
+});
+
+test('caso anonimizzato: tre acquisti, vendita in perdita su due lotti, poi vendita in utile sul residuo', () => {
+  const lotti = [
+    lotto('A1', '2026-01-10', 1_000_000, 400),
+    lotto('A2', '2026-02-10', 1_000_000, 600),
+    lotto('A3', '2026-03-10', 1_000_000, 800),
+  ];
+  const { lotti: stato, cessioni } = calcolaLifo(lotti, [
+    uscita('V1', '2026-04-01', 1_500_000, 900),
+    uscita('V2', '2026-06-01', 1_250_000, 1500),
+  ]);
+  // V1 consuma A3 (800) + metà di A2 (300) = 1100 → minusvalenza 200
+  assert.equal(cessioni[0].costoEur, 1100);
+  assert.equal(cessioni[0].plusvalenza, -200);
+  // V2 consuma metà A2 (300) + 750.000 sat di A1 (300) = 600 → plusvalenza 900
+  assert.equal(cessioni[1].costoEur, 600);
+  assert.equal(cessioni[1].plusvalenza, 900);
+  assert.deepEqual(saldoDaLotti(stato), { satoshi: 250_000, costoTotaleEur: 100 });
 });

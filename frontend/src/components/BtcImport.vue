@@ -172,7 +172,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
         </div>
       </div>
       <div class="azioni">
-        <button type="button" class="btn btn-primary" :disabled="occupato" @click="confermaMapping">Conferma mapping e importa</button>
+        <button type="button" class="btn btn-ok" :disabled="occupato" @click="confermaMapping">Conferma mapping e importa</button>
         <button type="button" class="btn btn-ghost" @click="mappingDaConfermare = null">Annulla</button>
       </div>
     </div>
@@ -192,7 +192,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
           </div>
           <div class="azioni-riga">
             <button type="button" class="btn btn-ok" :disabled="occupato || !p.data" :title="p.data ? '' : 'Transazione non ancora confermata'" @click="apriConferma(p)">Conferma…</button>
-            <button type="button" class="btn btn-ghost" :disabled="occupato" @click="azione(p, 'scarta')">Scarta</button>
+            <button type="button" class="btn btn-warn" :disabled="occupato" @click="azione(p, 'scarta')">Scarta</button>
           </div>
         </div>
         <p v-for="a in p.avvisi" :key="a" class="avviso-riga avviso-warn">{{ a }}</p>
@@ -211,7 +211,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
             </div>
           </div>
           <div class="azioni">
-            <button type="submit" class="btn btn-primary" :disabled="occupato">Registra</button>
+            <button type="submit" class="btn btn-ok" :disabled="occupato">Registra</button>
             <button type="button" class="btn btn-ghost" @click="apertaId = null">Annulla</button>
           </div>
         </form>

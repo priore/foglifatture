@@ -8,23 +8,6 @@ Quando una proposta viene implementata, rimuovere la voce da qui come ultimo pas
 
 Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in corso · ❌ scartato
 
-Piani di dettaglio e analisi di mercato: [`Plans/`](../Plans/).
-
----
-
-## FP-004 — Nota di variazione TD04 con invio a SDI
-
-**Stato:** 💡 proposta · **Impatto:** Alto · **Sforzo:** M
-
-🟢 `invoiceRoutes.js` (righe 182-187) blocca la rigenerazione di una fattura accettata dallo SDI e rimanda a una nota di variazione (Circolare Agenzia Entrate 13/E/2018; principio di diritto n. 17/2020), che l'app non sa emettere. `FatturaView.vue` (riga 386) ripete lo stesso criterio e mostra la nota «Fattura accettata dallo SDI».
-
-🟢 `fatturaPaXmlGenerator.js` scrive `TipoDocumento` fisso `TD01` (riga 189): servono il parametro e il blocco `DatiFattureCollegate`. Invio (`pecService.js`) e ricezione ricevute (`sdiRicevuteService.js`) si riusano senza modifiche, una TD04 è una fattura come le altre con un altro tipo documento.
-
-**Collocazione UI — decisa: dentro `FatturaView.vue`.** Il contesto della fattura da stornare è già lì (numero, data, cliente, importi) e validazione e invio sono già cablati. Vincolo: azione umana con conferma esplicita, mai innescabile da un automatismo o da un agente. Il server MCP e la chat restano in sola lettura.
-
-**Riferimenti:** `backend/src/services/fatturaPaXmlGenerator.js:189`, `backend/src/routes/invoiceRoutes.js:182-187`, `frontend/src/views/FatturaView.vue:386`
-**Piano di dettaglio:** — (da redigere quando passa a 🔍)
-
 ---
 
 ## FP-005 — Simulatore del fatturato residuo

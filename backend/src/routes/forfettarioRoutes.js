@@ -10,7 +10,9 @@ import { esportaReportCommercialistaCsv } from '../services/exportService.js';
 import { rilevaMappingColonne, estraiMovimentiDaCsv, proponiAbbinamenti, confermaPagamento, confermaPagamentoBtc, confermaPagamentoValuta, eliminaPagamento, fattureAperte } from '../services/pagamentiFattureService.js';
 import { cambioPer, valuteSupportate } from '../services/cambiValutaService.js';
 import { prossimeScadenzeFiscali, scadenzeIntrastatAnno } from '../services/scadenzeFiscaliService.js';
-import { stimaVersamenti } from '../services/stimaVersamentiService.js';
+import { stimaVersamenti, accantonamentoAnno } from '../services/stimaVersamentiService.js';
+import { prospettoDichiarazione } from '../services/prospettoDichiarazioneService.js';
+import { generaProspettoPdf } from '../services/prospettoDichiarazionePdfService.js';
 import { generaF24Pdf } from '../services/f24PdfService.js';
 import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
 import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo, suggerisciOrdineCrediti } from '../services/creditiService.js';
@@ -225,6 +227,39 @@ forfettarioRoutes.get('/versamenti-stimati', async (req, res) => {
   }
 });
 
+// K1: quota da accantonare e piano di cassa contro le uscite F24.
+forfettarioRoutes.get('/accantonamento', async (req, res) => {
+  try {
+    const anno = req.query.anno ? Number(req.query.anno) : new Date().getFullYear();
+    res.json(await accantonamentoAnno(await getConfig(), anno));
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+// K3: prospetto rigo per rigo per la dichiarazione Redditi PF (LM, RR, RX31).
+forfettarioRoutes.get('/dichiarazione', async (req, res) => {
+  try {
+    const anno = req.query.anno ? Number(req.query.anno) : new Date().getFullYear() - 1;
+    res.json(await prospettoDichiarazione(await getConfig(), anno));
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.get('/dichiarazione/pdf', async (req, res) => {
+  try {
+    const anno = req.query.anno ? Number(req.query.anno) : new Date().getFullYear() - 1;
+    const config = await getConfig();
+    const pdf = await generaProspettoPdf(await prospettoDichiarazione(config, anno), config);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Redditi-PF-quadro-LM-${anno}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    res.status(500).json({ errore: err.message });
+  }
+});
+
 // PDF F24 precompilato per una scadenza del piano versamenti stimati.
 // FP-023: stesura F24 sul modello ufficiale AdE.
 // :anno = anno fiscale, :indice = indice della scadenza nell'array (0 = giugno, 1 = novembre).
@@ -236,7 +271,7 @@ forfettarioRoutes.get('/versamenti-stimati/:anno/f24/:indice/pdf', async (req, r
     const piano  = await stimaVersamenti(config, anno);
     const sc = piano.scadenze?.[indice];
     if (!sc) return res.status(404).json({ errore: `Nessuna scadenza all\'indice ${indice} per l\'anno ${anno}.` });
-    const pdf = await generaF24Pdf(sc, config);
+    const pdf = await generaF24Pdf(sc, config, { provvisorie: piano.regole?.provvisorie, annoRegole: piano.regole?.anno });
     const nomeFile = `F24-${anno}-scad${indice + 1}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nomeFile}"`);

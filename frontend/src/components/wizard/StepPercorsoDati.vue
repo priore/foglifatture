@@ -46,6 +46,7 @@ async function spostaPercorsoDati() {
   <p class="note-legal" style="margin-top:16px">
     Vuoto = cartella di default (backend/data/ nel progetto). Cambiare il percorso sposta
     subito tutti i file esistenti nella nuova cartella (nessuna perdita dati); il server continua a
-    usare la nuova cartella senza bisogno di riavvio. La cartella scelta deve essere vuota.
+    usare la nuova cartella senza bisogno di riavvio. La cartella scelta deve essere vuota, oppure
+    contenere già una cartella dati (con config.json): in quel caso viene solo collegata, senza spostare nulla.
   </p>
 </template>

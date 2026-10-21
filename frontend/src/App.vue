@@ -1,5 +1,6 @@
 <script setup>
 import AppSidebar from './components/common/AppSidebar.vue';
+import TerminiModal from './components/common/TerminiModal.vue';
 </script>
 
 <template>
@@ -8,5 +9,6 @@ import AppSidebar from './components/common/AppSidebar.vue';
     <div class="main">
       <router-view />
     </div>
+    <TerminiModal />
   </div>
 </template>

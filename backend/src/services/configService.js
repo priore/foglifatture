@@ -1,11 +1,12 @@
 // Gestione configurazione: anagrafica fornitore, clienti, tariffa oraria, dati PEC/SDI.
 // Un unico file config.json salvato nella root dei dati.
 import { randomUUID } from 'node:crypto';
-import { rename, readdir, mkdir, rm } from 'node:fs/promises';
+import { rename, readdir, mkdir, rm, readFile, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import keytar from 'keytar';
 import { ibanValido } from '../lib/iban.js';
 import { parseEmails } from '../lib/email.js';
+import { VERSIONE_TERMINI } from '../lib/termini.js';
 import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
 
 const CONFIG_FILE = 'config.json';
@@ -90,6 +91,7 @@ const DEFAULT_CONFIG = {
     settoreAteco: '', // nome del settore/sub-settore associato al codice selezionato
     coefficenteRedditivita: 0, // % di redditività del settore selezionato (0-100)
     dataInizioAttivita: '', // "YYYY-MM-DD": aliquota 5% nei primi 5 anni di attività, poi 15%
+    altreAttivitaCoefficienteDiverso: false, // T7: l'utente dichiara altre attività con coefficiente diverso; l'app calcola con un solo coefficiente e mostra un avviso
     requisitiAliquotaRidotta: false, // L. 190/2014 c. 65: nessuna attività nei 3 anni precedenti, attività non in prosecuzione di lavoro dipendente
     soggettoIsa: true, // DPR 435/2001 art. 17 c. 3: acconti 50/50 se soggetto ISA, 40/60 altrimenti
     limitePersonale: 0, // soglia personale di sicurezza (€); 0 = disabilitato (FP-028)
@@ -154,6 +156,7 @@ const CLIENTE_VUOTO = {
   email: '',         // una o più email separate da virgola per l'invio del timesheet (e della fattura se emailFattura è vuota)
   emailFattura: '',  // una o più email separate da virgola per l'invio della fattura; se vuoto usa email
   figura: '', // campo header PDF timesheet
+  gestione: 'timesheet', // 'timesheet' = timesheet + fatture (calcolate o libere); 'fatture' = solo fatture a importo libero
   modalitaPagamento: '', // vuoto = fatturazione.modalitaDefault
   giorniScadenza: null, // null = fatturazione.giorniScadenzaDefault
   commessa: '', // campo header PDF timesheet
@@ -387,6 +390,8 @@ export async function saveConfig(partialConfig) {
     importBtc: fondiSezione(current.importBtc, partialConfig.importBtc),
     // mcp non passa dal salvataggio generico: solo salvaMcp() (toggle e token).
     mcp: current.mcp,
+    // termini passa solo da accettaTermini(): l'accettazione non si falsifica via PUT generico.
+    termini: current.termini,
     // dati.percorso non passa mai da qui: cambiarlo senza spostare i file lascerebbe
     // config.json a mentire sul percorso reale. Va solo tramite spostaPercorsoDati().
     dati: current.dati,
@@ -402,11 +407,53 @@ export async function salvaMcp(mcp) {
   await writeJson(CONFIG_FILE, { ...raw, mcp });
 }
 
-// Da chiamare una sola volta all'avvio del server: applica l'override di backend/data/
-// letto da config.json (nella cartella di default) prima di qualunque altra I/O.
+// Registra l'accettazione dei termini d'uso (versione corrente + data) senza toccare il resto.
+export async function accettaTermini() {
+  const raw = await readJson(CONFIG_FILE, {});
+  const termini = { versione: VERSIONE_TERMINI, accettatoIl: new Date().toISOString(), approvazioneSpecifica: true };
+  await writeJson(CONFIG_FILE, { ...raw, termini });
+  return termini;
+}
+
+// Il puntatore alla cartella dati è un dato del dispositivo e sta FUORI dalla cartella che
+// punta: se stesse dentro config.json verrebbe spostato insieme ai dati e all'avvio successivo
+// non sarebbe più raggiungibile. File locale non versionato (.gitignore).
+function percorsoPuntatore() {
+  return process.env.FOGLIFATTURE_PUNTATORE_DATI
+    || path.join(import.meta.dirname, '..', '..', '.percorso-dati.json');
+}
+
+async function leggiPuntatore() {
+  try {
+    return JSON.parse(await readFile(percorsoPuntatore(), 'utf-8')).percorso || null;
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+async function scriviPuntatore(percorso) {
+  await writeFile(percorsoPuntatore(), JSON.stringify({ percorso }, null, 2), 'utf-8');
+}
+
+// Da chiamare una sola volta all'avvio, PRIMA di qualunque altra I/O (server.js, mcpStdio.js).
+// 1. Puntatore locale. 2. Migrazione: installazioni precedenti, dove l'override stava in
+// dati.percorso del config.json della cartella di default (anche creato a mano come rimedio).
+// Se la cartella indicata non esiste (disco scollegato, cloud non montato) l'avvio si ferma:
+// ripartire su una cartella di default vuota farebbe sembrare l'archivio perso e
+// ricominciare la numerazione fatture da 1.
 export async function applicaPercorsoDatiAllAvvio() {
-  const config = await readJson(CONFIG_FILE, null);
-  if (config?.dati?.percorso) setDataDir(config.dati.percorso);
+  let percorso = await leggiPuntatore();
+  const daMigrare = !percorso;
+  if (daMigrare) percorso = (await readJson(CONFIG_FILE, null))?.dati?.percorso || null;
+  if (!percorso) return;
+
+  const esiste = await stat(percorso).then((s) => s.isDirectory(), () => false);
+  if (!esiste) {
+    throw new Error(`Cartella dati non trovata: ${percorso}. Collegala di nuovo oppure elimina backend/.percorso-dati.json per tornare alla cartella di default.`);
+  }
+  setDataDir(percorso);
+  if (daMigrare) await scriviPuntatore(percorso);
 }
 
 // Cambia backend/data/ spostando fisicamente ogni file esistente nella nuova cartella
@@ -419,6 +466,13 @@ export async function spostaPercorsoDati(nuovoPercorso) {
 
   await mkdir(percorsoAssoluto, { recursive: true });
   const vociEsistenti = await readdir(percorsoAssoluto);
+  // Cartella dati già esistente (es. spostata con la versione senza puntatore): si collega
+  // senza muovere nulla. Nessuna perdita: la cartella attuale resta intatta.
+  if (vociEsistenti.includes('config.json')) {
+    await scriviPuntatore(percorsoAssoluto);
+    setDataDir(percorsoAssoluto);
+    return percorsoAssoluto;
+  }
   if (vociEsistenti.length > 0) {
     throw new Error('La cartella scelta non è vuota: spostare/svuotare manualmente prima di riprovare');
   }
@@ -434,6 +488,8 @@ export async function spostaPercorsoDati(nuovoPercorso) {
     await rename(path.join(vecchioDir, voce), path.join(percorsoAssoluto, voce));
   }
 
+  // Puntatore scritto prima di rimuovere la cartella vecchia: da qui il riavvio ritrova i dati.
+  await scriviPuntatore(percorsoAssoluto);
   setDataDir(percorsoAssoluto);
   const config = await readJson(CONFIG_FILE, null);
   await writeJson(CONFIG_FILE, { ...config, dati: { ...(config?.dati ?? {}), percorso: percorsoAssoluto } });

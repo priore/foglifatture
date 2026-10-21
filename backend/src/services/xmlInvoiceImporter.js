@@ -4,6 +4,21 @@ import { XMLParser } from 'fast-xml-parser';
 
 const parser = new XMLParser({ removeNSPrefix: true, ignoreAttributes: true });
 
+// P.IVA senza prefisso IdPaese e con zeri iniziali reintegrati (11 cifre): alcuni XML storici
+// la riportano con spazi o "IT" incollato, altri la perdono come numero (es. "8364111008").
+export function normalizzaPiva(valore) {
+  const pulita = String(valore || '').trim().toUpperCase().replace(/^IT/, '');
+  return /^\d{1,11}$/.test(pulita) ? pulita.padStart(11, '0') : pulita;
+}
+
+// Vera se il CedentePrestatore non è l'operatore: fattura ricevuta, non emessa. Senza la
+// p.iva dell'operatore in config o senza p.iva nel cedente non si può decidere: false.
+export function eFatturaRicevuta(contenutoXml, pivaOperatore) {
+  const operatore = normalizzaPiva(pivaOperatore);
+  const cedente = normalizzaPiva(parser.parse(contenutoXml).FatturaElettronica?.FatturaElettronicaHeader?.CedentePrestatore?.DatiAnagrafici?.IdFiscaleIVA?.IdCodice);
+  return Boolean(operatore && cedente && operatore !== cedente);
+}
+
 // Estrae i soli campi rilevanti per il nostro modello Invoice; il resto dell'XML
 // (dati fiscali di fornitore/cliente) resta nella config, non viene reimportato qui.
 export function importaFatturaDaXml(contenutoXml) {

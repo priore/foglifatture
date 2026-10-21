@@ -104,6 +104,17 @@ export function generaXmlFatturaPA(dati) {
     ? `\n        <Causale>Controvalore in EUR: ${formattaImporto(fattura.imponibile)} EUR (cambio ${escapeXml(String(valutaFattura.cambio))} ${escapeXml(valutaFattura.codice)}/EUR del ${escapeXml(valutaFattura.dataQuotazione ?? '')}, fonte: ${escapeXml(valutaFattura.fonte ?? 'Banca d\'Italia')})</Causale>`
     : '';
 
+  // TD04 (nota di credito): `fatturaOrigine` {numero, data} è il documento stornato, riportato in
+  // DatiFattureCollegate. Importi positivi: il segno è dato dal tipo documento.
+  const tipoDocumento = fattura.tipoDocumento ?? 'TD01';
+  const datiFattureCollegate = fattura.fatturaOrigine
+    ? `
+      <DatiFattureCollegate>
+        <IdDocumento>${escapeXml(fattura.fatturaOrigine.numero)}</IdDocumento>
+        <Data>${escapeXml(fattura.fatturaOrigine.data)}</Data>
+      </DatiFattureCollegate>`
+    : '';
+
   const datiBollo = fattura.bolloApplicabile
     ? `        <DatiBollo>
           <BolloVirtuale>SI</BolloVirtuale>
@@ -186,7 +197,7 @@ export function generaXmlFatturaPA(dati) {
   <FatturaElettronicaBody>
     <DatiGenerali>
       <DatiGeneraliDocumento>
-        <TipoDocumento>TD01</TipoDocumento>
+        <TipoDocumento>${tipoDocumento}</TipoDocumento>
         <Divisa>${escapeXml(divisa)}</Divisa>
         <Data>${escapeXml(fattura.data)}</Data>
         <Numero>${escapeXml(fattura.numero)}</Numero>
@@ -194,7 +205,7 @@ ${datiBollo}${datiCassaPrevidenzialeXml}        <ImportoTotaleDocumento>${format
         <Causale>Operazione senza applicazione dell'IVA ai sensi dell'art.1, comma 58, Legge 190/2014, regime forfetario.</Causale>
         <Causale>Operazione senza applicazione della ritenuta alla fonte a titolo di acconto ai sensi dell'art.1, comma 67, Legge 190/2014.</Causale>${fattura.bolloApplicabile ? `
         <Causale>Imposta di bollo assolta in modo virtuale ai sensi dell'articolo 15 del d.p.r. 642/1972 e del DM 17/06/2014.</Causale>` : ''}${causaliEstereXml}${causaleValuta}${causaleBtc}
-      </DatiGeneraliDocumento>
+      </DatiGeneraliDocumento>${datiFattureCollegate}
     </DatiGenerali>
     <DatiBeniServizi>
       <DettaglioLinee>

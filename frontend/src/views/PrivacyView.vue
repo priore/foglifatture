@@ -1,5 +1,10 @@
 <script setup>
-// Pagina informativa privacy: nessuna logica, solo testo statico (app locale, single-user).
+import { ref, onMounted } from 'vue';
+import { api } from '../services/api.js';
+
+// Pagina informativa privacy: testo statico (app locale, single-user) + termini d'uso dal backend.
+const termini = ref(null);
+onMounted(async () => { termini.value = await api.getTermini().catch(() => null); });
 </script>
 
 <template>
@@ -79,7 +84,15 @@
     <div class="card">
       <div class="card-head"><h2>8. Disclaimer</h2></div>
       <div class="card-body">
-        <p>Questa informativa descrive il funzionamento del software così com'è, a scopo di trasparenza verso l'operatore e i suoi clienti. Non costituisce consulenza legale: l'operatore, in qualità di titolare del trattamento, resta l'unico responsabile della conformità al GDPR e alla normativa fiscale italiana applicabile alla propria attività, e dovrebbe far verificare la propria informativa privacy completa (es. verso i clienti) da un professionista competente in materia.</p>
+        <p>Questa informativa descrive il funzionamento del software così com'è, a scopo di trasparenza verso l'operatore e i suoi clienti. Non costituisce consulenza legale: l'operatore, in qualità di titolare del trattamento, resta l'unico responsabile della conformità al GDPR e alla normativa fiscale italiana applicabile alla propria attività, e dovrebbe far verificare la propria informativa privacy completa (es. verso i clienti) da un professionista competente in materia. Vedi anche i Termini d'uso (sezione 9).</p>
+      </div>
+    </div>
+
+    <div v-if="termini" class="card">
+      <div class="card-head"><h2>9. Termini d'uso</h2></div>
+      <div class="card-body">
+        <p v-for="(p, i) in termini.testo.split('\n\n')" :key="i">{{ p }}</p>
+        <p class="note-legal">Versione {{ termini.versione }} · {{ termini.accettatoIl ? `accettati il ${new Date(termini.accettatoIl).toLocaleDateString('it-IT')}` : 'non ancora accettati' }}</p>
       </div>
     </div>
   </div>

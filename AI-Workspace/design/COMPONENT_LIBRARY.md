@@ -16,6 +16,9 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 | DonutChart | `DonutChart.vue` | Grafico SVG ad anello con valore centrale | `fette:Array` (req, `[{valore, colore, etichetta}]`), `centroValore:String=''`, `centroLabel:String=''` |
 | BarChart | `BarChart.vue` | Grafico a barre | `barre:Array` (req, `[{etichetta, valore}]`) |
 | LineChart | `LineChart.vue` | Grafico a linee, anche in modalità sparkline | `punti:Array` (req, `[{etichetta, valore, valoreTesto}]`), `scalaRelativa:Boolean=false`, `sparkline:Boolean=false` |
+| BtcRegistro | `BtcRegistro.vue` | Registro BTC: movimenti dell'anno con colonna «Tipo», form ingresso/uscita con anteprima plusvalenza, eliminazione; emette `cambiato` | `anno:Number` (req) |
+| BtcImport | `BtcImport.vue` | Import BTC: stato polling, proposte (conferma/scarta/ripristina), import da file con mapping AI; emette `cambiato` | nessuna |
+| BtcValoreLive | `BtcValoreLive.vue` | Card prezzo di 1 BTC e valore dei BTC detenuti (usa `useBtcLive`) | nessuna |
 | ChatAi | `ChatAi.vue` | Chat AI in sola lettura sui dati dell'app, con domande suggerite e consenso invio dati | nessuna |
 | UpdateModal | `UpdateModal.vue` | Modale di aggiornamento app, emette `aggiorna` / `annulla` | `versioneLocale`, `versioneRemota`, `changelog:String`, `inCorso:Boolean` |
 
@@ -29,7 +32,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
 | Componente | Scopo | Props |
 |---|---|---|
-| StepFornitore | Anagrafica, fiscale, fatturazione (bollo, pagamento, wallet BTC) in tre schede | `modelValue` (`config.fornitore`), `forfettario`, `fatturazione`, `walletBtc` (tutte req) |
+| StepFornitore | Anagrafica, fiscale, fatturazione (bollo, pagamento, wallet BTC) in tre schede | `modelValue` (`config.fornitore`), `forfettario`, `fatturazione`, `walletBtc`, `importBtc` (tutte req) |
 | StepClienti | Elenco clienti: aggiunta, modifica, cancellazione logica | `modelValue:Array` (req) |
 | StepCliente | Form di un singolo cliente, usato da `StepClienti` | `modelValue:Object` (req) |
 | StepPec | Credenziali PEC, gestori preconfigurati, prove | `modelValue` (`config.pec`), `sdi` (`config.sdi`) |
@@ -45,7 +48,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 | TemplateGrid | Selettore template di stampa a griglia | `modelValue:String=null`, `tipo:String` (req, `fattura`/`timesheet`), `fallbackId:String` (req) |
 | LogoUpload | Upload logo (v-model, data URL) | `modelValue:String=''`, `etichetta:String='Logo'` |
 
-🟢 Tutti i componenti usano `<script setup>` con `defineProps`. 21 file dichiarano `<style scoped>` per il layout locale.
+🟢 Tutti i componenti usano `<script setup>` con `defineProps`. 19 componenti dichiarano `<style scoped>` per il layout locale.
 
 ## Primitive globali (`frontend/src/style.css`)
 
@@ -82,6 +85,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 - 🟢 `useValidazioneFiscale.js` — `pivaValida`, `codiceFiscaleValido`, `codiceSdiValido`, `pecValida`
 - 🟢 `useMailto.js` — `inviaPdfEmail`: salva il PDF e apre il client di posta
 - 🟢 `useMarkdown.js` — `renderMarkdown`: rendering minimale di testo AI e changelog
+- 🟢 `useBtcLive.js` — `useBtcLive`: prezzo BTC/EUR (CoinGecko) e BTC detenuti, stato condiviso tra vista Bitcoin e dashboard, aggiornamento ogni 60 s
 - 🟢 `useUpdateCheck.js` — polling stato aggiornamento ogni 10 minuti
 
 ---
@@ -89,7 +93,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 ## Review Checklist
 
 - **Completeness:** tutti i componenti e le primitive in uso, con props.
-- **Accuracy:** props lette da ogni `defineProps`; classi verificate su `style.css` (2026-10-13).
+- **Accuracy:** props lette da ogni `defineProps`; classi verificate su `style.css` (2026-10-19).
 - **Consistency:** coerente con `UI_ANALYSIS.md` e `DESIGN_SYSTEM.md`.
 - **TODO:** nessuno.
 - **Missing information:** nessun catalogo interattivo (Storybook): catalogo derivato dalla lettura del sorgente.

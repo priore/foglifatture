@@ -1,12 +1,13 @@
 // Import di archivi ZIP del Cassetto Fiscale (fatture + ricevute SDI mescolate): ogni file
 // viene riconosciuto dall'elemento radice dell'XML, non dal nome.
 import { leggiZip } from '../lib/zipReader.js';
-import { importaFatturaDaXml } from './xmlInvoiceImporter.js';
+import { importaFatturaDaXml, eFatturaRicevuta } from './xmlInvoiceImporter.js';
 
 // Elemento radice delle ricevute SDI ⇒ codice tipo usato da sdiRicevuteService.
-const RADICE_RICEVUTA = {
+export const RADICE_RICEVUTA = {
   RicevutaConsegna: 'RC',
   NotificaScarto: 'NS',
+  RicevutaScarto: 'NS',
   NotificaMancataConsegna: 'MC',
   NotificaEsito: 'NE',
   NotificaEsitoCommittente: 'EC',
@@ -23,11 +24,12 @@ export function radiceXml(contenuto) {
 /**
  * @returns {{ tipo: 'fattura'|'ricevuta'|'ignorato', codiceTipo?: string, motivo?: string, anteprima?: object }}
  */
-export function classificaFile(nome, contenuto) {
+export function classificaFile(nome, contenuto, pivaOperatore) {
   if (!/\.xml$/i.test(nome)) return { tipo: 'ignorato', motivo: 'Non è un file XML' };
   const radice = radiceXml(contenuto);
   if (radice === 'FatturaElettronica') {
     try {
+      if (eFatturaRicevuta(contenuto.toString('utf-8'), pivaOperatore)) return { tipo: 'ignorato', motivo: 'Fattura ricevuta (il cedente non è l\'operatore)' };
       const { numero, data, nettoAPagare } = importaFatturaDaXml(contenuto.toString('utf-8'));
       return { tipo: 'fattura', anteprima: { numero, data, nettoAPagare } };
     } catch (err) {
@@ -40,6 +42,6 @@ export function classificaFile(nome, contenuto) {
 
 // Legge lo ZIP e classifica ogni file. Un nome ripetuto (cartelle diverse) resta duplicato
 // nella lista: è l'import, non l'anteprima, a non creare doppioni.
-export function analizzaZip(buffer) {
-  return leggiZip(buffer).map(({ nome, contenuto }) => ({ nome, contenuto, ...classificaFile(nome, contenuto) }));
+export function analizzaZip(buffer, pivaOperatore) {
+  return leggiZip(buffer).map(({ nome, contenuto }) => ({ nome, contenuto, ...classificaFile(nome, contenuto, pivaOperatore) }));
 }

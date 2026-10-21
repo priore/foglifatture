@@ -144,11 +144,45 @@ export function riepilogoBtc(incassateAnno) {
   return { rate: rateBtc.length, eur, satoshi, cambioMedio, elenco };
 }
 
+// K1: quota da accantonare per gli incassi dell'anno. Metodo prudente costante:
+// quota = coefficiente × (aliquota imposta + aliquota INPS), senza la deduzione dei contributi
+// (arriva un anno dopo: sovrastima di poco, nel verso sicuro). Gli acconti non entrano nella
+// quota (sono nel piano di cassa). Oltre il massimale INPS la parte contributiva si ferma.
+// Funzione pura. `incassi` = [{ data: 'YYYY-MM-DD', importo }], `inps` = null se non configurata.
+export function calcolaAccantonamento({ incassi, coefficiente, aliquotaImposta, inps }) {
+  const ordinati = [...incassi].sort((a, b) => a.data.localeCompare(b.data));
+  const aliquotaInps = inps?.aliquota ?? 0;
+  const massimale = inps?.massimale ?? Infinity;
+  const quotaPct = Number((coefficiente / 100 * (aliquotaImposta + aliquotaInps)).toFixed(2));
+  let cumulato = 0, accantonato = 0;
+  const righe = ordinati.map(({ data, importo }) => {
+    const redditoPrima = cumulato * coefficiente / 100;
+    cumulato += importo;
+    const redditoDopo = cumulato * coefficiente / 100;
+    const quota = (redditoDopo - redditoPrima) * aliquotaImposta / 100
+      + (Math.min(redditoDopo, massimale) - Math.min(redditoPrima, massimale)) * aliquotaInps / 100;
+    accantonato += quota;
+    return { data, importo, quota: Number(quota.toFixed(2)), accantonato: Number(accantonato.toFixed(2)) };
+  });
+  return { quotaPct, accantonato: Number(accantonato.toFixed(2)), righe };
+}
+
+// Piano di cassa: accantonato teorico contro uscite F24 (saldo, acconti, rate, maggiorazioni).
+// `scadenze` = piano di stimaVersamenti. Residuo negativo = scoperto a quella data.
+export function pianoCassaAccantonamento(accantonato, scadenze) {
+  let residuo = accantonato;
+  return scadenze.map((s) => {
+    const uscita = s.totaleConMaggiorazione ?? s.totale;
+    residuo = Number((residuo - uscita).toFixed(2));
+    return { data: s.data, uscita, residuo, scoperto: residuo < 0 };
+  });
+}
+
 // Ricavi (imponibile) aggregati per mese civile, per il grafico andamento mensile in dashboard.
 function ricaviPerMese(risolteValide) {
   const perMese = new Map();
   for (const { mese, invoice } of risolteValide) {
-    perMese.set(mese, (perMese.get(mese) || 0) + invoice.imponibile);
+    perMese.set(mese, (perMese.get(mese) || 0) + invoice.imponibile - (invoice.notaCredito?.imponibile ?? 0));
   }
   return Array.from({ length: 12 }, (_, i) => ({
     mese: i + 1,
@@ -193,7 +227,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
 
   const { fatture, mesiFatturati, risolteValide } = await ricaviAnno(anno);
   // L. 662/96 c. 212: la rivalsa INPS addebitata al cliente è compenso a tutti gli effetti.
-  const ricaviCumulati = Number(fatture.reduce((tot, f) => tot + f.imponibile + (f.rivalsaInps ?? 0), 0).toFixed(2));
+  const ricaviCumulati = Number(fatture.reduce((tot, f) => tot + f.imponibile + (f.rivalsaInps ?? 0) - (f.notaCredito?.nettoAPagare ?? 0), 0).toFixed(2));
 
   const redditoImponibile = Number((ricaviCumulati * coefficenteRedditivita / 100).toFixed(2));
   const aliquota = await aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta);
@@ -281,6 +315,7 @@ export async function calcolaDashboardForfettario(config, { anno = new Date().ge
     anno,
     sogliaAnnua,
     coefficenteRedditivita,
+    altreAttivitaCoefficienteDiverso: config.forfettario.altreAttivitaCoefficienteDiverso === true,
     aliquota,
     soggettoIsa,
     gestionePrevidenziale,

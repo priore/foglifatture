@@ -19,6 +19,9 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 - 🟢 **SDI** — Sistema di Interscambio, instrada le fatture e restituisce ricevute. Indirizzo PEC ufficiale `sdi01@pec.fatturapa.it`.
 - 🟢 **PEC** — posta elettronica certificata, canale di invio al SDI e di ricezione ricevute (SMTP + IMAP).
 - 🟢 **Ricevute SDI** — RC (consegna), NS (scarto), MC (mancata consegna), NE (esito committente), EC, DT (decorrenza termini), AT (attestazione).
+- 🟡 **File metadati (MT)** — `..._MT_001.xml`, allegato dal SDI a ogni fattura recapitata al destinatario. Contiene `IdentificativoSdI`, nome file fattura e `TentativiInvio`. Segnale di fattura ricevuta, non di ricevuta.
+- 🟢 **Fattura ricevuta (passiva)** — fattura emessa da un fornitore all'operatore: `CessionarioCommittente` = operatore. Oggi l'app non la gestisce (K5).
+- 🟢 **`.xml.p7m`** — fattura firmata in busta CAdES. L'XML va estratto prima della lettura; nessuna libreria CMS installata.
 - 🟢 **RegimeFiscale RF19** — codice del regime forfettario nell'XML.
 - 🟢 **Natura N2.2 / N2.1** — natura dell'operazione senza IVA: N2.2 per forfettario con clienti italiani, N2.1 per clienti esteri B2B.
 - 🟢 **Art. 7-ter / 7-septies** — territorialità IVA delle prestazioni: B2B estero e servizi specifici a privati extra-UE (`clienteEsteroService`).
@@ -27,7 +30,11 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 - 🟢 **Rivalsa INPS 4%** — addebito facoltativo al cliente (L. 662/96 c. 212), blocco `DatiCassaPrevidenziale` TC22. Concorre a ricavi e soglia.
 - 🟢 **Nota di variazione (TD04)** — documento che corregge una fattura già accettata. Non ancora emessa dall'app.
 - 🟢 **Datio in solutum** — pagamento con un bene diverso dal denaro (art. 1197 c.c.): base dell'incasso in Bitcoin.
-- 🟢 **Quadro RW / imposta IC** — monitoraggio fiscale e imposta sul valore delle cripto detenute al 31/12.
+- 🟢 **Quadro RW / IVCA** — monitoraggio fiscale e imposta sul valore delle cripto-attività, 0,2% proporzionale ai giorni di detenzione, sul valore EUR/BTC al 31/12 inserito dall'utente (`lottiBtcService.calcolaIvca`). Codici F24 1727 (saldo), 1728 e 1729 (acconti).
+- 🟢 **Plusvalenze cripto** — redditi diversi da cessione di cripto-attività, imposta sostitutiva (33% dal 2026, regola dell'anno) versata con codice 1715; minusvalenze riportabili nei quattro anni successivi (`riportoMinusvalenze`).
+- 🟢 **LIFO** — «last in first out»: le uscite consumano per primi i lotti più recenti per determinare il costo di carico.
+- 🟢 **Lotto** — ingresso di BTC con costo in EUR: rata incassata in fattura (tipo `incasso`) o ingresso manuale.
+- 🟢 **Proposta di import** — transazione rilevata su blockchain o in un file, in attesa di conferma o scarto (`btcImportProposte.json`).
 - 🟢 **Credito compensabile** — credito fiscale usato a scomputo in F24, con limite di 5.000 € oltre il quale serve il visto di conformità.
 
 ## Termini del codice (nomi italiani)
@@ -52,7 +59,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 ## Review Checklist
 
 - **Completeness:** termini normativi e nomi ricorrenti del codice.
-- **Accuracy:** ogni termine ricondotto a un file o a un uso nel codice (2026-10-13).
+- **Accuracy:** ogni termine ricondotto a un file o a un uso nel codice (2026-10-19).
 - **Consistency:** coerente con `PROJECT_CONTEXT.md` e `ARCHITECTURE.md`.
 - **TODO:** nessuno.
 - **Missing information:** nessun glossario delle etichette dei campi dei form.

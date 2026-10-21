@@ -1,10 +1,9 @@
 // Test f24PdfService: formattazione importi, limiti righe, verifica impronta.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { generaF24Pdf } from './f24PdfService.js';
+import { generaF24Pdf, testoDicitura, LAYOUT } from './f24PdfService.js';
 import { DATA_DIR } from '../lib/jsonStore.js';
 
 // Funzioni pure estratte per test (non esportate dal service: reimplementate qui per testabilità).
@@ -68,35 +67,6 @@ describe('limiti righe', () => {
   });
 });
 
-// Test verifica impronta
-describe('verifica integrità', () => {
-  test('impronta corretta non lancia errore', () => {
-    const buf = Buffer.from('test-pdf-content');
-    const hash = createHash('sha256').update(buf).digest('hex');
-    // Simula il controllo del service
-    assert.doesNotThrow(() => {
-      if (hash !== hash) throw new Error('impronta diversa');
-    });
-  });
-
-  test('impronta errata lancia errore', () => {
-    const buf = Buffer.from('contenuto-diverso');
-    const hash = createHash('sha256').update(buf).digest('hex');
-    const attesa = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-    assert.throws(() => {
-      if (hash !== attesa) throw new Error(`impronta diversa. Attesa: ${attesa} Trovata: ${hash}`);
-    }, /impronta diversa/);
-  });
-
-  test('verifica disabilitata con stringa vuota', () => {
-    const MODELLO_SHA256 = '';
-    assert.doesNotThrow(() => {
-      if (!MODELLO_SHA256) return; // nessuna verifica
-      throw new Error('non dovrebbe arrivare qui');
-    });
-  });
-});
-
 // Test end-to-end: genera davvero il PDF sul modello AdE (skip se non scaricato,
 // evita dipendenza di rete nei test). Copre regressioni di layout/campi che i test
 // puri sopra non vedono (es. un campo config che non esiste più).
@@ -142,5 +112,24 @@ describe('generaF24Pdf', () => {
     assert.ok(pdf.length > 1000);
     assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
     // Saldo atteso: (2000-500) + (1000-200) = 2300
+  });
+});
+
+describe('dicitura bozza a margine', () => {
+  test('testo base e con regole provvisorie', () => {
+    assert.match(testoDicitura(), /Bozza FogliFatture/);
+    assert.doesNotMatch(testoDicitura(), /provvisorie/);
+    assert.match(testoDicitura({ provvisorie: true, annoRegole: 2026 }), /Regole 2026 provvisorie/);
+  });
+
+  test('posizione sopra ogni campo calibrato del modello', () => {
+    const { dicitura, ...campi } = LAYOUT;
+    const ys = [];
+    const raccogli = (o) => {
+      if (typeof o.y === 'number') ys.push(o.y);
+      for (const v of Object.values(o)) if (v && typeof v === 'object' && !Array.isArray(v)) raccogli(v);
+    };
+    raccogli(campi);
+    assert.ok(dicitura.y > Math.max(...ys) + 9);
   });
 });

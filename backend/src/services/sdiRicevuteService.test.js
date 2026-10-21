@@ -47,7 +47,7 @@ test('entità XML nel testo (es. nomi di tag citati) vengono decodificate una so
 
 // Test classificaAllegatoXml: radice SDI riconosciuta
 test('Ricevuta (RC) riconosciuta da radice XML', () => {
-  const rc = Buffer.from(`<?xml version="1.0"?><ns2:Ricevuta><IdentificativoSdI>123</IdentificativoSdI></ns2:Ricevuta>`, 'utf8');
+  const rc = Buffer.from(`<?xml version="1.0"?><ns2:RicevutaConsegna><IdentificativoSdI>123</IdentificativoSdI></ns2:RicevutaConsegna>`, 'utf8');
   const result = classificaAllegatoXml('IT10149810581_L4WDB_RC_002.xml', rc);
   assert.equal(result.isValido, true);
   assert.equal(result.tipo, 'RC');
@@ -60,8 +60,8 @@ test('NotificaScarto (NS) riconosciuta da radice XML', () => {
   assert.equal(result.tipo, 'NS');
 });
 
-test('FileMetadati scartato (metadato di trasporto)', () => {
-  const fm = Buffer.from(`<?xml version="1.0"?><ns3:FileMetadati><NomeFile>x.xml.p7m</NomeFile></ns3:FileMetadati>`, 'utf8');
+test('MetadatiInvioFile scartato (metadato di trasporto)', () => {
+  const fm = Buffer.from(`<?xml version="1.0"?><ns3:MetadatiInvioFile><NomeFile>x.xml.p7m</NomeFile></ns3:MetadatiInvioFile>`, 'utf8');
   const result = classificaAllegatoXml('IT01879020517A2026_g0WMK_MT_001.xml', fm);
   assert.equal(result.isValido, false);
   assert.equal(result.motivo, 'metadato-trasporto');
@@ -87,4 +87,14 @@ test('XML con radice sconosciuta scartato', () => {
   const result = classificaAllegatoXml('strange.xml', unknown);
   assert.equal(result.isValido, false);
   assert.equal(result.motivo, 'non-riconosciuto');
+});
+
+test('RicevutaScarto (NS reale) riconosciuta da radice', () => {
+  const result = classificaAllegatoXml('x.xml', Buffer.from(NS_REALE, 'utf8'));
+  assert.equal(result.tipo, 'NS');
+});
+
+test('FatturaElettronica ricevuta non è una ricevuta SDI', () => {
+  const f = Buffer.from('<?xml version="1.0"?><p:FatturaElettronica versione="FPR12"/>', 'utf8');
+  assert.equal(classificaAllegatoXml('f.xml', f).motivo, 'fattura-ricevuta');
 });

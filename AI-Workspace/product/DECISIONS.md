@@ -30,7 +30,7 @@ Decisioni architetturali e di prodotto come emergono dal codice e dai commenti. 
 
 ## Un solo schema di polling per ogni job ricorrente
 
-🟢 Polling SDI, backup, promemoria, scarti SDI, monitoraggio fonti e notifiche fiscali usano `setInterval` rileggendo la config a ogni tick, senza scheduler astratto né webhook (lo standard PEC/SDI non ne ha).
+🟢 Polling SDI, backup, promemoria, scarti SDI, monitoraggio fonti, notifiche fiscali e controllo blockchain BTC usano `setInterval` rileggendo la config a ogni tick, senza scheduler astratto né webhook (lo standard PEC/SDI non ne ha).
 
 ## Multi-cliente con numerazione condivisa
 
@@ -50,14 +50,22 @@ Decisioni architetturali e di prodotto come emergono dal codice e dai commenti. 
 
 ## Dati verso servizi esterni dal browser, con avviso
 
-🟢 Recupero transazioni BTC (mempool.space) e cambi storici partono dal frontend, con nota privacy accanto al pulsante. Il valore recuperato resta sempre modificabile a mano.
+🟢 Recupero transazioni BTC puntuale (mempool.space), cambi storici e prezzo in tempo reale (CoinGecko) partono dal frontend, con nota privacy accanto al pulsante. Il valore recuperato resta sempre modificabile a mano.
+
+## Import BTC opt-in, solo proposte
+
+🟢 Il controllo periodico degli indirizzi parte dal backend ma è disattivato di default: serve almeno un indirizzo e l'accettazione dell'avviso privacy, perché indirizzo e IP vanno a due provider (primario e di riserva, per confrontarne le risposte; l'utente può indicare il proprio nodo). Import da blockchain e da file creano solo proposte: nulla entra nel registro senza conferma. Per un CSV di formato sconosciuto all'AI vanno solo intestazioni e celle oscurate, con lo stesso consenso degli altri dati fiscali (per richiesta o permanente, `config.ai.autorizzaDatiFiscali`); il mapping proposto va confermato prima del parsing.
+
+## Costo di carico LIFO unico
+
+🟢 Le plusvalenze cripto usano solo il metodo LIFO (Circ. AdE 30/E §3.2.1), validato in `configService` (`metodoPlusvalenze`). Il calcolo è attivo dal 2026 e solo se la regola fiscale dell'anno ha la sezione `cripto`: senza, nessuna riga F24 a 0 € e un avviso se esistono BTC registrati.
 
 ---
 
 ## Review Checklist
 
 - **Completeness:** decisioni strutturali di architettura, sicurezza, UI, fiscale e AI.
-- **Accuracy:** ognuna legata a un dettaglio verificato nel codice (2026-10-13).
+- **Accuracy:** ognuna legata a un dettaglio verificato nel codice (2026-10-19).
 - **Consistency:** coerente con `ARCHITECTURE.md` e `DESIGN_PATTERNS_AS_IS.md`.
 - **TODO:** nessuno.
 - **Missing information:** nessun rationale scritto in repo: ricostruito dall'implementazione.

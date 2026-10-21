@@ -48,7 +48,25 @@ function validaPacchetto(pacchetto) {
 // Se non confermate: usa l'ultimo anno ≤ anno con aggiornate:false + banner.
 export async function regoleAnno(anno) {
   const regole = await regoleAnnoGrezze(anno);
-  return { ...regole, cripto: regole.cripto ?? null }; // null: anno senza sezione cripto, nessun calcolo
+  return { ...regole, ...statoProvvisorie(regole), cripto: regole.cripto ?? null }; // cripto null: anno senza sezione cripto, nessun calcolo
+}
+
+// ponytail: soglia fissa 12 mesi, configurabile solo se serve
+const SOGLIA_VERIFICA_MESI = 12;
+
+// Stime provvisorie se le regole non sono confermate dall'utente o `verificatoIl` manca / è oltre soglia.
+// Il banner esistente (regole non confermate) resta il motivo principale; si aggiunge solo quello di anzianità.
+export function statoProvvisorie(regole, oggi = new Date()) {
+  const verificatoIl = regole.verificatoIl ? new Date(regole.verificatoIl) : null;
+  const limite = new Date(oggi);
+  limite.setMonth(limite.getMonth() - SOGLIA_VERIFICA_MESI);
+  const vecchie = !verificatoIl || Number.isNaN(verificatoIl.getTime()) || verificatoIl < limite;
+  const provvisorie = regole.aggiornate === false || vecchie;
+  let banner = regole.banner ?? null;
+  if (vecchie && !banner) {
+    banner = `Regole ${regole.anno} ${verificatoIl ? `verificate oltre ${SOGLIA_VERIFICA_MESI} mesi fa` : 'senza data di verifica'}: le stime sono provvisorie.`;
+  }
+  return { provvisorie, banner };
 }
 
 async function regoleAnnoGrezze(anno) {
@@ -123,7 +141,7 @@ function confrontaOggetti(prefisso, vecchio, nuovo) {
   const diff = [];
   const chiavi = new Set([...Object.keys(vecchio ?? {}), ...Object.keys(nuovo ?? {})]);
   for (const k of chiavi) {
-    if (k === 'fonti' || k === 'confermatoIl') continue;
+    if (k === 'fonti' || k === 'confermatoIl' || k === 'verificatoIl') continue;
     const percorso = prefisso ? `${prefisso}.${k}` : k;
     const v = vecchio?.[k], n = nuovo?.[k];
     const vObj = typeof v === 'object' && v !== null && !Array.isArray(v);

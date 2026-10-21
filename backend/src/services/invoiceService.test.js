@@ -100,3 +100,11 @@ test('calcolaBollo: la rivalsa concorre alla soglia del bollo (77 + 4% = 80,08 >
   assert.equal(calcolaBollo(77, 77.47, 2, 4).bolloApplicabile, true);
   assert.equal(calcolaBollo(77, 77.47, 2).bolloApplicabile, false);
 });
+
+test('calcolaBollo: soglia 77,47 € non superata (uguale) senza bollo, superata di un centesimo con bollo', () => {
+  assert.equal(calcolaBollo(77.47, 77.47, 2).bolloApplicabile, false);
+  assert.equal(calcolaBollo(77.47, 77.47, 2).bollo, 0);
+  const sopra = calcolaBollo(77.48, 77.47, 2);
+  assert.equal(sopra.bolloApplicabile, true);
+  assert.equal(sopra.bollo, 2);
+});

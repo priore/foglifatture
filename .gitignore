@@ -40,5 +40,6 @@ packaging/dist/
 .claude/skills/pre-publish-check/
 .claude/skills/build-installers/
 
-# iOS/SCW mapping: local-only, never sync to GitHub
-AI-Workspace/documentation/BE_SWIFT_MAPPING.md
+
+# puntatore locale alla cartella dati scelta (dato del dispositivo, fuori dalla cartella che punta)
+backend/.percorso-dati.json

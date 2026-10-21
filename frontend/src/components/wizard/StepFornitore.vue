@@ -214,6 +214,13 @@ function selezionaCodice(c) {
             <small class="note-legal" style="margin-top:6px">Si auto-compila selezionando il codice ATECO, ma resta modificabile.</small>
           </div>
           <div class="field full">
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="altre-attivita-coefficiente" type="checkbox" v-model="forfettario.altreAttivitaCoefficienteDiverso" class="checkbox-app">
+              <label for="altre-attivita-coefficiente" style="margin:0">Ho altre attività con coefficiente di redditività diverso</label>
+            </div>
+            <small class="note-legal" style="margin-top:6px;display:block">L'app applica a tutti i ricavi il coefficiente indicato sopra, senza distinguere le attività: reddito, imposta e acconti stimati non tengono conto degli altri coefficienti.</small>
+          </div>
+          <div class="field full">
             <div class="checkbox-row">
               <div class="field" style="margin:0">
                 <div style="display:flex;align-items:center;gap:8px">
@@ -339,7 +346,7 @@ function selezionaCodice(c) {
 
         <h3 class="sotto-titolo">Import automatico transazioni</h3>
         <p class="note-legal">
-          Controlla periodicamente gli indirizzi qui sopra (mai altri) e propone le transazioni nuove nella tab Bitcoin della dashboard:
+          Controlla periodicamente gli indirizzi qui sopra (mai altri) e propone le transazioni nuove nella vista Bitcoin (Importa BTC):
           nulla viene registrato senza la tua conferma.
         </p>
         <p class="note-legal">
@@ -412,18 +419,6 @@ function selezionaCodice(c) {
 .tab-pannello { display: flex; flex-direction: column; gap: 20px; }
 .checkbox-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-}
-.checkbox-app {
-  appearance: none; width: 18px; height: 18px; border: 1px solid var(--line);
-  border-radius: var(--radius-sm); background: none; cursor: pointer; flex-shrink: 0;
-  margin: 0; position: relative;
-}
-.checkbox-app:checked { background: var(--accent); border-color: var(--accent); }
-.checkbox-app:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.checkbox-app:checked::after {
-  content: ''; position: absolute; top: 45%; left: 50%;
-  transform: translate(-50%, -50%) rotate(45deg);
-  width: 5px; height: 9px; border: solid var(--accent-ink); border-width: 0 2px 2px 0;
 }
 .ateco-risultati {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;

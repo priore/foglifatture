@@ -188,18 +188,18 @@ async function verificaStato() {
   gap: 6px;
   padding: 6px 14px;
   border-radius: var(--radius, 8px);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   background: var(--ground);
-  color: var(--text);
+  color: var(--ink);
   cursor: pointer;
   font-size: .88rem;
   transition: background .15s, border-color .15s;
 }
-.tab-btn:hover { background: var(--surface-raised, rgba(255,255,255,.06)); }
+.tab-btn:hover { background: var(--card); }
 .tab-btn.attiva {
-  background: var(--primary, #3b82f6);
-  border-color: var(--primary, #3b82f6);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-line);
+  color: var(--btn-primary-ink);
 }
 
 .dot-stato {

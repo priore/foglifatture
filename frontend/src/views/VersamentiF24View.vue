@@ -119,7 +119,7 @@ function formattaEuro(valore) {
     <div class="card" style="margin-top:20px">
       <div class="card-head">
         <h2>Elenco versamenti {{ annoSelezionato }}</h2>
-        <button type="button" class="btn btn-ghost" @click="esportaCsv">Esporta CSV</button>
+        <button type="button" class="btn btn-blue" @click="esportaCsv">Esporta CSV</button>
       </div>
       <div class="card-body">
         <div style="display:flex;gap:12px;flex-wrap:wrap">

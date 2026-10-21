@@ -27,18 +27,19 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 ## Avvio e job in background
 
 🟢 Dopo `listen`: `applicaPercorsoDatiAllAvvio()`, poi i job, tutti con lo stesso schema `setInterval` che rilegge la config a ogni tick:
-- `avviaPollingSdi` — ricevute IMAP, intervallo `sdi.intervalloPollingMinuti`
+- `avviaPollingSdi` — ricevute IMAP, intervallo `sdi.intervalloPollingMinuti`. Interroga la PEC solo se una fattura emessa nelle ultime 72 ore è ancora senza esito (`inAttesaRispostaRecente`)
 - `avviaBackupAutomatico` — solo se `backup.abilitato`
 - `avviaPromemoria` — solo se `reminder.abilitato`
 - `avviaPromemoriaScartoSdi`
 - `avviaMonitoraggioFonti` — confronto impronte delle fonti normative
 - `avviaNotificheFiscali` — F24, bollo, crediti, regole, Intrastat
+- `avviaPollingBtc` — transazioni sugli indirizzi `walletBtc`, tick da 60 s che rispetta `importBtc.intervalloMinuti`; non fa nulla senza `importBtc.abilitato`, avviso privacy accettato e almeno un indirizzo
 
 ## Comunicazione frontend ↔ backend
 
 🟢 `frontend/src/services/api.js`: `BASE_URL = '/api'`, `fetch` nativo, helper privato `richiesta()` con header JSON e estrazione uniforme dell'errore. Tre oggetti esportati: `api` (dominio), `updateApi` (`/api/update`), `authApi` (`/auth`, bypassa il wrapper).
 
-🟢 Eccezione voluta: `txBlockchain`, `txPerIndirizzo`, `cambioStoricoBtc`, `cambioAttualeBtc` e simili chiamano direttamente servizi esterni (mempool.space, CoinGecko) dal browser, con avviso privacy in UI.
+🟢 Eccezione voluta: `txBlockchain`, `txPerIndirizzo`, `cambioStoricoBtc`, `cambioAttualeBtc`, `prezzoMercatoBtc` e simili chiamano direttamente servizi esterni (mempool.space, CoinGecko) dal browser, con avviso privacy in UI. Il controllo periodico degli indirizzi (`importBtcService`) invece parte dal backend.
 
 ## Flusso chiave: emettere e inviare una fattura
 
@@ -47,6 +48,8 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 3. `GET .../xml`: rigenera con `generaXmlFatturaPA`, valida con `fatturaPaXmlValidator`, restituisce l'allegato.
 4. `POST .../invia-pec`: rigenera l'XML e invia via `inviaFatturaViaPec` (nodemailer).
 5. Ricevute: `POST /api/sdi/controlla` (manuale) o polling in background → `controllaRicevuteSdi` (imapflow + mailparser), archiviazione su disco, notifica desktop. Cronologia aggregata in `/api/sdi/cronologia`.
+   - Legge solo email non lette da `@pec.fatturapa.it` e solo allegati `.xml` (anche dentro `.eml` annidati), poi segna l'email `\Seen`.
+   - Le fatture d'acquisto recapitate dal SDI (fattura `.xml`/`.xml.p7m` più metadati `_MT_`) non vengono archiviate (vedi `KNOWN_ISSUES.md`).
 
 🟢 Una fattura già accettata dallo SDI non è rigenerabile: il backend rimanda a una nota di variazione, che l'app non emette (vedi `FEATURE_PROPOSALS.md`).
 
@@ -62,7 +65,17 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
 🟢 `AI_PROVIDER_DISABILITATI` (`envService.js`) esclude singoli provider. I provider CLI non supportano tool use: i servizi che richiedono ricerca web usano `soloApiKey`.
 
-🟢 Consumatori AI: aggiornamento settori ATECO (`geminiAtecoService`), mapping colonne CSV pagamenti, proroghe e minimale INPS (`scadenzeFiscaliService`), proposte di aggiornamento regole (`monitoraggioFontiService`), spiegazioni e ordine crediti (`regoleFiscaliRoutes`, `forfettarioRoutes`), chat (`chatService`). Dati fiscali personali partono solo con consenso (`config.ai.autorizzaDatiFiscali` o conferma per richiesta).
+🟢 Consumatori AI: aggiornamento settori ATECO (`geminiAtecoService`), mapping colonne CSV pagamenti e import BTC (`importFileBtcService`, celle oscurate, con lo stesso consenso), proroghe e minimale INPS (`scadenzeFiscaliService`), proposte di aggiornamento regole (`monitoraggioFontiService`), spiegazioni e ordine crediti (`regoleFiscaliRoutes`, `forfettarioRoutes`), chat (`chatService`). Dati fiscali personali partono solo con consenso (`config.ai.autorizzaDatiFiscali` o conferma per richiesta).
+
+## Cripto-attività (registro lotti BTC)
+
+🟢 Route sotto `/api/forfettario/btc/*` (`forfettarioRoutes.js`): movimenti (ingresso/uscita/elimina), lotti, plusvalenze (anche anteprima di un'uscita), RW, valore di mercato al 31/12, import da file e proposte (conferma, scarta, ripristina, controlla ora).
+
+🟢 Flusso dei dati: le rate incassate in BTC delle fatture (`invoiceService`) diventano lotti di tipo `incasso`; si sommano gli ingressi manuali (`movimentiBtcService`). Le uscite consumano i lotti in LIFO (`lottiBtcService`, nucleo puro senza I/O, funzioni async in fondo al file). Da lì: plusvalenze con riporto minusvalenze, IVCA, saldo al 31/12.
+
+🟢 Consumatori del registro: `stimaVersamentiService.righeCripto` (righe F24 1715, 1727, 1728, 1729; solo se la regola dell'anno ha la sezione `cripto`, altrimenti avviso), `exportService` (sezioni lotti, uscite, riepilogo in coda al CSV per il commercialista), dashboard (tab Bitcoin) e vista `/bitcoin`.
+
+🟢 Import: `importBtcService` interroga due provider compatibili con l'API mempool.space (primario e di riserva, `importBtc.urlPrimario`/`urlFallback`), confronta le risposte e salva proposte; `importFileBtcService` legge CSV/JSON (Sparrow, Electrum, Kraken, Binance, Coinbase, One Trading, o mapping proposto dall'AI). Le proposte si registrano solo con conferma esplicita dell'utente.
 
 ## Server MCP e chat
 
@@ -84,6 +97,8 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 | 🟢 Notifiche | `node-notifier` | `lib/notifier.js` | Notifiche desktop |
 | 🟢 Banca d'Italia | `fetch` | `cambiValutaService.js` | Cambi ufficiali (cache in `data/cambi/`) |
 | 🟢 Agenzia Entrate | `fetch` | `f24PdfService.js`, `monitoraggioFontiService.js` | Modello F24, documenti fonti (solo domini ufficiali) |
+| 🟢 mempool.space / blockstream.info | `fetch` | `importBtcService.js` | Polling transazioni sugli indirizzi configurati (disattivato di default, avviso privacy) |
+| 🟢 CoinGecko | `fetch` (browser) | `api.js` (`prezzoMercatoBtc`) | Prezzo BTC/EUR in tempo reale |
 | 🟢 Git | `git` CLI | `updateService.js` | Rilevamento/applicazione aggiornamenti via tag `vX.Y.Z` |
 
 ## Persistenza
@@ -98,7 +113,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 ## Review Checklist
 
 - **Completeness:** pipeline, router, job, flusso fattura, AI, MCP, integrazioni, persistenza.
-- **Accuracy:** verificato su `server.js`, `api.js`, `aiRouterService.js`, `mcpService.js`, route e servizi (2026-10-13).
+- **Accuracy:** verificato su `server.js`, `api.js`, `aiRouterService.js`, `mcpService.js`, route e servizi (2026-10-19).
 - **Consistency:** coerente con `PROJECT_ANALYSIS.md`.
 - **TODO:** nessuno.
 - **Missing information:** schema JSON completo di fatture e timesheet.

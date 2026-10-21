@@ -239,6 +239,12 @@ describe('righeCripto', () => {
     assert.deepEqual(r.novembre.map((x) => [x.codice, x.annoRiferimento, x.importo]), [['1729', 2027, 60]]);
   });
 
+  it('rateazione 0101 su 1727 e 1728 (Ris. AdE 10/E 2024), non su 1715 e 1729', () => {
+    const r = righeCripto({ ...base, ivca: ivca(100), accontiVersati: 30 });
+    const rate = Object.fromEntries([...r.saldo, ...r.novembre].map((x) => [x.codice, x.rateazione]));
+    assert.deepEqual(rate, { 1715: undefined, 1727: '0101', 1728: '0101', 1729: undefined });
+  });
+
   it('acconti non registrati: stima dall\'anno precedente con avviso', () => {
     const r = righeCripto({ ...base, plusvalenze: null, ivca: ivca(100), ivcaNm1: ivca(40), accontiVersati: null });
     assert.equal(r.saldo[0].importo, 60);

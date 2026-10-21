@@ -75,3 +75,25 @@ test('sezione cripto 2026: aliquota 33, franchigia 0, IVCA 0.2, codici tributo',
   assert.strictEqual(cripto.aliquotaIvca, 0.2);
   assert.deepStrictEqual(Object.values(cripto.codiciTributo), ['1715', '1727', '1728', '1729']);
 });
+
+test('statoProvvisorie: confermate e recenti non sono provvisorie', async () => {
+  const { statoProvvisorie } = await import('./regoleFiscaliService.js');
+  const r = statoProvvisorie({ anno: 2026, aggiornate: true, verificatoIl: '2026-10-19', banner: null }, new Date('2027-01-10'));
+  assert.deepStrictEqual(r, { provvisorie: false, banner: null });
+});
+
+test('statoProvvisorie: non confermate sono provvisorie, banner esistente invariato', async () => {
+  const { statoProvvisorie } = await import('./regoleFiscaliService.js');
+  const r = statoProvvisorie({ anno: 2026, aggiornate: false, verificatoIl: '2026-10-19', banner: 'non confermate' }, new Date('2026-11-01'));
+  assert.deepStrictEqual(r, { provvisorie: true, banner: 'non confermate' });
+});
+
+test('statoProvvisorie: verificatoIl assente o oltre 12 mesi sono provvisorie con motivo', async () => {
+  const { statoProvvisorie } = await import('./regoleFiscaliService.js');
+  const assente = statoProvvisorie({ anno: 2026, aggiornate: true }, new Date('2026-11-01'));
+  assert.equal(assente.provvisorie, true);
+  assert.match(assente.banner, /senza data di verifica/);
+  const vecchie = statoProvvisorie({ anno: 2026, aggiornate: true, verificatoIl: '2026-10-19' }, new Date('2027-11-01'));
+  assert.equal(vecchie.provvisorie, true);
+  assert.match(vecchie.banner, /oltre 12 mesi/);
+});

@@ -1,7 +1,7 @@
 // Stima delle scadenze F24 (imposta sostitutiva + INPS gestione separata) per l'anno fiscale N.
 // Funzioni pure: nessuna lettura da disco, tutti gli input arrivano dal chiamante (step 5 F24_STEP3).
 import { scadenzeBaseAnno, primoGiornoLavorativo } from './scadenzeFiscaliService.js';
-import { impostaCassaAnno, roundEuro, accontoInpsAnnoSuccessivo } from './forfettarioService.js';
+import { impostaCassaAnno, roundEuro, accontoInpsAnnoSuccessivo, aliquotaImposta, ricaviAnnoCassa, calcolaAccantonamento, pianoCassaAccantonamento } from './forfettarioService.js';
 import { listVersamenti, accontiImpostaVersati, accontiIvcaVersati } from './versamentiF24Service.js';
 import { riepilogoAnnuale, calcolaIvca, costruisciLotti } from './lottiBtcService.js';
 import { tutteLeFattureRisolte } from './forfettarioService.js';
@@ -181,7 +181,8 @@ export function maxRateConsentite(dataBase) {
 // `accontiVersati` null = nessun acconto registrato: si stima con l'IVCA dell'anno precedente.
 export function righeCripto({ anno, plusvalenze, ivca, ivcaNm1, accontiVersati, codici }) {
   const saldo = [], novembre = [], crediti = [], avvisi = [];
-  const riga = (codice, annoRiferimento, importo, descrizione) => ({ sezione: 'erario', codice, annoRiferimento, importo, descrizione });
+  // Ris. AdE 10/E 2024: per 1727 e 1728 il campo rateazione è "0101" se in unica soluzione (rateizzaScadenza lo sovrascrive con NNRR).
+  const riga = (codice, annoRiferimento, importo, descrizione, rateazione) => ({ sezione: 'erario', codice, annoRiferimento, importo, descrizione, ...(rateazione && { rateazione }) });
   if (plusvalenze?.applicabile && plusvalenze.imposta > 0) {
     if (plusvalenze.imposta >= F24_MIN_RIGA) saldo.push(riga(codici.plusvalenzeRegDichiarativo, anno, plusvalenze.imposta, `Imposta sostitutiva plusvalenze cripto ${anno}`));
     else avvisi.push(`Imposta plusvalenze cripto ${anno} (${plusvalenze.imposta} €) sotto la soglia minima di 1,03 €: riga F24 non dovuta.`);
@@ -191,11 +192,11 @@ export function righeCripto({ anno, plusvalenze, ivca, ivcaNm1, accontiVersati, 
   const accontiEffettivi = accontiVersati ?? ivcaNm1?.impostaDaVersare ?? 0;
   if (accontiVersati == null && accontiEffettivi > 0) avvisi.push(`Acconti IVCA ${anno} non registrati con codice tributo: usata la stima dell'anno precedente.`);
   const saldoIvca = roundEuro(ivca.impostaDaVersare - accontiEffettivi);
-  if (saldoIvca >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaSaldo, anno, saldoIvca, `Saldo IVCA ${anno}`));
+  if (saldoIvca >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaSaldo, anno, saldoIvca, `Saldo IVCA ${anno}`, '0101'));
   else if (saldoIvca < 0) crediti.push({ sezione: 'erario', importo: Math.abs(saldoIvca), descrizione: `Saldo IVCA ${anno} a credito (acconti > imposta)` });
   const primo = roundEuro(ivca.impostaDaVersare * 0.40);
   const secondo = roundEuro(ivca.impostaDaVersare - primo);
-  if (primo >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaAccontoI, anno + 1, primo, `I acconto IVCA ${anno + 1}`));
+  if (primo >= F24_MIN_RIGA) saldo.push(riga(codici.ivcaAccontoI, anno + 1, primo, `I acconto IVCA ${anno + 1}`, '0101'));
   if (secondo >= F24_MIN_RIGA) novembre.push(riga(codici.ivcaAccontoII, anno + 1, secondo, `II acconto IVCA ${anno + 1}`));
   return { saldo, novembre, crediti, avvisi };
 }
@@ -223,7 +224,7 @@ export async function stimaVersamenti(config, anno) {
   if (datiN.ricavi > sogliaUscita) {
     return {
       annoFiscale: anno,
-      regole: { anno: regole.anno, verificatoIl: regole.verificatoIl, aggiornate: regole.aggiornate ?? true, banner: regole.banner ?? null },
+      regole: { anno: regole.anno, verificatoIl: regole.verificatoIl, confermatoIl: regole.confermatoIl ?? null, aggiornate: regole.aggiornate ?? true, provvisorie: regole.provvisorie ?? false, banner: regole.banner ?? null },
       scadenze: [],
       crediti: [],
       avvisi: ['Ricavi oltre 100.000 €: il regime forfettario cessa nell\'anno stesso. F24 forfettario non applicabile — consultare un commercialista.'],
@@ -412,14 +413,41 @@ export async function stimaVersamenti(config, anno) {
   if (gestionePrevidenziale !== 'gestioneSeparata') {
     avvisi.push('Gestione previdenziale non configurata: righe INPS non incluse. Configura in Impostazioni → Regime forfettario.');
   }
-  if (regole.aggiornate === false) avvisi.push(regole.banner);
+  if (config.forfettario?.altreAttivitaCoefficienteDiverso === true) {
+    avvisi.push('Hai dichiarato altre attività con coefficiente di redditività diverso: l\'app applica a tutti i ricavi un solo coefficiente, quindi reddito e importi stimati non tengono conto delle altre attività.');
+  }
+  if (regole.provvisorie) avvisi.push(regole.banner);
 
   return {
     annoFiscale: anno,
-    regole: { anno: regole.anno, verificatoIl: regole.verificatoIl, aggiornate: regole.aggiornate ?? true, banner: regole.banner ?? null },
+    regole: { anno: regole.anno, verificatoIl: regole.verificatoIl, confermatoIl: regole.confermatoIl ?? null, aggiornate: regole.aggiornate ?? true, provvisorie: regole.provvisorie ?? false, banner: regole.banner ?? null },
     scadenze,
     crediti,
     avvisi: avvisi.filter(Boolean),
     _dettagli: { impostaN, impostaNm1, saldoImposta, accontoTotaleN1, saldoInps, accontoInpsTotaleN1, nRate, maxRate },
+  };
+}
+
+// K1: accantonamento teorico dell'anno `anno` + piano di cassa contro le uscite F24 che ne derivano.
+export async function accantonamentoAnno(config, anno) {
+  const regole = await regoleAnno(anno);
+  const tutte = (await tutteLeFattureRisolte()).map(arricchisciStatoPagamento);
+  const { incassateAnno } = await ricaviAnnoCassa(anno, tutte);
+  const { coefficenteRedditivita, dataInizioAttivita, requisitiAliquotaRidotta = false,
+    gestionePrevidenziale = '', altraCoperturaPrevidenziale = false } = config.forfettario;
+  const gs = regole.inpsGestioneSeparata;
+  const inps = gestionePrevidenziale === 'gestioneSeparata'
+    ? { aliquota: altraCoperturaPrevidenziale ? (gs?.aliquotaAltreAttivita ?? 24) : (gs?.aliquota ?? 26.07), massimale: gs?.massimale ?? 119650 }
+    : null;
+  const acc = calcolaAccantonamento({
+    incassi: incassateAnno.map((r) => ({ data: r.dataPagamento, importo: r.nettoAPagare })),
+    coefficiente: coefficenteRedditivita,
+    aliquotaImposta: await aliquotaImposta(dataInizioAttivita, anno, requisitiAliquotaRidotta),
+    inps,
+  });
+  const piano = await stimaVersamenti(config, anno);
+  return {
+    anno, quotaPct: acc.quotaPct, accantonato: acc.accantonato, inpsConfigurata: inps !== null,
+    piano: pianoCassaAccantonamento(acc.accantonato, piano.scadenze),
   };
 }

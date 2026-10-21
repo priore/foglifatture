@@ -84,7 +84,7 @@ async function salvaClaude() {
     </div>
 
     <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
-      <button class="btn btn-primary" :disabled="salvandoClaude" @click="salvaClaude">{{ salvandoClaude ? 'Salvo…' : 'Salva API key' }}</button>
+      <button class="btn btn-ok" :disabled="salvandoClaude" @click="salvaClaude">{{ salvandoClaude ? 'Salvo…' : 'Salva API key' }}</button>
       <span class="badge-mono" v-if="messaggioClaude">{{ messaggioClaude }}</span>
     </div>
 
@@ -100,7 +100,7 @@ async function salvaClaude() {
               <option v-if="modelloScelto && !MODELLI_NOTI.includes(modelloScelto)" :value="modelloScelto">{{ modelloScelto }}</option>
               <option v-for="m in MODELLI_NOTI" :key="m" :value="m">{{ m }}</option>
             </select>
-            <button class="btn btn-primary" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
+            <button class="btn btn-ok" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
           </div>
         </div>
         <span class="badge-mono" v-if="messaggioModello" style="display:inline-block;margin-top:8px">{{ messaggioModello }}</span>

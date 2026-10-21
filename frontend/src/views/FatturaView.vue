@@ -2,10 +2,12 @@
 // Schermata Fattura Pro-Forma: calcolo automatico da timesheet, generazione XML FatturaPA,
 // invio PEC. Il calcolo compenso è ricavato dal backend (unica fonte di verità sui totali).
 import { ref, computed, watch, onMounted } from 'vue';
+import { clienteAttivoId } from '../composables/useClienteAttivo.js';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import TemplateStampa from '../components/common/TemplateStampa.vue';
 import { api } from '../services/api.js';
+import { caricaQuota, daAccantonare } from '../composables/useAccantonamento.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
 import { inviaPdfEmail } from '../composables/useMailto.js';
 import { preparaDatiFattura, pagamentoDaConfig } from '../composables/useTemplateData.js';
@@ -21,6 +23,16 @@ const fatturaGenerata = ref(null);
 const anteprimaRef = ref(null);
 const inviandoPec = ref(false);
 const esitoPec = ref('');
+const importoNota = ref('');
+// Il GET fattura non arricchisce lo stato pagamento: quanto già incassato oltre il dovuto dopo la nota.
+const daRimborsareNota = computed(() => {
+  const f = fatturaGenerata.value;
+  if (!f?.notaCredito) return 0;
+  const pagato = (f.pagamenti ?? []).reduce((t, p) => t + p.importo, 0);
+  return Math.max(0, Number((pagato - (f.nettoAPagare - f.notaCredito.nettoAPagare)).toFixed(2)));
+});
+const lavorandoNota = ref(false);
+const esitoNota = ref('');
 const meseMinimo = ref(null);
 const controllandoSdi = ref(false);
 const esitoSdi = ref('');
@@ -46,6 +58,9 @@ function dataDefault() {
 
 const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
 const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
+const soloFatture = computed(() => clienteCorrente.value?.gestione === 'fatture');
+// Cliente "solo fatture": nessun calcolo da timesheet, importo sempre libero.
+watch(soloFatture, (v) => { if (v) modoManuale.value = true; }, { immediate: true });
 
 // Fatture storiche importate da XML possono avere una descrizione salvata senza il
 // totale ore (fedele al documento originale emesso): a video, solo per leggibilità,
@@ -407,13 +422,44 @@ async function inviaPec() {
   }
 }
 
+// Nota di credito TD04: azione fiscale, sempre con conferma esplicita dell'utente.
+async function emettiNotaCredito() {
+  const f = fatturaGenerata.value;
+  const importo = importoNota.value === '' ? null : Number(importoNota.value);
+  const quanto = importo == null ? 'per l\'intero importo' : `di ${importo.toFixed(2)} €`;
+  if (!window.confirm(`Emettere una nota di credito ${quanto} a storno della fattura n. ${f.numero}?\n\nOccuperà il prossimo numero della sequenza e non si può annullare.`)) return;
+  lavorandoNota.value = true;
+  esitoNota.value = '';
+  try {
+    fatturaGenerata.value = await api.emettiNotaCredito(anno.value, mese.value, clienteId.value, { importo });
+  } catch (err) {
+    esitoNota.value = `Errore: ${err.message}`;
+  } finally {
+    lavorandoNota.value = false;
+  }
+}
+
+async function inviaPecNotaCredito() {
+  lavorandoNota.value = true;
+  esitoNota.value = '';
+  try {
+    const risultato = await api.inviaPecNotaCredito(anno.value, mese.value, clienteId.value);
+    esitoNota.value = risultato.inviato ? 'Inviata con successo' : `Errore: ${risultato.errore}`;
+    fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
+  } catch (err) {
+    esitoNota.value = `Errore: ${err.message}`;
+  } finally {
+    lavorandoNota.value = false;
+  }
+}
+
 function inizializzaClienteId() {
   const salvato = localStorage.getItem('clienteAttivoId');
   clienteId.value = clientiAttivi.value.some(c => c.id === salvato)
     ? salvato
     : clientiAttivi.value[0]?.id ?? null;
 }
-watch(clienteId, (id) => { if (id) localStorage.setItem('clienteAttivoId', id); });
+watch(clienteId, (id) => { if (id) { localStorage.setItem('clienteAttivoId', id); clienteAttivoId.value = id; } });
 
 // Previsione soglia in modo manuale: aggiorna con debounce 400ms quando cambia l'importo.
 watch(importoManuale, (val) => {
@@ -475,6 +521,7 @@ async function inviaEmail() {
 watch([anno, mese, clienteId], caricaAnteprima);
 onMounted(async () => {
   [config.value, valuteLista.value] = await Promise.all([api.getConfig(), api.valuteSupportate()]);
+  caricaQuota(new Date().getFullYear());
   inizializzaClienteId();
   await caricaAnteprima();
   await aggiornaMeseMinimo();
@@ -494,12 +541,12 @@ onMounted(async () => {
     </div>
     <div class="actions" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-ok" @click="esporta">Scarica PDF</button>
+      <button class="btn btn-blue" @click="esporta">Scarica PDF</button>
     </div>
 
     <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
       <div>
-        <div class="card">
+        <div class="card" v-if="!soloFatture">
           <div class="card-head"><h2>Tipo fattura</h2></div>
           <div class="card-body" style="display:flex;gap:16px">
             <label style="display:flex;align-items:center;gap:6px"><input type="radio" :value="false" v-model="modoManuale" /> Da timesheet</label>
@@ -560,17 +607,20 @@ onMounted(async () => {
             <div class="field" v-if="fatturaGenerata?.pagamenti?.length">
               <label>Pagamenti registrati {{ fatturaGenerata.residuo > 0 ? `(residuo ${formattaEuro(fatturaGenerata.residuo)})` : '(saldata)' }}</label>
               <ul class="lista-piatta">
-                <li v-for="(p, i) in fatturaGenerata.pagamenti" :key="i" style="display:flex;justify-content:space-between;align-items:center">
-                  <span>
-                    {{ formattaData(p.data) }} — {{ formattaEuro(p.importo) }}
-                    <template v-if="p.btc">
-                      — ₿ <a :href="`https://mempool.space/tx/${p.btc.txid}`" target="_blank" rel="noopener">{{ p.btc.txid.slice(0, 10) }}…</a>
-                    </template>
-                    <template v-if="p.valuta">
-                      — {{ p.valuta.importoValuta }} {{ p.valuta.codice }} (cambio {{ p.valuta.cambio }}, {{ p.valuta.fonte }})
-                    </template>
-                  </span>
-                  <button class="btn btn-ghost" @click="eliminaPagamento(i)">Elimina</button>
+                <li v-for="(p, i) in fatturaGenerata.pagamenti" :key="i" class="pagamento">
+                  <div class="pagamento-main">
+                    <span class="pagamento-data">{{ formattaData(p.data) }}</span>
+                    <strong class="pagamento-importo">{{ formattaEuro(p.importo) }}</strong>
+                    <button type="button" class="btn-icon btn-icon-warn" title="Elimina pagamento" aria-label="Elimina pagamento" @click="eliminaPagamento(i)">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+                    </button>
+                  </div>
+                  <a v-if="p.btc" class="chip-tx" :href="`https://mempool.space/tx/${p.btc.txid}`" target="_blank" rel="noopener" :title="p.btc.txid">
+                    <span class="chip-tx-icon">₿</span>
+                    <span class="chip-tx-id">{{ p.btc.txid.slice(0, 8) }}…{{ p.btc.txid.slice(-8) }}</span>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                  </a>
+                  <span v-if="p.valuta" class="badge-mono">{{ p.valuta.importoValuta }} {{ p.valuta.codice }} · cambio {{ p.valuta.cambio }} · {{ p.valuta.fonte }}</span>
                 </li>
               </ul>
             </div>
@@ -623,9 +673,12 @@ onMounted(async () => {
                 <span v-if="btcForm.satoshi && btcForm.cambioEurBtc" class="badge-mono">
                   ≈ {{ formattaEuro((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc) }}
                 </span>
+                <small v-if="btcForm.satoshi && btcForm.cambioEurBtc && daAccantonare((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc, new Date().getFullYear()) != null" class="note-legal">
+                  Da accantonare per le tasse: {{ formattaEuro(daAccantonare((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc, new Date().getFullYear())) }}
+                </small>
 
                 <div style="display:flex;gap:6px">
-                  <button class="btn btn-primary" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-ok" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra' }}</button>
                   <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormBtc = false">Annulla</button>
                 </div>
               </div>
@@ -658,10 +711,13 @@ onMounted(async () => {
                 <span v-if="valutaForm.importoValuta && valutaForm.cambio && valutaForm.cambio > 0" class="badge-mono">
                   ≈ {{ formattaEuro(valutaForm.importoValuta / valutaForm.cambio) }}
                 </span>
+                <small v-if="valutaForm.importoValuta && valutaForm.cambio > 0 && daAccantonare(valutaForm.importoValuta / valutaForm.cambio, new Date().getFullYear()) != null" class="note-legal">
+                  Da accantonare per le tasse: {{ formattaEuro(daAccantonare(valutaForm.importoValuta / valutaForm.cambio, new Date().getFullYear())) }}
+                </small>
                 <span v-if="erroreValuta" class="note-legal" style="color:var(--warn)">{{ erroreValuta }}</span>
 
                 <div style="display:flex;gap:6px">
-                  <button class="btn btn-primary" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoValuta" @click="registraPagamentoValuta">{{ registrandoValuta ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-ok" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoValuta" @click="registraPagamentoValuta">{{ registrandoValuta ? 'Registro…' : 'Registra' }}</button>
                   <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormValuta = false">Annulla</button>
                 </div>
               </div>
@@ -685,10 +741,11 @@ onMounted(async () => {
             <button class="btn btn-primary" :disabled="fatturaAccettataSdi || (modoManuale && (!importoValido || !descrizioneManuale))" @click="generaFattura()">
               {{ fatturaGenerata ? 'Rigenera fattura' : 'Genera fattura' }} n. {{ fatturaGenerata?.numero ?? '' }}
             </button>
-            <small v-if="fatturaAccettataSdi" class="note-legal">Fattura accettata dallo SDI: emessa e non più modificabile. Per correggere un errore, emetti una nota di variazione.</small>
+            <small v-if="!fatturaGenerata" class="note-legal">Verifica imponibile, rivalsa INPS e bollo prima di emettere: dopo l'invio allo SDI la fattura non si modifica.</small>
+            <small v-if="fatturaAccettataSdi" class="note-legal">Fattura accettata dallo SDI: emessa e non più modificabile. Per correggere un errore, emetti una nota di credito (card sotto).</small>
             <small v-else-if="!fatturaGenerata && previsioneSogliaCorrente?.livelloUscita === 'uscitaImmediata'" class="note-legal" style="color:var(--warn)">⚠️ Con questa fattura supereresti i 100.000 €: se incassata nell'anno il regime cessa immediatamente. Sarà chiesta conferma.</small>
             <small v-else-if="!fatturaGenerata && (previsioneSogliaCorrente?.livelloSoglia === 'oltre' || previsioneSogliaCorrente?.livelloSoglia === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'oltre')" class="note-legal" style="color:var(--warn)">Attenzione: con questa fattura ti avvicini o superi la soglia forfettaria{{ previsioneSogliaCorrente?.livelloSoglia === 'oltre' ? ' — sarà chiesta conferma' : '' }}.</small>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
+            <button class="btn btn-blue" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata || !(clienteCorrente.emailFattura || clienteCorrente.email) || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
@@ -698,6 +755,31 @@ onMounted(async () => {
               {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
+          </div>
+        </div>
+
+        <div v-if="fatturaGenerata && fatturaAccettataSdi" class="card">
+          <div class="card-head"><h2>Nota di credito</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <template v-if="fatturaGenerata.notaCredito">
+              <p class="note-legal">
+                Nota n. {{ fatturaGenerata.notaCredito.numero }} del {{ fatturaGenerata.notaCredito.data }}:
+                storno di {{ fatturaGenerata.notaCredito.nettoAPagare.toFixed(2) }} € sulla fattura n. {{ fatturaGenerata.numero }}.
+              </p>
+              <p v-if="daRimborsareNota > 0" class="note-legal" style="color:var(--warn)">
+                Il cliente aveva già pagato: da rimborsare {{ daRimborsareNota.toFixed(2) }} €. I ricavi per cassa non cambiano finché il rimborso non incide sull'anno dell'incasso: verifica col commercialista.
+              </p>
+              <a class="btn btn-blue" :href="api.urlDownloadXmlNotaCredito(anno, mese, clienteId)" target="_blank">Scarica XML nota di credito</a>
+              <button class="btn btn-ok" :disabled="lavorandoNota" @click="inviaPecNotaCredito">{{ lavorandoNota ? 'Invio…' : 'Invia PEC a SDI' }}</button>
+              <small v-if="fatturaGenerata.notaCredito.invii.length" class="note-legal">Tentativi di invio: {{ fatturaGenerata.notaCredito.invii.length }}.</small>
+            </template>
+            <template v-else>
+              <label for="importo-nota">Importo da stornare (vuoto = intera fattura)</label>
+              <input id="importo-nota" v-model="importoNota" type="number" min="0.01" step="0.01" :max="fatturaGenerata.imponibile" :placeholder="fatturaGenerata.imponibile.toFixed(2)" />
+              <button class="btn btn-warn" :disabled="lavorandoNota" @click="emettiNotaCredito">Emetti nota di credito</button>
+              <small class="note-legal">Una sola nota per fattura. Prende il prossimo numero della sequenza.</small>
+            </template>
+            <span v-if="esitoNota" class="badge-mono">{{ esitoNota }}</span>
           </div>
         </div>
 
@@ -755,4 +837,14 @@ onMounted(async () => {
 
 <style scoped>
 .lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.pagamento { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px 12px; }
+.pagamento-main { display: flex; align-items: center; gap: var(--gap-md); width: 100%; }
+.pagamento-data { color: var(--ink-soft); font-size: var(--font-size-sm); }
+.pagamento-importo { flex: 1; font-size: var(--font-size-md); color: var(--ink); }
+.btn-icon-warn { width: 28px; height: 28px; background: var(--btn-warn-bg); color: var(--btn-warn-ink); border-color: var(--btn-warn-line); }
+.btn-icon-warn:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-warn-bg) 85%, var(--btn-warn-ink)); }
+.chip-tx { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 10px 3px 4px; border-radius: var(--radius-pill); background: var(--btn-primary-bg); border: 1px solid var(--btn-primary-line); color: var(--btn-primary-ink); font-size: var(--font-size-xs); text-decoration: none; }
+.chip-tx:hover { filter: brightness(.96); }
+.chip-tx-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--radius-circle); background: var(--btn-primary-ink); color: var(--btn-primary-bg); font-weight: 700; font-size: var(--font-size-xs); }
+.chip-tx-id { font-family: 'IBM Plex Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

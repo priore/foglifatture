@@ -4,6 +4,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../services/api.js';
+import { caricaQuota, daAccantonare } from '../composables/useAccantonamento.js';
 import { PASSI_IMPORTA_STORICO as PASSI } from '../wizardImportaStoricoPassi.js';
 import FileDrop from '../components/common/FileDrop.vue';
 
@@ -185,6 +186,7 @@ async function analizzaFilePagamenti(files) {
       api.fattureAperte(),
     ]);
     propostePagamenti.value = trovate;
+    new Set(trovate.map((p) => Number(String(p.data).slice(0, 4)))).forEach(caricaQuota);
     fattureApertePagamenti.value = aperte;
     trovate.forEach((p, i) => {
       scelteFatturaPagamenti.value[i] = p.fattura ? chiaveFattura(p.fattura) : '';
@@ -410,7 +412,10 @@ async function riavvia() {
           <tbody>
             <tr v-for="(p, i) in propostePagamenti" :key="i">
               <td>{{ p.data }}</td>
-              <td>{{ formattaEuro(p.importo) }}</td>
+              <td>
+                {{ formattaEuro(p.importo) }}
+                <small v-if="daAccantonare(p.importo, Number(String(p.data).slice(0, 4))) != null" class="note-legal" style="display:block">da accantonare {{ formattaEuro(daAccantonare(p.importo, Number(String(p.data).slice(0, 4)))) }}</small>
+              </td>
               <td class="cella-descrizione">{{ p.descrizione }}</td>
               <td>
                 <span v-if="confermatiPagamenti.has(i)">✓ Registrato</span>

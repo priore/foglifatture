@@ -1,4 +1,5 @@
 <script setup>
+import { clienteAttivoId } from '../composables/useClienteAttivo.js';
 // Schermata Timesheet: editor mensile + riepilogo + anteprima di stampa PDF.
 import { ref, computed, watch, onMounted } from 'vue';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
@@ -24,7 +25,8 @@ const meseMinimo = ref(null);
 const inviandoEmail = ref(false);
 const esitoEmail = ref('');
 
-const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo) ?? []);
+// Clienti "solo fatture" non hanno timesheet: esclusi dal selettore.
+const clientiAttivi = computed(() => config.value?.clienti.filter(c => c.attivo && c.gestione !== 'fatture') ?? []);
 const clienteCorrente = computed(() => clientiAttivi.value.find(c => c.id === clienteId.value) ?? null);
 
 const totaleMensile = computed(() => calcolaTotaleMensile(giorni.value));
@@ -112,7 +114,7 @@ function inizializzaClienteId() {
     ? salvato
     : clientiAttivi.value[0]?.id ?? null;
 }
-watch(clienteId, (id) => { if (id) localStorage.setItem('clienteAttivoId', id); });
+watch(clienteId, (id) => { if (id) { localStorage.setItem('clienteAttivoId', id); clienteAttivoId.value = id; } });
 
 watch([anno, mese, clienteId], caricaTimesheet);
 onMounted(async () => {
@@ -136,14 +138,14 @@ onMounted(async () => {
     </div>
     <div class="actions" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-blue" :disabled="salvando" @click="salvaTimesheet">
+      <button class="btn btn-ok" :disabled="salvando" @click="salvaTimesheet">
         {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
       </button>
-      <button class="btn btn-ok" @click="esporta">Esporta PDF</button>
-      <button class="btn btn-amber" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
+      <button class="btn btn-blue" @click="esporta">Esporta PDF</button>
+      <button class="btn btn-blue" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
         {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
       </button>
-      <button class="btn btn-violet" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
+      <button class="btn btn-blue" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
     </div>
     <p v-if="esitoEmail" class="badge-mono" style="margin-top:-10px;margin-bottom:16px">{{ esitoEmail }}</p>
 

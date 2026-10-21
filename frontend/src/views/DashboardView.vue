@@ -9,6 +9,8 @@ import UpdateModal from '../components/UpdateModal.vue';
 import StepRegoleFiscali from '../components/wizard/StepRegoleFiscali.vue';
 import ChatAi from '../components/ChatAi.vue';
 import BtcValoreLive from '../components/BtcValoreLive.vue';
+import QuadroRwCripto from '../components/QuadroRwCripto.vue';
+import ProspettoDichiarazione from '../components/ProspettoDichiarazione.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 
@@ -43,6 +45,14 @@ const scadenzeFiscali = ref([]);
 const fonteScadenzeFiscali = ref('base');
 const statoRegoleFiscali = ref(null);
 const versamentiStimati = ref(null);
+const accantonamento = ref(null);
+const prospettoDichiarazione = ref(null);
+const erroreProspetto = ref('');
+// Conferma «Ho verificato gli importi» per scadenza: abilita il download del PDF F24 (solo UI).
+const f24Verificati = ref({});
+function scaricaF24(indice) {
+  window.open(api.urlF24Pdf(annoSelezionato.value, indice), '_blank');
+}
 const rateSaldoSelezionato = ref(1);
 const salvatoreRate = ref(false);
 const bolloTrimestrale = ref(null);
@@ -76,6 +86,7 @@ async function salvaDataIncasso(f, dataPagamento, importo) {
     await api.confermaPagamentoFattura(f.anno, f.mese, f.clienteId, dataPagamento, importo);
     await caricaFattureAperte();
     await carica();
+    caricaAccantonamento();
   } catch (err) {
     errore.value = err.message;
   } finally {
@@ -92,6 +103,27 @@ async function caricaScadenzeFiscali() {
 async function caricaStatoRegole() {
   statoRegoleFiscali.value = await api.statoRegoleFiscali().catch(() => null);
 }
+
+async function caricaProspettoDichiarazione() {
+  prospettoDichiarazione.value = null;
+  erroreProspetto.value = '';
+  try { prospettoDichiarazione.value = await api.prospettoDichiarazione(annoSelezionato.value); } catch (e) { erroreProspetto.value = e.message; }
+}
+
+async function caricaAccantonamento() {
+  accantonamento.value = await api.accantonamento(annoSelezionato.value).catch(() => null);
+}
+
+function quotaIncasso(importo) {
+  return accantonamento.value ? (Number(importo) || 0) * accantonamento.value.quotaPct / 100 : 0;
+}
+
+const barrePianoCassa = computed(() => (accantonamento.value?.piano ?? []).map((p) => ({
+  etichetta: `${MESI_BREVI[Number(p.data.slice(5, 7)) - 1]} ${p.data.slice(0, 4)}`,
+  colore: p.scoperto ? 'var(--warn)' : 'var(--ok)',
+  valore: Math.abs(p.residuo),
+  valoreTesto: `${p.scoperto ? 'scoperto ' : 'resta '}${formattaEuro(Math.abs(p.residuo))}`,
+})));
 
 async function caricaVersamentiStimati() {
   versamentiStimati.value = await api.versamentiStimati(annoSelezionato.value).catch(() => null);
@@ -180,11 +212,13 @@ onMounted(() => {
   caricaMercatoBtc();
   caricaStatoRegole();
   caricaVersamentiStimati();
+  caricaAccantonamento();
+  caricaProspettoDichiarazione();
   caricaBolloTrimestrale();
   caricaCreditiResidui();
   caricaRegoleAnno();
 });
-watch(annoSelezionato, () => { carica(); caricaVersamentiStimati(); caricaBolloTrimestrale(); caricaRegoleAnno(); });
+watch(annoSelezionato, () => { carica(); caricaAccantonamento(); caricaVersamentiStimati(); caricaProspettoDichiarazione(); caricaBolloTrimestrale(); caricaRegoleAnno(); });
 
 const barreRicaviMensili = computed(() => {
   if (!dashboard.value) return [];
@@ -301,6 +335,7 @@ async function caricaValoreAttualeBtc() {
 const fiscaleBtc = ref(null);
 const erroreFiscaleBtc = ref('');
 const prezzo1231Btc = ref('');
+const prezzoInizioBtc = ref('');
 const salvandoPrezzoBtc = ref(false);
 async function caricaFiscaleBtc() {
   erroreFiscaleBtc.value = '';
@@ -317,6 +352,19 @@ async function salvaPrezzo1231Btc() {
   erroreFiscaleBtc.value = '';
   try {
     await api.impostaValoreMercatoBtc(annoSelezionato.value, Number(prezzo1231Btc.value.replace(',', '.')));
+    await caricaFiscaleBtc();
+  } catch (err) {
+    erroreFiscaleBtc.value = err.message;
+  } finally {
+    salvandoPrezzoBtc.value = false;
+  }
+}
+async function salvaPrezzoInizioBtc() {
+  salvandoPrezzoBtc.value = true;
+  erroreFiscaleBtc.value = '';
+  try {
+    await api.impostaValoreMercatoBtc(annoSelezionato.value - 1, Number(prezzoInizioBtc.value.replace(',', '.')));
+    prezzoInizioBtc.value = '';
     await caricaFiscaleBtc();
   } catch (err) {
     erroreFiscaleBtc.value = err.message;
@@ -383,9 +431,9 @@ async function caricaMercatoBtc() {
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
 // Tre viste (Dashboard/Bitcoin/F24), ognuna col proprio ordine e la propria chiave localStorage.
-const ORDINE_DEFAULT = ['soglia-cassa', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const ORDINE_DEFAULT = ['soglia-cassa', 'accantonamento', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
 const ORDINE_DEFAULT_BTC = ['btc-mercato', 'btc-detenuti', 'btc-valore-attuale', 'btc-riepilogo', 'btc-plusvalenze', 'btc-rw', 'btc-rate'];
-const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale', 'crediti-f24'];
+const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale', 'crediti-f24', 'prospetto-dichiarazione'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
 const CHIAVE_ORDINE_BTC = 'dashboardOrdineCardBtc';
 const CHIAVE_ORDINE_F24 = 'dashboardOrdineCardF24';
@@ -511,7 +559,8 @@ function ripristinaLayout() {
           v-if="statoAggiornamento.disponibile" type="button" class="btn btn-blue"
           @click="mostraPopupAggiornamento = true"
         >Aggiornamento disponibile</button>
-        <button type="button" class="btn btn-ghost" @click="esportaCommercialista">Esporta per commercialista</button>
+        <small class="note-legal">Dati di supporto, da verificare prima dell'uso in dichiarazione.</small>
+        <button type="button" class="btn btn-blue" @click="esportaCommercialista">Esporta per commercialista</button>
         <button
           type="button" class="btn btn-ghost" :disabled="!layoutModificato"
           :title="layoutModificato ? '' : 'Layout già di default'"
@@ -620,6 +669,28 @@ function ripristinaLayout() {
           </div>
         </div>
 
+        <div class="card" v-if="accantonamento" :style="{ order: ordinePer('accantonamento') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('accantonamento')" @dragover.prevent @drop="drop('accantonamento')"
+            @keydown.alt.up.prevent="spostaConTastiera('accantonamento', -1)" @keydown.alt.down.prevent="spostaConTastiera('accantonamento', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Da accantonare</h2></span>
+          </div>
+          <div class="card-body">
+            <div class="mini-stat-row">
+              <div class="mini-stat"><span class="mini-stat-label">Quota per ogni incasso</span><span class="mini-stat-value">{{ accantonamento.quotaPct }}%</span></div>
+              <div class="mini-stat"><span class="mini-stat-label">Accantonato {{ accantonamento.anno }}</span><span class="mini-stat-value">{{ formattaEuro(accantonamento.accantonato) }}</span></div>
+            </div>
+            <p v-if="!accantonamento.inpsConfigurata" class="avviso-riga avviso-info">Gestione previdenziale non configurata: la quota include solo l'imposta sostitutiva.</p>
+            <template v-if="barrePianoCassa.length">
+              <p class="note-legal">Cassa residua dopo ogni scadenza F24 dell'anno successivo, partendo da quanto accantonato.</p>
+              <BarChart :barre="barrePianoCassa" larghezza-etichetta="64px" />
+              <p v-if="accantonamento.piano.some((p) => p.scoperto)" class="avviso-riga avviso-warn">Scoperto: l'accantonato non copre le uscite F24. Le scadenze includono gli acconti dell'anno successivo, che si coprono con gli incassi di quell'anno.</p>
+            </template>
+            <p class="note-legal" style="margin-top:12px">Stima prudente: imposta e INPS sul reddito forfettario degli incassi, senza la deduzione dei contributi (arriva un anno dopo). Gli acconti non sono nella quota.</p>
+          </div>
+        </div>
         <div class="card" :style="{ order: ordinePer('soglia-competenza') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -652,6 +723,9 @@ function ripristinaLayout() {
             <p class="note-legal" style="margin-top:20px">
               Settore coefficiente {{ dashboard.coefficenteRedditivita }}% · aliquota {{ dashboard.aliquota }}% ·
               {{ dashboard.mesiFatturati }} mesi fatturati nel {{ dashboard.anno }}.
+            </p>
+            <p v-if="dashboard.altreAttivitaCoefficienteDiverso" class="avviso-riga avviso-warn">
+              Hai altre attività con coefficiente diverso: l'app applica a tutti i ricavi un solo coefficiente, quindi reddito e imposta stimati non tengono conto delle altre attività.
             </p>
           </div>
         </div>
@@ -704,6 +778,7 @@ function ripristinaLayout() {
                       @input="importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] = $event.target.value"
                       :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
                     />
+                    <span v-if="accantonamento" class="scadenza-sotto">da accantonare {{ formattaEuro(quotaIncasso(importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo)) }}</span>
                   </td>
                   <td>
                     <input
@@ -817,7 +892,7 @@ function ripristinaLayout() {
                   <td>{{ (r.satoshi / 1e8).toFixed(8) }}</td>
                   <td>{{ formattaEuro(r.cambioEurBtc) }}</td>
                   <td>{{ formattaEuro(r.eur) }}</td>
-                  <td><a :href="`https://mempool.space/tx/${r.txid}`" target="_blank" rel="noopener">{{ abbreviaTxid(r.txid) }}</a></td>
+                  <td><a class="link-txid" :href="`https://mempool.space/tx/${r.txid}`" target="_blank" rel="noopener">{{ abbreviaTxid(r.txid) }}</a></td>
                 </tr>
               </tbody>
             </table></div>
@@ -856,7 +931,7 @@ function ripristinaLayout() {
           </div>
         </div>
 
-        <div class="card" :style="{ order: ordinePer('btc-rw') }">
+        <div class="card" :class="{ 'card-intera': detenzioneBtc }" :style="{ order: ordinePer('btc-rw') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
             @dragstart="dragStart('btc-rw')" @dragover.prevent @drop="drop('btc-rw')"
@@ -869,11 +944,13 @@ function ripristinaLayout() {
             <p v-else-if="!fiscaleBtc" class="note-legal">Caricamento…</p>
             <template v-else-if="fiscaleBtc.ivca">
               <template v-if="detenzioneBtc">
-                <div class="mini-stat-row">
-                  <div class="mini-stat"><span class="mini-stat-label">Saldo al 31/12</span><span class="mini-stat-value">{{ (fiscaleBtc.saldo.satoshi / 1e8).toFixed(8) }} BTC</span></div>
-                  <div class="mini-stat"><span class="mini-stat-label">Valore RW (fine anno)</span><span class="mini-stat-value">{{ fiscaleBtc.ivca.mancaValoreMercato ? '—' : formattaEuro(fiscaleBtc.ivca.valoreFine) }}</span></div>
-                  <div class="mini-stat" title="Imposta IVCA 0,2% proporzionale ai giorni di possesso; non dovuta se sotto 12 €"><span class="mini-stat-label">IVCA dovuta</span><span class="mini-stat-value">{{ formattaEuro(fiscaleBtc.ivca.impostaDaVersare) }}</span></div>
-                  <div class="mini-stat"><span class="mini-stat-label">Giorni di possesso</span><span class="mini-stat-value">{{ fiscaleBtc.ivca.giorniTotaliPonderati }}</span></div>
+                <QuadroRwCripto :rw="fiscaleBtc" :anno="dashboard.anno" />
+                <div v-if="fiscaleBtc.ivca.valoreInizio == null" class="field" style="margin-top:12px">
+                  <label for="prezzo-inizio">Prezzo EUR/BTC al 31/12/{{ dashboard.anno - 1 }} (da inserire per il valore iniziale, colonna 7)</label>
+                  <div style="display:flex;gap:8px">
+                    <input id="prezzo-inizio" v-model="prezzoInizioBtc" type="text" inputmode="decimal" placeholder="0,00" style="flex:1" @keydown.enter.prevent="salvaPrezzoInizioBtc">
+                    <button type="button" class="btn btn-ok" :disabled="salvandoPrezzoBtc || !prezzoInizioBtc" @click="salvaPrezzoInizioBtc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
+                  </div>
                 </div>
                 <p v-if="fiscaleBtc.saldo.satoshi === 0" class="avviso-riga avviso-info">
                   Saldo al 31/12 = 0, ma BTC detenuti nell'anno: IVCA stimata {{ formattaEuro(fiscaleBtc.ivca.impostaLorda) }}, rigo RW da compilare.
@@ -885,12 +962,9 @@ function ripristinaLayout() {
                   <label for="prezzo-1231">Prezzo EUR/BTC al 31/12/{{ dashboard.anno }}{{ fiscaleBtc.ivca.mancaValoreMercato ? ' (da inserire per calcolare l\'IVCA)' : '' }}</label>
                   <div style="display:flex;gap:8px">
                     <input id="prezzo-1231" v-model="prezzo1231Btc" type="text" inputmode="decimal" placeholder="0,00" style="flex:1" @keydown.enter.prevent="salvaPrezzo1231Btc">
-                    <button type="button" class="btn btn-ghost" :disabled="salvandoPrezzoBtc || !prezzo1231Btc" @click="salvaPrezzo1231Btc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
+                    <button type="button" class="btn btn-ok" :disabled="salvandoPrezzoBtc || !prezzo1231Btc" @click="salvaPrezzo1231Btc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
                   </div>
                 </div>
-                <p v-if="fiscaleBtc.rw8" class="note-legal" style="margin-top:12px">
-                  Rigo RW8: totale imposta {{ formattaEuro(fiscaleBtc.rw8.totaleImposta) }}, acconti versati {{ formattaEuro(fiscaleBtc.rw8.accontiVersati) }}, saldo {{ formattaEuro(fiscaleBtc.rw8.saldo) }}.
-                </p>
               </template>
               <p v-else class="note-legal">Nessun BTC detenuto nel {{ dashboard.anno }}.</p>
             </template>
@@ -969,7 +1043,7 @@ function ripristinaLayout() {
             @keydown.alt.up.prevent="spostaConTastiera('versamenti-stimati', -1)" @keydown.alt.down.prevent="spostaConTastiera('versamenti-stimati', 1)"
           >
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Versamenti stimati F24</h2></span>
-            <span v-if="versamentiStimati?.regole?.aggiornate === false" class="badge-fonte" style="color:var(--warn)" title="Regole non confermate per quest'anno">regole non confermate</span>
+            <span v-if="versamentiStimati?.regole?.provvisorie" class="badge-fonte" style="color:var(--warn)" :title="versamentiStimati.regole.banner || 'Stime provvisorie'">provvisorio</span>
           </div>
           <div class="card-body">
             <div v-if="!versamentiStimati" class="note-legal">Caricamento…</div>
@@ -1040,7 +1114,7 @@ function ripristinaLayout() {
                               :class="{ 'f24-riga-interessi': r.codice === '1668' }"
                             >
                               <td>{{ r.sezione }}</td>
-                              <td class="f24-mono">{{ r.codice }}</td>
+                              <td class="f24-mono" :title="r.descrizione">{{ r.codice }}</td>
                               <td>{{ r.annoRiferimento }}</td>
                               <td style="text-align:right;font-variant-numeric:tabular-nums">{{ formattaEuro(r.importo) }}</td>
                             </tr>
@@ -1057,9 +1131,17 @@ function ripristinaLayout() {
                           </tfoot>
                         </table>
                       </div>
-                      <a :href="api.urlF24Pdf(annoSelezionato, scIdx)" target="_blank" class="btn btn-primary f24-dl-btn">
+                      <div class="f24-conferma">
+                        <input :id="`f24-verificato-${scIdx}`" v-model="f24Verificati[scIdx]" type="checkbox" class="checkbox-app" />
+                        <label :for="`f24-verificato-${scIdx}`">Ho verificato gli importi</label>
+                      </div>
+                      <button
+                        type="button" class="btn btn-blue f24-dl-btn" :disabled="!f24Verificati[scIdx]"
+                        :title="f24Verificati[scIdx] ? '' : 'Spunta «Ho verificato gli importi» per scaricare il modello'"
+                        @click="scaricaF24(scIdx)"
+                      >
                         Scarica F24 (precompilato)
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1079,7 +1161,10 @@ function ripristinaLayout() {
               </p>
 
               <p class="nota-piede">
-                Stima basata su regole{{ versamentiStimati.regole?.verificatoIl ? ' verificate il ' + versamentiStimati.regole.verificatoIl.slice(0,10) : '' }}.
+                Regole {{ versamentiStimati.regole?.anno }}
+                · verificate il {{ versamentiStimati.regole?.verificatoIl?.slice(0,10) || '—' }}
+                · confermate il {{ versamentiStimati.regole?.confermatoIl?.slice(0,10) || 'non confermate' }}
+                · <a href="#" @click.prevent="cambiaTab('Regole fiscali')">fonti</a>.
                 Importi calcolati automaticamente — <u>verificare con il commercialista prima di pagare</u>.
               </p>
             </template>
@@ -1113,6 +1198,36 @@ function ripristinaLayout() {
                 </p>
               </template>
               <p class="nota-piede">{{ bolloTrimestrale.nota }}</p>
+            </template>
+          </div>
+        </div>
+
+        <!-- Card prospetto dichiarazione redditi (K3) -->
+        <div class="card card-intera" :style="{ order: ordinePer('prospetto-dichiarazione') }">
+          <div
+            class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
+            @dragstart="dragStart('prospetto-dichiarazione')" @dragover.prevent @drop="drop('prospetto-dichiarazione')"
+            @keydown.alt.up.prevent="spostaConTastiera('prospetto-dichiarazione', -1)" @keydown.alt.down.prevent="spostaConTastiera('prospetto-dichiarazione', 1)"
+          >
+            <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Prospetto dichiarazione redditi</h2></span>
+          </div>
+          <div class="card-body">
+            <p v-if="erroreProspetto" class="avviso-riga avviso-warn" role="alert">{{ erroreProspetto }}</p>
+            <p v-else-if="!prospettoDichiarazione" class="note-legal">Caricamento…</p>
+            <template v-else>
+              <ProspettoDichiarazione :prospetto="prospettoDichiarazione" />
+              <p v-if="prospettoDichiarazione.avvisi.length" class="note-legal" style="margin-top:12px">
+                <span v-for="a in prospettoDichiarazione.avvisi" :key="a" style="display:block" :style="a.startsWith('(*)') ? 'color:var(--warn);font-weight:600' : ''">{{ a.startsWith('(*)') ? '' : '⚠ ' }}{{ a }}</span>
+              </p>
+              <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <a class="btn btn-ghost" :href="api.urlProspettoDichiarazionePdf(annoSelezionato)" target="_blank" rel="noopener">Scarica PDF quadro LM</a>
+              </div>
+              <p class="nota-piede">
+                Clicca una casella per copiarne il valore. Importi in euro interi come da modello; le caselle evidenziate con (*) vanno controllate e compilate a mano.
+                Righi verificati sul modello {{ prospettoDichiarazione.modello }}
+                · <a href="#" @click.prevent="cambiaTab('Regole fiscali')">fonti</a>.
+                Importi calcolati automaticamente — <u>verificare con il commercialista prima di compilare la dichiarazione</u>.
+              </p>
             </template>
           </div>
         </div>
@@ -1217,6 +1332,8 @@ function ripristinaLayout() {
 </template>
 
 <style scoped>
+.link-txid { color: var(--cyan-soft-ink); text-decoration: underline; }
+.link-txid:visited { color: var(--cyan-soft-ink); }
 .azioni-tab-btc { grid-column: 1 / -1; order: -1; display: flex; justify-content: flex-end; }
 .summary-row { grid-template-columns: repeat(3, 1fr); }
 .stat-gruppo-stima { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
@@ -1368,4 +1485,6 @@ function ripristinaLayout() {
 .f24-magg-row td { font-size: .77rem; color: var(--ink-faint); }
 
 .f24-dl-btn { margin-top: 10px; font-size: .8rem; }
+.f24-dl-btn:disabled { opacity: .5; cursor: not-allowed; }
+.f24-conferma { display: flex; align-items: center; gap: var(--gap-sm); margin-top: 10px; font-size: .85rem; }
 </style>

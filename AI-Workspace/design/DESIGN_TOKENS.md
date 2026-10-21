@@ -16,9 +16,11 @@ Confidence: 🟢 confermato da codice (valori esatti da `frontend/src/style.css`
 | `--ok` / `--ok-bg` | `#3f7a5c` / `#e6f0ea` | successo |
 | `--warn` / `--warn-bg` | `#b5473a` / `#f7e9e6` | avviso/errore |
 | `--muted` | `#7c8a97` | testo disabilitato |
-| `--action-blue` | `#2563eb` | bottone `.btn-blue` |
-| `--action-amber` | `#d97706` | bottone `.btn-amber` |
-| `--action-violet` | `#7c3aed` | bottone `.btn-violet` |
+| `--btn-primary-*` | bg `#f6dcae` · ink `#5c3d14` · line `#e3be80` | bottone `.btn-primary` (avanzamento) |
+| `--btn-ok-*` | bg `#cfe9df` · ink `#14503b` · line `#9fd0bc` | bottone `.btn-ok` (salva, aggiungi, conferma) |
+| `--btn-info-*` | bg `#d3e4f6` · ink `#174a7c` · line `#a6c6e8` | bottone `.btn-blue` (esporta, scarica, aggiorna, invia) |
+| `--btn-ai-*` | bg `#e9dcf3` · ink `#54307a` · line `#cfb5e3` | bottone `.btn-ai` (funzioni AI) |
+| `--btn-warn-*` | bg `#f6d5c6` · ink `#8a3410` · line `#e8ad92` | bottone `.btn-warn` (elimina, scarta, riavvia) |
 
 ## Colori — dark (`prefers-color-scheme: dark` e `:root[data-theme="dark"]`)
 
@@ -34,9 +36,6 @@ Confidence: 🟢 confermato da codice (valori esatti da `frontend/src/style.css`
 | `--ok` / `--ok-bg` | `#6fbf94` / `#193226` |
 | `--warn` / `--warn-bg` | `#e0796b` / `#3a2320` |
 | `--muted` | `#8a97a3` |
-| `--action-blue` | `#3b78f0` |
-| `--action-amber` | `#e2921a` |
-| `--action-violet` | `#8e5cf0` |
 
 🟢 La sidebar ha uno sfondo dedicato in dark: `#0d1319`.
 

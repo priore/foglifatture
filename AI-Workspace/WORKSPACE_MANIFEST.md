@@ -28,7 +28,6 @@ Cartelle di supporto:
 
 | Cartella | Scopo |
 |---|---|
-| [Plans/](AI-Workspace/Plans/) | Piani di dettaglio e analisi, una nota per tema; non seguono le regole dei documenti sopra |
 | [Output/](AI-Workspace/Output/) | Export locali di debug (per esempio CSV bancari), ignorati da git |
 | prompts/, templates/, workflows/, reviews/, tasks/ | Vuote, segnaposto per materiale futuro |
 

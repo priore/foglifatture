@@ -6,6 +6,27 @@ $ProjectDir = (Resolve-Path "$PSScriptRoot\..").Path
 $TaskName = "PrioreGroupFatturazione"
 $LogDir = Join-Path $ProjectDir "logs"
 
+function Update-Path {
+  $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+}
+
+# ── winget (strumento usato per installare Node.js, Git e GitHub CLI) ────────
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+  Write-Host "winget non trovato: installazione di App Installer..."
+  try {
+    $Pkg = Join-Path $env:TEMP "AppInstaller.msixbundle"
+    Invoke-WebRequest -Uri "https://aka.ms/getwinget" -OutFile $Pkg
+    Add-AppxPackage -Path $Pkg
+    Remove-Item $Pkg -ErrorAction SilentlyContinue
+    Update-Path
+  } catch {
+    Write-Host "  Installazione winget non riuscita: $_"
+  }
+  if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "  winget ancora non disponibile: installa 'Programma di installazione app' dal Microsoft Store, poi riapri PowerShell e rilancia lo script."
+  }
+}
+
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   if (Get-Command winget -ErrorAction SilentlyContinue) {
     Write-Host "Node.js non trovato: installazione tramite winget..."
@@ -18,6 +39,19 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   }
 }
 $NodeBin = (Get-Command node).Source
+
+# ── Git (serve agli aggiornamenti automatici) ────────────────────────────────
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+  if (Get-Command winget -ErrorAction SilentlyContinue) {
+    Write-Host "Git non trovato: installazione tramite winget..."
+    winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+  }
+  if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Error "Git non trovato e installazione automatica non riuscita. Installa Git da git-scm.com e riprova."
+    exit 1
+  }
+}
 
 # ── Google Antigravity CLI (agy) ─────────────────────────────────────────────
 if (-not (Get-Command agy -ErrorAction SilentlyContinue)) {

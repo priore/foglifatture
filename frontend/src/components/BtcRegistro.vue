@@ -14,6 +14,7 @@ const cessioni = ref([]);
 const errore = ref('');
 const avvisi = ref([]);
 const caricando = ref(false);
+const regoleProvvisorie = ref(false);
 
 const formAperto = ref(null); // 'uscita' | 'ingresso' | null
 const salvando = ref(false);
@@ -36,6 +37,7 @@ async function carica() {
     lotti.value = l;
     uscite.value = m.uscite;
     cessioni.value = p.cessioni;
+    regoleProvvisorie.value = !!(await api.regoleFiscaliAnno(props.anno).catch(() => null))?.provvisorie;
   } catch (err) {
     errore.value = err.message;
   } finally {
@@ -142,6 +144,11 @@ async function elimina(r) {
       <div class="mini-stat" title="Costo di carico LIFO dei BTC ancora detenuti"><span class="mini-stat-label">Costo di carico</span><span class="mini-stat-value">{{ eur(costoResiduo) }}</span></div>
     </div>
 
+    <p class="note-legal">
+      Plusvalenze calcolate con metodo LIFO sulle regole {{ anno }}: stima da verificare con il commercialista.
+      <span v-if="regoleProvvisorie" class="badge-fonte" style="color:var(--warn)" title="Regole non confermate o non verificate di recente">provvisorio</span>
+    </p>
+
     <p v-if="errore" class="avviso-riga avviso-warn" role="alert">{{ errore }}</p>
     <p v-for="a in avvisi" :key="a" class="avviso-riga avviso-info">{{ a }}</p>
 
@@ -212,7 +219,7 @@ async function elimina(r) {
       </div>
 
       <div class="azioni">
-        <button type="submit" class="btn btn-primary" :disabled="salvando">{{ salvando ? 'Salvataggio…' : 'Salva' }}</button>
+        <button type="submit" class="btn btn-ok" :disabled="salvando">{{ salvando ? 'Salvataggio…' : 'Salva' }}</button>
         <button type="button" class="btn btn-ghost" @click="formAperto = null">Annulla</button>
       </div>
     </form>

@@ -264,5 +264,61 @@
     "sha256Originale": null,
     "consultatoIl": null,
     "note": "Testo non ancora archiviato — da scaricare (cripto-attività, FP-012/013)"
+  },
+  {
+    "id": "pf3-istruzioni-2026",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Istruzioni Redditi PF 2026 Fascicolo 3 — Quadro LM (regime forfetario)",
+    "tipo": "istruzioni",
+    "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni",
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/d/guest/pf3_istruzioni_2026_agg-13-05-2026",
+    "formato": "pdf",
+    "selettoreContenuto": null,
+    "file": "testi/pf3-istruzioni-2026.txt",
+    "sha256Originale": "862d1a80f12e044ea0d682ebd596cc1e20befaa21cf63fa5476c577032215d23",
+    "consultatoIl": "2026-10-21",
+    "note": "Estratto: quadro LM sezioni III e IV (righi LM21-LM49). sha256 dei byte del PDF (agg. 13/05/2026). K3 prospetto dichiarazione."
+  },
+  {
+    "id": "pf2-istruzioni-2026-rr",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Istruzioni Redditi PF 2026 Fascicolo 2 — Quadro RR sezione II (Gestione separata)",
+    "tipo": "istruzioni",
+    "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni",
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/d/guest/pf2_istruzioni_2026_agg-13-05-2026",
+    "formato": "pdf",
+    "selettoreContenuto": null,
+    "file": "testi/pf2-istruzioni-2026-rr.txt",
+    "sha256Originale": "9589b0bb07d3c59d92fda08945b63e4a222e2e50cdd26721dd2f434d309b63a3",
+    "consultatoIl": "2026-10-21",
+    "note": "Estratto: quadro RR sezione II (righi RR5-RR8). sha256 dei byte del PDF (agg. 13/05/2026). K3 prospetto dichiarazione."
+  },
+  {
+    "id": "pf3-modello-2026",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Modello Redditi PF 2026 Fascicolo 3 (PDF da compilare)",
+    "tipo": "modello",
+    "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni",
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/d/guest/pf3_modello_2026",
+    "formato": "pdf",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": "6ceeed94d2f3a2d9984cc03bceffc5c3c2190c6b04d5d899e1bc7e6d8de5bcb6",
+    "consultatoIl": "2026-10-21",
+    "note": "Modello vuoto, non ridistribuito: scaricato al primo uso e verificato con sha256. Se l'impronta cambia, ricalibrare le coordinate in prospettoDichiarazionePdfService.js. Il testo non è archiviato (monitorata solo l'impronta)."
+  },
+  {
+    "id": "f24-ordinario",
+    "ente": "Agenzia delle Entrate",
+    "titolo": "Modello F24 Ordinario (PDF da compilare, aggiornamento 2019)",
+    "tipo": "modello",
+    "url": "https://www.agenziaentrate.gov.it/portale/web/guest/schede/pagamentieversamenti/f24-ordinario",
+    "urlDownload": "https://www.agenziaentrate.gov.it/portale/documents/20143/250689/Modello+di+versamento+unificato+-+F24+Ordinario_i+Modello+F24+%282%29.pdf",
+    "formato": "pdf",
+    "selettoreContenuto": null,
+    "file": null,
+    "sha256Originale": "a5429ca42c7330fdd514a4143734342b1e29dbe66edb27185e3be36a6d51712a",
+    "consultatoIl": "2026-10-21",
+    "note": "Modello vuoto, non ridistribuito: scaricato al primo uso e verificato con sha256. Se l'impronta cambia, ricalibrare le coordinate in f24PdfService.js. Il testo non è archiviato (monitorata solo l'impronta)."
   }
 ]

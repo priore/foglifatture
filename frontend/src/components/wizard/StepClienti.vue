@@ -27,7 +27,7 @@ function aggiungiCliente() {
   const nuovo = {
     id: crypto.randomUUID(), attivo: true,
     denominazione: '', indirizzo: '', cap: '', comune: '', provincia: '',
-    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0,
+    partitaIva: '', codiceDestinatarioSdi: '', logoDataUrl: '', tariffaOraria: 0, gestione: 'timesheet',
     email: '', emailFattura: '',
     figura: '', commessa: '', clientePdf: '', progetto: '',
   };
@@ -57,7 +57,7 @@ function riattivaCliente(cliente) {
 <template>
   <div>
     <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button type="button" class="btn btn-primary" @click="aggiungiCliente">+ Aggiungi cliente</button>
+      <button type="button" class="btn btn-ok" @click="aggiungiCliente">+ Aggiungi cliente</button>
       <input
         v-if="modelValue.filter(c => c.attivo).length > 1"
         type="search" v-model="ricerca" placeholder="Cerca cliente…"
@@ -79,68 +79,97 @@ function riattivaCliente(cliente) {
         <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
       </div>
       <div class="card-body" v-show="aperti.has(cliente.id)">
+        <div class="sub-cards">
         <StepCliente v-model="modelValue[modelValue.indexOf(cliente)]" />
-        <div class="field" style="margin-top:12px">
-          <label>Tariffa oraria (€)</label>
-          <input type="number" step="0.01" v-model.number="cliente.tariffaOraria">
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label>Email per timesheet</label>
-          <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
-          <small class="note-legal">Una o più email separate da virgola per l'invio del timesheet. Se "Email per fattura" è vuota, viene usata anche per le fatture.</small>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label>Email per fattura <span style="opacity:0.6">(opzionale)</span></label>
-          <input type="text" v-model="cliente.emailFattura" placeholder="es. amministrazione@azienda.it, acquisti@azienda.it">
-          <small class="note-legal">Se compilato, usa questi indirizzi per l'invio della fattura invece dell'email timesheet.</small>
-        </div>
-        <div style="display:flex;gap:20px;margin-top:12px">
-          <div class="field" style="flex:1">
-            <label>Modalità di pagamento</label>
-            <select v-model="cliente.modalitaPagamento">
-              <option value="">Predefinita (Impostazioni)</option>
-              <option value="MP05">Bonifico</option>
-        <option value="MP19">Addebito diretto SEPA</option>
-        <option value="MP08">Carta di pagamento</option>
-        <option value="MP02">Assegno</option>
-        <option value="MP01">Contanti</option>
-        <option value="BTC">Bitcoin (indirizzo dal primo wallet in Fornitore)</option>
+        <section class="card" style="margin-bottom:0">
+          <div class="card-head"><h2>Gestione e tariffa</h2></div>
+          <div class="card-body">
+          <div class="field">
+            <label>Gestione cliente</label>
+            <select v-model="cliente.gestione">
+              <option value="timesheet">Timesheet e fatture (importo calcolato o libero)</option>
+              <option value="fatture">Solo fatture (importo libero)</option>
             </select>
           </div>
-          <div class="field" style="flex:1">
-            <label>Giorni di scadenza</label>
-            <input type="number" min="0" v-model.number="cliente.giorniScadenza" placeholder="Predefiniti">
+          <div class="field" style="margin-top:12px" v-if="cliente.gestione !== 'fatture'">
+            <label>Tariffa oraria (€)</label>
+            <input type="number" step="0.01" v-model.number="cliente.tariffaOraria">
           </div>
         </div>
-        <div class="field" style="margin-top:12px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <input :id="`btc-abilitato-${cliente.id}`" type="checkbox" v-model="cliente.pagamentoBtc" class="checkbox-app">
-            <label :for="`btc-abilitato-${cliente.id}`" style="margin:0">₿ Ammetti pagamento in Bitcoin</label>
+   </section>
+        <section class="card" style="margin-bottom:0">
+          <div class="card-head"><h2>Email</h2></div>
+          <div class="card-body">
+          <div class="field">
+            <label>Email per timesheet</label>
+            <input type="text" v-model="cliente.email" placeholder="destinatario1@esempio.it, destinatario2@esempio.it">
+            <small class="note-legal">Una o più email separate da virgola per l'invio del timesheet. Se "Email per fattura" è vuota, viene usata anche per le fatture.</small>
           </div>
-          <small class="note-legal">Aggiunge la dicitura sotto in fattura e XML FatturaPA, alla generazione. Non obbliga il cliente: resta comunque possibile pagare a bonifico.</small>
-        </div>
-        <div class="field" v-if="cliente.pagamentoBtc" style="margin-top:8px">
-          <label>Testo della clausola</label>
-          <textarea v-model="cliente.causaleBtc" rows="2" placeholder="Criterio di cambio da concordare col cliente" style="resize:vertical;font-family:inherit"></textarea>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label>Rivalsa INPS 4%</label>
-          <select v-model="cliente.rivalsaInps">
-            <option :value="null">Predefinita (Impostazioni fornitore)</option>
-            <option :value="true">Attiva per questo cliente</option>
-            <option :value="false">Disattiva per questo cliente</option>
-          </select>
-          <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente. La rivalsa concorre al totale del documento ai fini dell'imposta di bollo.</small>
-        </div>
-        <div style="display:flex;gap:20px;margin-top:12px">
-          <div class="field" style="flex:1">
-            <label>Template fattura</label>
-            <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" @update:model-value="emit('salva-subito')" />
+          <div class="field" style="margin-top:12px">
+            <label>Email per fattura <span style="opacity:0.6">(opzionale)</span></label>
+            <input type="text" v-model="cliente.emailFattura" placeholder="es. amministrazione@azienda.it, acquisti@azienda.it">
+            <small class="note-legal">Se compilato, usa questi indirizzi per l'invio della fattura invece dell'email timesheet.</small>
           </div>
-          <div class="field" style="flex:1">
-            <label>Template timesheet</label>
-            <TemplateGrid v-model="cliente.templateTimesheetId" tipo="timesheet" fallback-id="timesheet-default" @update:model-value="emit('salva-subito')" />
+        </div>
+   </section>
+        <section class="card" style="margin-bottom:0">
+          <div class="card-head"><h2>Pagamento e fatturazione</h2></div>
+          <div class="card-body">
+          <div style="display:flex;gap:20px">
+            <div class="field" style="flex:1">
+              <label>Modalità di pagamento</label>
+              <select v-model="cliente.modalitaPagamento">
+                <option value="">Predefinita (Impostazioni)</option>
+                <option value="MP05">Bonifico</option>
+                <option value="MP19">Addebito diretto SEPA</option>
+                <option value="MP08">Carta di pagamento</option>
+                <option value="MP02">Assegno</option>
+                <option value="MP01">Contanti</option>
+                <option value="BTC">Bitcoin (indirizzo dal primo wallet in Fornitore)</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1">
+              <label>Giorni di scadenza</label>
+              <input type="number" min="0" v-model.number="cliente.giorniScadenza" placeholder="Predefiniti">
+            </div>
           </div>
+          <div class="field" style="margin-top:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <input :id="`btc-abilitato-${cliente.id}`" type="checkbox" v-model="cliente.pagamentoBtc" class="checkbox-app">
+              <label :for="`btc-abilitato-${cliente.id}`" style="margin:0">₿ Ammetti pagamento in Bitcoin</label>
+            </div>
+            <small class="note-legal">Aggiunge la dicitura sotto in fattura e XML FatturaPA, alla generazione. Non obbliga il cliente: resta comunque possibile pagare a bonifico.</small>
+          </div>
+          <div class="field" v-if="cliente.pagamentoBtc" style="margin-top:8px">
+            <label>Testo della clausola</label>
+            <textarea v-model="cliente.causaleBtc" rows="2" placeholder="Criterio di cambio da concordare col cliente" style="resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>Rivalsa INPS 4%</label>
+            <select v-model="cliente.rivalsaInps">
+              <option :value="null">Predefinita (Impostazioni fornitore)</option>
+              <option :value="true">Attiva per questo cliente</option>
+              <option :value="false">Disattiva per questo cliente</option>
+            </select>
+            <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente. La rivalsa concorre al totale del documento ai fini dell'imposta di bollo.</small>
+          </div>
+        </div>
+   </section>
+        <section class="card" style="margin-bottom:0">
+          <div class="card-head"><h2>Template</h2></div>
+          <div class="card-body">
+          <div style="display:flex;gap:20px">
+            <div class="field" style="flex:1">
+              <label>Template fattura</label>
+              <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" @update:model-value="emit('salva-subito')" />
+            </div>
+            <div class="field" style="flex:1">
+              <label>Template timesheet</label>
+              <TemplateGrid v-model="cliente.templateTimesheetId" tipo="timesheet" fallback-id="timesheet-default" @update:model-value="emit('salva-subito')" />
+            </div>
+          </div>
+        </div>
+   </section>
         </div>
       </div>
     </div>

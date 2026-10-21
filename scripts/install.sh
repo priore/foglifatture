@@ -8,6 +8,21 @@ LABEL="com.prioregroup.fatturazione"
 PLIST_PATH="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$PROJECT_DIR/logs"
 
+# ── Homebrew (strumento usato per installare Node.js, Git e GitHub CLI) ──────
+# Il suo installer richiede anche i Command Line Tools e chiede la password di amministratore.
+if ! command -v brew >/dev/null 2>&1; then
+  for B in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [ -x "$B" ] && eval "$("$B" shellenv)" && break
+  done
+fi
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Homebrew non trovato: installazione..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "  Installazione Homebrew non riuscita."
+  for B in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [ -x "$B" ] && eval "$("$B" shellenv)" && break
+  done
+fi
+
 if ! command -v node >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
     echo "Node.js non trovato: installazione tramite Homebrew..."
@@ -19,6 +34,19 @@ NODE_BIN="$(command -v node)"
 if [ -z "$NODE_BIN" ]; then
   echo "Errore: node non trovato e installazione automatica non riuscita. Installa Node.js da nodejs.org e riprova."
   exit 1
+fi
+
+# ── Git (serve agli aggiornamenti automatici) ─────────────────────────────────
+# Su macOS /usr/bin/git esiste sempre ma senza Command Line Tools fallisce: si verifica l'esecuzione.
+if ! git --version >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "Git non trovato: installazione tramite Homebrew..."
+    brew install git
+  else
+    echo "Git non trovato: installazione Command Line Tools (conferma nella finestra che si apre, poi rilancia lo script)..."
+    xcode-select --install 2>/dev/null || true
+    exit 1
+  fi
 fi
 
 # ── Google Antigravity CLI (agy) — provider AI gratuito via OAuth Google ──────

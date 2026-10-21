@@ -1,5 +1,81 @@
 {
   "anno": 2026,
+  "verificatoIl": "2026-10-19",
+  "dichiarazione": {
+    "modello": "Redditi PF 2026",
+    "annoImposta": 2025,
+    "modelloPdf": { "id": "pf3-modello-2026", "pagineQuadroLm": [6, 7] },
+    "fonti": {
+      "LM34": {
+        "id": "pf3-istruzioni-2026",
+        "citazione": "Nel rigo LM34, colonna 3 (reddito lordo), va indicato il reddito lordo, dato dalla somma degli importi dei redditi relativi alle singole attività",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 3, quadro LM, rigo LM34",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      },
+      "LM35": {
+        "id": "pf3-istruzioni-2026",
+        "citazione": "Nella colonna 2, deve essere indicato l'importo dei predetti contributi che trova capienza nel reddito",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 3, quadro LM, rigo LM35",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      },
+      "LM39": {
+        "id": "pf3-istruzioni-2026",
+        "citazione": "Nel rigo LM39 (imposta sostitutiva), va indicata l'imposta sostitutiva pari al 15 per cento",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 3, quadro LM, rigo LM39",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      },
+      "LM45": {
+        "id": "pf3-istruzioni-2026",
+        "citazione": "ovvero con codice tributo 1790 e 1791 (nel caso di adesione al regime forfetario)",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 3, quadro LM, rigo LM45",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      },
+      "LM46": {
+        "id": "pf3-istruzioni-2026",
+        "citazione": "Se il risultato è positivo, tale importo va indicato nel rigo LM46, colonna 1 (imposta a debito) e riportato nel rigo RX31, colonna 1",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 3, quadro LM, righi LM46-LM47 e RX31",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      },
+      "RR5": {
+        "id": "pf2-istruzioni-2026-rr",
+        "citazione": "a colonna 16, inserire gli importi versati in acconto con il mod. F24 per il periodo di imposta 2025",
+        "riferimento": "Istruzioni Redditi PF 2026 Fasc. 2, quadro RR sez. II, rigo RR5",
+        "url": "https://www.agenziaentrate.gov.it/portale/modello-redditi-persone-fisiche-2026/modello-e-istruzioni"
+      }
+    },
+    "righi": {
+      "LM22.1": "Codice attività (ATECO 2007)",
+      "LM22.2": "Coefficiente di redditività",
+      "LM22.3": "Ricavi e compensi percepiti",
+      "LM22.5": "Reddito dell'attività",
+      "LM22.6": "Forma di esercizio (1 impresa, 2 lavoro autonomo)",
+      "LM34.2": "Reddito lordo soggetto a Gestione separata autonomi",
+      "LM34.3": "Reddito lordo",
+      "LM35.1": "Contributi previdenziali versati nell'anno",
+      "LM35.2": "Contributi che trovano capienza nel reddito",
+      "LM36": "Reddito netto",
+      "LM37.5": "Perdite pregresse",
+      "LM38": "Reddito al netto delle perdite",
+      "LM39": "Imposta sostitutiva",
+      "LM40": "Crediti d'imposta",
+      "LM42": "Differenza",
+      "LM43": "Eccedenza d'imposta della precedente dichiarazione",
+      "LM44": "Eccedenza precedente compensata in F24",
+      "LM45.2": "Acconti versati (codici 1790 e 1791)",
+      "LM46.1": "Imposta a debito",
+      "LM47.1": "Imposta a credito",
+      "LM49": "Eccedenza contributi deducibile dal reddito complessivo",
+      "RR5.2": "Reddito percepito (codice 1)",
+      "RR5.11": "Reddito imponibile previdenziale",
+      "RR5.14": "Codice aliquota",
+      "RR5.15": "Contributo dovuto",
+      "RR5.16": "Acconti versati con F24",
+      "RR7": "Contributo a debito",
+      "RR8.1": "Contributo a credito",
+      "RX31.1": "Imposta sostitutiva a debito",
+      "RX31.2": "Imposta sostitutiva a credito"
+    }
+  },
   "forfettario": {
     "sogliaAnnua": 85000,
     "sogliaUscitaImmediata": 100000,

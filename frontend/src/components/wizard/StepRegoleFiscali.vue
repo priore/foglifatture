@@ -299,18 +299,18 @@ async function apriEstratto(fonte) {
               </tbody>
             </table>
             <div class="diff-actions">
-              <button class="btn btn-primary" :disabled="caricamento" @click="conferma">Conferma regole {{ annoSelezionato }}</button>
-              <button class="btn btn-ghost" :disabled="spiegaInCorso" @click="spiegaConAI">{{ spiegaInCorso ? 'Analisi…' : 'Spiega con AI' }}</button>
+              <button class="btn btn-ok" :disabled="caricamento" @click="conferma">Conferma regole {{ annoSelezionato }}</button>
+              <button class="btn btn-ai" :disabled="spiegaInCorso" @click="spiegaConAI">{{ spiegaInCorso ? 'Analisi…' : 'Spiega con AI' }}</button>
               <template v-if="diff.some(d => d.origine === 'proposta')">
-                <button class="btn btn-proposta" :disabled="proposteInCorso" @click="applicaProposte" title="Applica le proposte AI alle regole attive">{{ proposteInCorso ? 'Applicazione…' : 'Applica proposte AI' }}</button>
-                <button class="btn btn-ghost" :disabled="proposteInCorso" @click="scartaProposte" title="Scarta tutte le proposte AI senza applicarle">Scarta proposte</button>
+                <button class="btn btn-ai" :disabled="proposteInCorso" @click="applicaProposte" title="Applica le proposte AI alle regole attive">{{ proposteInCorso ? 'Applicazione…' : 'Applica proposte AI' }}</button>
+                <button class="btn btn-warn" :disabled="proposteInCorso" @click="scartaProposte" title="Scarta tutte le proposte AI senza applicarle">Scarta proposte</button>
               </template>
             </div>
           </div>
           <div v-else-if="!annoInfo(annoSelezionato)?.confermato" class="diff-area">
             <p class="diff-titolo">Pacchetto {{ annoSelezionato }} non ancora confermato</p>
             <div class="diff-actions">
-              <button class="btn btn-primary" :disabled="caricamento" @click="conferma">Conferma regole {{ annoSelezionato }}</button>
+              <button class="btn btn-ok" :disabled="caricamento" @click="conferma">Conferma regole {{ annoSelezionato }}</button>
             </div>
           </div>
           <div v-else class="stato-ok">✓ Regole {{ annoSelezionato }} attive e aggiornate</div>
@@ -445,9 +445,9 @@ async function apriEstratto(fonte) {
 }
 .anno-btn:hover { background: var(--line); }
 .anno-btn.attivo {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-line);
+  color: var(--btn-primary-ink);
 }
 .dot-anno { width: 7px; height: 7px; border-radius: var(--radius-circle); flex-shrink: 0; }
 .dot-anno.ok { background: var(--ok); }
@@ -504,11 +504,6 @@ async function apriEstratto(fonte) {
   font-weight: 700; font-size: var(--font-size-xs);
 }
 .diff-actions { margin-top: 12px; display: flex; gap: 8px; }
-.btn { padding: 7px 14px; border-radius: var(--radius-sm); border: none; font-size: var(--font-size-sm); font-weight: 600; cursor: pointer; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
-.btn-proposta { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* --- Stato ok --- */
 .stato-ok {

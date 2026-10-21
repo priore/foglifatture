@@ -132,8 +132,10 @@ export function calcolaIvcaDaLotti(lottiLifo, anno, { prezzoFine = null, prezzoI
   const dettaglio = [];
   let mancaValoreMercato = false;
   let satoshiInizio = 0;
+  let costoAcquistatiNellAnno = 0;
   for (const l of lottiLifo) {
     if (l.data > fineAnno) continue;
+    if (l.data >= inizioAnno) costoAcquistatiNellAnno += l.costoEur;
     if (l.data <= fineAnnoPrec) satoshiInizio += l.satoshi - l.consumi.filter((c) => c.data <= fineAnnoPrec).reduce((t, c) => t + c.satoshi, 0);
     const dal = l.data > inizioAnno ? l.data : inizioAnno;
     const periodi = l.consumi.filter((c) => c.data >= inizioAnno).map((c) => ({ satoshi: c.satoshi, al: c.data, valoreFinale: c.ricavoEur }));
@@ -158,7 +160,8 @@ export function calcolaIvcaDaLotti(lottiLifo, anno, { prezzoFine = null, prezzoI
     impostaLorda,
     dettaglioPerLotto: dettaglio.map((d) => ({ ...d, imposta: d.imposta == null ? null : arrotonda(d.imposta) })),
     giorniTotaliPonderati: valoreFine > 0 ? Math.round(valutati.reduce((t, d) => t + d.valoreFinale * d.giorni, 0) / valoreFine) : 0,
-    valoreInizio: satoshiInizio === 0 ? 0 : (prezzoInizio == null ? null : arrotonda((satoshiInizio / SAT) * prezzoInizio)),
+    // RW col. 7: valore a inizio anno dei lotti già detenuti + costo dei lotti acquistati nell'anno (primo giorno di detenzione).
+    valoreInizio: satoshiInizio === 0 ? arrotonda(costoAcquistatiNellAnno) : (prezzoInizio == null ? null : arrotonda((satoshiInizio / SAT) * prezzoInizio + costoAcquistatiNellAnno)),
     valoreFine,
     impostaDaVersare: impostaLorda < SOGLIA_VERSAMENTO_IVCA ? 0 : impostaLorda,
     mancaValoreMercato,

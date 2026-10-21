@@ -73,6 +73,10 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, validato prima dell'invio.
   - Regime forfettario: `RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia.
 - **Fatturazione a importo libero** — anche senza passare dal timesheet, per fatture a corpo o extra.
+  - **Cliente «solo fatture»** — importo sempre libero, senza timesheet né tariffa oraria; la voce Timesheet sparisce dal menu se tutti i clienti attivi sono di questo tipo.
+- **Nota di credito (TD04)** — storno totale o parziale di una fattura già accettata dallo SDI.
+  - Prende il prossimo numero della sequenza, con XML collegato alla fattura stornata, download e invio PEC.
+  - La fattura stornata esce dal dovuto e dai ricavi per competenza; se già pagata, l'app segnala la somma da rimborsare.
 - **Numerazione fatture unica e progressiva** — condivisa correttamente tra tutti i clienti, come richiesto dalla normativa (legata alla partita IVA, non al singolo cliente).
 - **Clienti esteri** — gestione IVA automatica per clienti UE e extra-UE.
   - Inversione contabile N2.1 (art. 7-ter/7-septies DPR 633/72).
@@ -88,7 +92,8 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Invio PEC automatico** — fattura inviata al Sistema di Interscambio (SDI) direttamente dall'app, via la tua casella PEC.
 - **Ricezione ricevute SDI automatica**:
   - Polling della casella PEC via IMAP.
-  - Riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...).
+  - Riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...), anche se annidate in altre email.
+  - Le fatture ricevute nella casella non vengono scambiate per ricevute né rielaborate.
   - Notifica desktop.
 - **Email separata per timesheet e fattura** — ogni cliente può avere indirizzi email distinti per l'invio del timesheet e della fattura, con supporto più destinatari per indirizzo.
 
@@ -116,6 +121,14 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - **Codice sede INPS** — scelta da elenco ufficiale AdE con ricerca (Impostazioni → Fornitore → INPS), stampato nella sezione INPS del PDF.
   - **Rateizzazione saldo F24** — da 1 a 7 rate con date, interessi (codice 1668) e causali INPS rateizzate calcolati automaticamente.
   - **Compensazione crediti fiscali** — registrazione crediti con codice tributo e compensazione verticale/orizzontale con avvisi sui limiti di legge (DL 124/2019).
+  - **Stime provvisorie** — i versamenti stimati sono marcati «provvisorio» se le regole dell'anno non sono confermate o verificate da oltre 12 mesi; il PDF F24 riporta la dicitura «bozza da verificare».
+- **Da accantonare** — quanto mettere da parte per imposta e contributi, con quota prudente sugli incassi.
+  - Totale accantonato dell'anno e cassa residua dopo ogni scadenza F24, con avviso di scoperto.
+- **Prospetto per la dichiarazione dei redditi** — valori da riportare nel modello Redditi PF, con un clic per copiarli.
+  - Quadro LM, quadro RR (gestione separata) e rigo RX31; le caselle da verificare sono evidenziate.
+  - PDF del quadro LM compilato sul modello ufficiale dell'Agenzia delle Entrate, come bozza da verificare.
+  - Quadro RW per le cripto-attività con colonne e righi come nel modello ufficiale.
+- **Avvisi di verifica** — note prima dell'emissione della fattura, nel riepilogo plusvalenze BTC e accanto all'export per il commercialista; mai nel PDF, XML o CSV.
 
 ### Normativa e aggiornamenti
 
@@ -137,6 +150,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - Copia periodica programmabile.
   - Esportazione manuale protetta da password.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
+- **Termini d'uso** — accettazione esplicita al primo avvio e dopo ogni aggiornamento, con approvazione specifica della clausola di limitazione di responsabilità.
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
 
 ## Sicurezza
@@ -200,25 +214,28 @@ Il modo più semplice: scarica l'installer per il tuo sistema, aprilo e segui la
 
 **macOS**: apri il `.pkg` e segui il wizard. Se macOS avvisa che il file è di uno sviluppatore non identificato, vai in **Impostazioni di sistema → Privacy e sicurezza** e clicca "Apri comunque".
 
-**Windows**: esegui il `.exe` e segui il wizard. L'installer non è firmato digitalmente, quindi Windows può bloccarlo. Se succede, segui il caso che corrisponde a quello che vedi:
+**Windows 11**: esegui il `.exe` e segui il wizard. L'installer non è firmato digitalmente, quindi Windows può bloccarlo. Se succede, segui il caso che corrisponde a quello che vedi:
 
 - **Avviso blu "Windows ha protetto il PC"** (SmartScreen):
   1. clicca "Ulteriori informazioni"
   2. clicca "Esegui comunque"
 - **Errore "Impossibile accedere al dispositivo, al percorso o al file specificato"** (file bloccato perché scaricato da internet):
   1. clic destro sul file `FogliFatture-win-x64.exe` → "Proprietà"
-  2. in basso nella scheda "Generale" spunta "Annulla blocco" (o "Sblocca")
+  2. nella scheda "Generale", in fondo, spunta "Annulla blocco" (se la voce non c'è, il file non è bloccato: passa al caso successivo)
   3. clicca "OK" e riapri il file
 - **Il file sparisce o non parte** (l'antivirus lo ha messo in quarantena):
-  1. apri "Sicurezza di Windows" → "Protezione da virus e minacce" → "Cronologia protezione"
-  2. trova la voce relativa a `FogliFatture-win-x64.exe`
-  3. clicca "Azioni" → "Ripristina" (o "Consenti")
-  4. scarica di nuovo il file se necessario e riavvia l'installer
+  1. apri **Start** → "Sicurezza di Windows" → "Protezione da virus e minacce"
+  2. clicca "Cronologia protezione"
+  3. apri la voce relativa a `FogliFatture-win-x64.exe`
+  4. clicca "Azioni" → "Consenti sul dispositivo" (o "Ripristina")
+  5. scarica di nuovo il file se necessario e riavvia l'installer
 - **Smart App Control attivo** (blocca ogni programma non firmato, senza possibilità di "Esegui comunque"):
-  1. apri "Sicurezza di Windows" → "Controllo app e browser" → "Impostazioni Smart App Control"
-  2. scegli "Disattivato" (non si può riattivare senza reinstallare Windows)
-  3. riavvia l'installer
-  4. in alternativa usa l'[installazione da terminale](#installazione-da-terminale-alternativa), che non richiede l'`.exe`
+  1. apri **Impostazioni** → "Privacy e sicurezza" → "Sicurezza di Windows" → "Apri Sicurezza di Windows"
+  2. vai su "Controllo app e browser" → "Impostazioni Smart App Control"
+  3. scegli "Disattivato" (non si può riattivare senza reinstallare Windows)
+  4. riavvia l'installer
+  5. in alternativa usa l'[installazione da terminale](#installazione-da-terminale-alternativa), che non richiede l'`.exe`
+- **Dopo l'installazione l'app non parte da sola**: nessuna impostazione di Windows da attivare. L'avvio automatico è un'attività pianificata creata dall'installer; verifica con `Get-ScheduledTask -TaskName PrioreGroupFatturazione` in PowerShell, oppure apri `http://localhost:1969`.
 
 > **Versione specifica** (avanzato): per installare una versione precisa anziché l'ultima, lancia l'installer da terminale con il numero di versione:
 > - macOS: `FOGLIFATTURE_VERSION=1.5.0 installer -pkg FogliFatture-mac-universal.pkg -target CurrentUserHomeDirectory`
@@ -233,14 +250,14 @@ Al termine dell'installazione l'app:
 
 ### Installazione da terminale (alternativa)
 
-Serve solo la prima volta. Lo script fa tutto da solo: installa Node.js se manca, scarica le librerie necessarie, prepara la configurazione, avvia l'app come servizio permanente e apre il browser sulla pagina iniziale.
+Serve solo la prima volta. Lo script fa tutto da solo: installa gli strumenti mancanti (Git e Node.js), scarica le librerie necessarie, prepara la configurazione, avvia l'app come servizio permanente e apre il browser sulla pagina iniziale.
 
-Requisiti minimi: Node.js ≥ 18 (installato automaticamente dallo script se assente), macOS o Windows 10/11.
+Requisiti minimi: macOS o Windows 11. Git e Node.js ≥ 18 vengono installati automaticamente dallo script se assenti (su Windows tramite `winget`, su Mac tramite Homebrew o Command Line Tools).
 
 #### Mac
 
 1. Apri l'app **Terminale** (Applicazioni → Utility → Terminale).
-2. Scarica il progetto ed entra nella cartella:
+2. Scarica il progetto ed entra nella cartella. Se Git manca, macOS propone di installare i "Command Line Tools": conferma nella finestra che si apre, attendi la fine e ripeti il comando:
    ```bash
    git clone https://github.com/priore/foglifatture.git
    cd foglifatture
@@ -263,12 +280,16 @@ scripts/uninstall.sh
 #### Windows
 
 1. Apri **PowerShell** (cerca "PowerShell" nel menu Start).
-2. Scarica il progetto ed entra nella cartella:
+2. Se Git manca (`git --version` dà errore), installalo e **chiudi e riapri PowerShell**:
+   ```powershell
+   winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
+   ```
+3. Scarica il progetto ed entra nella cartella:
    ```powershell
    git clone https://github.com/priore/foglifatture.git
    cd foglifatture
    ```
-3. Lancia l'installazione:
+4. Lancia l'installazione (installa Node.js se manca):
    ```powershell
    .\scripts\install.ps1
    ```

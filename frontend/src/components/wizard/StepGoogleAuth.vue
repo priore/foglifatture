@@ -92,7 +92,7 @@ async function riavvia() {
     </div>
 
     <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
-      <button class="btn btn-primary" :disabled="salvando" @click="salva">{{ salvando ? 'Salvo…' : 'Salva credenziali' }}</button>
+      <button class="btn btn-ok" :disabled="salvando" @click="salva">{{ salvando ? 'Salvo…' : 'Salva credenziali' }}</button>
       <button class="btn btn-warn" v-if="serveRiavvio" :disabled="riavviando" @click="riavvia">{{ riavviando ? 'Riavvio…' : 'Riavvia app' }}</button>
       <span class="badge-mono" v-if="messaggio">{{ messaggio }}</span>
     </div>

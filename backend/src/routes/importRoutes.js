@@ -6,7 +6,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { importaTimesheetDaXls, estraiAnnoMeseDaNomeFile } from '../services/xlsTimesheetImporter.js';
-import { importaFatturaDaXml } from '../services/xmlInvoiceImporter.js';
+import { importaFatturaDaXml, eFatturaRicevuta, normalizzaPiva } from '../services/xmlInvoiceImporter.js';
 import { analizzaZip } from '../services/importZipService.js';
 import { archiviaRicevuta } from '../services/sdiRicevuteService.js';
 import { saveTimesheet } from '../services/timesheetService.js';
@@ -16,16 +16,6 @@ import { logger } from '../lib/logger.js';
 import { randomUUID } from 'node:crypto';
 
 const xmlParser = new XMLParser({ removeNSPrefix: true, ignoreAttributes: true });
-
-// Normalizza una partita IVA per il confronto: alcuni XML storici la riportano con
-// spazi o col prefisso IdPaese incollato (es. "IT01234567890"), altri come puro numero.
-// La p.iva italiana è sempre 11 cifre: uno zero iniziale può andare perso in fogli/import
-// storici (es. "8364111008" invece di "08364111008"), quindi si reintegra col padding
-// prima di confrontare, senza scartare cifre significative.
-function normalizzaPiva(valore) {
-  const pulita = String(valore || '').trim().toUpperCase().replace(/^IT/, '');
-  return /^\d{1,11}$/.test(pulita) ? pulita.padStart(11, '0') : pulita;
-}
 
 // Estrae dall'header XML l'intera anagrafica CessionarioCommittente (il "cliente" per
 // questa app, che emette fatture: vedi CedentePrestatore = fornitore in fatturaPaXmlGenerator.js).
@@ -122,11 +112,15 @@ async function fileEsiste(percorso) {
 async function importaUnaFatturaXml(buffer, originalname, clienteIdRichiesto) {
   const contenutoXml = buffer.toString('utf-8');
   const invoice = importaFatturaDaXml(contenutoXml);
+  let config = await getConfig();
+  // Una fattura ricevuta (cedente diverso dall'operatore) non va mai importata come emessa.
+  if (eFatturaRicevuta(contenutoXml, config.fornitore?.partitaIva)) {
+    throw new Error('Fattura ricevuta: il cedente non è l\'operatore, non è una fattura emessa');
+  }
   if (!invoice.anno || !invoice.mese) {
     throw new Error('Impossibile determinare anno/mese dal campo Data della fattura');
   }
 
-  let config = await getConfig();
   let clienteId = clienteIdRichiesto || risolviClienteIdDaXml(contenutoXml, config.clienti);
   if (!clienteId) {
     const anagrafica = estraiAnagraficaCessionario(contenutoXml);
@@ -217,10 +211,11 @@ importRoutes.post('/fattura-batch', upload.array('file'), async (req, res) => {
 // (lo ZIP viene ricaricato, i nomi scelti arrivano in `selezionati`).
 const uploadZip = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
-importRoutes.post('/zip/anteprima', uploadZip.single('file'), (req, res) => {
+importRoutes.post('/zip/anteprima', uploadZip.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
   try {
-    const file = analizzaZip(req.file.buffer).map(({ nome, tipo, codiceTipo, motivo, anteprima }) => ({ nome, tipo, codiceTipo, motivo, anteprima }));
+    const { fornitore } = await getConfig();
+    const file = analizzaZip(req.file.buffer, fornitore?.partitaIva).map(({ nome, tipo, codiceTipo, motivo, anteprima }) => ({ nome, tipo, codiceTipo, motivo, anteprima }));
     res.json({ file });
   } catch (err) {
     logger.error('Errore lettura ZIP', { errore: err.message });
@@ -232,9 +227,9 @@ importRoutes.post('/zip', uploadZip.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
   try {
     const selezionati = new Set(JSON.parse(req.body.selezionati || '[]'));
-    const { sdi } = await getConfig();
+    const { sdi, fornitore } = await getConfig();
     const risultati = [];
-    for (const voce of analizzaZip(req.file.buffer).filter((v) => selezionati.has(v.nome))) {
+    for (const voce of analizzaZip(req.file.buffer, fornitore?.partitaIva).filter((v) => selezionati.has(v.nome))) {
       try {
         if (voce.tipo === 'fattura') {
           const invoice = await importaUnaFatturaXml(voce.contenuto, voce.nome, req.body.clienteId);

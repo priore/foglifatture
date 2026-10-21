@@ -1,0 +1,136 @@
+Istruzioni Redditi PF 2026, Fascicolo 2 (agg. 13/05/2026): quadro RR, sezione II. Estratto.
+SEZIONE II – Contributi previdenziali dovuti dai liberi professionisti iscritti alla Gestione separata dell’Inps
+La presente sezione deve essere compilata dai lavoratori autonomi che svolgono attività di cui all’art. 53, comma 1, del TUIR, tenuti al
+versamento dei contributi previdenziali alla Gestione separata ex art. 2, comma 26, della L. 8 agosto 1995, n. 335. Si precisa, al riguardo,
+che non sono tenuti all’iscrizione alla gestione separata istituita presso l’INPS e, quindi, alla compilazione del presente quadro e al calcolo
+dei relativi contributi, i professionisti che sono obbligati al versamento della contribuzione obbligatoria previdenziale (cd contributo sog-
+gettivo) presso le Casse di cui ai decreti legislativi n. 509/94 e n. 103/96 e chi, pur producendo redditi da lavoro autonomo, sia assogget-
+tato, per l’attività professionale, ad altre forme assicurative. Sono invece obbligati al versamento alla Gestione separata coloro, che pur
+iscritti ad Albi, non sono tenuti al versamento del contributo soggettivo presso la Cassa di appartenenza, ovvero hanno esercitato even-
+tuali facoltà di non versamento e/o iscrizione, in base alle previsioni dei rispettivi Statuti o regolamenti. Sono tenuti, inoltre, alla compila-
+zione della presente sezione i magistrati onorari – giudici onorari di pace e viceprocuratori onorari – così come previsto dall’articolo 25,
+comma 3, del decreto legislativo n. 13 luglio 2017, n. 116.
+La base imponibile sulla quale deve essere calcolata la contribuzione dovuta è rappresentata dalla totalità dei redditi proveniente dal-
+l’esercizio di attività da lavoro autonomo compreso quello in forma associata dichiarata ai fini IRPEF, prodotti per l’anno 2025 e/o il reddito
+prodotto nell’ambito del “regime dell’imprenditoria giovanile” (art. 27 comma 1 e 2 del Decreto legge 98/2011) o del “regime forfettario,
+determinato ai sensi dell’art. 1, commi dal 54 a 89 previsto dalla legge 23 dicembre 2014 n. 190”, qualora il professionista abbia adottato
+tali regimi. Inoltre, sono redditi imponibili le indennità corrisposte ai giudici di pace e ai viceprocuratori onorari, così come disciplinato dal-
+l’art. 53, commi 1 e 2, lett. f), del TUIR come modificato dall’art. 25, commi 3 e 26, del D. Lgs. 13 luglio 2017 n. 116 e per i professionisti
+del settore sportivo dilettantistico anche la quota di reddito prodotto nell’anno di imposta 2025 (comprensivo anche della quota parte esen-
+te Irpef, al netto della franchigia di euro 5.000,00 avente esenzione previdenziale).
+Per l’anno di imposta 2025:
+n il massimale di reddito annuo entro il quale sono dovuti i contributi previdenziali è di euro 120.607 (reddito imponibile massimo);
+n le aliquote da applicare sul reddito professionale sono: 24% per i professionisti già coperti per l’anno di imposta da una gestione pre-
+videnziale obbligatoria o sono titolari di pensione diretta o non diretta (pensione di reversibilità); 26,07%per i professionisti privi da altra
+tutela previdenziale obbligatoria (v. circolare INPS n. 27/205), che producono reddito ai sensi dell’art. 53, comma 1, del Tuir e 25,72%
+
+
+45
+             REDDITI PERSONE FISICHE 2026  Fascicolo 2  ISTRUZIONI PER LA COMPILAZIONE
+
+per i magistrati onorari obbligati alla Gestione separata). Le aliquote previste per I lavoratori autonomi del settore sportive dilettantistico
+titolari di partita Iva devono essere applicate come dalle circolari n. 88 del 31 ottobre 2023 paragrafo 10.2 e 27/205.
+Gli importi eventualmente risultanti a credito della presente sezione possono essere utilizzati in compensazione mediante modello F24
+indicando come periodo di riferimento esclusivamente l’anno 2025; tutte le somme riferite ad anni precedenti rispetto all’anno 2023, do-
+vranno essere oggetto di domanda di rimborso oppure di compensazione contributiva (autoconguaglio).
+COME SI COMPILA LA SEZIONE II
+La presente sezione deve essere compilata dai lavoratori autonomi iscritti alla Gestione Separata Inps e Magistrati onorari (articolo 25,
+comma 3, del decreto legislativo n. 13 luglio 2017, n.116) ad esclusione dei lavoratori autonomi del settore sportivo dilettantistico ai quali
+è riservata la sezione III.
+Nel rigo RR5 devono essere riportati i seguenti dati:
+n a colonna 1, il codice che contraddistingue il reddito percepito come:
+1 - la somma dei redditi da lavoro autonomo determinati nel quadro RE – RH e/o LM sezione I o III e/o le indennità corrisposte ai
+giudici di pace e ai viceprocuratori onorari indicate nel rigo RL26 con codice 2 indicato nella colonna 2. I redditi da indicare sono
+quelli che devono essere utilizzati per la determinazione della base imponibile previdenziale e certificati nel campo 19 e 20;
+n a colonna 2, il reddito percepito riferito al codice inserito in colonna 1;
+n da colonna 3 a colonna 10 il codice che contraddistingue il reddito percepito come:
+2 - amministratori locali di cui all’art. 1 del D.M. 25 maggio 2001 per i quali sono stati dagli enti competenti versati i contributi alla Ge-
+stione separata come quote forfetarie. I redditi denunciati con i flussi uniemens a tale titolo concorrono alla formazione del massi-
+male annuo e non devono essere superiori a euro 18.555;
+3 - parasubordinati, si tratta di redditi soggetti a contribuzione presso la Gestione separata e denunciati con flusso uniemens: sono
+sommati i redditi percepiti e soggetti al contributo della Gestione separata di cui all’art. 50, comma 1 lett. cbis) del TUIR; le parteci-
+pazioni agli utili di cui alla lettera f) del comma 1 dell’art. 44 quando l’apporto è costituito esclusivamente dalla prestazione di lavoro
+quale Associato in partecipazione di cui all’art. 53 comma 2 lett. c); i redditi derivanti da attività di lavoro autonomo non esercitate
+abitualmente di cui art. 67 comma 1 lett. l) redditi diversi quali lavoro autonomo occasionale). Tali redditi concorrono alla formazione
+del massimale annuo;
+4 - redditi che non sono base imponibile fiscale ma sui quali c’è obbligo contributivo previdenziale alla Gestione separata (assegno di
+ricerca, dottorato di ricerca, borsa di studio, compensi per i medici in formazione specialistica compreso gli incarichi di ricerca di cui
+all’art. 22-ter legge 240/2010 e circolare Inps n. 142/2025)) tali redditi concorrono alla formazione del massimale annuo;
+5 - tale codice indica il reddito da lavoro autonomo, indicato nel quadro RE/RH o LM, sul quale sono stati calcolati e versati contributi
+previdenziali presso altra forma di previdenza assicurativa, quale, ad esempio, la Gestione speciale esercenti attività commerciali
+oppure Inarcassa. Al fine di indicare la gestione presso la quale è stato versato il contributo previdenziale e sottrarre dalla base im-
+ponibile la quota di reddito già assoggettata a contribuzione, il codice 5 assume le sotto-specificate tipologie:
+5 a) – quota di reddito soggetto ad altra Cassa professionale autonoma di cui ai decreti legislativi n. 509/94 e n. 103/96, quale, ad
+esempio, Inarcassa, Cassa nazionale dei dottori commercialisti, ecc.;
+5 b) – quota di reddito soggetto alla gestione dello Spettacolo (ex Pals);
+5 c) – quota di reddito da lavoro autonomo sulla quale sono state calcolate le somme a titolo di contribuzione previdenziale presso la
+gestione speciale esercenti attività commerciali ed esposte nel quadro RR sez. I;
+5 d) – quota di reddito soggetto ad altre forme di previdenza obbligatorie diverse dalle precedenti;
+n nelle colonne da 3 a 10 le coppie di codici e relativi redditi qualora il soggetto abbia percepito nello stesso anno differenti tipologie di
+reddito;
+n a colonna 11, il reddito imponibile previdenziale. L’imponibile da indicare è il reddito sul quale calcolare il contributo della Gestione se-
+parata e dovuto direttamente dal professionista. Possono verificarsi situazioni diverse a seconda della natura dei redditi prodotti dal
+contribuente stesso. Esempio 1: reddito determinato ai sensi dell’art. 53 comma 1 e dichiarato nel quadro RE, rigo RE23; in colonna 1
+è indicato il codice 1 e il reddito di colonna 2 coincide con colonna 11. Esempio 2: reddito determinato ai sensi dell’art. 53 comma 1
+quadro RE indicato con codice 1 in colonna 1 (euro 68.000), inoltre reddito indicato a colonna 4 con codice 2 in colonna 3 (euro 15.953)
+e reddito indicato in colonna 6 con codice 3 in colonna 5 (euro 120.607) denunciati entrambi nel quadro RC: nella colonna 11 deve es-
+sere indicato euro 0 (zero) in quanto il reddito proveniente da reddito assimilato e assoggettato alla gestione separata supera il mas-
+simale annuo. Esempio 3: reddito determinato ai sensi dell’art. 53 comma 1 e dichiarato nel quadro RH rigo RH17 (euro 65.000), reddito
+indicato con codice 3 (euro 65.000) e dichiarato, rispettivamente, nel quadro RC come collaboratore coordinato e continuativo e deter-
+minato ai sensi dell’art. 50 co 1 c bis (euro 40.000) e nel quadro RL rigo RL15 come reddito derivante da attività di lavoro autonomo
+non esercitato abitualmente, così come determinato ai sensi dell’art. 67 comma 1 lett. l) del TUIR (euro 30.000 – si ricorda che tali red-
+diti sono assoggettati su importi superiori a euro 5.000). Il reddito da indicare in colonna 11 è pari a euro 55.607 e non euro 65.000 in
+quanto la somma del reddito per il quale è dovuta la contribuzione è pari a euro 130.000, concorre fino al massimale di euro 120.607
+e su euro 65.000 sono già versati i contributi dal sostituto previdenziale;
+n nelle colonne 12 e 13, il periodo in cui è stato conseguito il reddito nella forma “dal mese” e “al mese”;
+n a colonna 14, indicare il codice corrispondente all’aliquota applicata; in particolare:
+A aliquota del 24%;
+B aliquota del 25,72%;
+C aliquota del 26,07%
+n a colonna 15, il contributo dovuto; l’importo del contributo dovuto deve essere calcolato applicando l’aliquota indicata nella colonna 14
+all’importo indicato nella colonna 11;
+n a colonna 16, inserire gli importi versati in acconto con il mod. F24 per il periodo di imposta 2025;
+
+
+46
+              REDDITI PERSONE FISICHE 2026  Fascicolo 2  ISTRUZIONI PER LA COMPILAZIONE
+
+ a colonna 17, inserire il codice relativo alla tipologia di contributo sospeso:
+1 malattia
+2 infortunio grave
+3 calamità naturale
+ a colonna 18, inserire gli importi sospesi per malattia o infortunio grave ai sensi dell’art. 14, della Legge 22 maggio 2017 n. 81 (cfr. cir-
+colare INPS n. 69 del 11 maggio 2018) o per calamità naturali.
+Qualora si modifichi in corso d’anno la misura dell’aliquota contributiva da applicare (ad esempio dal 25.72% al 24%) per l’inizio, ad esem-
+pio, di un concomitante rapporto di lavoro subordinato a decorrere dal mese di maggio, devono essere compilati più moduli.
+Proseguendo nell’esempio, nel rigo RR5 sarà indicato il reddito imponibile del primo periodo dell’anno nel quale non vi era altro rapporto
+di lavoro, nella misura di 4/12 del reddito annuo, il periodo di riferimento, da 01 a 04, e il codice B.
+Nel successivo modulo saranno riportati l’imponibile relativo alla restante parte dell’anno, nella misura di 8/12 del reddito annuo, il periodo
+di riferimento, da 05 a 12, e il codice A. Nel caso in cui il reddito conseguito sia superiore a 120.607 euro, ai fini della determinazione delle
+due diverse basi imponibili, detta somma sarà rapportata a mese e moltiplicata per i mesi di ciascun periodo. Nell’esempio, il reddito da
+indicare nei righi sarà pari, rispettivamente, a euro 40.202 e ad euro 80.405. Si evidenzia che in caso di attività che non si protrae per l’in-
+tero anno i contributi sono comunque dovuti entro il predetto massimale di euro 120.607.
+ a colonna 19 deve essere barrata per certificare che il reddito inserito nel campo 20 o campo 21 costituisce base imponibile di cui al
+campo RR5 codice 1 del campo 1 e importo del campo 2, in quanto il contribuente che ha aderito al CPB (D.Lgs 13/2024) può avvalersi
+della facoltà di cui all’art.19 (comma 1 secondo periodo) di versare i contributi sul reddito effettivo;
+ a colonna 20 importo del reddito concordato proveniente dal quadro CP sezione Sezioni I rigo CP2 campo 3 e sezione III rigo CP9
+campo 3 al netto delle perdite pregresse presenti nel campo RE24. Nella medesima colonna devono essere indicati anche i redditi,
+prodotti in forma associata, per i quali è richiesta la contribuzione previdenziale obbligatoria in Gestione Separata e presenti ai righi da
+RH1 a RH4, colonna 14, con i codici 2, 3, 6 e 7 in colonna 2 nonché, le quote relative ai redditi assoggettate ad imposta sostituiva di
+cui all’art. 20-bis comma 1 e comma 1-bis del D.lgs. n. 13 del 2024, di cui ai righi da CP3 a CP5. Per maggiori approfondimenti si rinvia
+alla circolare operativa dell’INPS;
+ a colonna 21 importo del reddito effettivo proveniente dal/i quadro RE – RH o LM (sez. I o III) reddito effettivo;
+ a colonna 22 indicare il totale dei redditi provenienti da quadri CP o RE RH.
+Nel rigo RR6, deve essere indicato:
+ a colonna 1 il totale dei contributi dovuti riportati nella colonna 15 – l’importo della colonna 18 del rigo RR5 dei vari moduli compilati;
+ a colonna 2 il totale degli acconti versati riportati nella colonna 16 del rigo RR5 dei vari moduli compilati.
+Nel rigo RR7 deve essere riportato il contributo a debito dato dalla seguente operazione: colonne 1 – colonna 2 del rigo RR6 se uguale
+o maggiore a 0; se tale somma algebrica risulti essere negativa deve essere compilato il rigo RR8 colonna 1.
+Nel rigo RR8 devono essere indicati i seguenti dati:
+ in colonna 1 il contributo a credito. Deve essere riportato, in valore assoluto, il risultato dato dalla seguente operazione: colonna 1 rigo
+RR6 – colonna 2 del rigo RR6 se il risultato di tale operazione è negativo. Il credito può essere esclusivamente compensato con F24
+o chiesto a rimborso (con specifica istanza da presentare presso INPS);
+ in colonna 2 il credito valorizzato in tale colonna deve essere utilizzato in compensazione esclusivamente con modello F24 con l’indi-
+cazione dell’anno 2025 e in colonna 3 il credito del presente anno che deve essere richiesto a rimborso con specifica istanza da pre-
+sentare alla sede di competenza INPS; si precisa che in colonna 2 e colonna 3 deve essere ripartito il risultato di colonna 1.
+

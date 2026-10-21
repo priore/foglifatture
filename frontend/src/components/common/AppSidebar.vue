@@ -1,20 +1,26 @@
 <script setup>
 // Barra di navigazione laterale fissa: unico punto di accesso alle 3 schermate dell'app.
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { soloFatture, aggiornaGestioniClienti } from '../../composables/useClienteAttivo.js';
 import { api, updateApi } from '../../services/api.js';
 import { PASSI_IMPOSTAZIONI } from '../../wizardImpostazioniPassi.js';
 import { PASSI_IMPORTA_STORICO } from '../../wizardImportaStoricoPassi.js';
 
 const route = useRoute();
+const router = useRouter();
 const nomeFornitore = ref('Consulente');
 const versioneApp = ref('');
 onMounted(async () => {
   const config = await api.getConfig().catch(() => null);
+  aggiornaGestioniClienti(config?.clienti);
   if (config?.fornitore?.denominazione) nomeFornitore.value = config.fornitore.denominazione;
   const stato = await updateApi.stato().catch(() => null);
   versioneApp.value = stato?.versioneLocale || '';
 });
+
+// Cliente "solo fatture" selezionato: niente Timesheet, eventuale pagina aperta ripiega su Fattura.
+watch([soloFatture, () => route.path], ([sf, path]) => { if (sf && path === '/timesheet') router.replace('/fattura'); });
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
 function toggleTheme() {
@@ -30,7 +36,7 @@ function toggleTheme() {
     <div class="brand">Fogli & Fatture<small>Consulenza IT · Regime forfettario</small></div>
     <nav class="nav">
       <router-link to="/dashboard"><span class="dot"></span>Dashboard forfettario</router-link>
-      <router-link to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
+      <router-link v-if="!soloFatture" to="/timesheet"><span class="dot"></span>Timesheet mensile</router-link>
       <router-link to="/fattura"><span class="dot"></span>Fattura Pro-Forma</router-link>
       <router-link to="/bitcoin"><span class="dot"></span>Bitcoin</router-link>
       <router-link to="/versamenti-f24"><span class="dot"></span>Versamenti F24</router-link>
