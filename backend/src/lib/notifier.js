@@ -19,10 +19,14 @@ function inviaNotifica(titolo, messaggio) {
 }
 
 export async function notifica(titolo, messaggio) {
-  const { getConfig } = await import('../services/configService.js');
-  const config = await getConfig();
-  if (config.notifiche?.abilitate === false) return;
-  inviaNotifica(titolo, messaggio);
+  try {
+    const { getConfig } = await import('../services/configService.js');
+    const config = await getConfig();
+    if (config.notifiche?.abilitate === false) return;
+    inviaNotifica(titolo, messaggio);
+  } catch (err) {
+    logger.warn('Notifica desktop fallita', { err: err.message });
+  }
 }
 
 // ponytail: dedup 24h per chiave — evita spam da polling ripetuto per lo stesso evento
