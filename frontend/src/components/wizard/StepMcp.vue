@@ -1,4 +1,5 @@
 <script setup>
+import { chiediConferma } from '../../composables/useConferma.js';
 // Server MCP in sola lettura (FP-008). Salva da sé: toggle e token passano da /api/mcp, non da config.json generico.
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api.js';
@@ -24,7 +25,7 @@ async function cambiaAbilitato() {
 }
 
 async function rigenera() {
-  if (!confirm('Il vecchio token smette di funzionare: i client già configurati vanno aggiornati. Continuare?')) return;
+  if (!(await chiediConferma('Il vecchio token smette di funzionare: i client già configurati vanno aggiornati. Continuare?', { titolo: 'Rigenera token', ok: 'Rigenera' }))) return;
   try {
     stato.value = await api.rigeneraTokenMcp();
   } catch (err) {

@@ -15,10 +15,10 @@ defineEmits(['aggiorna', 'annulla']);
       <p class="note-legal">Versione attuale: {{ versioneLocale || '—' }} · Nuova versione: {{ versioneRemota }}</p>
       <pre v-if="changelog" class="update-changelog">{{ changelog }}</pre>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" :disabled="inCorso" @click="$emit('annulla')">Annulla</button>
-        <button type="button" class="btn btn-blue" :disabled="inCorso" @click="$emit('aggiorna')">
+        <button type="button" class="btn btn-ok" :disabled="inCorso" @click="$emit('aggiorna')">
           {{ inCorso ? 'Aggiornamento in corso…' : 'Aggiorna' }}
         </button>
+        <button type="button" class="btn btn-warn" :disabled="inCorso" @click="$emit('annulla')">Annulla</button>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../components/common/SelectField.vue';
 // Vista Bitcoin: registro movimenti BTC (FP-012) e import transazioni (FP-014), cioè le azioni
 // che modificano i dati. La dashboard (tab Bitcoin) resta la sola visualizzazione.
 import { ref } from 'vue';
@@ -17,9 +18,9 @@ const versioneRegistro = ref(0); // cambia quando una proposta confermata aggiun
       <div><h1>Bitcoin</h1><p>Registro movimenti, plusvalenze e import delle transazioni</p></div>
       <div class="page-head-actions">
         <router-link to="/dashboard" class="btn btn-ghost">Riepilogo in dashboard</router-link>
-        <select v-model.number="annoSelezionato" class="status" aria-label="Anno">
+        <SelectField titolo="Anno" descrizione="Anno delle operazioni da mostrare" v-model.number="annoSelezionato" class="status" aria-label="Anno">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
-        </select>
+        </SelectField>
       </div>
     </div>
 

@@ -1,0 +1,5 @@
+{
+  "google":   { "clientId": "", "clientSecret": "" },
+  "dropbox":  { "clientId": "", "clientSecret": "" },
+  "onedrive": { "clientId": "", "clientSecret": "" }
+}

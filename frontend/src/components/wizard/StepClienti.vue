@@ -1,4 +1,6 @@
 <script setup>
+import { chiediConferma, avvisa } from '../../composables/useConferma.js';
+import SelectField from '../common/SelectField.vue';
 import { ref, computed } from 'vue';
 import StepCliente from './StepCliente.vue';
 import TemplateGrid from './TemplateGrid.vue';
@@ -39,13 +41,13 @@ function aggiungiCliente() {
 // Cancellazione logica (attivo:false), mai rimozione dall'array: le fatture/timesheet
 // storici del cliente restano risolvibili. Doppia conferma perché è comunque un'azione
 // che toglie il cliente da tutti i selettori attivi dell'app.
-function disattivaCliente(cliente) {
+async function disattivaCliente(cliente) {
   if (props.modelValue.filter((c) => c.attivo).length <= 1) {
-    alert('Deve restare sempre almeno un cliente attivo.');
+    await avvisa('Deve restare sempre almeno un cliente attivo.', { titolo: 'Disattiva cliente' });
     return;
   }
-  if (!confirm(`Disattivare "${cliente.denominazione || 'questo cliente'}"? Rimane nello storico ma sparisce dai selettori.`)) return;
-  if (!confirm('Confermi? Potrai riattivarlo in qualsiasi momento da "Clienti disattivati".')) return;
+  if (!(await chiediConferma(`Disattivare "${cliente.denominazione || 'questo cliente'}"? Rimane nello storico ma sparisce dai selettori.`, { titolo: 'Disattiva cliente', ok: 'Disattiva' }))) return;
+  if (!(await chiediConferma('Confermi? Potrai riattivarlo in qualsiasi momento da "Clienti disattivati".', { titolo: 'Disattiva cliente' }))) return;
   cliente.attivo = false;
 }
 
@@ -86,10 +88,10 @@ function riattivaCliente(cliente) {
           <div class="card-body">
           <div class="field">
             <label>Gestione cliente</label>
-            <select v-model="cliente.gestione">
+            <SelectField titolo="Gestione cliente" descrizione="Cosa si gestisce per questo cliente" v-model="cliente.gestione">
               <option value="timesheet">Timesheet e fatture (importo calcolato o libero)</option>
               <option value="fatture">Solo fatture (importo libero)</option>
-            </select>
+            </SelectField>
           </div>
           <div class="field" style="margin-top:12px" v-if="cliente.gestione !== 'fatture'">
             <label>Tariffa oraria (€)</label>
@@ -118,7 +120,7 @@ function riattivaCliente(cliente) {
           <div style="display:flex;gap:20px">
             <div class="field" style="flex:1">
               <label>Modalità di pagamento</label>
-              <select v-model="cliente.modalitaPagamento">
+              <SelectField titolo="Modalità di pagamento" descrizione="Come il cliente paga le fatture" v-model="cliente.modalitaPagamento">
                 <option value="">Predefinita (Impostazioni)</option>
                 <option value="MP05">Bonifico</option>
                 <option value="MP19">Addebito diretto SEPA</option>
@@ -126,7 +128,7 @@ function riattivaCliente(cliente) {
                 <option value="MP02">Assegno</option>
                 <option value="MP01">Contanti</option>
                 <option value="BTC">Bitcoin (indirizzo dal primo wallet in Fornitore)</option>
-              </select>
+              </SelectField>
             </div>
             <div class="field" style="flex:1">
               <label>Giorni di scadenza</label>
@@ -146,11 +148,11 @@ function riattivaCliente(cliente) {
           </div>
           <div class="field" style="margin-top:12px">
             <label>Rivalsa INPS 4%</label>
-            <select v-model="cliente.rivalsaInps">
+            <SelectField titolo="Rivalsa INPS" descrizione="Override sull'impostazione del fornitore" v-model="cliente.rivalsaInps">
               <option :value="null">Predefinita (Impostazioni fornitore)</option>
               <option :value="true">Attiva per questo cliente</option>
               <option :value="false">Disattiva per questo cliente</option>
-            </select>
+            </SelectField>
             <small class="note-legal">Override sull'impostazione globale rivalsa INPS. Da concordare col cliente. La rivalsa concorre al totale del documento ai fini dell'imposta di bollo.</small>
           </div>
         </div>

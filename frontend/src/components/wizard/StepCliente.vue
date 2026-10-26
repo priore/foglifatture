@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../common/SelectField.vue';
 import { computed, onMounted, ref } from 'vue';
 import LogoUpload from './LogoUpload.vue';
 import { pivaValida, codiceSdiValido } from '../../composables/useValidazioneFiscale.js';
@@ -69,7 +70,7 @@ async function aiutamiCapire7Septies() {
     <!-- Paese e tipo cliente -->
     <div class="field">
       <label>Paese</label>
-      <select :value="modelValue.paese || 'IT'" @change="modelValue.paese = $event.target.value">
+      <SelectField titolo="Paese" descrizione="Nazione della sede del cliente" :model-value="modelValue.paese || 'IT'" @change="modelValue.paese = $event">
         <option value="IT">IT — Italia</option>
         <option disabled>── UE ──</option>
         <option value="AT">AT — Austria</option>
@@ -120,14 +121,14 @@ async function aiutamiCapire7Septies() {
         <option value="TR">TR — Turchia</option>
         <option value="RU">RU — Russia</option>
         <option value="UA">UA — Ucraina</option>
-      </select>
+      </SelectField>
     </div>
     <div class="field">
       <label>Tipo soggetto</label>
-      <select v-model="modelValue.tipo">
+      <SelectField titolo="Tipo cliente" descrizione="Azienda o privato" v-model="modelValue.tipo">
         <option value="azienda">Azienda / soggetto passivo IVA</option>
         <option value="privato">Privato</option>
-      </select>
+      </SelectField>
     </div>
 
     <!-- Avviso VIES e 7-septies sono sotto, dopo la sede -->

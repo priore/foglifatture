@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../common/SelectField.vue';
 // Configurazione della API key Groq (free tier), usata solo come fallback automatico
 // quando la quota gratuita Gemini è esaurita, per il mapping colonne CSV pagamenti
 // (vedi pagamentiFattureService.js). Nessuna ricerca web: Groq copre solo i compiti
@@ -86,10 +87,10 @@ async function salvaGroq() {
         </p>
         <div class="form-grid" style="margin-top:12px">
           <div class="field full" style="display:flex;align-items:center;gap:12px">
-            <select v-model="modelloScelto" style="flex:1">
+            <SelectField titolo="Modello Groq" descrizione="Modello usato per le funzioni AI" v-model="modelloScelto" style="flex:1">
               <option v-if="modelloScelto && !MODELLI_NOTI.includes(modelloScelto)" :value="modelloScelto">{{ modelloScelto }}</option>
               <option v-for="m in MODELLI_NOTI" :key="m" :value="m">{{ m }}</option>
-            </select>
+            </SelectField>
             <button class="btn btn-ok" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
           </div>
         </div>

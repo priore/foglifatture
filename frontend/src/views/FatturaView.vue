@@ -1,4 +1,7 @@
 <script setup>
+import { chiediConferma } from '../composables/useConferma.js';
+import SelectField from '../components/common/SelectField.vue';
+import DateField from '../components/common/DateField.vue';
 // Schermata Fattura Pro-Forma: calcolo automatico da timesheet, generazione XML FatturaPA,
 // invio PEC. Il calcolo compenso è ricavato dal backend (unica fonte di verità sui totali).
 import { ref, computed, watch, onMounted } from 'vue';
@@ -176,11 +179,12 @@ async function generaFattura(confermaSoglia = false) {
   }
   try {
     fatturaGenerata.value = await api.generaFattura(anno.value, mese.value, clienteId.value, dati);
+    caricaSequenza();
     dataFattura.value = fatturaGenerata.value?.data ?? dataFattura.value;
     await caricaRicevuteSdi();
   } catch (err) {
     if (err.tipo === 'soglia100' || err.tipo === 'soglia85') {
-      if (window.confirm(err.message)) await generaFattura(true);
+      if (await chiediConferma(err.message, { titolo: 'Soglia forfettario', ok: 'Genera comunque' })) await generaFattura(true);
     } else {
       throw err;
     }
@@ -407,7 +411,7 @@ const fatturaAccettataSdi = computed(() =>
 async function inviaPec() {
   if (ultimoScarto.value) {
     const motivo = ultimoScarto.value.errori?.[0]?.descrizione ?? 'motivo non disponibile';
-    if (!window.confirm(`La fattura è stata scartata da SDI (${motivo}).\n\nReinviare con un nuovo progressivo di trasmissione?`)) return;
+    if (!(await chiediConferma(`La fattura è stata scartata da SDI (${motivo}).\n\nReinviare con un nuovo progressivo di trasmissione?`, { titolo: 'Fattura scartata', ok: 'Reinvia' }))) return;
   }
   inviandoPec.value = true;
   esitoPec.value = '';
@@ -427,7 +431,7 @@ async function emettiNotaCredito() {
   const f = fatturaGenerata.value;
   const importo = importoNota.value === '' ? null : Number(importoNota.value);
   const quanto = importo == null ? 'per l\'intero importo' : `di ${importo.toFixed(2)} €`;
-  if (!window.confirm(`Emettere una nota di credito ${quanto} a storno della fattura n. ${f.numero}?\n\nOccuperà il prossimo numero della sequenza e non si può annullare.`)) return;
+  if (!(await chiediConferma(`Emettere una nota di credito ${quanto} a storno della fattura n. ${f.numero}?\n\nOccuperà il prossimo numero della sequenza e non si può annullare.`, { titolo: 'Nota di credito', ok: 'Emetti' }))) return;
   lavorandoNota.value = true;
   esitoNota.value = '';
   try {
@@ -519,7 +523,14 @@ async function inviaEmail() {
 }
 
 watch([anno, mese, clienteId], caricaAnteprima);
+// Numeri mancanti nella sequenza: avviso in pagina, non blocca l'emissione.
+const numeriMancanti = ref([]);
+async function caricaSequenza() {
+  numeriMancanti.value = (await api.sequenzaFatture().catch(() => null))?.anomalie?.buchi ?? [];
+}
+
 onMounted(async () => {
+  caricaSequenza();
   [config.value, valuteLista.value] = await Promise.all([api.getConfig(), api.valuteSupportate()]);
   caricaQuota(new Date().getFullYear());
   inizializzaClienteId();
@@ -536,6 +547,10 @@ onMounted(async () => {
         <p>{{ modoManuale ? 'Importo e dicitura liberi' : 'Generata da Timesheet · Tariffa oraria configurabile in Impostazioni' }}</p>
       </div>
     </div>
+    <p class="avviso-numerazione" v-if="numeriMancanti.length">
+      Nella numerazione {{ numeriMancanti.length === 1 ? 'manca il numero' : 'mancano i numeri' }} {{ numeriMancanti.join(', ') }}.
+      Verifica che non sia una fattura non ancora sincronizzata da un altro dispositivo.
+    </p>
     <div class="cliente-row" v-if="clientiAttivi.length">
       <ClienteSwitcher v-model="clienteId" :clienti="clientiAttivi" />
     </div>
@@ -597,11 +612,11 @@ onMounted(async () => {
           <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
             <div class="field">
               <label>Data fattura</label>
-              <input type="date" v-model="dataFattura" :disabled="fatturaAccettataSdi" />
+              <DateField v-model="dataFattura" titolo="Data fattura" descrizione="Data di emissione della fattura definitiva" :disabled="fatturaAccettataSdi" />
             </div>
             <div class="field" v-if="fatturaGenerata">
               <label>Scadenza pagamento</label>
-              <input type="date" v-model="dataScadenzaPagamento" :disabled="salvandoScadenza" @change="salvaScadenzaPagamento" />
+              <DateField v-model="dataScadenzaPagamento" titolo="Scadenza pagamento" descrizione="Termine entro cui il cliente deve saldare" :disabled="salvandoScadenza" @change="salvaScadenzaPagamento" />
               <small class="note-legal">Termine commerciale, non fiscale: modificabile anche a fattura già emessa. Va in XML (DatiPagamento) se la fattura non è ancora stata inviata.</small>
             </div>
             <div class="field" v-if="fatturaGenerata?.pagamenti?.length">
@@ -630,10 +645,10 @@ onMounted(async () => {
               <div v-if="mostraFormBtc" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
                 <label>Indirizzo di destinazione</label>
                 <div style="display:flex;gap:6px">
-                  <select v-if="config.walletBtc?.length && !indirizzoLibero" v-model="btcForm.indirizzoDestinatario" style="flex:1" @change="btcForm.indirizzoDestinatario === '__altro__' && (indirizzoLibero = true, btcForm.indirizzoDestinatario = '')">
+                  <SelectField titolo="Indirizzo wallet" descrizione="Wallet che ha ricevuto il pagamento" v-if="config.walletBtc?.length && !indirizzoLibero" v-model="btcForm.indirizzoDestinatario" style="flex:1" @change="btcForm.indirizzoDestinatario === '__altro__' && (indirizzoLibero = true, btcForm.indirizzoDestinatario = '')">
                     <option v-for="w in config.walletBtc" :key="w.indirizzo" :value="w.indirizzo">{{ w.etichetta || w.indirizzo }}</option>
                     <option value="__altro__">Altro indirizzo…</option>
-                  </select>
+                  </SelectField>
                   <input v-else v-model="btcForm.indirizzoDestinatario" placeholder="il tuo indirizzo BTC che ha ricevuto il pagamento" style="flex:1" />
                   <button class="btn btn-ghost" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
                     <span v-if="caricandoTx">…</span>
@@ -688,9 +703,9 @@ onMounted(async () => {
               <small v-if="!mostraFormValuta && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
               <div v-if="mostraFormValuta" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
                 <label>Valuta</label>
-                <select v-model="valutaForm.codice">
+                <SelectField titolo="Valuta" descrizione="Valuta in cui è stato ricevuto il pagamento" v-model="valutaForm.codice">
                   <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
-                </select>
+                </SelectField>
 
                 <label>Importo ricevuto (nella valuta)</label>
                 <input v-model.number="valutaForm.importoValuta" type="number" min="0" step="0.01" />
@@ -706,7 +721,7 @@ onMounted(async () => {
                 <input v-model="valutaForm.fonte" placeholder="es. Banca d'Italia" />
 
                 <label>Data quotazione</label>
-                <input v-model="valutaForm.dataQuotazione" type="date" />
+                <DateField v-model="valutaForm.dataQuotazione" titolo="Data quotazione" descrizione="Giorno a cui si riferisce il cambio" />
 
                 <span v-if="valutaForm.importoValuta && valutaForm.cambio && valutaForm.cambio > 0" class="badge-mono">
                   ≈ {{ formattaEuro(valutaForm.importoValuta / valutaForm.cambio) }}
@@ -725,10 +740,10 @@ onMounted(async () => {
             <div v-if="!fatturaAccettataSdi" class="field">
               <label>Valuta fattura</label>
               <div style="display:flex;gap:6px">
-                <select v-model="valutaFatturaCodice" style="flex:1">
+                <SelectField titolo="Valuta della fattura" descrizione="EUR oppure valuta estera della fattura" v-model="valutaFatturaCodice" style="flex:1">
                   <option value="">EUR (default)</option>
                   <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
-                </select>
+                </SelectField>
                 <button v-if="valutaFatturaCodice" class="btn btn-ghost" :disabled="caricandoCambioFattura" @click="recuperaCambioFattura">{{ caricandoCambioFattura ? '…' : 'Recupera cambio' }}</button>
               </div>
               <div v-if="valutaFatturaCambio && valutaFatturaCodice" style="display:flex;gap:6px;align-items:center;margin-top:4px">

@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../../services/api.js';
+import { sceltaPendente } from '../../composables/useSceltaArchivio.js';
 
 // Modale bloccante: finché i termini correnti non sono accettati. Non copre /privacy,
 // dove i termini si possono leggere per intero.
@@ -27,7 +28,7 @@ async function accetta() {
 </script>
 
 <template>
-  <div v-if="termini && !termini.accettati && route.path !== '/privacy'" class="modal-overlay">
+  <div v-if="termini && !termini.accettati && sceltaPendente === false && route.path !== '/privacy'" class="modal-overlay">
     <div class="modal-box termini-box">
       <h2>Termini d'uso</h2>
       <div class="termini-testo">
@@ -52,7 +53,10 @@ async function accetta() {
 </template>
 
 <style scoped>
-.termini-box { max-width: 720px; max-height: 90vh; overflow-y: auto; }
-.termini-testo { margin: 12px 0; }
-.termini-check { display: flex; align-items: center; gap: var(--gap-sm); margin-top: 16px; }
+.termini-box { max-width: 900px; max-height: 90vh; overflow-y: auto; }
+.termini-testo { margin: var(--gap-sm) 0; }
+.termini-testo p { font-size: var(--font-size-xs); line-height: 1.4; margin: 0 0 var(--gap-sm); }
+.termini-check label { font-size: var(--font-size-sm); }
+.termini-check { margin-top: var(--gap-sm); }
+.termini-check { display: flex; align-items: center; gap: var(--gap-sm); }
 </style>

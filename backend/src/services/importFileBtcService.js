@@ -131,7 +131,7 @@ function parseKraken([intest, ...righe]) {
 }
 
 // Exchange (Binance tax report, Coinbase, One Trading): colonne per nome, solo righe BTC.
-// Logica ripresa da Crypto-RW (Exchanges/*.swift), ma per intestazione e non per posizione.
+// Logica ripresa da Crypto-RW (Exchanges), ma per intestazione e non per posizione.
 // Deposit/withdrawal/send/receive sono spostamenti tra custodie proprie: ignorati e contati
 // (come Kraken), per non duplicare i lotti. Il controvalore EUR è preso solo se già in EUR.
 const BTC = /^(X?XBT|BTC)$/i;

@@ -1,4 +1,8 @@
 <script setup>
+import SelectField from '../common/SelectField.vue';
+import ListaPopup from '../common/ListaPopup.vue';
+import { avvisa } from '../../composables/useConferma.js';
+import DateField from '../common/DateField.vue';
 // Anagrafica fornitore, regime forfettario, INPS, bollo e dati di pagamento in un'unica pagina (card per
 // categoria): sono lo stesso soggetto fiscale, l'utente li compila/verifica insieme invece che in step separati.
 import { ref, onMounted, computed, watch } from 'vue';
@@ -31,7 +35,6 @@ const partitaIvaOk = computed(() => pivaValida(props.modelValue.partitaIva));
 const codiceFiscaleOk = computed(() => codiceFiscaleValido(props.modelValue.codiceFiscale));
 
 const codici = ref([]);
-const ricerca = ref('');
 const aggiornando = ref(false);
 const messaggioAggiorna = ref('');
 const spiegaRequisitiInCorso = ref(false);
@@ -40,12 +43,8 @@ const popupAI = ref(null); // { titolo, testo }
 // Codice sede INPS (J.1): elenco ufficiale AdE in popup con ricerca testuale.
 const sedi = ref([]);
 const popupSedi = ref(false);
-const ricercaSede = ref('');
 const sedeAttuale = computed(() => sedi.value.find((s) => s.codice === props.forfettario.codiceSedeInps));
-const sediFiltrate = computed(() => {
-  const t = ricercaSede.value.trim().toLowerCase();
-  return t ? sedi.value.filter((s) => s.codice.includes(t) || s.nome.toLowerCase().includes(t)) : sedi.value;
-});
+const vociSedi = computed(() => sedi.value.map((x) => ({ value: x.codice, label: `${x.codice} — ${x.nome}` })));
 const erroreSedi = ref('');
 async function apriPopupSedi() {
   erroreSedi.value = '';
@@ -58,7 +57,7 @@ async function apriPopupSedi() {
       erroreSedi.value = `Elenco sedi non disponibile: ${err.message}`;
     }
   }
-  ricercaSede.value = '';
+  if (erroreSedi.value) { await avvisa(erroreSedi.value, { titolo: 'Codice sede INPS' }); return; }
   popupSedi.value = true;
 }
 function scegliSede(codice) {
@@ -68,8 +67,6 @@ function scegliSede(codice) {
 
 onMounted(async () => {
   codici.value = await api.settoriAteco();
-  const attuale = codici.value.find((c) => c.codice === props.forfettario.codiceAteco);
-  if (attuale) ricerca.value = `${attuale.codice} — ${attuale.descrizione}`;
 });
 
 async function aggiornaElencoAteco() {
@@ -85,16 +82,6 @@ async function aggiornaElencoAteco() {
     aggiornando.value = false;
   }
 }
-
-const risultati = computed(() => {
-  const termine = ricerca.value.trim().toLowerCase();
-  if (!termine) return [];
-  return codici.value
-    .filter((c) => c.codice.toLowerCase().includes(termine)
-      || c.descrizione.toLowerCase().includes(termine)
-      || c.settore.toLowerCase().includes(termine))
-    .slice(0, 20);
-});
 
 // Aliquota agevolata: eligibile solo se dataInizioAttivita è impostata e l'attività
 // è nei primi 5 anni solari (anno inizio incluso). Fuori da questa finestra il flag
@@ -123,11 +110,12 @@ async function spiegaRequisitiConAI() {
   }
 }
 
-function selezionaCodice(c) {
+function selezionaCodice(codice) {
+  const c = codici.value.find((x) => x.codice === codice);
+  if (!c) return;
   props.forfettario.codiceAteco = c.codice;
   props.forfettario.settoreAteco = c.settore;
   props.forfettario.coefficenteRedditivita = c.coefficente;
-  ricerca.value = `${c.codice} — ${c.descrizione}`;
 }
 </script>
 
@@ -181,7 +169,7 @@ function selezionaCodice(c) {
             <input type="number" step="1" min="0" v-model.number="forfettario.limitePersonale" placeholder="0 = disabilitato">
             <small class="note-legal" style="margin-top:4px">Soglia personale opzionale (es. 80.000 €): superarla richiede conferma prima di generare la fattura. Indipendente dalla soglia di legge.</small>
           </div>
-          <div class="field"><label>Data inizio attività</label><input type="date" v-model="forfettario.dataInizioAttivita"></div>
+          <div class="field"><label>Data inizio attività</label><DateField v-model="forfettario.dataInizioAttivita" titolo="Data inizio attività" descrizione="Data di apertura della partita IVA" /></div>
           <div class="field field-full" style="position:relative">
             <label style="display:flex;align-items:center;gap:8px">
               Codice ATECO
@@ -195,19 +183,13 @@ function selezionaCodice(c) {
               >{{ aggiornando ? '…' : '⟳' }}</button>
               <span v-if="messaggioAggiorna" class="badge-mono" style="font-weight:normal">{{ messaggioAggiorna }}</span>
             </label>
-            <input type="text" v-model="ricerca" placeholder="Cerca per codice, descrizione o settore… (anche sotto-codici es. 62.20.10)" autocomplete="off">
-            <ul v-if="risultati.length" class="ateco-risultati">
-              <li
-                v-for="c in risultati" :key="c.codice"
-                role="button" tabindex="0"
-                @click="selezionaCodice(c)"
-                @keydown.enter="selezionaCodice(c)"
-                @keydown.space.prevent="selezionaCodice(c)"
-              >
-                <strong>{{ c.codice }}</strong> — {{ c.descrizione }}
-                <span class="ateco-settore">{{ c.settore }} · {{ c.coefficente }}%</span>
-              </li>
-            </ul>
+            <SelectField
+              titolo="Codice ATECO" descrizione="Cerca per codice, descrizione o settore (anche sotto-codici es. 62.20.10)"
+              :model-value="forfettario.codiceAteco" @change="selezionaCodice"
+            >
+              <option v-if="forfettario.codiceAteco && !codici.some((c) => c.codice === forfettario.codiceAteco)" :value="forfettario.codiceAteco">{{ forfettario.codiceAteco }}</option>
+              <option v-for="c in codici" :key="c.codice" :value="c.codice">{{ c.codice }} — {{ c.descrizione }} · {{ c.settore }} · {{ c.coefficente }}%</option>
+            </SelectField>
           </div>
           <div class="field"><label>Settore</label><input type="text" v-model="forfettario.settoreAteco" readonly></div>
           <div class="field"><label>Coefficiente di redditività (%)</label><input type="number" step="1" min="0" max="100" v-model.number="forfettario.coefficenteRedditivita">
@@ -254,11 +236,11 @@ function selezionaCodice(c) {
         <div class="form-grid">
           <div class="field">
             <label for="gestione-previdenziale">Gestione previdenziale</label>
-            <select id="gestione-previdenziale" v-model="forfettario.gestionePrevidenziale">
+            <SelectField titolo="Gestione previdenziale" descrizione="Cassa previdenziale per stimare i contributi INPS" id="gestione-previdenziale" v-model="forfettario.gestionePrevidenziale">
               <option value="">Non configurata (INPS non stimato)</option>
               <option value="gestioneSeparata">INPS gestione separata</option>
               <option value="altra">Altra (artigiani/commercianti/cassa professionale — non stimata)</option>
-            </select>
+            </SelectField>
             <small class="note-legal" style="margin-top:6px">Necessaria per stimare i contributi INPS nelle scadenze F24. Per i liberi professionisti senza altra copertura obbligatoria si applica la gestione separata INPS (aliquota 26,07%).</small>
           </div>
           <div class="field" v-if="forfettario.gestionePrevidenziale === 'gestioneSeparata'">
@@ -310,14 +292,14 @@ function selezionaCodice(c) {
           <div class="field"><label>Intestatario conto</label><input type="text" v-model="fatturazione.intestatario"></div>
           <div class="field"><label>Istituto finanziario (facoltativo)</label><input type="text" v-model="fatturazione.istitutoFinanziario"></div>
           <div class="field"><label>Modalità predefinita</label>
-            <select v-model="fatturazione.modalitaDefault">
+            <SelectField titolo="Modalità di pagamento predefinita" descrizione="Usata nelle fatture se il cliente non ne ha una propria" v-model="fatturazione.modalitaDefault">
               <option value="MP05">Bonifico</option>
               <option value="MP19">Addebito diretto SEPA</option>
               <option value="MP08">Carta di pagamento</option>
               <option value="MP02">Assegno</option>
               <option value="MP01">Contanti</option>
               <option value="BTC">Bitcoin (indirizzo dal primo wallet in Fornitore)</option>
-            </select>
+            </SelectField>
           </div>
           <div class="field"><label>Giorni di scadenza predefiniti</label><input type="number" min="0" v-model.number="fatturazione.giorniScadenzaDefault"></div>
         </div>
@@ -375,29 +357,11 @@ function selezionaCodice(c) {
   </div>
 
   <!-- Popup elenco sedi INPS (J.1) -->
-  <Teleport to="body">
-    <div v-if="popupSedi" class="ai-overlay" @click.self="popupSedi = false">
-      <div class="ai-popup" role="dialog" aria-modal="true">
-        <div class="ai-popup-header">
-          <span class="ai-popup-titolo">Codice sede INPS</span>
-          <button class="btn-chiudi" @click="popupSedi = false" aria-label="Chiudi">✕</button>
-        </div>
-        <div class="ai-popup-body">
-          <div class="field" style="margin-bottom:8px">
-            <input type="text" v-model="ricercaSede" placeholder="Cerca per nome o codice…" autocomplete="off" aria-label="Cerca sede INPS">
-          </div>
-          <p v-if="erroreSedi" class="note-legal">{{ erroreSedi }}</p>
-          <ul class="ateco-risultati" style="position:static;max-height:none;box-shadow:none;border:0;margin:0;padding:0">
-            <li v-for="(s, i) in sediFiltrate" :key="s.codice + i" @click="scegliSede(s.codice)">
-              <strong>{{ s.codice }}</strong> — {{ s.nome }}
-            </li>
-            <li v-if="!sediFiltrate.length" style="cursor:default">Nessuna sede trovata</li>
-          </ul>
-        </div>
-        <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupSedi = false">Chiudi</button></div>
-      </div>
-    </div>
-  </Teleport>
+  <ListaPopup
+    v-if="popupSedi" :voci="vociSedi" :model-value="forfettario.codiceSedeInps"
+    titolo="Codice sede INPS" descrizione="Sede INPS da riportare nella sezione INPS dell'F24"
+    @conferma="scegliSede" @chiudi="popupSedi = false"
+  />
 
   <!-- Popup spiegazione AI (B.5 requisiti aliquota, riusabile) -->
   <Teleport to="body">
@@ -420,14 +384,6 @@ function selezionaCodice(c) {
 .checkbox-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }
-.ateco-risultati {
-  position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md);
-  max-height: 260px; overflow-y: auto; list-style: none; margin: 4px 0 0; padding: 4px;
-  box-shadow: var(--shadow);
-}
-.ateco-risultati li { padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: .85rem; color: var(--ink); }
-.ateco-risultati li:hover { background: var(--ground); }
 .ateco-settore { display: block; font-size: .74rem; color: var(--muted); margin-top: 2px; }
 /* btn-ai, btn-icon definiti in style.css globale */
 .sotto-titolo { margin: 20px 0 4px; font-size: var(--font-size-md); }

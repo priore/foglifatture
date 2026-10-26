@@ -24,35 +24,38 @@ let timerReminder = null;
 export function avviaPromemoria(getConfig, intervalloMinuti = 60) {
   fermaPromemoria();
   const intervalloMs = Math.max(1, intervalloMinuti) * 60 * 1000;
-  timerReminder = setInterval(async () => {
-    const config = await getConfig();
-    if (!config.reminder?.abilitato) return;
+  timerReminder = setInterval(() => controllaPromemoria(getConfig), intervalloMs);
+}
 
-    const oggi = new Date();
-    const anno = oggi.getFullYear();
-    const mese = oggi.getMonth() + 1;
-    if (oggi.getDate() !== ultimoGiornoLavorativo(anno, mese)) return;
+// Un giro del promemoria (usato anche dai lavori in background del core embedded, senza timer).
+export async function controllaPromemoria(getConfig) {
+  const config = await getConfig();
+  if (!config.reminder?.abilitato) return;
 
-    const chiaveOggi = oggiChiave(oggi);
-    if (config.reminder.ultimaNotifica === chiaveOggi) return;
+  const oggi = new Date();
+  const anno = oggi.getFullYear();
+  const mese = oggi.getMonth() + 1;
+  if (oggi.getDate() !== ultimoGiornoLavorativo(anno, mese)) return;
 
-    try {
-      const clientiAttivi = (config.clienti ?? []).filter((c) => c.attivo);
-      const righe = [];
-      for (const cliente of clientiAttivi) {
-        const giorniMancanti = await getGiorniMancanti(anno, mese, cliente.id);
-        if (giorniMancanti.length > 0) {
-          righe.push(`${cliente.denominazione || 'Cliente'}: ${giorniMancanti.join(', ')}`);
-        }
+  const chiaveOggi = oggiChiave(oggi);
+  if (config.reminder.ultimaNotifica === chiaveOggi) return;
+
+  try {
+    const clientiAttivi = (config.clienti ?? []).filter((c) => c.attivo);
+    const righe = [];
+    for (const cliente of clientiAttivi) {
+      const giorniMancanti = await getGiorniMancanti(anno, mese, cliente.id);
+      if (giorniMancanti.length > 0) {
+        righe.push(`${cliente.denominazione || 'Cliente'}: ${giorniMancanti.join(', ')}`);
       }
-      if (righe.length > 0) {
-        notifica('Promemoria timesheet', `Giorni senza ore registrate questo mese —\n${righe.join('\n')}`);
-      }
-      await saveConfig({ reminder: { ...config.reminder, ultimaNotifica: chiaveOggi } });
-    } catch (err) {
-      logger.error('Errore promemoria timesheet', { errore: err.message });
     }
-  }, intervalloMs);
+    if (righe.length > 0) {
+      notifica('Promemoria timesheet', `Giorni senza ore registrate questo mese —\n${righe.join('\n')}`);
+    }
+    await saveConfig({ reminder: { ...config.reminder, ultimaNotifica: chiaveOggi } });
+  } catch (err) {
+    logger.error('Errore promemoria timesheet', { errore: err.message });
+  }
 }
 
 export function fermaPromemoria() {

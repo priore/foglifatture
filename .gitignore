@@ -43,3 +43,11 @@ packaging/dist/
 
 # puntatore locale alla cartella dati scelta (dato del dispositivo, fuori dalla cartella che punta)
 backend/.percorso-dati.json
+backend/.id-dispositivo.json
+# archivio cloud: copia locale dei dati fiscali e stato di sincronizzazione del dispositivo
+backend/.cloud/
+# identificativi delle app cloud dello sviluppatore (vedi backend/cloud-clients.example.json)
+backend/cloud-clients.json
+
+# Python
+__pycache__/

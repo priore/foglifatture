@@ -6,6 +6,59 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-10-26
+
+### Added
+- **Scelta dell'archivio al primo avvio sul desktop** — se sul computer ci sono client Dropbox, OneDrive o Google Drive, prima dei termini d'uso un popup propone di tenere l'archivio nella loro cartella
+  - Si può restare in locale; nessun login, il client è già collegato al tuo account
+- **Icona dell'app** — nuova icona per l'app
+- **Archivio su cloud** — in Impostazioni → Percorso dati si può tenere l'archivio nella cartella dei client Dropbox, OneDrive o Google Drive installati sul computer, per usarlo su più computer
+  - Si sceglie il servizio da un popup; la sottocartella FogliFatture è fissa e la cartella del servizio si può cambiare con la finestra di sistema
+  - Nessun login né chiave: il client è già collegato al tuo account
+  - Prima di usarla l'app avvisa del rischio di dati e numeri fattura non allineati tra più computer
+- **Registro di numerazione** — ogni fattura e nota di credito prenota il proprio numero in un file condiviso dell'archivio
+  - Un numero prenotato da un altro dispositivo, con la fattura non ancora sincronizzata, non viene riusato
+  - Se nella numerazione mancano dei numeri, la pagina Fattura mostra un avviso che non blocca l'emissione
+- **Controllo della sequenza prima dell'emissione** — fatture e note di credito si bloccano con la spiegazione se l'archivio ha anomalie
+  - Due fatture con lo stesso numero, nate da due dispositivi, si sistemano da sole: il documento non ancora inviato passa al primo numero libero
+  - Un numero prenotato e mai usato in fondo alla sequenza si libera dopo 10 minuti
+  - Numeri duplicati, copie in conflitto del cloud o file estranei nella cartella delle fatture, copie in conflitto del registro
+  - I buchi nella sequenza non bloccano
+- **Apri archivio esistente** — in Impostazioni → Percorso dati, per usare un archivio già presente in una cartella senza spostare i dati attuali
+
+### Changed
+- **Menu laterale fisso** — scorre solo il contenuto a destra, il menu resta sempre visibile
+- **Cartella delle ricevute SDI** — se sta dentro la cartella dati viene salvata in forma relativa, così lo stesso archivio funziona su più dispositivi
+  - I percorsi già salvati vengono convertiti da soli; una cartella fuori dall'archivio resta com'è
+- **Backup a blocchi** — i nuovi backup sono cifrati a blocchi, per un ripristino migliore senza consumare memoria in proporzione alla dimensione
+  - I backup creati finora si ripristinano ancora
+  - I percorsi dei file contenuti nel backup vengono controllati prima di scrivere
+- **Calendario a popup** — tutti i campi data e il selettore del mese aprono un calendario al centro dello schermo
+  - Titolo che indica il campo che si sta compilando, con una breve descrizione
+  - Pulsanti OK e Annulla; un tap fuori dal calendario chiude senza modificare il valore
+  - Icona del calendario grigia in tema chiaro, bianca in tema scuro
+- **Liste di scelta a popup** — menu a tendina (anni, tipi, valute, paesi, clienti, modelli AI) aperti in un popup al centro
+  - Titolo, breve descrizione e pulsanti OK e Annulla
+  - Casella di ricerca nelle liste lunghe per filtrare le voci
+- **Conferme e avvisi a popup** — al posto delle finestre del browser, con OK a sinistra e Annulla a destra
+  - Il pulsante di conferma porta il nome dell'azione (Elimina, Emetti, Reinvia…)
+  - Riguarda eliminazione movimento BTC, disattivazione cliente, rigenera token, PEC di prova, nota di credito, fattura scartata, soglia forfettario, invio dati all'AI
+- **Codice ATECO e sede INPS** — scelta dall'elenco in un popup con ricerca, come le altre liste
+- **Pulsanti dei popup uniformi** — conferma verde a sinistra, Annulla rosso tenue a destra, stessa dimensione
+
+### Fixed
+- **Navigazione:** aprendo una pagina (per esempio Privacy) si parte sempre dall'alto
+- **Menu laterale** — il nome «Consulente» non compare più finché non è impostato il fornitore
+- **Rilevamento OneDrive** — riconosciuta la cartella `OneDrive-Personale` del sistema in italiano, senza doppioni
+- **Avvio senza rete** — i font non bloccano più l'apertura dell'app: senza connessione o con rete lenta compare subito, con i font di sistema finché non arrivano quelli dell'app
+- **Notifiche di scadenza del bollo trimestrale** — non partivano mai; ora arrivano insieme a F24, crediti e Intrastat
+- **Controllo delle fonti normative** — non si ferma più alla prima fonte che non risponde
+- **Copie in conflitto del cloud** — non vengono più lette come fatture, quindi non falsano numerazione, ricavi ed esportazioni
+- **Pulsante tema** — con il tema scuro di sistema e nessuna scelta salvata mostra l'icona giusta (sole) e il primo clic passa al tema chiaro
+- **Liste di scelta con valore iniziale** — paese del cliente e numero di rate del saldo F24 mostrano subito il valore corrente
+- **Calendario** — i giorni restano selezionabili nei campi data senza limiti di data minima o massima
+- **Campo data nelle fatture da incassare** — mantiene l'aspetto compatto della tabella
+
 ## [1.10.0] - 2026-10-21
 
 ### Added

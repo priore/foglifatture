@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getConfigSicura, saveConfig, validaConfig, spostaPercorsoDati } from '../services/configService.js';
+import { getConfigSicura, saveConfig, validaConfig, spostaPercorsoDati, apriArchivioEsistente } from '../services/configService.js';
 import { logger } from '../lib/logger.js';
 
 export const configRoutes = Router();
@@ -25,6 +25,18 @@ configRoutes.put('/percorso-dati', async (req, res) => {
     res.json({ percorso: percorsoApplicato });
   } catch (err) {
     logger.error('Errore spostamento percorso dati', { errore: err.message });
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+// Apre un archivio già presente nella cartella indicata, senza spostare i dati attuali.
+configRoutes.put('/percorso-dati/apri', async (req, res) => {
+  const { percorso } = req.body;
+  if (!percorso) return res.status(400).json({ errore: 'Percorso mancante' });
+  try {
+    res.json({ percorso: await apriArchivioEsistente(percorso) });
+  } catch (err) {
+    logger.error('Errore apertura archivio esistente', { errore: err.message });
     res.status(400).json({ errore: err.message });
   }
 });

@@ -22,6 +22,7 @@ async function scrivi(fileLog, livello, messaggio, dettagli) {
 // Log generale dell'applicazione (avvio server, richieste, errori route).
 export const logger = {
   info: (messaggio, dettagli) => scrivi('app.log', 'info', messaggio, dettagli),
+  warn: (messaggio, dettagli) => scrivi('app.log', 'warn', messaggio, dettagli),
   error: (messaggio, dettagli) => scrivi('app.log', 'error', messaggio, dettagli),
 };
 

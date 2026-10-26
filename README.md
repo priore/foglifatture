@@ -20,8 +20,6 @@ App per chi lavora in regime forfettario, con due funzioni indipendenti:
 
 Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
-**Stato del progetto**: attivo, mantenuto da una sola persona nel tempo libero — nessuno SLA. Segnalazioni prese sul serio, vedi [SECURITY.md](SECURITY.md).
-
 ## Indice
 
 - [Features](#features)
@@ -31,6 +29,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - [Primo utilizzo](#primo-utilizzo)
 - [Domande frequenti](#domande-frequenti)
 - [Note per chi programma](#note-per-chi-programma)
+- [Privacy](PRIVACY.md)
 - [Licenza](#licenza)
 - [Support Development](#support-development)
 
@@ -68,16 +67,18 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   5. Groq API
   6. LLM locale (Ollama/LM Studio)
 
+### Timesheet
+
+- **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
+- **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
+- **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
+
 ### Fatturazione elettronica
 
 - **Fatturazione elettronica FatturaPA** — XML conforme allo schema ufficiale, validato prima dell'invio.
   - Regime forfettario: `RegimeFiscale RF19`, IVA esente `N2.2`, bollo virtuale sopra soglia.
 - **Fatturazione a importo libero** — anche senza passare dal timesheet, per fatture a corpo o extra.
   - **Cliente «solo fatture»** — importo sempre libero, senza timesheet né tariffa oraria; la voce Timesheet sparisce dal menu se tutti i clienti attivi sono di questo tipo.
-- **Nota di credito (TD04)** — storno totale o parziale di una fattura già accettata dallo SDI.
-  - Prende il prossimo numero della sequenza, con XML collegato alla fattura stornata, download e invio PEC.
-  - La fattura stornata esce dal dovuto e dai ricavi per competenza; se già pagata, l'app segnala la somma da rimborsare.
-- **Numerazione fatture unica e progressiva** — condivisa correttamente tra tutti i clienti, come richiesto dalla normativa (legata alla partita IVA, non al singolo cliente).
 - **Clienti esteri** — gestione IVA automatica per clienti UE e extra-UE.
   - Inversione contabile N2.1 (art. 7-ter/7-septies DPR 633/72).
   - XML FatturaPA adattivo: CodiceDestinatario, CAP, IdPaese dal paese del cliente.
@@ -86,6 +87,17 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Rivalsa INPS 4% facoltativa** — addebito al cliente del contributo INPS (L. 662/96 art. 1 c. 212).
   - Blocco `DatiCassaPrevidenziale TC22` aggiunto nell'XML FatturaPA quando attiva.
   - Configurabile globalmente o per singolo cliente.
+- **Numerazione fatture unica e progressiva** — condivisa correttamente tra tutti i clienti, come richiesto dalla normativa (legata alla partita IVA, non al singolo cliente).
+  - **Registro di numerazione** — ogni fattura e nota di credito prenota il proprio numero in un file condiviso dell'archivio.
+    - Un numero prenotato da un altro dispositivo, con la fattura non ancora sincronizzata, non viene riusato.
+    - Se mancano dei numeri, la pagina Fattura mostra un avviso che non blocca l'emissione.
+  - **Controllo della sequenza prima dell'emissione** — fatture e note di credito si bloccano, con la spiegazione, se l'archivio ha anomalie.
+    - Numeri duplicati, copie in conflitto del cloud o file estranei nella cartella delle fatture.
+    - Due fatture con lo stesso numero, nate da due dispositivi, si sistemano da sole: il documento non ancora inviato passa al primo numero libero.
+    - Un numero prenotato e mai usato in fondo alla sequenza si libera dopo 10 minuti.
+- **Nota di credito (TD04)** — storno totale o parziale di una fattura già accettata dallo SDI.
+  - Prende il prossimo numero della sequenza, con XML collegato alla fattura stornata, download e invio PEC.
+  - La fattura stornata esce dal dovuto e dai ricavi per competenza; se già pagata, l'app segnala la somma da rimborsare.
 
 ### Invio e ricezione SDI
 
@@ -96,12 +108,6 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - Le fatture ricevute nella casella non vengono scambiate per ricevute né rielaborate.
   - Notifica desktop.
 - **Email separata per timesheet e fattura** — ogni cliente può avere indirizzi email distinti per l'invio del timesheet e della fattura, con supporto più destinatari per indirizzo.
-
-### Timesheet
-
-- **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
-- **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
-- **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
 
 ### Dashboard e F24
 
@@ -146,17 +152,26 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ### Dati, sicurezza, piattaforma
 
+- **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
+- **Archivio su cloud** — in Impostazioni → Percorso dati l'archivio può stare nella cartella dei client Dropbox, OneDrive o Google Drive installati sul computer, per usarlo su più computer.
+  - Si sceglie il servizio da un popup; la sottocartella FogliFatture è fissa e la cartella del servizio si può cambiare con la finestra di sistema.
+  - Nessun login né chiave: il client è già collegato al tuo account.
+  - **Apri archivio esistente** — usa un archivio già presente in una cartella senza spostare i dati attuali.
+  - Cartella delle ricevute SDI salvata in forma relativa, così lo stesso archivio funziona su più dispositivi.
 - **Backup automatico ed esportazione cifrata**:
   - Copia periodica programmabile.
   - Esportazione manuale protetta da password.
+  - Cifratura dei backup a blocchi.
 - **Login opzionale con Google OAuth** — accesso protetto per singolo utente, o app libera in rete locale se non configurato.
 - **Termini d'uso** — accettazione esplicita al primo avvio e dopo ogni aggiornamento, con approvazione specifica della clausola di limitazione di responsabilità.
-- **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
+- **Interfaccia a popup coerente** — calendari, liste di scelta, conferme e avvisi si aprono al centro dello schermo, con titolo, descrizione e pulsanti OK e Annulla.
+  - Liste lunghe (ATECO, sede INPS, paesi) con casella di ricerca.
+  - Un tap fuori dal popup o Esc chiude senza modificare nulla.
 
 ## Sicurezza
 
 - Nessuna credenziale hardcoded: chiavi API, secret OAuth e dati PEC vivono solo in `backend/.env` locale, mai versionato né distribuito.
-- La chiave API Gemini non viene mai esposta al frontend né scritta nei log — usata server-side solo per la chiamata a `generativelanguage.googleapis.com`.
+- La chiave API Gemini non viene mai esposta al frontend né scritta nei log.
 - Avvio path-indipendente: l'app funziona da qualsiasi cartella, su Mac e Windows.
 - Repository sotto scansione automatica continua:
   - Secret scanning (gitleaks).

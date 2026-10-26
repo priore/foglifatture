@@ -11,8 +11,9 @@ import StepPromemoria from '../components/wizard/StepPromemoria.vue';
 import StepGoogleAuth from '../components/wizard/StepGoogleAuth.vue';
 import StepAI from '../components/wizard/StepAI.vue';
 import { api } from '../services/api.js';
-import { PASSI_IMPOSTAZIONI as PASSI, PASSI_AUTOSALVANTI, DESCRIZIONI_PASSI } from '../wizardImpostazioniPassi.js';
+import { PASSI_IMPOSTAZIONI, PASSI_AUTOSALVANTI, DESCRIZIONI_PASSI, componentePasso } from '../wizardImpostazioniPassi.js';
 
+const PASSI = PASSI_IMPOSTAZIONI; // computed: le estensioni possono aggiungere passi in coda
 const route = useRoute();
 const router = useRouter();
 // Il passo attivo vive nella query string (?passo=N) invece che in uno stato locale,
@@ -20,40 +21,48 @@ const router = useRouter();
 const passoAttivo = computed({
   get: () => {
     const n = Number(route.query.passo);
-    return Number.isInteger(n) && n >= 0 && n < PASSI.length ? n : 0;
+    return Number.isInteger(n) && n >= 0 && n < PASSI.value.length ? n : 0;
   },
   set: (n) => router.push({ query: { passo: n } }),
 });
 const config = ref(null);
 const messaggio = ref('');
+const passoRef = ref(null); // il passo può esporre `salva()` per applicare scelte che non stanno in config.json
 
 onMounted(async () => {
   config.value = await api.getConfig();
 });
 
+// Restituisce false se il passo ha rinunciato (annullo nel popup) o il salvataggio è fallito: «Avanti» allora non procede.
 async function salva() {
   messaggio.value = 'Salvataggio…';
   try {
+    if ((await passoRef.value?.salva?.()) === false) {
+      messaggio.value = '';
+      return false;
+    }
     config.value = await api.saveConfig(config.value);
     // Il backup automatico ha un proprio scheduler in background: va riavviato esplicitamente
     // dopo ogni salvataggio, altrimenti un cambio di cadenza/path richiederebbe il riavvio del server.
     config.value.backup = await api.salvaImpostazioniBackup(config.value.backup);
     config.value.reminder = await api.salvaImpostazioniReminder(config.value.reminder);
     messaggio.value = 'Salvato';
+    return true;
   } catch (err) {
     messaggio.value = `Errore: ${err.message}`;
+    return false;
   } finally {
     setTimeout(() => (messaggio.value = ''), 2000);
   }
 }
 
 function eAutosalvante(passo) {
-  return PASSI_AUTOSALVANTI.includes(PASSI[passo]);
+  return PASSI_AUTOSALVANTI.includes(PASSI.value[passo]);
 }
 
 async function avanti() {
-  if (passoAttivo.value < PASSI.length - 1) {
-    if (!eAutosalvante(passoAttivo.value)) await salva();
+  if (passoAttivo.value < PASSI.value.length - 1) {
+    if (!eAutosalvante(passoAttivo.value) && !(await salva())) return;
     passoAttivo.value += 1;
   } else if (!eAutosalvante(passoAttivo.value)) {
     await salva();
@@ -85,11 +94,12 @@ onBeforeRouteUpdate(async (to, from, next) => {
       <div class="card-body">
         <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :fatturazione="config.fatturazione" :wallet-btc="config.walletBtc" :import-btc="config.importBtc" />
         <StepPec v-else-if="passoAttivo === 1" v-model="config.pec" :sdi="config.sdi" />
-        <StepPercorsoDati v-else-if="passoAttivo === 2" v-model="config.dati" />
+        <StepPercorsoDati v-else-if="passoAttivo === 2" ref="passoRef" v-model="config.dati" />
         <StepBackup v-else-if="passoAttivo === 3" v-model="config.backup" />
         <StepPromemoria v-else-if="passoAttivo === 4" v-model="config.reminder" :notifiche="config.notifiche" />
         <StepGoogleAuth v-else-if="passoAttivo === 5" />
-        <StepAI v-else />
+        <StepAI v-else-if="passoAttivo === 6" />
+        <component :is="componentePasso(PASSI[passoAttivo])" v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-ghost" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>

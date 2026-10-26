@@ -482,12 +482,15 @@ let timerPolling = null;
 export function avviaPollingSdi(getConfig, minuti) {
   fermaPollingSdi();
   const intervalloMs = Math.max(1, minuti) * 60 * 1000;
-  timerPolling = setInterval(async () => {
-    const config = await getConfig();
-    if (!config.sdi.pollingAbilitato) return;
-    if (!(await inAttesaRispostaRecente(config))) return;
-    await controllaRicevuteSdi(config.pec, config.sdi.percorsoArchivio, config);
-  }, intervalloMs);
+  timerPolling = setInterval(() => controllaRicevuteSePossibile(getConfig), intervalloMs);
+}
+
+// Un giro del polling (usato anche dai lavori in background del core embedded, senza timer).
+export async function controllaRicevuteSePossibile(getConfig) {
+  const config = await getConfig();
+  if (!config.sdi.pollingAbilitato) return;
+  if (!(await inAttesaRispostaRecente(config))) return;
+  await controllaRicevuteSdi(config.pec, config.sdi.percorsoArchivio, config);
 }
 
 export function fermaPollingSdi() {

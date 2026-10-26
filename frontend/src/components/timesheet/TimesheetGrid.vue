@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../common/SelectField.vue';
 // Griglia editabile del timesheet: un input per ciascun orario, select per lo stato
 // giornaliero, note libere. Gli orari sono sempre editabili; uno stato di assenza
 // esplicita (Malattia, Ferie, ...) azzera comunque il conteggio ore per quel giorno.
@@ -72,10 +73,10 @@ const totaleMensile = computed(() => calcolaTotaleMensile(props.giorni));
           <td><input class="time-input" v-model="giorno.finePomeriggio" placeholder="--:--" maxlength="5" @input="formattaOrario(giorno, 'finePomeriggio')"></td>
           <td>{{ calcolaOreGiorno(giorno).toFixed(1) }}</td>
           <td>
-            <select class="status" v-model="giorno.stato">
+            <SelectField :titolo="`Stato del giorno ${giorno.giorno}`" descrizione="Assenza o stato della giornata" class="status" v-model="giorno.stato">
               <option value=""></option>
               <option v-for="stato in STATI_ASSENZA" :key="stato" :value="stato">{{ stato }}</option>
-            </select>
+            </SelectField>
           </td>
           <td><input class="note" v-model="giorno.note" placeholder="Nota…"></td>
           <td style="white-space:nowrap">

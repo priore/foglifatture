@@ -11,6 +11,7 @@ import StepClaudeAI from './StepClaudeAI.vue';
 import StepGroqAI from './StepGroqAI.vue';
 import StepLocaleLLM from './StepLocaleLLM.vue';
 import StepMcp from './StepMcp.vue';
+import { capacita } from '../../composables/useCapacita.js';
 
 // Mappa scheda → provider interni del router (uno per scheda tranne Gemini che ne ha due)
 const PROVIDER_PER_SCHEDA = {
@@ -111,7 +112,7 @@ async function verificaStato() {
       <small class="note-legal" style="margin-top:6px;display:block">Usato dal suggerimento d'ordine dei crediti F24. Se disattivo, l'app chiede conferma a ogni richiesta.</small>
     </div>
 
-    <div class="ai-card">
+    <div v-if="capacita.mcp" class="ai-card">
       <StepMcp />
     </div>
     </div>
@@ -121,7 +122,7 @@ async function verificaStato() {
         <span class="dot-stato" :class="{ attivo: geminiOk }"></span>Gemini
         <span class="tab-badge free">gratuito</span>
       </button>
-      <button class="tab-btn" :class="{ attiva: schedaAttiva === 'copilot' }" @click="schedaAttiva = 'copilot'">
+      <button v-if="capacita.aiCli" class="tab-btn" :class="{ attiva: schedaAttiva === 'copilot' }" @click="schedaAttiva = 'copilot'">
         <span class="dot-stato" :class="{ attivo: copilotOk }"></span>GitHub Copilot
         <span class="tab-badge free">gratuito</span>
       </button>
@@ -149,7 +150,7 @@ async function verificaStato() {
           Provider abilitato nel router AI
         </label>
       </div>
-      <StepGeminiAI v-if="schedaAttiva === 'gemini'" :router-dati="routerDati" @refresh="verificaStato" />
+      <StepGeminiAI v-if="schedaAttiva === 'gemini'" :router-dati="routerDati" :con-cli="capacita.aiCli" @refresh="verificaStato" />
       <StepCopilotAI v-else-if="schedaAttiva === 'copilot'" :router-dati="routerDati" @refresh="verificaStato" />
       <StepClaudeAI v-else-if="schedaAttiva === 'claude'" />
       <StepGroqAI v-else-if="schedaAttiva === 'groq'" />

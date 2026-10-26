@@ -1,7 +1,10 @@
 <script setup>
+import SelectField from '../components/common/SelectField.vue';
+import DateField from '../components/common/DateField.vue';
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta,
 // grafico a torta stile Flat-Tax (netto / imposta / margine residuo alla soglia).
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
 import LineChart from '../components/LineChart.vue';
@@ -452,14 +455,18 @@ function caricaOrdineSalvato(chiave, ordineDefault) {
   }
 }
 
+// Valori stabili di ?tab= (senza spazi): servono a widget, notifiche e tasti rapidi per aprire una tab precisa.
+const TAB_QUERY = { dashboard: 'Dashboard', bitcoin: 'Bitcoin', f24: 'F24', regole: 'Regole fiscali', ai: 'AI' };
+const QUERY_DA_TAB = Object.fromEntries(Object.entries(TAB_QUERY).map(([q, t]) => [t, q]));
+const route = useRoute();
+const router = useRouter();
+
+// Precedenza all'apertura: ?tab= valido, poi localStorage, poi Dashboard.
 function caricaTabSalvato() {
+  if (TAB_QUERY[route.query.tab]) return TAB_QUERY[route.query.tab];
   try {
     const salvato = localStorage.getItem(CHIAVE_TAB);
-    if (salvato === 'Bitcoin') return 'Bitcoin';
-    if (salvato === 'F24') return 'F24';
-    if (salvato === 'Regole fiscali') return 'Regole fiscali';
-    if (salvato === 'AI') return 'AI';
-    return 'Dashboard';
+    return Object.values(TAB_QUERY).includes(salvato) ? salvato : 'Dashboard';
   } catch {
     return 'Dashboard';
   }
@@ -473,7 +480,12 @@ function cambiaTab(tab) {
   } catch {
     // storage non disponibile: preferenza resta solo in memoria per questa sessione.
   }
+  if (route.query.tab !== QUERY_DA_TAB[tab]) router.replace({ query: { ...route.query, tab: QUERY_DA_TAB[tab] } });
 }
+// Navigazione dall'esterno (host esterno, link con ?tab=) con la vista già aperta.
+watch(() => route.query.tab, (q) => {
+  if (TAB_QUERY[q] && TAB_QUERY[q] !== tabAttivo.value) cambiaTab(TAB_QUERY[q]);
+});
 
 const ordineCard = ref(caricaOrdineSalvato(CHIAVE_ORDINE, ORDINE_DEFAULT));
 const ordineCardBtc = ref(caricaOrdineSalvato(CHIAVE_ORDINE_BTC, ORDINE_DEFAULT_BTC));
@@ -566,9 +578,9 @@ function ripristinaLayout() {
           :title="layoutModificato ? '' : 'Layout già di default'"
           @click="ripristinaLayout"
         >Ripristina layout</button>
-        <select v-model.number="annoSelezionato" class="status">
+        <SelectField titolo="Anno" descrizione="Anno di riferimento della dashboard" v-model.number="annoSelezionato" class="status">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
-        </select>
+        </SelectField>
       </div>
     </div>
 
@@ -781,10 +793,10 @@ function ripristinaLayout() {
                     <span v-if="accantonamento" class="scadenza-sotto">da accantonare {{ formattaEuro(quotaIncasso(importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo)) }}</span>
                   </td>
                   <td>
-                    <input
-                      type="date" class="input-incasso" title="Segna come incassata il..."
+                    <DateField
+                      class="input-incasso" :titolo="`Data incasso fattura ${f.numero}`" descrizione="Segna la fattura come incassata nel giorno scelto"
                       :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
-                      @change="salvaDataIncasso(f, $event.target.value, Number(importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo))"
+                      @change="salvaDataIncasso(f, $event, Number(importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo))"
                     />
                   </td>
                 </tr>
@@ -1051,18 +1063,18 @@ function ripristinaLayout() {
               <!-- Selettore rate -->
               <div class="f24-rate-row">
                 <label for="rate-saldo" class="f24-rate-label">Rateizza saldo + I acconto:</label>
-                <select
+                <SelectField titolo="Rateizzazione del saldo" descrizione="Numero di rate per il saldo"
                   id="rate-saldo"
                   class="input-incasso"
-                  :value="rateSaldoSelezionato"
+                  :model-value="rateSaldoSelezionato"
                   :disabled="(versamentiStimati._dettagli?.maxRate ?? 1) <= 1 || salvatoreRate"
                   :title="(versamentiStimati._dettagli?.maxRate ?? 1) <= 1 ? 'Rateizzazione non disponibile con questa scadenza' : ''"
-                  @change="cambiaRateSaldo(Number($event.target.value))"
+                  @change="cambiaRateSaldo(Number($event))"
                 >
                   <option v-for="n in (versamentiStimati._dettagli?.maxRate ?? 1)" :key="n" :value="n">
                     {{ n === 1 ? '1 rata (unica soluzione)' : n + ' rate' }}
                   </option>
-                </select>
+                </SelectField>
                 <span v-if="salvatoreRate" class="f24-saving">Salvataggio…</span>
               </div>
 
@@ -1281,15 +1293,15 @@ function ripristinaLayout() {
             <form v-if="mostraFormCredito" @submit.prevent="aggiungiCreditoF24" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
               <div class="field">
                 <label>Sezione</label>
-                <select v-model="nuovoCredito.sezione">
+                <SelectField titolo="Sezione del credito" descrizione="Erario o INPS" v-model="nuovoCredito.sezione">
                   <option value="erario">Erario</option>
                   <option value="inps">INPS</option>
-                </select>
+                </SelectField>
               </div>
               <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required style="width:90px"></div>
               <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento" style="width:75px"></div>
               <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required style="width:100px"></div>
-              <div class="field"><label>Disponibile dal</label><input type="date" v-model="nuovoCredito.utilizzabileDal"></div>
+              <div class="field"><label>Disponibile dal</label><DateField v-model="nuovoCredito.utilizzabileDal" titolo="Disponibile dal" descrizione="Da quando il credito è utilizzabile in compensazione" /></div>
               <div class="field"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito" style="width:180px"></div>
               <button type="submit" class="btn btn-ok">Aggiungi</button>
             </form>
@@ -1312,9 +1324,9 @@ function ripristinaLayout() {
         <h2>Inviare i dati all'AI?</h2>
         <p class="note-legal">Il suggerimento invia all'AI importi e codici tributo dei tuoi crediti e delle prossime scadenze F24.</p>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" @click="chiediConsensoAi = false">Annulla</button>
-          <button type="button" class="btn btn-ghost" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
           <button type="button" class="btn btn-ok" @click="suggerisciOrdineCrediti({ conferma: true })">Sì, questa volta</button>
+          <button type="button" class="btn btn-ghost" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
+          <button type="button" class="btn btn-warn" @click="chiediConsensoAi = false">Annulla</button>
         </div>
       </div>
     </div>

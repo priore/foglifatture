@@ -5,13 +5,17 @@ import { provaConnessionePec, inviaPecProvaSdi, leggiRisposteProvaSdi } from '..
 
 export const pecRoutes = Router();
 
-const GESTORI = JSON.parse(await readFile(new URL('../data/gestoriPec.json', import.meta.url), 'utf-8'));
+// Letto alla prima richiesta (non a livello di modulo): il core embedded è un bundle senza top-level await.
+let gestori = null;
 
 function pecCompleta(pec) {
   return pec.smtpHost && pec.imapHost && pec.casellaMittente && pec.passwordMittente;
 }
 
-pecRoutes.get('/gestori', (req, res) => res.json(GESTORI));
+pecRoutes.get('/gestori', async (req, res) => {
+  gestori ??= JSON.parse(await readFile(new URL('../data/gestoriPec.json', import.meta.url), 'utf-8'));
+  res.json(gestori);
+});
 
 // Prova con la configurazione SALVATA (la password vive nel Keychain, non nel form).
 pecRoutes.post('/prova', async (req, res) => {

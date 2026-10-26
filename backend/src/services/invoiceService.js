@@ -1,6 +1,12 @@
 // Calcolo e archiviazione della Fattura Pro-Forma: ore * tariffa oraria + bollo virtuale condizionale.
 import { randomBytes } from 'node:crypto';
-import { readJson, writeJson, listKeys } from '../lib/jsonStore.js';
+import { readJson, writeJson, listKeys, listEstranei, listNomi } from '../lib/jsonStore.js';
+import { leggiRegistro, registraNumero, liberaPrenotazioniOrfane, FILE_REGISTRO } from './numerazioneService.js';
+import { sincronizzaPrimaDiEmettere } from '../lib/cloudHook.js';
+
+// Nome valido di un file in invoices/: anno-mese-clienteId. Altro (copie in conflitto dei
+// provider cloud, file estranei) non è una fattura e va segnalato, non letto.
+const FORMATO_CHIAVE = /^\d{4}-\d{2}-[A-Za-z0-9_-]+$/;
 
 function chiaveMese(anno, mese, clienteId) {
   return `${anno}-${String(mese).padStart(2, '0')}-${clienteId}`;
@@ -93,7 +99,7 @@ export async function impostaScadenzaPagamento(anno, mese, clienteId, dataScaden
 // Restituisce le chiavi già parsate ({ chiave, anno, mese, clienteId }), non stringhe
 // grezze: evita che ogni consumatore debba rifare split('-') su un formato composito.
 export async function listMesiFatturati() {
-  const chiavi = await listKeys('invoices');
+  const chiavi = await listKeys('invoices', FORMATO_CHIAVE);
   return chiavi.map(parseChiave).sort((a, b) => a.chiave.localeCompare(b.chiave));
 }
 
@@ -105,15 +111,20 @@ export async function listMesiFatturati() {
 export async function prossimoNumeroFattura(anno, mese, clienteId) {
   const esistente = await getInvoice(anno, mese, clienteId);
   if (esistente) return esistente.numero;
-  const fatture = await tutteLeFatture();
-  return String(fatture.length + 1);
+  return prossimoNumeroInSequenza();
 }
 
 // Numero successivo della sequenza unica (fatture + note di credito), senza riusare quello di
 // alcuna fattura esistente: serve per documenti nuovi come la nota di credito.
+// Conta anche il registro di numerazione: un numero prenotato da un altro dispositivo, la
+// cui fattura non è ancora arrivata, non si riusa.
 export async function prossimoNumeroInSequenza() {
+  return String(await ultimoNumeroEmesso() + 1);
+}
+
+async function ultimoNumeroEmesso() {
   const numeri = (await tutteLeFatture()).map((f) => Number(f.numero));
-  return String(Math.max(0, ...numeri) + 1);
+  return Math.max(0, ...numeri, (await leggiRegistro()).ultimoNumero);
 }
 
 // Legge tutte le fatture esistenti (tutti i mesi, tutti i clienti), ordinate per numero
@@ -179,18 +190,89 @@ export async function verificaIntegritaNumerazione(anno, mese, clienteId, numero
     };
   }
 
-  if (fatture.length === 0) {
+  const ultimoNumero = Math.max(0, ...fatture.map((f) => Number(f.numero)), (await leggiRegistro()).ultimoNumero);
+  if (ultimoNumero === 0) {
     if (String(numero) !== '1') {
       return { valido: false, errore: `Prima fattura: il numero deve essere 1, non ${numero}` };
     }
     return { valido: true };
   }
 
-  const ultimoNumero = Math.max(...fatture.map((f) => Number(f.numero)));
   const atteso = ultimoNumero + 1;
   if (Number(numero) !== atteso) {
     return { valido: false, errore: `Numero fattura non sequenziale: atteso ${atteso}, ricevuto ${numero}` };
   }
 
   return { valido: true };
+}
+
+// Scansione completa della sequenza (prima di ogni emissione). Bloccanti: numeri duplicati,
+// file estranei in invoices/ (copie in conflitto incluse) e copie in conflitto del registro.
+// I buchi non bloccano (una fattura non ancora sincronizzata, o un import storico, li crea)
+// e i numeri prenotati senza fattura sono solo informativi.
+export async function scansionaSequenza() {
+  const [estranei, documenti, registro, nomiRadice] = await Promise.all([
+    listEstranei('invoices', FORMATO_CHIAVE), tutteLeFatture(), leggiRegistro(), listNomi(''),
+  ]);
+  const perNumero = new Map();
+  for (const d of documenti) {
+    const etichetta = `${d.nota ? 'nota di credito ' : ''}${d.anno}-${String(d.mese).padStart(2, '0')} cliente ${d.clienteId}`;
+    perNumero.set(Number(d.numero), [...(perNumero.get(Number(d.numero)) ?? []), etichetta]);
+  }
+  const duplicati = [...perNumero].filter(([, docs]) => docs.length > 1).map(([numero, docs]) => ({ numero, documenti: docs }));
+  const massimo = Math.max(0, ...perNumero.keys());
+  const buchi = Array.from({ length: massimo }, (_, i) => i + 1).filter((n) => !perNumero.has(n));
+  const inAttesa = Object.keys(registro.numeri).map(Number).filter((n) => !perNumero.has(n)).sort((a, b) => a - b);
+  const registroConflitto = nomiRadice.filter((n) => n.startsWith(FILE_REGISTRO) && n !== FILE_REGISTRO);
+  return { ok: !duplicati.length && !estranei.length && !registroConflitto.length, duplicati, estranei, registroConflitto, buchi, inAttesa };
+}
+
+// Doppione nato da due dispositivi che hanno preso lo stesso numero. Tiene il numero il documento già
+// trasmesso o pagato, poi il più vecchio (criterio dei soli dati: ogni dispositivo sceglie lo stesso vincitore
+// anche con un registro non ancora allineato); gli altri, se mai usciti dall'app, passano al primo numero libero.
+// Un documento già trasmesso non si rinumera: il doppione resta e blocca.
+const giaUscito = (d) => Boolean(d.invii?.length || d.dataPagamento || d.pagamenti?.length);
+
+export async function riparaDuplicati() {
+  const chiavi = await listMesiFatturati();
+  const fatture = (await Promise.all(chiavi.map(({ anno, mese, clienteId }) => getInvoice(anno, mese, clienteId)))).filter(Boolean);
+  const documenti = fatture.flatMap((f) => [{ f, d: f, nota: false }, ...(f.notaCredito ? [{ f, d: f.notaCredito, nota: true }] : [])]);
+  const perNumero = Map.groupBy(documenti, ({ d }) => Number(d.numero));
+  let massimo = Math.max((await leggiRegistro()).ultimoNumero, ...perNumero.keys());
+  const priorita = ({ f, d, nota }) => [giaUscito(d) ? 0 : 1, f.anno * 100 + f.mese, f.clienteId, nota ? 1 : 0];
+  const confronta = (a, b) => { const [pa, pb] = [priorita(a), priorita(b)]; const i = pa.findIndex((v, k) => v !== pb[k]); return i < 0 ? 0 : pa[i] < pb[i] ? -1 : 1; };
+  const riparati = [];
+  for (const [numero, gruppo] of perNumero) {
+    if (gruppo.length < 2) continue;
+    gruppo.sort(confronta);
+    const [vincitore, ...altri] = gruppo;
+    await registraNumero(numero, { anno: vincitore.f.anno, mese: vincitore.f.mese, clienteId: vincitore.f.clienteId, nota: vincitore.nota, riassegna: true });
+    for (const { f, d, nota } of altri) {
+      if (giaUscito(d)) continue;
+      const nuovo = ++massimo;
+      await registraNumero(nuovo, { anno: f.anno, mese: f.mese, clienteId: f.clienteId, nota });
+      d.numero = String(nuovo);
+      await saveInvoice(f.anno, f.mese, f.clienteId, f);
+      riparati.push({ anno: f.anno, mese: f.mese, clienteId: f.clienteId, nota, da: numero, a: nuovo });
+    }
+  }
+  return riparati;
+}
+
+// Esito per l'emissione: ok, oppure il messaggio che spiega perché è bloccata.
+export async function verificaSequenzaPerEmissione() {
+  try {
+    await sincronizzaPrimaDiEmettere();
+  } catch (err) {
+    return { ok: false, errore: err.message };
+  }
+  const riparati = await riparaDuplicati();
+  await liberaPrenotazioniOrfane((await tutteLeFatture()).map((d) => Number(d.numero)));
+  const scan = await scansionaSequenza();
+  if (scan.ok) return { ok: true, scan, riparati };
+  const parti = [];
+  if (scan.duplicati.length) parti.push(`numeri duplicati: ${scan.duplicati.map((d) => `${d.numero} (${d.documenti.join(', ')})`).join('; ')}`);
+  if (scan.estranei.length) parti.push(`file estranei o copie in conflitto in invoices/: ${scan.estranei.join(', ')}`);
+  if (scan.registroConflitto.length) parti.push(`copie in conflitto del registro di numerazione: ${scan.registroConflitto.join(', ')}`);
+  return { ok: false, scan, errore: `Emissione bloccata, controlla l'archivio. ${parti.join('. ')}.` };
 }

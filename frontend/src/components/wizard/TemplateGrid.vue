@@ -109,7 +109,7 @@ function osservaBox(el) {
         <div class="modal-box" style="max-width:1200px;width:92vw;max-height:92vh;display:flex;flex-direction:column">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex:0 0 auto">
             <h2 style="margin:0">Scegli template</h2>
-            <button type="button" class="btn btn-ghost" @click="selezioneAperta = false">Annulla</button>
+            <button type="button" class="btn btn-warn" @click="selezioneAperta = false">Annulla</button>
           </div>
           <input
             v-if="templates.length > 4"

@@ -42,7 +42,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 - **Timesheet**: `timesheetService`, `timeCalculator`, `vmsTimesheetExporter`
 - **Fiscale**: `forfettarioService`, `stimaVersamentiService`, `versamentiF24Service`, `f24StateService`, `f24PdfService`, `bolloTrimestrale`, `creditiService`, `scadenzeFiscaliService`, `pagamentiFattureService`
 - **Cripto**: `movimentiBtcService`, `lottiBtcService`, `importBtcService`, `importFileBtcService`
-- **Regole e fonti**: `regoleFiscaliService`, `fontiNormativeService`, `monitoraggioFontiService`, `notificheFiscaliService`
+- **Regole e fonti**: `regoleFiscaliService`, `regoleScaricateService` (pacchetti scaricati), `fontiNormativeService`, `monitoraggioFontiService`, `notificheFiscaliService`
 - **AI**: `aiRouterService`, `geminiAtecoService`, `chatService`, `mcpService`, `envService`
 - **Import/backup**: `xlsTimesheetImporter`, `xmlInvoiceImporter`, `importZipService`, `backupService`
 - **Sistema**: `configService`, `reminderService`, `updateService`
@@ -57,12 +57,13 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 
 ## Storage
 
-🟢 `jsonStore.js`: `readJson`/`writeJson`/`listKeys` su `DATA_DIR` (default `backend/data/`, mutabile con `setDataDir`). Nessun database. Layout principale:
+🟢 `jsonStore.js`: `readJson`/`writeJson`/`listKeys`/`listNomi`/`listEstranei` su `DATA_DIR` (default `backend/data/`, mutabile con `setDataDir`). Nessun database. Layout principale:
 - `config.json` — configurazione (fornitore, `clienti[]`, fatturazione, pec, sdi, backup, reminder, forfettario, dati, ai, mcp, notifiche, `walletBtc`, `importBtc`, `metodoPlusvalenze`)
-- `invoices/<anno>-<mese>-<clienteId>.json`, `timesheets/<anno>-<mese>-<clienteId>.json`
+- `numerazione.json` — registro di numerazione (ultimo numero, chi ha prenotato ogni numero), alla radice e non in `invoices/`; l'id del dispositivo sta fuori dall'archivio, in `backend/.id-dispositivo.json` (non versionato)
+- `invoices/<anno>-<mese>-<clienteId>.json` (solo nomi in questo formato: altri file in `invoices/` sono segnalati come anomalie), `timesheets/<anno>-<mese>-<clienteId>.json`
 - `f24Versamenti.json`, `crediti.json`, `scadenzeFiscali.json`, `pagamentiMappingColonne.json`
 - `movimentiBtc.json` (ingressi manuali, uscite, valori di mercato al 31/12), `btcImportProposte.json` (proposte di import e stato del polling)
-- `regole-attive/<anno>.json`, `regole-proposte/<anno>.json`, `fonti-cambiate.json`
+- `regole-attive/<anno>.json`, `regole-proposte/<anno>.json`, `regole-scaricate/<anno>.json`, `fonti-cambiate.json`
 - `cambi/` (cache cambi), `modelli/f24-ordinario.pdf` (modello AdE scaricato al primo uso, impronta SHA-256 verificata), `mail-outbox/` (PDF allegati)
 
 ## Test

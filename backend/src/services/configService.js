@@ -8,6 +8,7 @@ import { ibanValido } from '../lib/iban.js';
 import { parseEmails } from '../lib/email.js';
 import { VERSIONE_TERMINI } from '../lib/termini.js';
 import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
+import { relativizzaPercorsoSdi, risolviPercorsoSdi } from '../lib/percorsoSdi.js';
 
 const CONFIG_FILE = 'config.json';
 
@@ -228,6 +229,13 @@ export async function getConfig() {
     await writeJson(CONFIG_FILE, { ...(config ?? base), backup: { ...base.backup, password: '' } });
   }
 
+  // Migrazione silenziosa: un percorso SDI assoluto dentro la cartella dati diventa relativo, così l'archivio
+  // si legge anche dagli altri dispositivi.
+  const sdiRelativo = relativizzaPercorsoSdi(base.sdi.percorsoArchivio, DATA_DIR);
+  if (config && sdiRelativo !== base.sdi.percorsoArchivio) {
+    await writeJson(CONFIG_FILE, { ...config, sdi: { ...base.sdi, percorsoArchivio: sdiRelativo } });
+  }
+
   const [passwordMittente, backupPassword] = await Promise.all([
     keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_PEC),
     keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_BACKUP),
@@ -235,6 +243,8 @@ export async function getConfig() {
 
   return {
     ...base,
+    // `globalThis.__percorsoSdiPredefinito` lo imposta solo il core embedded.
+    sdi: { ...base.sdi, percorsoArchivio: risolviPercorsoSdi(sdiRelativo, DATA_DIR, globalThis.__percorsoSdiPredefinito) },
     pec: { ...base.pec, passwordMittente: passwordMittente || '' },
     backup: { ...base.backup, password: backupPassword || '' },
   };
@@ -397,7 +407,7 @@ export async function saveConfig(partialConfig) {
     dati: current.dati,
   };
   // Su disco (config.json) le due password restano sempre vuote: risiedono solo nel Keychain.
-  await writeJson(CONFIG_FILE, next);
+  await writeJson(CONFIG_FILE, { ...next, sdi: { ...next.sdi, percorsoArchivio: relativizzaPercorsoSdi(next.sdi.percorsoArchivio, DATA_DIR) } });
   return { ...next, pec: { ...next.pec, passwordMittente }, backup: { ...next.backup, password: backupPassword } };
 }
 
@@ -454,6 +464,21 @@ export async function applicaPercorsoDatiAllAvvio() {
   }
   setDataDir(percorso);
   if (daMigrare) await scriviPuntatore(percorso);
+}
+
+// Apre un archivio già presente (per esempio creato da un altro dispositivo) senza spostare né
+// copiare nulla: valido se la cartella contiene un config.json con il fornitore. I dati attuali
+// restano dove sono, intatti. Mai una fusione.
+export async function apriArchivioEsistente(percorso) {
+  const percorsoAssoluto = path.resolve(percorso || '');
+  if (percorsoAssoluto === DATA_DIR) throw new Error('Il percorso indicato è già quello attuale');
+  const config = await readFile(path.join(percorsoAssoluto, 'config.json'), 'utf-8').then(JSON.parse, () => null);
+  if (!config?.fornitore) {
+    throw new Error('La cartella scelta non contiene un archivio valido (manca config.json con i dati del fornitore)');
+  }
+  await scriviPuntatore(percorsoAssoluto);
+  setDataDir(percorsoAssoluto);
+  return percorsoAssoluto;
 }
 
 // Cambia backend/data/ spostando fisicamente ogni file esistente nella nuova cartella

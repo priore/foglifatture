@@ -1,4 +1,7 @@
 <script setup>
+import { chiediConferma } from '../composables/useConferma.js';
+import SelectField from './common/SelectField.vue';
+import DateField from './common/DateField.vue';
 // Registro BTC (FP-012, piano REGISTRO_LOTTI_BTC.md Step 8): movimenti in ingresso (rate fattura + manuali)
 // e uscite, saldo residuo LIFO, form di registrazione con anteprima plusvalenza. Vive nella tab Bitcoin.
 import { ref, computed, watch, onMounted } from 'vue';
@@ -126,7 +129,7 @@ async function salva() {
 }
 
 async function elimina(r) {
-  if (!confirm(`Eliminare il movimento del ${dataIt(r.data)} (${btcTesto(r.satoshi)} BTC)? Plusvalenze e saldo verranno ricalcolati.`)) return;
+  if (!(await chiediConferma(`Eliminare il movimento del ${dataIt(r.data)} (${btcTesto(r.satoshi)} BTC)? Plusvalenze e saldo verranno ricalcolati.`, { titolo: 'Elimina movimento', ok: 'Elimina' }))) return;
   try {
     avvisi.value = (await api.eliminaMovimentoBtc(r.id)).avvisi;
     await carica();
@@ -165,18 +168,18 @@ async function elimina(r) {
       <div class="form-grid">
         <div class="field">
           <label for="reg-tipo">Tipo</label>
-          <select id="reg-tipo" v-model="form.tipo" required>
+          <SelectField titolo="Tipo operazione" descrizione="Natura dell'operazione BTC" id="reg-tipo" v-model="form.tipo" required>
             <template v-if="formAperto === 'uscita'">
               <option value="vendita">Vendita</option><option value="spesa">Spesa</option><option value="trasferimento">Trasferimento</option>
             </template>
             <template v-else>
               <option value="acquisto">Acquisto</option><option value="ricevuto">Ricevuto</option><option value="mining">Mining</option>
             </template>
-          </select>
+          </SelectField>
         </div>
         <div class="field">
           <label for="reg-data">Data</label>
-          <input id="reg-data" v-model="form.data" type="date" required>
+          <DateField v-model="form.data" titolo="Data operazione" descrizione="Giorno in cui è avvenuta l'operazione BTC" required />
         </div>
         <div class="field">
           <label for="reg-btc">Quantità (BTC)</label>

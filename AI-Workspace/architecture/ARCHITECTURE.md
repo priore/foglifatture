@@ -106,7 +106,7 @@ Confidence: 🟢 confermato da codice · 🟡 inferito · 🔴 ipotesi
 🟢 Vedi layout in `PROJECT_ANALYSIS.md`. Punti rilevanti:
 - numerazione fattura unica, indipendente dalla chiave per cliente dei file
 - ricevute SDI e XML scaricati vanno come file grezzi sotto `sdi.percorsoArchivio`, fuori da `jsonStore.js`
-- regole fiscali: pacchetto versionato in git (`src/data/regole/`) → copia confermata dall'utente (`data/regole-attive/`) → proposte da AI (`data/regole-proposte/`)
+- regole fiscali: pacchetto versionato in git (`src/data/regole/`) o scaricato da un indice pubblico (`data/regole-scaricate/`, solo con hash corretto, il più recente per `verificatoIl`) → copia confermata dall'utente (`data/regole-attive/`) → proposte da AI (`data/regole-proposte/`)
 
 ---
 

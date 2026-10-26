@@ -5,11 +5,14 @@ const store = {
   '2026-01-cli': { anno: 2026, mese: 1, clienteId: 'cli', numero: '1', data: '2026-01-28', imponibile: 1000, rivalsaInps: 40, nettoAPagare: 1040, pagamenti: [] },
   '2026-02-cli': { anno: 2026, mese: 2, clienteId: 'cli', numero: '2', data: '2026-02-28', imponibile: 500, rivalsaInps: 0, nettoAPagare: 500, pagamenti: [] },
 };
+const registro = {}; // numerazione.json, fuori da invoices/
 mock.module('../lib/jsonStore.js', {
   exports: {
-    readJson: async (p) => store[p.replace('invoices/', '').replace('.json', '')] ?? null,
-    writeJson: async (p, d) => { store[p.replace('invoices/', '').replace('.json', '')] = d; },
+    readJson: async (p) => (p.startsWith('invoices/') ? store[p.replace('invoices/', '').replace('.json', '')] : registro[p]) ?? null,
+    writeJson: async (p, d) => { if (p.startsWith('invoices/')) store[p.replace('invoices/', '').replace('.json', '')] = d; else registro[p] = d; },
     listKeys: async () => Object.keys(store),
+    listEstranei: async () => [],
+    listNomi: async () => [],
   },
 });
 

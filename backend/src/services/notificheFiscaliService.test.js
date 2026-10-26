@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calcolaNotifiche } from './notificheFiscaliService.js';
+import { calcolaNotifiche, appiattisciBollo } from './notificheFiscaliService.js';
 
 const vuoto = { f24List: [], scadenzeBollo: [], crediti: [], stato: { aggiornamentoDisponibile: false, annoDisponibile: null, annoAttivo: null }, scadenzeIntrastat: [] };
 
@@ -97,4 +97,11 @@ test('OS.7 — intrastat imminente', () => {
 test('OS.7 — intrastat fuori finestra — silenzioso', () => {
   const scadenzeIntrastat = [{ data: '2026-11-25', tipo: 'Intrastat servizi resi', descrizione: 'III trim. 2026' }];
   assert.equal(calcolaNotifiche('2026-10-13', '2026-10-20', { ...vuoto, scadenzeIntrastat }).length, 0);
+});
+
+test('appiattisciBollo: scadenzeBollo restituisce un oggetto, le voci portano l\'anno; errori (null) ignorati', () => {
+  const sb = appiattisciBollo([{ anno: 2026, scadenze: [{ trimestre: 3, data: '2026-10-15', importo: 12 }] }, null]);
+  assert.deepEqual(sb, [{ trimestre: 3, data: '2026-10-15', importo: 12, anno: 2026 }]);
+  const n = calcolaNotifiche('2026-10-10', '2026-10-17', { ...vuoto, scadenzeBollo: sb });
+  assert.equal(n[0].chiave, 'bollo-2026-Q3');
 });

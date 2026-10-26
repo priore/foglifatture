@@ -20,6 +20,8 @@ mock.module('../lib/jsonStore.js', {
     },
     writeJson: async () => {},
     listKeys: async () => [`2026-01-${CLI_A}`, `2026-01-${CLI_B}`, `2026-02-${CLI_A}`],
+    listEstranei: async () => [],
+    listNomi: async () => [],
   },
 });
 

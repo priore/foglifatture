@@ -92,9 +92,9 @@ function svuota() {
         <h2>Inviare i dati all'AI?</h2>
         <p class="note-legal">Per rispondere, l'assistente invia al provider AI configurato i dati fiscali che servono alla domanda (importi, fatture, scadenze F24, bollo, crediti). Anagrafica, codice fiscale, IBAN e credenziali non vengono mai inviati.</p>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" @click="chiediConsenso = false">Annulla</button>
-          <button type="button" class="btn btn-ghost" @click="invia({ conferma: true, ricorda: true })">Sì, sempre</button>
           <button type="button" class="btn btn-ok" @click="invia({ conferma: true })">Sì, questa volta</button>
+          <button type="button" class="btn btn-ghost" @click="invia({ conferma: true, ricorda: true })">Sì, sempre</button>
+          <button type="button" class="btn btn-warn" @click="chiediConsenso = false">Annulla</button>
         </div>
       </div>
     </div>

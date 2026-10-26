@@ -1,4 +1,6 @@
 <script setup>
+import SelectField from '../components/common/SelectField.vue';
+import DateField from '../components/common/DateField.vue';
 // Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, confrontati con
 // l'imposta stimata dal regime forfettario (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md).
 import { ref, computed, onMounted, watch } from 'vue';
@@ -101,9 +103,9 @@ function formattaEuro(valore) {
   <div>
     <div class="page-head">
       <div><h1>Versamenti F24</h1><p>Registrazione manuale dei versamenti effettivi, confronto con l'imposta stimata</p></div>
-      <select v-model.number="annoSelezionato" class="status">
+      <SelectField titolo="Anno" descrizione="Anno dei versamenti da mostrare" v-model.number="annoSelezionato" class="status">
         <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
-      </select>
+      </SelectField>
     </div>
 
     <p v-if="errore" class="note-legal">Errore: {{ errore }}</p>
@@ -126,10 +128,10 @@ function formattaEuro(valore) {
           <div class="field"><label>Cerca per tipo</label><input type="text" v-model="ricerca" placeholder="es. INPS"></div>
           <div class="field">
             <label>Filtra tipo</label>
-            <select v-model="filtroTipo">
+            <SelectField titolo="Filtra per tipo" descrizione="Mostra solo i versamenti del tipo scelto" v-model="filtroTipo">
               <option value="">Tutti</option>
               <option v-for="t in tipiVersamento" :key="t" :value="t">{{ t }}</option>
-            </select>
+            </SelectField>
           </div>
         </div>
 
@@ -148,19 +150,19 @@ function formattaEuro(valore) {
         </table>
 
         <form @submit.prevent="salvaVersamento" style="display:flex;gap:12px;margin-top:20px;align-items:flex-end;flex-wrap:wrap">
-          <div class="field"><label>Data</label><input type="date" v-model="nuovoVersamento.data" required></div>
+          <div class="field"><label>Data</label><DateField v-model="nuovoVersamento.data" titolo="Data versamento" descrizione="Giorno in cui è stato pagato l'F24" required /></div>
           <div class="field">
             <label>Tipo</label>
-            <select v-model="nuovoVersamento.tipo">
+            <SelectField titolo="Tipo versamento" descrizione="Imposta o contributo versato" v-model="nuovoVersamento.tipo">
               <option v-for="t in tipiVersamento" :key="t" :value="t">{{ t }}</option>
-            </select>
+            </SelectField>
           </div>
           <div class="field">
             <label>Codice (opzionale)</label>
-            <select v-model="nuovoVersamento.codice">
+            <SelectField titolo="Codice tributo" descrizione="Codice del versamento, facoltativo" v-model="nuovoVersamento.codice">
               <option value="">—</option>
               <option v-for="c in codiciTributo.filter(x => x)" :key="c" :value="c">{{ c }}</option>
-            </select>
+            </SelectField>
           </div>
           <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoVersamento.importo" required></div>
           <button type="submit" class="btn btn-ok">Aggiungi</button>

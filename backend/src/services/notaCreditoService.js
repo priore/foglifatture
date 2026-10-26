@@ -1,7 +1,8 @@
 // Nota di credito TD04: storna (tutta o in parte) una fattura già accettata dallo SDI.
 // Salvata dentro la fattura stornata (`fattura.notaCredito`), una sola per fattura: lo
 // storno parziale ripetuto non è gestito. Condivide la sequenza numerica delle fatture.
-import { getInvoice, saveInvoice, prossimoNumeroInSequenza } from './invoiceService.js';
+import { getInvoice, saveInvoice, prossimoNumeroInSequenza, verificaSequenzaPerEmissione } from './invoiceService.js';
+import { registraNumero } from './numerazioneService.js';
 
 // Dati nel formato atteso da generaXmlFatturaPA/validaDatiFatturaPA per la nota di credito.
 // Bollo e pagamento omessi: la nota non ha scadenza né IBAN, il bollo resta sulla fattura.
@@ -29,7 +30,10 @@ export async function emettiNotaCredito(anno, mese, clienteId, { importo, descri
   }
   // Rivalsa INPS proporzionale a quanto si storna.
   const rivalsaInps = invoice.rivalsaInps ? Number((invoice.rivalsaInps * imponibile / invoice.imponibile).toFixed(2)) : 0;
+  const sequenza = await verificaSequenzaPerEmissione();
+  if (!sequenza.ok) throw new Error(sequenza.errore);
   const numero = await prossimoNumeroInSequenza();
+  await registraNumero(numero, { anno, mese, clienteId, nota: true });
   const adesso = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Rome' });
   invoice.notaCredito = {
     numero,

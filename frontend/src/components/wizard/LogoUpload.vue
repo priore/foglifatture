@@ -1,4 +1,5 @@
 <script setup>
+import { avvisa } from '../../composables/useConferma.js';
 // Upload logo: converte l'immagine scelta in data URL e la salva direttamente
 // nella configurazione (niente storage file separato, coerente con il resto
 // dell'app che tiene tutto in JSON flat file).
@@ -12,10 +13,10 @@ const emit = defineEmits(['update:modelValue']);
 
 const LIMITE_BYTE = 500 * 1024; // 500 KB: sufficiente per un logo, non appesantisce il config.json
 
-function onFileSelezionato(file) {
+async function onFileSelezionato(file) {
   if (!file) return;
   if (file.size > LIMITE_BYTE) {
-    alert('Immagine troppo grande: massimo 500 KB.');
+    await avvisa('Immagine troppo grande: massimo 500 KB.', { titolo: 'Logo' });
     return;
   }
   const reader = new FileReader();

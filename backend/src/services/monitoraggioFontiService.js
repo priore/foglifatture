@@ -325,7 +325,8 @@ export function fermaMonitoraggioFonti() {
   timer = null;
 }
 
-async function _controllaSeNecessario() {
+// Un giro del monitoraggio (usato anche dai lavori in background del core embedded, senza timer).
+export async function _controllaSeNecessario() {
   try {
     const stato = await readJson('monitoraggio-ultimo-controllo.json');
     if (stato?.eseguitoIl) {

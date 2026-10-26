@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../components/common/SelectField.vue';
 // Import di storico pregresso: timesheet da xls originale (stesso layout del template),
 // fatture da XML FatturaPA già emesse. Azione one-off, indipendente dalla configurazione.
 import { ref, computed, onMounted } from 'vue';
@@ -297,9 +298,9 @@ async function riavvia() {
           <div class="field"><label>Mese</label><input type="number" min="1" max="12" v-model.number="meseTimesheet"></div>
           <div class="field" v-if="clienti.length > 1">
             <label>Cliente</label>
-            <select v-model="clienteIdTimesheet">
+            <SelectField titolo="Cliente" descrizione="Cliente a cui assegnare i timesheet importati" v-model="clienteIdTimesheet">
               <option v-for="c in clienti" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
-            </select>
+            </SelectField>
           </div>
           <div class="field field-full full">
             <label>File .xls (uno o più; anno/mese letti dal file)</label>
@@ -352,10 +353,10 @@ async function riavvia() {
           </div>
           <div class="field field-full full" v-if="clienti.length > 1">
             <label>Cliente (solo se richiesto)</label>
-            <select v-model="clienteIdFattura">
+            <SelectField titolo="Cliente delle fatture" descrizione="Cliente delle fatture importate, o riconoscimento automatico" v-model="clienteIdFattura">
               <option value="">Riconosci automaticamente</option>
               <option v-for="c in clienti" :key="c.id" :value="c.id">{{ c.denominazione || 'Cliente senza nome' }}</option>
-            </select>
+            </SelectField>
           </div>
         </div>
         <button class="btn btn-primary" :disabled="(!fileFattura && !fileFatturaMulti.length) || importandoFattura" @click="importaFattura">
@@ -419,12 +420,12 @@ async function riavvia() {
               <td class="cella-descrizione">{{ p.descrizione }}</td>
               <td>
                 <span v-if="confermatiPagamenti.has(i)">✓ Registrato</span>
-                <select v-else-if="p.fattura || p.ambiguo" v-model="scelteFatturaPagamenti[i]" class="status">
+                <SelectField titolo="Fattura corrispondente" descrizione="Fattura a cui collegare questo pagamento" v-else-if="p.fattura || p.ambiguo" v-model="scelteFatturaPagamenti[i]" class="status">
                   <option value="">— seleziona fattura —</option>
                   <option v-for="f in fatturePerImporto(p.importo, p)" :key="chiaveFattura(f)" :value="chiaveFattura(f)">
                     N. {{ f.numero }} ({{ f.anno }}-{{ String(f.mese).padStart(2, '0') }}) — {{ nomeCliente(f.clienteId) }}
                   </option>
-                </select>
+                </SelectField>
                 <span v-else style="color:var(--muted)">Nessuna fattura corrispondente</span>
               </td>
               <td>

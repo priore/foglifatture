@@ -20,31 +20,34 @@ let timer = null;
 export function avviaPromemoriaScartoSdi(getConfig, intervalloMinuti = 60) {
   fermaPromemoriaScartoSdi();
   const intervalloMs = Math.max(1, intervalloMinuti) * 60 * 1000;
-  timer = setInterval(async () => {
-    const config = await getConfig();
-    const chiaveOggi = oggiChiave();
+  timer = setInterval(() => controllaPromemoriaScartoSdi(getConfig), intervalloMs);
+}
 
-    try {
-      const chiavi = await listMesiFatturati();
-      for (const { anno, mese, clienteId } of chiavi) {
-        const invoice = await getInvoice(anno, mese, clienteId);
-        if (!invoice || invoice.ultimaNotificaScartoSdi === chiaveOggi) continue;
+// Un giro del promemoria (usato anche dai lavori in background del core embedded, senza timer).
+export async function controllaPromemoriaScartoSdi(getConfig) {
+  const config = await getConfig();
+  const chiaveOggi = oggiChiave();
 
-        const { stato, data } = await statoSdiFattura(invoice, config);
-        if (stato !== 'scartata') continue;
+  try {
+    const chiavi = await listMesiFatturati();
+    for (const { anno, mese, clienteId } of chiavi) {
+      const invoice = await getInvoice(anno, mese, clienteId);
+      if (!invoice || invoice.ultimaNotificaScartoSdi === chiaveOggi) continue;
 
-        const giorniTrascorsi = Math.floor((Date.now() - new Date(data).getTime()) / MS_GIORNO);
-        const messaggio = giorniTrascorsi > GIORNI_LIMITE_RIEMISSIONE
-          ? `Fattura n.${invoice.numero} scartata da ${giorniTrascorsi} giorni: termine di ${GIORNI_LIMITE_RIEMISSIONE} giorni per la riemissione SUPERATO, rischio sanzione per tardiva fatturazione.`
-          : `Fattura n.${invoice.numero} scartata da SDI: ${GIORNI_LIMITE_RIEMISSIONE - giorniTrascorsi} giorni residui per correggere e reinviare.`;
-        notifica('Fattura scartata da SDI', messaggio);
+      const { stato, data } = await statoSdiFattura(invoice, config);
+      if (stato !== 'scartata') continue;
 
-        await saveInvoice(anno, mese, clienteId, { ...invoice, ultimaNotificaScartoSdi: chiaveOggi });
-      }
-    } catch (err) {
-      logger.error('Errore promemoria scarto SDI', { errore: err.message });
+      const giorniTrascorsi = Math.floor((Date.now() - new Date(data).getTime()) / MS_GIORNO);
+      const messaggio = giorniTrascorsi > GIORNI_LIMITE_RIEMISSIONE
+        ? `Fattura n.${invoice.numero} scartata da ${giorniTrascorsi} giorni: termine di ${GIORNI_LIMITE_RIEMISSIONE} giorni per la riemissione SUPERATO, rischio sanzione per tardiva fatturazione.`
+        : `Fattura n.${invoice.numero} scartata da SDI: ${GIORNI_LIMITE_RIEMISSIONE - giorniTrascorsi} giorni residui per correggere e reinviare.`;
+      notifica('Fattura scartata da SDI', messaggio);
+
+      await saveInvoice(anno, mese, clienteId, { ...invoice, ultimaNotificaScartoSdi: chiaveOggi });
     }
-  }, intervalloMs);
+  } catch (err) {
+    logger.error('Errore promemoria scarto SDI', { errore: err.message });
+  }
 }
 
 export function fermaPromemoriaScartoSdi() {

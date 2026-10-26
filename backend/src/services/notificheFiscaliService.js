@@ -22,6 +22,11 @@ function aggiungiGiorni(dataStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
+// scadenzeBollo(anno) restituisce { anno, scadenze: [...] }: per le notifiche serve l'elenco piatto, con l'anno su ogni voce.
+export function appiattisciBollo(bolli) {
+  return bolli.flatMap((b) => (b?.scadenze ?? []).map((s) => ({ ...s, anno: b.anno })));
+}
+
 // Funzione pura: riceve lo stato aggregato e restituisce [{chiave, titolo, messaggio}].
 // `oggi` come AAAA-MM-GG; `limite` come AAAA-MM-GG (oggi + 7 giorni).
 export function calcolaNotifiche(oggi, limite, { f24List, scadenzeBollo: sb, crediti, stato, scadenzeIntrastat }) {
@@ -103,13 +108,13 @@ export async function controllaNotificheFiscali() {
 
   const [f24List, bolloCorrenti, bolloPrec, crediti, stato] = await Promise.all([
     listF24().catch(() => []),
-    scadenzeBollo(annoCorrente).catch(() => []),
-    scadenzeBollo(annoCorrente - 1).catch(() => []),
+    scadenzeBollo(annoCorrente).catch(() => null),
+    scadenzeBollo(annoCorrente - 1).catch(() => null),
     creditiConResiduo(oggi).catch(() => []),
     statoRegole().catch(() => ({ aggiornamentoDisponibile: false, annoDisponibile: null, annoAttivo: null })),
   ]);
 
-  const sb = [...bolloCorrenti, ...bolloPrec];
+  const sb = appiattisciBollo([bolloCorrenti, bolloPrec]);
 
   const scadenzeIntrastat = (config.fornitore?.iscrittoVies && haClientiUe)
     ? [...scadenzeIntrastatAnno(annoCorrente), ...scadenzeIntrastatAnno(annoCorrente - 1)]

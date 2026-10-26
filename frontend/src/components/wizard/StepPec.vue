@@ -1,4 +1,6 @@
 <script setup>
+import { chiediConferma } from '../../composables/useConferma.js';
+import SelectField from '../common/SelectField.vue';
 import { computed, ref, onMounted } from 'vue';
 import { api } from '../../services/api.js';
 import { pecValida } from '../../composables/useValidazioneFiscale.js';
@@ -38,7 +40,7 @@ const provaSdi = ref(null);
 const risposteSdi = ref(null);
 const provaSdiInCorso = ref(false);
 async function inviaProvaSdi() {
-  if (!confirm('Invio allo SDI una PEC vuota, senza fattura. Lo SDI risponde con un messaggio di cortesia. Procedere?')) return;
+  if (!(await chiediConferma('Invio allo SDI una PEC vuota, senza fattura. Lo SDI risponde con un messaggio di cortesia. Procedere?', { titolo: 'PEC di prova allo SDI', ok: 'Invia' }))) return;
   provaSdiInCorso.value = true;
   risposteSdi.value = null;
   try { provaSdi.value = await api.provaPecSdi(); }
@@ -58,10 +60,10 @@ async function leggiRisposte() {
   <div class="form-grid">
     <div class="field field-full full">
       <label>Gestore PEC</label>
-      <select v-model="gestoreId" @change="scegliGestore">
+      <SelectField titolo="Gestore PEC" descrizione="Precompila server e porte del provider" v-model="gestoreId" @change="scegliGestore">
         <option value="">Altro gestore (inserimento manuale)</option>
         <option v-for="g in gestori" :key="g.id" :value="g.id">{{ g.nome }}</option>
-      </select>
+      </SelectField>
       <small v-if="gestore?.suggerimentoPassword" class="note-legal">{{ gestore.suggerimentoPassword }}</small>
     </div>
     <div class="field"><label>Server SMTP PEC</label><input v-model="modelValue.smtpHost" placeholder="smtps.pec-provider.it"></div>

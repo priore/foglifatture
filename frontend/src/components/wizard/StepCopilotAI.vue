@@ -91,9 +91,9 @@ function chiudiOtp() {
         <p class="note-legal" style="margin:16px 0 20px;font-size:.83rem">
           Dopo aver completato il login nel browser, clicca "Ho completato il login".
         </p>
-        <div style="display:flex;gap:10px;justify-content:center">
-          <button class="btn btn-primary" @click="chiudiOtp">Ho completato il login</button>
-          <button class="btn btn-ghost" @click="otpVisibile = false">Chiudi</button>
+        <div class="modal-actions">
+          <button class="btn btn-ok" @click="chiudiOtp">Ho completato il login</button>
+          <button class="btn btn-warn" @click="otpVisibile = false">Chiudi</button>
         </div>
       </div>
     </div>

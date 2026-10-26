@@ -16,6 +16,13 @@ export function setDataDir(dir) {
   DATA_DIR = dir || DATA_DIR_DEFAULT;
 }
 
+// Notifica dopo ogni scrittura (percorso relativo): la sincronizzazione con i provider cloud
+// sa così quali file caricare. Un solo ascoltatore; un suo errore non fa fallire la scrittura.
+let dopoScrittura = null;
+export function setDopoScrittura(fn) {
+  dopoScrittura = fn;
+}
+
 async function ensureDir(dir) {
   await mkdir(dir, { recursive: true });
 }
@@ -37,10 +44,11 @@ export async function writeJson(relativePath, data) {
   const file = path.join(DATA_DIR, relativePath);
   await ensureDir(path.dirname(file));
   await writeFile(file, JSON.stringify(data, null, 2), 'utf-8');
+  try { dopoScrittura?.(relativePath); } catch { /* la scrittura locale è riuscita */ }
 }
 
-// Elenca le chiavi (nomi file senza estensione) presenti in una sottocartella della collezione.
-export async function listKeys(relativeDir) {
+// Elenca i nomi (senza estensione) dei file .json presenti in una cartella dell'archivio.
+export async function listNomi(relativeDir) {
   const dir = path.join(DATA_DIR, relativeDir);
   try {
     const files = await readdir(dir);
@@ -51,3 +59,15 @@ export async function listKeys(relativeDir) {
   }
 }
 
+// Elenca le chiavi (nomi file senza estensione) di una sottocartella. Con `formato` (RegExp)
+// restano solo i nomi che lo rispettano: copie in conflitto dei provider cloud e file estranei
+// ("x (conflicted copy).json") non diventano record; vedi listEstranei per segnalarli.
+export async function listKeys(relativeDir, formato) {
+  const nomi = await listNomi(relativeDir);
+  return formato ? nomi.filter(n => formato.test(n)) : nomi;
+}
+
+// Nomi che NON rispettano il formato: l'altra metà di listKeys(dir, formato).
+export async function listEstranei(relativeDir, formato) {
+  return (await listNomi(relativeDir)).filter(n => !formato.test(n));
+}

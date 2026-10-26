@@ -1,4 +1,6 @@
 <script setup>
+import { chiediConferma } from '../composables/useConferma.js';
+import SelectField from './common/SelectField.vue';
 // Import BTC (FP-014, piano REGISTRO_LOTTI_BTC.md Step 12): proposte da polling blockchain e da file,
 // da confermare (con il controvalore EUR) o scartare. Stato del polling e import da file. Tab Bitcoin.
 import { ref, computed, onMounted } from 'vue';
@@ -100,7 +102,7 @@ const importaFile = (opzioni = {}) => esegui(async () => {
   if (!file.value) return;
   const r = await api.importaFileBtc(file.value, { formato: formato.value, ...opzioni }).catch(async (err) => {
     // Formato sconosciuto: l'analisi AI invia dati fiscali (hash per indirizzi/txid) solo con consenso esplicito.
-    if (err.codice === 'AUTORIZZAZIONE_RICHIESTA' && confirm('Formato non riconosciuto: l\'AI analizzerà alcune righe per proporre le colonne. Indirizzi e TXID sono sostituiti da hash, ma date e importi vengono inviati al provider AI. Procedere?')) {
+    if (err.codice === 'AUTORIZZAZIONE_RICHIESTA' && await chiediConferma('Formato non riconosciuto: l\'AI analizzerà alcune righe per proporre le colonne. Indirizzi e TXID sono sostituiti da hash, ma date e importi vengono inviati al provider AI. Procedere?', { titolo: 'Inviare i dati all\'AI?', ok: 'Procedi' })) {
       return api.importaFileBtc(file.value, { formato: formato.value, ...opzioni, conferma: true });
     }
     throw err;
@@ -135,7 +137,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
       <button type="button" class="btn btn-ghost" :disabled="occupato || !!motivoControllo" :title="motivoControllo" @click="controlla">Controlla ora</button>
       <div class="field campo-provider">
         <label for="import-formato">Provider / exchange</label>
-        <select id="import-formato" v-model="formato" :disabled="occupato">
+        <SelectField titolo="Formato file" descrizione="Come interpretare il file importato" id="import-formato" v-model="formato" :disabled="occupato">
           <option value="auto">Riconoscimento automatico</option>
           <optgroup label="Wallet">
             <option value="sparrow">Sparrow (CSV)</option>
@@ -148,7 +150,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
             <option value="coinbase">Coinbase (CSV)</option>
             <option value="onetrading">One Trading (CSV)</option>
           </optgroup>
-        </select>
+        </SelectField>
       </div>
       <FileDrop class="drop-import" accept=".csv,.json,text/csv,application/json" :disabled="occupato"
         :label="file ? file.name : 'Trascina qui il file o clicca per sfogliare'" @change="sceltaFile" />
@@ -161,14 +163,14 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
       <div class="form-grid">
         <div v-for="[chiave, etichetta, obbligatoria] in [['colonnaData', 'Data', true], ['colonnaImporto', 'Importo BTC', true], ['colonnaTxid', 'TXID', false], ['colonnaEur', 'Controvalore EUR', false], ['colonnaTipo', 'Tipo (entrata/uscita)', false]]" :key="chiave" class="field">
           <label :for="`map-${chiave}`">{{ etichetta }}</label>
-          <select :id="`map-${chiave}`" v-model="mappingDaConfermare.mapping[chiave]">
+          <SelectField :titolo="`Colonna: ${etichetta}`" descrizione="Colonna del file corrispondente a questo campo" :id="`map-${chiave}`" v-model="mappingDaConfermare.mapping[chiave]">
             <option v-if="!obbligatoria" :value="null">— nessuna —</option>
             <option v-for="(h, i) in mappingDaConfermare.intestazioni" :key="i" :value="i">{{ h }}</option>
-          </select>
+          </SelectField>
         </div>
         <div class="field">
           <label for="map-unita">Unità importo</label>
-          <select id="map-unita" v-model="mappingDaConfermare.mapping.unita"><option value="btc">BTC</option><option value="satoshi">Satoshi</option></select>
+          <SelectField titolo="Unità importo" descrizione="Unità in cui è espresso l'importo" id="map-unita" v-model="mappingDaConfermare.mapping.unita"><option value="btc">BTC</option><option value="satoshi">Satoshi</option></SelectField>
         </div>
       </div>
       <div class="azioni">
@@ -200,10 +202,10 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
           <div class="form-grid">
             <div class="field">
               <label :for="`c-tipo-${p.id}`">Tipo</label>
-              <select :id="`c-tipo-${p.id}`" v-model="conf.tipo">
+              <SelectField titolo="Tipo operazione" descrizione="Natura dell'operazione da registrare" :id="`c-tipo-${p.id}`" v-model="conf.tipo">
                 <template v-if="p.direzione === 'ingresso'"><option value="ricevuto">Ricevuto</option><option value="acquisto">Acquisto</option><option value="mining">Mining</option></template>
                 <template v-else><option value="vendita">Vendita</option><option value="spesa">Spesa</option><option value="trasferimento">Trasferimento tra wallet propri</option></template>
-              </select>
+              </SelectField>
             </div>
             <div v-if="conf.tipo !== 'trasferimento'" class="field">
               <label :for="`c-eur-${p.id}`">{{ p.direzione === 'ingresso' ? 'Costo (EUR)' : 'Ricavo (EUR)' }}</label>

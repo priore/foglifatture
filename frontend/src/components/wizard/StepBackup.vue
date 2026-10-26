@@ -1,4 +1,6 @@
 <script setup>
+import { capacita } from '../../composables/useCapacita.js';
+
 defineProps({
   modelValue: { type: Object, required: true }, // config.backup
 });
@@ -12,7 +14,8 @@ defineProps({
     </div>
     <div class="field field-full full">
       <label>Cartella di destinazione</label>
-      <input v-model="modelValue.percorsoDestinazione" placeholder="/Users/tuonome/Dropbox/Backup Timesheet" :disabled="!modelValue.abilitato">
+      <input v-if="capacita.cartellaLibera" v-model="modelValue.percorsoDestinazione" placeholder="/Users/tuonome/Dropbox/Backup Timesheet" :disabled="!modelValue.abilitato">
+      <input v-else value="backup-automatici (nell'archivio)" disabled>
     </div>
     <div class="field"><label>Ogni (minuti)</label><input type="number" min="1" v-model.number="modelValue.intervalloOreMinuti" :disabled="!modelValue.abilitato"></div>
     <div class="field"><label>Password di cifratura</label><input type="password" v-model="modelValue.password" :disabled="!modelValue.abilitato"></div>

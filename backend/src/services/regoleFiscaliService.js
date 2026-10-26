@@ -2,15 +2,13 @@
 // Ogni anno ha un pacchetto versionato in src/data/regole/<anno>.json (dati pubblici, in git).
 // L'utente "attiva" un pacchetto copiandolo in data/regole-attive/<anno>.json (dati utente,
 // escluso da git). finché non ne attiva uno, si usa l'ultimo anno disponibile con banner.
-import { readJson, writeJson } from '../lib/jsonStore.js';
+import { readJson, writeJson, listNomi } from '../lib/jsonStore.js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const REGOLE_SRC = path.join(import.meta.dirname, '..', 'data', 'regole');
 
-// Legge il pacchetto versionato per anno da src/data/regole/<anno>.json.
-// Esportata per monitoraggioFontiService (ricerca campi che citano una fonte).
-export async function leggiPacchettoVersionato(anno) {
+async function leggiPacchettoIncluso(anno) {
   const file = path.join(REGOLE_SRC, `${anno}.json`);
   try {
     const raw = await readFile(file, 'utf-8');
@@ -21,25 +19,33 @@ export async function leggiPacchettoVersionato(anno) {
   }
 }
 
-// Anno più alto disponibile in src/data/regole/.
-async function ultimoAnnoDisponibile() {
+// Legge il pacchetto per anno: quello incluso nel codice (src/data/regole/<anno>.json) o quello scaricato
+// (regole-scaricate/<anno>.json, vedi regoleScaricateService), il più recente per `verificatoIl`; a parità, l'incluso.
+// Esportata per monitoraggioFontiService (ricerca campi che citano una fonte).
+export async function leggiPacchettoVersionato(anno) {
+  const incluso = await leggiPacchettoIncluso(anno);
+  const scaricato = await readJson(`regole-scaricate/${anno}.json`);
+  if (scaricato && (!incluso || (scaricato.verificatoIl ?? '') > (incluso.verificatoIl ?? ''))) return scaricato;
+  return incluso;
+}
+
+// Anni con un pacchetto (inclusi o scaricati), dal più recente.
+async function anniDisponibili() {
   const { readdir } = await import('node:fs/promises');
-  try {
-    const files = await readdir(REGOLE_SRC);
-    const anni = files
-      .filter(f => /^\d{4}\.json$/.test(f))
-      .map(f => parseInt(f, 10))
-      .sort((a, b) => b - a);
-    return anni[0] ?? null;
-  } catch {
-    return null;
-  }
+  let inclusi = [];
+  try { inclusi = (await readdir(REGOLE_SRC)).filter(f => /^\d{4}\.json$/.test(f)).map(f => parseInt(f, 10)); } catch { /* cartella assente */ }
+  const scaricati = (await listNomi('regole-scaricate')).filter(n => /^\d{4}$/.test(n)).map(Number);
+  return [...new Set([...inclusi, ...scaricati])].sort((a, b) => b - a);
+}
+
+async function ultimoAnnoDisponibile() {
+  return (await anniDisponibili())[0] ?? null;
 }
 
 // Valida che le chiavi obbligatorie siano presenti nel pacchetto.
 const CHIAVI_OBBLIGATORIE = ['anno', 'forfettario', 'acconti', 'scadenze', 'rate', 'inpsGestioneSeparata', 'bollo', 'codiciTributo', 'causaliInps'];
 
-function validaPacchetto(pacchetto) {
+export function validaPacchetto(pacchetto) {
   const mancanti = CHIAVI_OBBLIGATORIE.filter(k => !(k in pacchetto));
   if (mancanti.length) throw new Error(`Pacchetto regole non valido: mancano ${mancanti.join(', ')}`);
 }
@@ -269,10 +275,7 @@ export async function statoRegole() {
 
 // Tutti gli anni con pacchetto versionato e stato conferma.
 export async function elencoAnni() {
-  const { readdir } = await import('node:fs/promises');
-  let files = [];
-  try { files = await readdir(REGOLE_SRC); } catch { return []; }
-  const anni = files.filter(f => /^\d{4}\.json$/.test(f)).map(f => parseInt(f, 10)).sort((a, b) => b - a);
+  const anni = await anniDisponibili();
   return Promise.all(anni.map(async (anno) => {
     const attivo = await readJson(`regole-attive/${anno}.json`);
     return { anno, confermato: !!attivo, confermatoIl: attivo?.confermatoIl ?? null };

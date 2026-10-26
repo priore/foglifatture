@@ -9,7 +9,7 @@ import { PASSI_IMPORTA_STORICO } from '../../wizardImportaStoricoPassi.js';
 
 const route = useRoute();
 const router = useRouter();
-const nomeFornitore = ref('Consulente');
+const nomeFornitore = ref('');
 const versioneApp = ref('');
 onMounted(async () => {
   const config = await api.getConfig().catch(() => null);
@@ -22,7 +22,9 @@ onMounted(async () => {
 // Cliente "solo fatture" selezionato: niente Timesheet, eventuale pagina aperta ripiega su Fattura.
 watch([soloFatture, () => route.path], ([sf, path]) => { if (sf && path === '/timesheet') router.replace('/fattura'); });
 
-const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
+// Senza una scelta salvata vale il tema di sistema: l'icona deve rispecchiare quello visibile.
+const temaScelto = document.documentElement.getAttribute('data-theme');
+const isDark = ref(temaScelto ? temaScelto === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
 function toggleTheme() {
   isDark.value = !isDark.value;
   const theme = isDark.value ? 'dark' : 'light';

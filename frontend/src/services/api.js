@@ -1,8 +1,10 @@
 // Client API centralizzato: tutte le chiamate al backend passano da qui,
 // così ogni componente resta ignaro di URL, header e gestione errori HTTP.
+import { registro } from '../registroEstensioni.js';
+
 const BASE_URL = '/api';
 
-async function richiesta(percorso, opzioni = {}) {
+export async function richiesta(percorso, opzioni = {}) {
   const risposta = await fetch(`${BASE_URL}${percorso}`, {
     headers: { 'Content-Type': 'application/json' },
     ...opzioni,
@@ -15,6 +17,7 @@ async function richiesta(percorso, opzioni = {}) {
     if (corpo.tipo) errore.tipo = corpo.tipo;
     if (corpo.codice) errore.codice = corpo.codice;
     if (corpo.previsione) errore.previsione = corpo.previsione;
+    registro.suRispostaNegata?.(risposta, corpo);
     throw errore;
   }
   const tipo = risposta.headers.get('content-type') || '';
@@ -26,6 +29,12 @@ export const api = {
   getConfig: () => richiesta('/config'),
   saveConfig: (config) => richiesta('/config', { method: 'PUT', body: JSON.stringify(config) }),
   spostaPercorsoDati: (percorso) => richiesta('/config/percorso-dati', { method: 'PUT', body: JSON.stringify({ percorso }) }),
+  apriArchivioEsistente: (percorso) => richiesta('/config/percorso-dati/apri', { method: 'PUT', body: JSON.stringify({ percorso }) }),
+
+  // Cartelle dei client Dropbox, OneDrive e Google Drive trovate su questo computer (solo desktop)
+  cartelleCloud: () => richiesta('/cartelle-cloud'),
+  cartelleCloudEsamina: (radice) => richiesta(`/cartelle-cloud/esamina?radice=${encodeURIComponent(radice)}`),
+  cartelleCloudScegli: () => richiesta('/cartelle-cloud/scegli', { method: 'POST', body: JSON.stringify({}) }),
 
   // Termini d'uso
   getTermini: () => richiesta('/termini'),
@@ -43,6 +52,7 @@ export const api = {
   anteprimaFatturaManuale: (anno, mese, clienteId, importo) => richiesta(`/invoice/${anno}/${mese}/${clienteId}/anteprima-manuale?importo=${importo}`),
   getFattura: (anno, mese, clienteId) => richiesta(`/invoice/${anno}/${mese}/${clienteId}`).catch(() => null),
   listMesiFatturati: () => richiesta('/invoice'),
+  sequenzaFatture: () => richiesta('/invoice/sequenza'),
   generaFattura: (anno, mese, clienteId, dati = {}) =>
     richiesta(`/invoice/${anno}/${mese}/${clienteId}/genera`, { method: 'POST', body: JSON.stringify(dati) }),
   impostaScadenzaPagamento: (anno, mese, clienteId, dataScadenzaPagamento) =>

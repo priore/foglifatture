@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
 import { getTimesheet, calcolaRiepilogo } from '../services/timesheetService.js';
-import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoProgressivoInvio, verificaIntegritaNumerazione, listMesiFatturati, impostaScadenzaPagamento, arricchisciStatoPagamento } from '../services/invoiceService.js';
+import { calcolaCompenso, calcolaBollo, getInvoice, saveInvoice, prossimoNumeroFattura, prossimoNumeroInSequenza, prossimoProgressivoInvio, verificaIntegritaNumerazione, verificaSequenzaPerEmissione, listMesiFatturati, impostaScadenzaPagamento, arricchisciStatoPagamento } from '../services/invoiceService.js';
+import { registraNumero } from '../services/numerazioneService.js';
 import { previsioneSoglia, tutteLeFattureRisolte, ricaviAnnoCassa } from '../services/forfettarioService.js';
 import { regoleAnno } from '../services/regoleFiscaliService.js';
 import { generaXmlFatturaPA, generaNomeFileXml } from '../services/fatturaPaXmlGenerator.js';
@@ -13,6 +14,12 @@ import { emettiNotaCredito, fatturaDaNotaCredito } from '../services/notaCredito
 import { listaRicevutePerFattura, statoSdiFattura } from '../services/sdiRicevuteService.js';
 
 export const invoiceRoutes = Router();
+
+// Esito della scansione della sequenza (la stessa che blocca l'emissione), per mostrarlo prima di emettere.
+invoiceRoutes.get('/sequenza', async (req, res) => {
+  const sequenza = await verificaSequenzaPerEmissione();
+  res.json({ ok: sequenza.ok, errore: sequenza.errore ?? null, anomalie: sequenza.scan });
+});
 
 invoiceRoutes.get('/', async (req, res) => {
   res.json(await listMesiFatturati());
@@ -165,6 +172,9 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
 
   // Formato "Numero" a norma FatturaPA: progressivo numerico puro, senza barra/anno
   // (più compatibile con lo SDI secondo esperienza pregressa con formati misti).
+  const sequenza = await verificaSequenzaPerEmissione();
+  if (!sequenza.ok) return res.status(409).json({ errore: sequenza.errore, tipo: 'numerazione', anomalie: sequenza.scan });
+
   const numero = req.body.numero ?? await prossimoNumeroFattura(Number(anno), Number(mese), clienteId);
 
   const integrita = await verificaIntegritaNumerazione(Number(anno), Number(mese), clienteId, numero);
@@ -267,6 +277,18 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
       } catch { return null; }
     })() : null,
   };
+  // Numero proposto dall'app e preso nel frattempo da un altro dispositivo: ci si riallinea e si passa al successivo libero.
+  const automatico = req.body.numero == null && !await getInvoice(Number(anno), Number(mese), clienteId);
+  for (let tentativo = 0; ; tentativo++) {
+    try {
+      await registraNumero(invoice.numero, { anno: Number(anno), mese: Number(mese), clienteId });
+      break;
+    } catch (err) {
+      if (!automatico || tentativo >= 4) return res.status(409).json({ errore: err.message });
+      await verificaSequenzaPerEmissione();
+      invoice.numero = await prossimoNumeroInSequenza();
+    }
+  }
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);
 });

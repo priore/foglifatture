@@ -26,6 +26,9 @@ import { regoleFiscaliRoutes } from './routes/regoleFiscaliRoutes.js';
 import { mcpRoutes, mcpConfigRoutes } from './routes/mcpRoutes.js';
 import { chatRoutes } from './routes/chatRoutes.js';
 import { terminiRoutes } from './routes/terminiRoutes.js';
+import { cloudRoutes, cloudCallback } from './routes/cloudRoutes.js';
+import { cartelleCloudRoutes } from './routes/cartelleCloudRoutes.js';
+import { riprendiCloud } from './services/cloudSyncService.js';
 import { getConfig, applicaPercorsoDatiAllAvvio } from './services/configService.js';
 import { avviaPollingSdi } from './services/sdiRicevuteService.js';
 import { avviaBackupAutomatico } from './services/backupService.js';
@@ -56,6 +59,7 @@ app.use(session({
 
 // Prima di qualunque lettura da disco: il resto dell'avvio deve vedere la cartella dati vera.
 await applicaPercorsoDatiAllAvvio();
+await riprendiCloud();
 
 await configuraPassport();
 app.use(passport.initialize());
@@ -80,6 +84,9 @@ app.use('/api/regole-fiscali', richiedeAutenticazione, regoleFiscaliRoutes);
 app.use('/api/mcp', richiedeAutenticazione, mcpConfigRoutes);
 app.use('/api/chat', richiedeAutenticazione, chatRoutes);
 app.use('/api/termini', richiedeAutenticazione, terminiRoutes);
+app.get('/api/cloud/callback', cloudCallback);
+app.use('/api/cartelle-cloud', richiedeAutenticazione, cartelleCloudRoutes);
+app.use('/api/cloud', richiedeAutenticazione, cloudRoutes);
 // Fuori da richiedeAutenticazione: i client MCP non hanno sessione, autenticano col token.
 app.use('/mcp', mcpRoutes);
 

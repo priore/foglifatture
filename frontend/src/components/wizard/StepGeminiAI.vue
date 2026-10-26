@@ -1,4 +1,5 @@
 <script setup>
+import SelectField from '../common/SelectField.vue';
 // Configurazione Gemini: due canali di accesso in parallelo.
 // 1. API key (aistudio.google.com) — richiede registrazione, modello configurabile.
 // 2. agy CLI (Google Antigravity) — OAuth Google gratuito, nessuna API key, login via browser.
@@ -6,7 +7,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { api } from '../../services/api.js';
 
-const props = defineProps({ routerDati: { type: Object, default: null } });
+const props = defineProps({ routerDati: { type: Object, default: null }, conCli: { type: Boolean, default: true } });
 const emit = defineEmits(['refresh']);
 
 const geminiApiKey = ref('');
@@ -134,11 +135,11 @@ async function avviaLoginCli() {
           </p>
           <div class="form-grid">
             <div class="field full" style="display:flex;align-items:center;gap:12px">
-              <select v-model="modelloScelto" style="flex:1">
+              <SelectField titolo="Modello Gemini" descrizione="Modello usato per le funzioni AI" v-model="modelloScelto" style="flex:1">
                 <option value="" disabled>{{ modelliDisponibili.length ? 'Seleziona un modello' : 'Carica l\'elenco modelli' }}</option>
                 <option v-if="modelloScelto && !modelliDisponibili.includes(modelloScelto)" :value="modelloScelto">{{ modelloScelto }}</option>
                 <option v-for="m in modelliDisponibili" :key="m" :value="m">{{ m }}</option>
-              </select>
+              </SelectField>
               <button class="btn btn-ghost" :disabled="caricandoModelli" @click="caricaModelli">{{ caricandoModelli ? 'Carico…' : 'Carica elenco' }}</button>
               <button class="btn btn-ok" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
             </div>
@@ -154,7 +155,7 @@ async function avviaLoginCli() {
     </div>
 
     <!-- ── Canale 2: CLI OAuth (agy) ── -->
-    <div class="card" style="margin-top:16px">
+    <div v-if="conCli" class="card" style="margin-top:16px">
       <div class="card-head">
         <h2>
           <span class="dot-stato" :class="{ attivo: agyAutenticato === true, errore: agyAutenticato === false && agyInstallato }"></span>
