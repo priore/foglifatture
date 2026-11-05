@@ -5,12 +5,12 @@
 ![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows-lightgrey)
 ![FatturaPA XML](https://img.shields.io/badge/FatturaPA%20XML-conforme-blue)
 ![Invio SDI](https://img.shields.io/badge/SDI-invio%20diretto-blue)
-![Incasso Bitcoin](https://img.shields.io/badge/Bitcoin-incasso%20fatture-orange?logo=bitcoin)
+![Incasso Bitcoin](https://img.shields.io/badge/Bitcoin-incasso%20fatture-orange)
 [![Security Policy](https://img.shields.io/badge/security-policy-orange)](SECURITY.md)
-[![Feed RSS](https://img.shields.io/badge/RSS-novit%C3%A0%20e%20release-orange?logo=rss)](https://github.com/priore/foglifatture/releases.atom)
+[![Feed RSS](https://img.shields.io/badge/RSS-novit%C3%A0%20e%20release-orange)](https://github.com/priore/foglifatture/releases.atom)
 [![Contributing](https://img.shields.io/badge/contributing-guide-informational)](CONTRIBUTING.md)
 [![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-blue?logo=paypal)](https://paypal.me/prioregroup)
-[![Donate with BITCOIN](https://img.shields.io/badge/BITCOIN-donate-green?logo=bitcoin)](https://github.com/priore/foglifatture#support-development)
+[![Donate with BITCOIN](https://img.shields.io/badge/BITCOIN-donate-green)](https://github.com/priore/foglifatture#support-development)
 [![Star History](https://img.shields.io/badge/⭐-Star%20History-blue)](https://star-history.com/#priore/foglifatture&Date)
 
 
