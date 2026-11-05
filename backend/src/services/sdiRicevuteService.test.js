@@ -98,3 +98,45 @@ test('FatturaElettronica ricevuta non è una ricevuta SDI', () => {
   const f = Buffer.from('<?xml version="1.0"?><p:FatturaElettronica versione="FPR12"/>', 'utf8');
   assert.equal(classificaAllegatoXml('f.xml', f).motivo, 'fattura-ricevuta');
 });
+
+test('raggruppaCronologia lega le ricevute all\'invio e ne deduce lo stato', async () => {
+  const { raggruppaCronologia } = await import('./sdiRicevuteService.js');
+  const fornitore = { partitaIva: '01234567890' };
+  const invii = [
+    { anno: 2026, mese: 1, clienteId: 'c1', progressivoInvio: '00001', dataInvio: '2026-01-01T10:00:00Z', esito: 'inviata' },
+    { anno: 2026, mese: 2, clienteId: 'c1', progressivoInvio: '00002', dataInvio: '2026-02-01T10:00:00Z', esito: 'inviata' },
+    { anno: 2026, mese: 3, clienteId: 'c1', progressivoInvio: '00003', dataInvio: '2026-03-01T10:00:00Z', esito: 'inviata' },
+    { anno: 2026, mese: 4, clienteId: 'c1', progressivoInvio: '00004', dataInvio: '2026-04-01T10:00:00Z', esito: 'errore-invio' },
+  ];
+  const r = (nomeFile, tipo, data) => ({ nomeFile, tipo, data });
+  const ricevute = [
+    r('IT01234567890_00001_RC_001.xml', 'RC', '2026-01-01T11:00:00Z'),
+    r('IT01234567890_00002_NS_001.xml', 'NS', '2026-02-01T11:00:00Z'),
+  ];
+  const [quattro, tre, due, uno] = raggruppaCronologia(invii, ricevute, fornitore);
+  assert.equal(quattro.stato, 'errore-invio');
+  assert.equal(tre.stato, 'in-attesa');
+  assert.equal(due.stato, 'scartata');
+  assert.equal(uno.stato, 'accettata');
+  assert.equal(uno.ricevute.length, 1);
+});
+
+test('raggruppaCronologia: un rinvio accettato risolve la fattura e archivia i tentativi precedenti', async () => {
+  const { raggruppaCronologia } = await import('./sdiRicevuteService.js');
+  const f = { partitaIva: '01234567890' };
+  const base = { anno: 2026, mese: 8, clienteId: 'c1', esito: 'inviata' };
+  const invii = [
+    { ...base, progressivoInvio: '1', dataInvio: '2026-08-31T14:05:00Z' },
+    { ...base, progressivoInvio: '2', dataInvio: '2026-08-31T14:15:00Z' },
+    { ...base, progressivoInvio: '3', dataInvio: '2026-08-31T14:32:00Z' },
+    { ...base, progressivoInvio: '4', dataInvio: '2026-08-31T14:46:00Z' },
+  ];
+  const ricevute = [
+    { nomeFile: 'IT01234567890_3_NS_001.xml', tipo: 'NS', data: '2026-08-31T14:40:00Z' },
+    { nomeFile: 'IT01234567890_4_RC_001.xml', tipo: 'RC', data: '2026-08-31T15:00:00Z' },
+  ];
+  const schede = raggruppaCronologia(invii, ricevute, f);
+  assert.equal(schede.length, 1);
+  assert.equal(schede[0].stato, 'accettata');
+  assert.equal(schede[0].tentativiPrecedenti.length, 3);
+});

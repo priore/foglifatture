@@ -1,17 +1,21 @@
 <script setup>
 // Dropzone stilizzata, riusabile ovunque serva un input file: click per sfogliare
 // o drag & drop. Emette sempre un array di File, anche per selezione singola.
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useTouch } from '../../composables/useTouch.js';
 
 const props = defineProps({
   accept: { type: String, default: '' },
   multiple: { type: Boolean, default: false },
   directory: { type: Boolean, default: false }, // webkitdirectory: intera cartella
   label: { type: String, default: 'Trascina qui i file o clicca per sfogliare' },
+  labelTouch: { type: String, default: '' }, // testo al posto di `label` quando il puntatore è il dito
   disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['change']);
 
+const { isTouch } = useTouch();
+const testo = computed(() => (isTouch.value && props.labelTouch) || props.label);
 const inputEl = ref(null);
 const trascinando = ref(false);
 
@@ -35,7 +39,7 @@ function daDrop(evento) {
   <div
     class="file-drop"
     :class="{ 'file-drop-over': trascinando, 'file-drop-disabled': disabled }"
-    role="button" tabindex="0" :aria-label="label"
+    role="button" tabindex="0" :aria-label="testo"
     @click="apriSelettore"
     @keydown.enter="apriSelettore"
     @keydown.space.prevent="apriSelettore"
@@ -54,7 +58,7 @@ function daDrop(evento) {
       @change="daInput"
       hidden
     >
-    <span class="file-drop-label">{{ label }}</span>
+    <span class="file-drop-label">{{ testo }}</span>
   </div>
 </template>
 

@@ -102,9 +102,9 @@ async function salvaGroq() {
       <div class="card-head"><h2>Come ottenere una Groq API Key</h2></div>
       <div class="card-body">
         <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:.88rem;line-height:1.6">
-          <li>Vai su <strong>console.groq.com</strong> e accedi (email o Google/GitHub).</li>
+          <li>Vai su <strong><a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a></strong> e accedi (email o Google/GitHub).</li>
           <li>Vai in <strong>API Keys</strong>, crea una nuova chiave e copiala.</li>
-          <li>Incollala nel campo qui sopra e salva: vale subito, senza bisogno di riavviare il servizio.</li>
+          <li>Incollala nel campo qui sopra e salva: vale subito.</li>
         </ol>
       </div>
     </div>

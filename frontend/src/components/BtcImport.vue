@@ -1,6 +1,7 @@
 <script setup>
 import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from './common/SelectField.vue';
+import ModuloPopup from './common/ModuloPopup.vue';
 // Import BTC (FP-014, piano REGISTRO_LOTTI_BTC.md Step 12): proposte da polling blockchain e da file,
 // da confermare (con il controvalore EUR) o scartare. Stato del polling e import da file. Tab Bitcoin.
 import { ref, computed, onMounted } from 'vue';
@@ -127,7 +128,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
       <span class="badge-mono">{{ attivo ? 'Controllo automatico attivo' : 'Controllo automatico non attivo' }}</span>
       <span v-if="dati?.ultimoControllo" class="nota">Ultimo controllo {{ dataOra(dati.ultimoControllo) }}</span>
       <span v-if="prossimo" class="nota">Prossimo {{ prossimo }}</span>
-      <router-link v-if="!attivo" to="/impostazioni" class="nota">Attivalo in Impostazioni → Fornitore → Wallet Bitcoin</router-link>
+      <router-link v-if="!attivo" to="/impostazioni?da=1" class="nota">Attivalo in Impostazioni → Fornitore → Wallet Bitcoin</router-link>
     </div>
     <p v-if="dati?.ultimoErrore" class="avviso-riga avviso-warn" role="alert">Ultimo controllo fallito: {{ dati.ultimoErrore }}</p>
     <p v-if="errore" class="avviso-riga avviso-warn" role="alert">{{ errore }}</p>
@@ -153,13 +154,12 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
         </SelectField>
       </div>
       <FileDrop class="drop-import" accept=".csv,.json,text/csv,application/json" :disabled="occupato"
-        :label="file ? file.name : 'Trascina qui il file o clicca per sfogliare'" @change="sceltaFile" />
+        :label="file ? file.name : 'Trascina qui il file o clicca per sfogliare'" :label-touch="file ? file.name : 'Tocca per scegliere il file'" @change="sceltaFile" />
       <button type="button" class="btn btn-primary" :disabled="occupato || !file" @click="importaFile()">Importa</button>
     </div>
     <p v-if="motivoControllo" class="note-legal">«Controlla ora» non disponibile: {{ motivoControllo.toLowerCase() }}. L'import da file funziona comunque.</p>
 
-    <div v-if="mappingDaConfermare" class="mapping">
-      <p class="note-legal">Formato non riconosciuto: l'AI propone queste colonne. Verifica e conferma.</p>
+    <ModuloPopup v-if="mappingDaConfermare" titolo="Colonne del file" descrizione="Formato non riconosciuto: l'AI propone queste colonne. Verifica e conferma." @chiudi="mappingDaConfermare = null">
       <div class="form-grid">
         <div v-for="[chiave, etichetta, obbligatoria] in [['colonnaData', 'Data', true], ['colonnaImporto', 'Importo BTC', true], ['colonnaTxid', 'TXID', false], ['colonnaEur', 'Controvalore EUR', false], ['colonnaTipo', 'Tipo (entrata/uscita)', false]]" :key="chiave" class="field">
           <label :for="`map-${chiave}`">{{ etichetta }}</label>
@@ -173,11 +173,11 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
           <SelectField titolo="Unità importo" descrizione="Unità in cui è espresso l'importo" id="map-unita" v-model="mappingDaConfermare.mapping.unita"><option value="btc">BTC</option><option value="satoshi">Satoshi</option></SelectField>
         </div>
       </div>
-      <div class="azioni">
-        <button type="button" class="btn btn-ok" :disabled="occupato" @click="confermaMapping">Conferma mapping e importa</button>
-        <button type="button" class="btn btn-ghost" @click="mappingDaConfermare = null">Annulla</button>
-      </div>
-    </div>
+      <template #azioni>
+        <button type="button" class="btn btn-ok" :disabled="occupato" @click="confermaMapping">Importa</button>
+        <button type="button" class="btn btn-warn" @click="mappingDaConfermare = null">Annulla</button>
+      </template>
+    </ModuloPopup>
 
     <p v-if="!dati" class="note-legal">Caricamento…</p>
     <p v-else-if="!inAttesa.length" class="note-legal">Nessuna transazione da confermare.</p>
@@ -198,7 +198,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
           </div>
         </div>
         <p v-for="a in p.avvisi" :key="a" class="avviso-riga avviso-warn">{{ a }}</p>
-        <form v-if="apertaId === p.id" class="form-conferma" @submit.prevent="conferma(p)">
+        <ModuloPopup v-if="apertaId === p.id" come-form :titolo="p.direzione === 'ingresso' ? 'Conferma ingresso' : 'Conferma uscita'" :descrizione="`${p.direzione === 'ingresso' ? '+' : '−'}${btcTesto(p.satoshi)} BTC · ${p.data ? dataIt(p.data) : ''}`" @invia="conferma(p)" @chiudi="apertaId = null">
           <div class="form-grid">
             <div class="field">
               <label :for="`c-tipo-${p.id}`">Tipo</label>
@@ -212,11 +212,11 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
               <input :id="`c-eur-${p.id}`" v-model="conf.euro" type="text" inputmode="decimal" placeholder="0,00" required>
             </div>
           </div>
-          <div class="azioni">
+          <template #azioni>
             <button type="submit" class="btn btn-ok" :disabled="occupato">Registra</button>
-            <button type="button" class="btn btn-ghost" @click="apertaId = null">Annulla</button>
-          </div>
-        </form>
+            <button type="button" class="btn btn-warn" @click="apertaId = null">Annulla</button>
+          </template>
+        </ModuloPopup>
       </li>
     </ul>
 
@@ -240,7 +240,6 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
 .azioni { display: flex; gap: var(--gap-sm); flex-wrap: wrap; align-items: flex-end; margin: 14px 0; }
 .campo-provider { min-width: 220px; }
 .azioni .drop-import { flex: 1; min-width: 220px; padding: 9px 16px; }
-.mapping, .form-conferma { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px; margin: 8px 0; background: var(--ground); }
 .proposte { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--gap-sm); }
 .proposte > li { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px 12px; }
 .riga { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -249,5 +248,5 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
 .nota { font-size: var(--font-size-xs); color: var(--muted); }
 .scartate { margin-top: 14px; }
 .scartate summary { cursor: pointer; font-size: var(--font-size-sm); color: var(--ink-soft); margin-bottom: 8px; }
-@media (max-width: 640px) { .mapping :deep(.form-grid), .form-conferma :deep(.form-grid) { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
 </style>

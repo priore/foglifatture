@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { api } from '../../services/api.js';
 import { chiediConferma } from '../../composables/useConferma.js';
 import { registro } from '../../registroEstensioni.js';
+import { capacita } from '../../composables/useCapacita.js';
 import StepCartelleCloud from './StepCartelleCloud.vue';
 
 // Negli ambienti embedded l'archivio cloud passa dall'API del provider; sul desktop dalla cartella del suo client.
@@ -63,7 +64,7 @@ async function apriArchivioEsistente() {
 </script>
 
 <template>
-  <div class="form-grid">
+  <div v-if="capacita.cartellaLibera" class="form-grid">
     <div class="field field-full full">
       <label>Cartella dati (timesheet, fatture, config)</label>
       <input v-model="nuovoPercorso" placeholder="/Users/tuonome/Dropbox/Timesheet Dati" :disabled="spostamentoInCorso">
@@ -84,7 +85,7 @@ async function apriArchivioEsistente() {
       <span class="badge-mono">{{ messaggio }}</span>
     </div>
   </div>
-  <p class="note-legal" style="margin-top:16px">
+  <p v-if="capacita.cartellaLibera" class="note-legal" style="margin-top:16px">
     Vuoto = cartella di default (backend/data/ nel progetto). Cambiare il percorso sposta
     subito tutti i file esistenti nella nuova cartella (nessuna perdita dati); il server continua a
     usare la nuova cartella senza bisogno di riavvio. «Sposta dati qui» richiede una cartella vuota.

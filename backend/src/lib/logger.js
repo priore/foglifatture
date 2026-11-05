@@ -35,6 +35,8 @@ export const pecLogger = {
 
 // Log dedicato al recupero ricevute/notifiche SDI via IMAP e al loro archivio locale.
 export const sdiLogger = {
+  debug: (messaggio, dettagli) => scrivi('sdi.log', 'debug', messaggio, dettagli),
   info: (messaggio, dettagli) => scrivi('sdi.log', 'info', messaggio, dettagli),
+  warn: (messaggio, dettagli) => scrivi('sdi.log', 'warn', messaggio, dettagli),
   error: (messaggio, dettagli) => scrivi('sdi.log', 'error', messaggio, dettagli),
 };

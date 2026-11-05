@@ -1,9 +1,10 @@
 <script setup>
+import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
 // Dashboard regime forfettario: compenso cumulato annuo vs soglia, previsione imposta,
 // grafico a torta stile Flat-Tax (netto / imposta / margine residuo alla soglia).
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import DonutChart from '../components/DonutChart.vue';
 import BarChart from '../components/BarChart.vue';
@@ -16,8 +17,9 @@ import QuadroRwCripto from '../components/QuadroRwCripto.vue';
 import ProspettoDichiarazione from '../components/ProspettoDichiarazione.vue';
 import { api, updateApi } from '../services/api.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
-
-const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+import { useTouch } from '../composables/useTouch.js';
+import { MESI_BREVI, formattaEuro } from '../composables/useFormati.js';
+import * as calcoli from '../composables/useCalcoliDashboard.js';
 
 const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
 const annoSelezionato = ref(new Date().getFullYear());
@@ -118,15 +120,10 @@ async function caricaAccantonamento() {
 }
 
 function quotaIncasso(importo) {
-  return accantonamento.value ? (Number(importo) || 0) * accantonamento.value.quotaPct / 100 : 0;
+  return calcoli.quotaIncasso(importo, accantonamento.value?.quotaPct);
 }
 
-const barrePianoCassa = computed(() => (accantonamento.value?.piano ?? []).map((p) => ({
-  etichetta: `${MESI_BREVI[Number(p.data.slice(5, 7)) - 1]} ${p.data.slice(0, 4)}`,
-  colore: p.scoperto ? 'var(--warn)' : 'var(--ok)',
-  valore: Math.abs(p.residuo),
-  valoreTesto: `${p.scoperto ? 'scoperto ' : 'resta '}${formattaEuro(Math.abs(p.residuo))}`,
-})));
+const barrePianoCassa = computed(() => calcoli.barrePianoCassa(accantonamento.value?.piano));
 
 async function caricaVersamentiStimati() {
   versamentiStimati.value = await api.versamentiStimati(annoSelezionato.value).catch(() => null);
@@ -196,6 +193,7 @@ async function suggerisciOrdineCrediti(consenso = {}) {
 }
 
 async function eliminaCreditoF24(id) {
+  if (!(await chiediConferma('Eliminare il credito registrato?', { titolo: 'Elimina credito', ok: 'Elimina' }))) return;
   erroreCrediti.value = '';
   eliminandoCredito.value = id;
   try {
@@ -223,14 +221,7 @@ onMounted(() => {
 });
 watch(annoSelezionato, () => { carica(); caricaAccantonamento(); caricaVersamentiStimati(); caricaProspettoDichiarazione(); caricaBolloTrimestrale(); caricaRegoleAnno(); });
 
-const barreRicaviMensili = computed(() => {
-  if (!dashboard.value) return [];
-  return dashboard.value.ricaviMensili.map((m) => ({
-    etichetta: MESI_BREVI[m.mese - 1],
-    valore: m.ricavi,
-    valoreTesto: formattaEuro(m.ricavi),
-  }));
-});
+const barreRicaviMensili = computed(() => calcoli.barreRicaviMensili(dashboard.value?.ricaviMensili));
 
 function formattaData(valore) {
   return new Date(valore).toLocaleDateString('it-IT');
@@ -261,43 +252,20 @@ function fatturaScaduta(f) {
 }
 
 // Composizione del compenso: ricavi/reddito fiscale/imposta, proporzionati tra loro.
-const fetteComposizione = computed(() => {
-  if (!dashboard.value) return [];
-  const { ricaviCumulati, redditoImponibile, impostaStimata } = dashboard.value;
-  return [
-    { etichetta: 'Ricavi/compensi', valore: ricaviCumulati, colore: 'var(--ok)', valoreTesto: formattaEuro(ricaviCumulati) },
-    { etichetta: 'Reddito fiscale', valore: redditoImponibile, colore: 'var(--accent)', valoreTesto: formattaEuro(redditoImponibile) },
-    { etichetta: 'Imposta stimata', valore: impostaStimata, colore: 'var(--warn)', valoreTesto: formattaEuro(impostaStimata) },
-  ];
-});
+const fetteComposizione = computed(() => (dashboard.value ? calcoli.fetteComposizione(dashboard.value) : []));
 
 // Soglia forfettario: quota di fatturato già raggiunta vs margine residuo agli 85.000€.
 const fetteSoglia = computed(() => {
-  if (!dashboard.value) return [];
-  const { sogliaAnnua, ricaviCumulati } = dashboard.value;
-  const margineResiduo = Math.max(sogliaAnnua - ricaviCumulati, 0);
-  return [
-    { etichetta: 'Ricavi cumulati', valore: ricaviCumulati, colore: dashboard.value.superamentoSoglia ? 'var(--warn)' : 'var(--accent)', valoreTesto: formattaEuro(ricaviCumulati) },
-    { etichetta: 'Margine alla soglia', valore: margineResiduo, colore: 'var(--line)', valoreTesto: formattaEuro(margineResiduo) },
-  ];
+  const d = dashboard.value;
+  return d ? calcoli.fetteSoglia(d.sogliaAnnua, d.ricaviCumulati, d.superamentoSoglia, 'Ricavi cumulati') : [];
 });
 
 // Soglia per cassa: come fetteSoglia ma sui ricavi effettivamente incassati nell'anno
 // (dataPagamento), non su quelli emessi — è il calcolo rilevante ai fini fiscali reali.
 const fetteSogliaCassa = computed(() => {
-  if (!dashboard.value) return [];
-  const { sogliaAnnua } = dashboard.value;
-  const { ricaviCumulati } = dashboard.value.cassa;
-  const margineResiduo = Math.max(sogliaAnnua - ricaviCumulati, 0);
-  return [
-    { etichetta: 'Incassato', valore: ricaviCumulati, colore: dashboard.value.cassa.superamentoSoglia ? 'var(--warn)' : 'var(--accent)', valoreTesto: formattaEuro(ricaviCumulati) },
-    { etichetta: 'Margine alla soglia', valore: margineResiduo, colore: 'var(--line)', valoreTesto: formattaEuro(margineResiduo) },
-  ];
+  const d = dashboard.value;
+  return d ? calcoli.fetteSoglia(d.sogliaAnnua, d.cassa.ricaviCumulati, d.cassa.superamentoSoglia, 'Incassato') : [];
 });
-
-function formattaEuro(valore) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
-}
 
 function esportaCommercialista() {
   window.open(api.urlExportCommercialista(annoSelezionato.value), '_blank');
@@ -411,18 +379,7 @@ async function caricaMercatoBtc() {
     prezzoMercatoBtc.value = { eur, variazione24h: rispPrezzo.value.bitcoin.eur_24h_change };
 
     if (rispStorico.status === 'fulfilled') {
-      // CoinGecko restituisce granularità oraria (~720 punti su 30gg): un punto al giorno
-      // (l'ultimo rilevato di ogni giorno) basta per il trend e disegna una linea leggibile.
-      const perGiorno = new Map();
-      for (const [ts, valore] of rispStorico.value?.prices ?? []) {
-        const giorno = new Date(ts).toISOString().slice(0, 10);
-        perGiorno.set(giorno, valore); // sovrascrive: resta l'ultimo rilevamento del giorno
-      }
-      storicoMercatoBtc.value = [...perGiorno].map(([giorno, valore]) => ({
-        etichetta: new Date(giorno).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
-        valore,
-        valoreTesto: formattaEuro(valore),
-      }));
+      storicoMercatoBtc.value = calcoli.storicoGiornaliero(rispStorico.value?.prices);
     }
   } catch (err) {
     erroreMercatoBtc.value = err.message;
@@ -473,6 +430,16 @@ function caricaTabSalvato() {
 }
 
 const tabAttivo = ref(caricaTabSalvato());
+// Scheda ripristinata dal salvataggio: l'indirizzo la riflette, così chi legge la rotta (host nativo) vede la scheda aperta.
+if (tabAttivo.value !== 'Dashboard' && route.query.tab !== QUERY_DA_TAB[tabAttivo.value]) router.replace({ query: { ...route.query, tab: QUERY_DA_TAB[tabAttivo.value] } });
+const SOTTOTITOLO_TAB = {
+  Dashboard: 'Compenso cumulato vs soglia, previsione imposta sostitutiva',
+  Bitcoin: 'Plusvalenze, saldo e movimenti dei wallet',
+  F24: 'Scadenze e importi da versare',
+  'Regole fiscali': 'Aliquote, soglie e contributi dell\'anno',
+  AI: 'Chiedi all\'assistente sui tuoi dati fiscali',
+};
+const TITOLO_TAB = { Dashboard: 'Dashboard forfettario', Bitcoin: 'Dashboard Bitcoin', F24: 'Dashboard F24', 'Regole fiscali': 'Regole fiscali', AI: 'Assistente AI' };
 function cambiaTab(tab) {
   tabAttivo.value = tab;
   try {
@@ -544,6 +511,32 @@ function spostaConTastiera(id, delta) {
   salvaOrdine();
 }
 
+// Al tocco il drag non c'è: popup con ▲▼ che riusa spostaConTastiera (salva già l'ordine).
+const { isTouch } = useTouch();
+const mostraRiordino = ref(false);
+const TITOLI_CARD = {
+  'soglia-cassa': 'Soglia forfettario (cassa)', accantonamento: 'Da accantonare', 'soglia-competenza': 'Soglia forfettario (competenza)',
+  composizione: 'Composizione compenso', andamento: 'Andamento mensile ricavi', 'fatture-da-incassare': 'Fatture da incassare',
+  'scadenze-fiscali': 'Scadenze fiscali', 'btc-mercato': 'Valore BTC di mercato', 'btc-detenuti': 'Valore BTC detenuti',
+  'btc-valore-attuale': 'Valore attuale', 'btc-riepilogo': 'Riepilogo Bitcoin', 'btc-plusvalenze': 'Plusvalenze', 'btc-rw': 'Quadro RW',
+  'btc-rate': 'Rate incassate in BTC', 'versamenti-stimati': 'Versamenti stimati F24', 'bollo-trimestrale': 'Bollo trimestrale',
+  'crediti-f24': 'Crediti compensabili F24', 'prospetto-dichiarazione': 'Prospetto dichiarazione redditi',
+};
+const cardRiordinabili = computed(() => {
+  const lista = tabAttivo.value === 'Bitcoin' ? ordineCardBtc.value : tabAttivo.value === 'F24' ? ordineCardF24.value : ordineCard.value;
+  return lista.filter((id) => id !== 'accantonamento' || accantonamento.value);
+});
+const chiudiRiordinoConEsc = (e) => { if (e.key === 'Escape') { mostraRiordino.value = false; mostraFormCredito.value = false; } };
+onMounted(() => window.addEventListener('keydown', chiudiRiordinoConEsc));
+onUnmounted(() => window.removeEventListener('keydown', chiudiRiordinoConEsc));
+// ▲▼ si muovono fra le card visibili: salta quelle non montate.
+function spostaVisibile(id, delta) {
+  const lista = refPerId(id).value;
+  const vis = cardRiordinabili.value;
+  const vicino = vis[vis.indexOf(id) + delta];
+  if (vicino) spostaConTastiera(id, lista.indexOf(vicino) - lista.indexOf(id));
+}
+
 const layoutModificato = computed(() => {
   if (tabAttivo.value === 'Bitcoin') return ordineCardBtc.value.some((id, i) => id !== ORDINE_DEFAULT_BTC[i]);
   if (tabAttivo.value === 'F24') return ordineCardF24.value.some((id, i) => id !== ORDINE_DEFAULT_F24[i]);
@@ -563,21 +556,23 @@ function ripristinaLayout() {
 </script>
 
 <template>
-  <div>
+  <div :data-tab="tabAttivo">
     <div class="page-head">
-      <div><h1>Dashboard forfettario</h1><p>Compenso cumulato vs soglia, previsione imposta sostitutiva</p></div>
+      <div><h1>{{ TITOLO_TAB[tabAttivo] }}</h1><p>{{ SOTTOTITOLO_TAB[tabAttivo] }}</p></div>
       <div class="page-head-actions">
+        <router-link v-if="tabAttivo === 'Bitcoin'" to="/bitcoin?da=1" class="btn btn-ghost btn-icona solo-compatto" title="Registro e import Bitcoin" aria-label="Registro e import Bitcoin"><svg class="ico-azione" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></svg></router-link>
         <button
-          v-if="statoAggiornamento.disponibile" type="button" class="btn btn-blue"
+          v-if="statoAggiornamento.disponibile" type="button" class="btn btn-blue solo-dashboard"
           @click="mostraPopupAggiornamento = true"
         >Aggiornamento disponibile</button>
-        <small class="note-legal">Dati di supporto, da verificare prima dell'uso in dichiarazione.</small>
-        <button type="button" class="btn btn-blue" @click="esportaCommercialista">Esporta per commercialista</button>
+        <small class="note-legal solo-dashboard">Dati di supporto, da verificare prima dell'uso in dichiarazione.</small>
+        <button type="button" class="btn btn-blue solo-dashboard btn-icona" title="Esporta per commercialista" aria-label="Esporta per commercialista" @click="esportaCommercialista"><svg class="ico-azione" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg><span class="lbl-esteso">Esporta per commercialista</span></button>
         <button
-          type="button" class="btn btn-ghost" :disabled="!layoutModificato"
+          type="button" class="btn btn-ghost solo-card btn-icona" aria-label="Ripristina layout" :disabled="!layoutModificato"
           :title="layoutModificato ? '' : 'Layout già di default'"
           @click="ripristinaLayout"
-        >Ripristina layout</button>
+        ><svg class="ico-azione" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg><span class="lbl-esteso">Ripristina layout</span></button>
+        <button v-if="isTouch" type="button" class="btn btn-ghost solo-card btn-icona" aria-label="Riordina" title="Riordina" @click="mostraRiordino = true"><svg class="ico-azione" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14M5 16l3 3 3-3M16 19V5M13 8l3-3 3 3"/></svg><span class="lbl-esteso">Riordina</span></button>
         <SelectField titolo="Anno" descrizione="Anno di riferimento della dashboard" v-model.number="annoSelezionato" class="status">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
         </SelectField>
@@ -762,7 +757,7 @@ function ripristinaLayout() {
             @keydown.alt.up.prevent="spostaConTastiera('fatture-da-incassare', -1)" @keydown.alt.down.prevent="spostaConTastiera('fatture-da-incassare', 1)"
           >
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Fatture da incassare</h2></span>
-            <router-link to="/importa-storico?passo=2" class="btn btn-ghost">Importa CSV pagamenti</router-link>
+            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ghost azione-testata">Importa CSV pagamenti</router-link>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
             <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
@@ -786,7 +781,7 @@ function ripristinaLayout() {
                   <td>
                     <input
                       type="number" step="0.01" class="input-importo-incasso" title="Importo incassato"
-                      :value="f.residuo"
+                      :value="importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] ?? f.residuo"
                       @input="importiIncasso[`${f.anno}-${f.mese}-${f.clienteId}`] = $event.target.value"
                       :disabled="salvandoIncasso === `${f.anno}-${f.mese}-${f.clienteId}`"
                     />
@@ -802,6 +797,7 @@ function ripristinaLayout() {
                 </tr>
               </tbody>
             </table>
+            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ghost azione-piede">Importa CSV pagamenti</router-link>
             <p class="nota-piede">Incasso rilevato da import CSV home banking (Importa storico → Pagamenti fatture), o inserito a mano qui sopra. L'importo è precompilato col residuo: confermalo così com'è per un incasso totale, oppure modificalo per registrare un acconto — la fattura resta "da incassare" finché il residuo non arriva a zero.</p>
           </div>
         </div>
@@ -841,9 +837,6 @@ function ripristinaLayout() {
       </div>
 
       <div v-else-if="tabAttivo === 'Bitcoin'" class="griglia-card">
-        <div class="azioni-tab-btc">
-          <router-link to="/bitcoin" class="btn btn-primary">Registro e import Bitcoin</router-link>
-        </div>
         <div class="card" :style="{ order: ordinePer('btc-detenuti') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
@@ -852,7 +845,10 @@ function ripristinaLayout() {
           >
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Valore BTC detenuti</h2></span>
           </div>
-          <div class="card-body"><BtcValoreLive tipo="detenuti" /></div>
+          <div class="card-body">
+            <BtcValoreLive tipo="detenuti" />
+            <div class="azioni-tab-btc solo-desktop"><router-link to="/bitcoin?da=1" class="btn btn-primary">Registro e import</router-link></div>
+          </div>
         </div>
 
         <div class="card" :style="{ order: ordinePer('btc-riepilogo') }">
@@ -875,10 +871,8 @@ function ripristinaLayout() {
             </template>
             <template v-else>
               <p class="note-legal">Nessun incasso BTC nel {{ dashboard.anno }}.</p>
-              <p class="nota-piede">
-                <router-link v-if="!dashboard.cassa.btc.walletConfigurati" to="/impostazioni">Configura un wallet BTC in Impostazioni</router-link>
-                <span v-else>Registra un incasso BTC dalla pagina fattura.</span>
-              </p>
+              <router-link v-if="!dashboard.cassa.btc.walletConfigurati" to="/impostazioni?da=1" class="btn btn-primary azione-app">Configura un wallet BTC in Impostazioni</router-link>
+              <p v-else class="nota-piede">Registra un incasso BTC dalla pagina fattura.</p>
             </template>
           </div>
         </div>
@@ -938,7 +932,7 @@ function ripristinaLayout() {
             </template>
             <template v-else>
               <p class="note-legal">{{ dashboard.anno < 2026 ? 'Plusvalenze cripto calcolate dal 2026.' : 'Regole cripto non attive per il ' + dashboard.anno + '.' }}</p>
-              <router-link v-if="dashboard.anno >= 2026" to="/impostazioni" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+              <router-link v-if="dashboard.anno >= 2026" to="/impostazioni?da=1" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
             </template>
           </div>
         </div>
@@ -982,7 +976,7 @@ function ripristinaLayout() {
             </template>
             <template v-else>
               <p class="note-legal">Regole cripto non attive per il {{ dashboard.anno }}.</p>
-              <router-link to="/impostazioni" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+              <router-link to="/impostazioni?da=1" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
             </template>
           </div>
         </div>
@@ -1198,7 +1192,7 @@ function ripristinaLayout() {
               <div v-if="!bolloTrimestrale.scadenze?.length" class="note-legal">Nessun bollo da versare nell'anno {{ annoSelezionato }}.</div>
               <template v-else>
                 <div v-for="sc in bolloTrimestrale.scadenze" :key="sc.trimestre" style="margin-bottom:14px">
-                  <div style="font-weight:600;margin-bottom:4px">{{ formattaData(sc.data) }} — {{ sc.righe[0]?.descrizione }}</div>
+                  <div class="titolo-scadenza" style="font-weight:600;margin-bottom:4px">{{ formattaData(sc.data) }} — {{ sc.righe[0]?.descrizione }}</div>
                   <div style="display:flex;align-items:center;gap:12px">
                     <span style="font-size:1.1rem;font-weight:700">{{ formattaEuro(sc.importo) }}</span>
                     <span class="badge-fonte">cod. {{ sc.righe[0]?.codice }}</span>
@@ -1286,25 +1280,10 @@ function ripristinaLayout() {
             <p v-else class="note-legal" style="margin-bottom:14px">Nessun credito registrato.</p>
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:14px">
-              <button type="button" class="btn btn-ghost" :aria-expanded="mostraFormCredito" @click="mostraFormCredito = !mostraFormCredito">{{ mostraFormCredito ? 'Chiudi' : 'Aggiungi credito' }}</button>
+              <button type="button" class="btn btn-ghost" :aria-expanded="mostraFormCredito" @click="mostraFormCredito = true">Aggiungi credito</button>
               <button type="button" class="btn btn-ai" :disabled="suggerimentoInCorso || !creditiResidui.length" :title="creditiResidui.length ? '' : 'Registra almeno un credito per ottenere il suggerimento'" @click="suggerisciOrdineCrediti()">{{ suggerimentoInCorso ? '…' : 'Suggerisci ordine con AI' }}</button>
             </div>
 
-            <form v-if="mostraFormCredito" @submit.prevent="aggiungiCreditoF24" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
-              <div class="field">
-                <label>Sezione</label>
-                <SelectField titolo="Sezione del credito" descrizione="Erario o INPS" v-model="nuovoCredito.sezione">
-                  <option value="erario">Erario</option>
-                  <option value="inps">INPS</option>
-                </SelectField>
-              </div>
-              <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required style="width:90px"></div>
-              <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento" style="width:75px"></div>
-              <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required style="width:100px"></div>
-              <div class="field"><label>Disponibile dal</label><DateField v-model="nuovoCredito.utilizzabileDal" titolo="Disponibile dal" descrizione="Da quando il credito è utilizzabile in compensazione" /></div>
-              <div class="field"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito" style="width:180px"></div>
-              <button type="submit" class="btn btn-ok">Aggiungi</button>
-            </form>
 
             <p v-if="!creditiResidui.length" class="note-legal" style="margin-bottom:14px">Registra almeno un credito per ottenere il suggerimento AI.</p>
             <div v-if="suggerimentoCrediti" class="note-legal" style="margin-bottom:14px;white-space:pre-wrap">{{ suggerimentoCrediti }}</div>
@@ -1319,6 +1298,31 @@ function ripristinaLayout() {
       </div>
     </template>
 
+    <div v-if="mostraFormCredito" class="modal-overlay" @click.self="mostraFormCredito = false">
+      <form class="modal-box" role="dialog" aria-modal="true" @submit.prevent="aggiungiCreditoF24">
+        <h2>Aggiungi credito</h2>
+        <p class="note-legal">Credito F24 da usare in compensazione.</p>
+        <div class="grid-credito">
+          <div class="field">
+            <label>Sezione</label>
+            <SelectField titolo="Sezione del credito" descrizione="Erario o INPS" v-model="nuovoCredito.sezione">
+              <option value="erario">Erario</option>
+              <option value="inps">INPS</option>
+            </SelectField>
+          </div>
+          <div class="field"><label>Codice tributo</label><input type="text" v-model="nuovoCredito.codice" placeholder="es. 1792" required></div>
+          <div class="field"><label>Anno rif.</label><input type="number" v-model.number="nuovoCredito.annoRiferimento"></div>
+          <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoCredito.importo" required></div>
+          <div class="field full"><label>Disponibile dal</label><DateField v-model="nuovoCredito.utilizzabileDal" titolo="Disponibile dal" descrizione="Da quando il credito è utilizzabile in compensazione" /></div>
+          <div class="field full"><label>Descrizione</label><input type="text" v-model="nuovoCredito.descrizione" placeholder="es. Saldo 2024 a credito"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-ok">Aggiungi</button>
+          <button type="button" class="btn btn-warn" @click="mostraFormCredito = false">Annulla</button>
+        </div>
+      </form>
+    </div>
+
     <div v-if="chiediConsensoAi" class="modal-overlay" @click.self="chiediConsensoAi = false">
       <div class="modal-box" role="dialog" aria-modal="true">
         <h2>Inviare i dati all'AI?</h2>
@@ -1328,6 +1332,19 @@ function ripristinaLayout() {
           <button type="button" class="btn btn-ghost" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
           <button type="button" class="btn btn-warn" @click="chiediConsensoAi = false">Annulla</button>
         </div>
+      </div>
+    </div>
+
+    <div v-if="mostraRiordino" class="modal-overlay" @click.self="mostraRiordino = false">
+      <div class="modal-box">
+        <h2>Riordina card</h2>
+        <p class="note-legal">Sposta le card con le frecce.</p>
+        <div v-for="(id, i) in cardRiordinabili" :key="id" class="riordino-riga">
+          <span>{{ TITOLI_CARD[id] }}</span>
+          <button type="button" class="btn btn-ghost" :disabled="i === 0" aria-label="Sposta su" @click="spostaVisibile(id, -1)">▲</button>
+          <button type="button" class="btn btn-ghost" :disabled="i === cardRiordinabili.length - 1" aria-label="Sposta giù" @click="spostaVisibile(id, 1)">▼</button>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn btn-ghost" @click="mostraRiordino = false">Chiudi</button></div>
       </div>
     </div>
 
@@ -1346,7 +1363,7 @@ function ripristinaLayout() {
 <style scoped>
 .link-txid { color: var(--cyan-soft-ink); text-decoration: underline; }
 .link-txid:visited { color: var(--cyan-soft-ink); }
-.azioni-tab-btc { grid-column: 1 / -1; order: -1; display: flex; justify-content: flex-end; }
+.azioni-tab-btc { display: flex; justify-content: flex-end; margin-top: 12px; }
 .summary-row { grid-template-columns: repeat(3, 1fr); }
 .stat-gruppo-stima { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
 .stat-gruppo-riga { display: flex; gap: 32px; }

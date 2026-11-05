@@ -1,11 +1,17 @@
 // Etichette dei passi del wizard Impostazioni: condivise tra AppSidebar.vue (sotto-voci
 // verticali) e ImpostazioniView.vue (titolo passo corrente), per non duplicare l'elenco.
 import { computed, shallowReactive } from 'vue';
+import { capacita } from './composables/useCapacita.js';
 
 // Passi aggiunti in coda dalle estensioni (`registraPassoImpostazioni`), così gli indici dei passi precedenti non cambiano.
 const PASSI_ESTESI = shallowReactive([]);
+// «Login» e «Backup Automatico» escono dalla lista dove il dispositivo non li supporta: i passi si scelgono per etichetta, non per indice.
 export const PASSI_IMPOSTAZIONI = computed(() => [
-  'Fornitore', 'PEC', 'Percorso dati', 'Backup Automatico', 'Promemoria', 'Login', 'AI',
+  'Fornitore', 'PEC', 'Percorso dati',
+  ...(capacita.backupAutomatico ? ['Backup Automatico'] : []),
+  'Promemoria',
+  ...(capacita.loginGoogle ? ['Login'] : []),
+  'AI',
   ...PASSI_ESTESI.filter((p) => p.visibile()).map((p) => p.nome),
 ]);
 

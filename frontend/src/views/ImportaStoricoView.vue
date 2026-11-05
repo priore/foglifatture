@@ -1,4 +1,5 @@
 <script setup>
+import { formattaEuro } from '../composables/useFormati.js';
 import SelectField from '../components/common/SelectField.vue';
 // Import di storico pregresso: timesheet da xls originale (stesso layout del template),
 // fatture da XML FatturaPA già emesse. Azione one-off, indipendente dalla configurazione.
@@ -8,17 +9,19 @@ import { api } from '../services/api.js';
 import { caricaQuota, daAccantonare } from '../composables/useAccantonamento.js';
 import { PASSI_IMPORTA_STORICO as PASSI } from '../wizardImportaStoricoPassi.js';
 import FileDrop from '../components/common/FileDrop.vue';
+import { capacita } from '../composables/useCapacita.js';
+import TabbarPassi from '../components/common/TabbarPassi.vue';
 
 const route = useRoute();
 const router = useRouter();
 // La sezione attiva vive nella query string (?passo=N), come in Impostazioni,
-// così le sotto-voci verticali in AppSidebar possono linkarci direttamente con router-link.
+// così si può linkare direttamente una scheda con router-link.
 const passoAttivo = computed({
   get: () => {
     const n = Number(route.query.passo);
     return Number.isInteger(n) && n >= 0 && n < PASSI.length ? n : 0;
   },
-  set: (n) => router.push({ query: { passo: n } }),
+  set: (n) => router.push({ query: { ...route.query, passo: n } }),
 });
 
 const oggi = new Date();
@@ -220,10 +223,6 @@ async function confermaPagamento(proposta, indice) {
   }
 }
 
-function formattaEuro(valore) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
-}
-
 async function esportaBackup() {
   if (!passwordEsporta.value) return;
   esportandoBackup.value = true;
@@ -236,7 +235,7 @@ async function esportaBackup() {
     link.download = nomeFile;
     link.click();
     URL.revokeObjectURL(url);
-    esitoEsportaBackup.value = 'Backup scaricato';
+    esitoEsportaBackup.value = capacita.piattaforma === 'desktop' ? 'Backup scaricato' : 'Backup esportato';
     passwordEsporta.value = '';
   } catch (err) {
     esitoEsportaBackup.value = `Errore: ${err.message}`;
@@ -251,8 +250,14 @@ async function ripristinaBackup() {
   esitoRipristinaBackup.value = '';
   try {
     const risultato = await api.ripristinaBackup(fileBackup.value, passwordRipristina.value);
-    esitoRipristinaBackup.value = `Ripristinati ${risultato.fileRipristinati} file. Riavvia l'app per applicare i dati.`;
-    serveRiavvio.value = true;
+    if (document.documentElement.dataset.shell) {
+      // Nella shell non c'è un processo da riavviare: la pagina si ricarica per leggere i dati ripristinati (cache di fornitore e clienti).
+      esitoRipristinaBackup.value = `Ripristinati ${risultato.fileRipristinati} file. Ricarico i dati…`;
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      esitoRipristinaBackup.value = `Ripristinati ${risultato.fileRipristinati} file. Riavvia l'app per applicare i dati.`;
+      serveRiavvio.value = true;
+    }
     passwordRipristina.value = '';
   } catch (err) {
     esitoRipristinaBackup.value = `Errore: ${err.message}`;
@@ -277,14 +282,18 @@ async function riavvia() {
 
 <template>
   <div>
-    <div class="page-head">
-      <div>
-        <h1>Importa storico</h1>
-        <p>Recupera mesi passati non ancora presenti nell'app</p>
+    <div class="intestazione-fissa">
+      <div class="page-head">
+        <div>
+          <h1>Importa storico</h1>
+          <p>Recupera mesi passati non ancora presenti nell'app</p>
+        </div>
       </div>
+
+      <TabbarPassi v-model="passoAttivo" :passi="PASSI" />
     </div>
 
-    <p class="note-legal">
+    <p v-if="passoAttivo <= 1" class="note-legal">
       La griglia timesheet e la fattura importate diventano subito visibili/modificabili
       nelle rispettive schermate.
     </p>
@@ -308,11 +317,12 @@ async function riavvia() {
               accept=".xls,.xlsx"
               multiple
               label="Trascina i file .xls o clicca per sfogliare"
+              label-touch="Tocca per scegliere i file .xls"
               @change="files => { fileTimesheetMulti = files; fileTimesheet = files.length === 1 ? files[0] : null; }"
             />
             <span v-if="fileTimesheetMulti.length" class="badge-mono">{{ fileTimesheetMulti.length }} file selezionati</span>
           </div>
-          <div class="field field-full full">
+          <div v-if="capacita.cartellaMultipla" class="field field-full full">
             <label>Oppure intera cartella</label>
             <FileDrop
               directory
@@ -339,11 +349,12 @@ async function riavvia() {
               accept=".xml"
               multiple
               label="Trascina i file .xml o clicca per sfogliare"
+              label-touch="Tocca per scegliere i file .xml"
               @change="files => { fileFatturaMulti = files; fileFattura = files.length === 1 ? files[0] : null; }"
             />
             <span v-if="fileFatturaMulti.length" class="badge-mono">{{ fileFatturaMulti.length }} file selezionati</span>
           </div>
-          <div class="field field-full full">
+          <div v-if="capacita.cartellaMultipla" class="field field-full full">
             <label>Oppure intera cartella</label>
             <FileDrop
               directory
@@ -369,8 +380,8 @@ async function riavvia() {
     <div class="card" style="margin-top:16px" v-if="passoAttivo === 1">
       <div class="card-head"><h2>Importa archivio ZIP (fatture e ricevute SDI)</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <p class="note-legal">Lo ZIP scaricato dal portale Fatture e Corrispettivi si carica così com'è: ogni file è riconosciuto dal contenuto. Vedi l'anteprima, poi importa solo i file scelti. Le ricevute vanno nella cartella archivio SDI; quelle già presenti non vengono toccate. Il cliente segue la scelta del riquadro sopra.</p>
-        <FileDrop accept=".zip" label="Trascina lo ZIP o clicca per sfogliare" :disabled="lavorandoZip" @change="analizzaZip" />
+        <p class="note-legal">Lo ZIP scaricato dal portale Fatture e Corrispettivi si carica così com'è: ogni file è riconosciuto dal contenuto. Vedi l'anteprima, poi importa solo i file scelti. Le ricevute vanno {{ capacita.cartellaLibera ? 'nella cartella archivio SDI' : 'nell\'archivio SDI dell\'app' }}; quelle già presenti non vengono toccate. Il cliente segue la scelta del riquadro sopra.</p>
+        <FileDrop accept=".zip" label="Trascina lo ZIP o clicca per sfogliare" label-touch="Tocca per scegliere lo ZIP" :disabled="lavorandoZip" @change="analizzaZip" />
         <table v-if="vociZip.length" class="data-table">
           <thead><tr><th></th><th>File</th><th>Tipo</th><th>Dettaglio</th></tr></thead>
           <tbody>
@@ -400,7 +411,7 @@ async function riavvia() {
           importi o causali reali. Il mapping viene salvato: lo stesso formato file non richiede una
           seconda chiamata a Gemini.
         </p>
-        <FileDrop accept=".csv" label="Trascina il CSV o clicca per sfogliare" style="margin-top:10px" :disabled="analizzandoPagamenti" @change="analizzaFilePagamenti" />
+        <FileDrop accept=".csv" label="Trascina il CSV o clicca per sfogliare" label-touch="Tocca per scegliere il CSV" style="margin-top:10px" :disabled="analizzandoPagamenti" @change="analizzaFilePagamenti" />
         <p v-if="analizzandoPagamenti" class="note-legal">Analisi in corso…</p>
         <p v-if="propostePagamenti.length" class="note-legal" style="margin-top:12px">
           Ogni movimento viene proposto per fatture con residuo sufficiente a coprirlo (anche pagamenti
@@ -454,11 +465,11 @@ async function riavvia() {
     <div class="card" style="margin-top:16px" v-if="passoAttivo === 4">
       <div class="card-head"><h2>Ripristina da backup</h2></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <p class="note-legal">Sovrascrive i dati esistenti su questa macchina con quelli del backup.</p>
+        <p class="note-legal">Sovrascrive i dati esistenti {{ capacita.piattaforma === 'desktop' ? 'su questa macchina' : 'su questo dispositivo' }} con quelli del backup.</p>
         <div class="form-grid">
           <div class="field field-full full">
             <label>File backup</label>
-            <FileDrop accept=".tsbk" label="Trascina il file .tsbk o clicca per sfogliare" @change="files => fileBackup = files[0] ?? null" />
+            <FileDrop accept=".tsbk" label="Trascina il file .tsbk o clicca per sfogliare" label-touch="Tocca per scegliere il file .tsbk" @change="files => fileBackup = files[0] ?? null" />
             <span v-if="fileBackup" class="badge-mono">{{ fileBackup.name }}</span>
           </div>
           <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordRipristina"></div>

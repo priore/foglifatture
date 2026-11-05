@@ -244,7 +244,7 @@ export async function getConfig() {
   return {
     ...base,
     // `globalThis.__percorsoSdiPredefinito` lo imposta solo il core embedded.
-    sdi: { ...base.sdi, percorsoArchivio: risolviPercorsoSdi(sdiRelativo, DATA_DIR, globalThis.__percorsoSdiPredefinito) },
+    sdi: { ...base.sdi, percorsoArchivio: risolviPercorsoSdi(sdiRelativo, DATA_DIR, globalThis.__percorsoSdiPredefinito, globalThis.__cartelleAutorizzate) },
     pec: { ...base.pec, passwordMittente: passwordMittente || '' },
     backup: { ...base.backup, password: backupPassword || '' },
   };

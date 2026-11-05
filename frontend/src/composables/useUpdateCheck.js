@@ -9,6 +9,8 @@ export function useUpdateCheck() {
   let timer = null;
 
   async function controlla() {
+    // Sulle app l'aggiornamento passa dallo store: nessun controllo Git.
+    if (document.documentElement.dataset.shell) return;
     stato.value = await updateApi.stato().catch(() => stato.value);
   }
 

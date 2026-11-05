@@ -15,7 +15,8 @@ onUnmounted(() => window.removeEventListener('keydown', alTasto));
         <h2 class="cal-titolo">{{ richiesta.titolo }}</h2>
         <p class="conferma-messaggio">{{ richiesta.messaggio }}</p>
         <div class="modal-actions">
-          <button type="button" class="btn btn-ok" @click="chiudiRichiesta(true)">{{ richiesta.ok }}</button>
+          <button type="button" class="btn btn-ok" @click="chiudiRichiesta(richiesta.tre ? 'ok' : true)">{{ richiesta.ok }}</button>
+          <button v-if="richiesta.alternativa" type="button" class="btn btn-blue" @click="chiudiRichiesta('alternativa')">{{ richiesta.alternativa }}</button>
           <button v-if="richiesta.annulla" type="button" class="btn btn-warn" @click="chiudiRichiesta(false)">{{ richiesta.annulla }}</button>
         </div>
       </div>

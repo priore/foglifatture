@@ -3,6 +3,10 @@
 // Supporta URL custom (host:porta) per server remoti OpenAI-compatibili o porte non standard.
 import { ref, onMounted, watch } from 'vue';
 import { api } from '../../services/api.js';
+import { capacita } from '../../composables/useCapacita.js';
+
+// Nell'ambiente embedded il server non gira sul dispositivo: si indica l'indirizzo di un computer della rete locale.
+const llmInRete = capacita.llmInRete;
 
 const props = defineProps({ routerDati: { type: Object, default: null } });
 const emit = defineEmits(['refresh']);
@@ -12,6 +16,7 @@ const nome = ref(null);
 const urlRilevato = ref(null);
 const modelli = ref([]);
 const messaggio = ref('');
+const errore = ref('');
 
 const urlCustom = ref('');
 const salvandoUrl = ref(false);
@@ -24,6 +29,7 @@ watch(() => props.routerDati, (dati) => {
   urlRilevato.value = dati.locale.url;
   modelli.value = dati.locale.modelli || [];
   urlCustom.value = dati.locale.urlCustom || '';
+  errore.value = dati.locale.errore || '';
 }, { immediate: true });
 
 onMounted(async () => {
@@ -40,7 +46,7 @@ async function salvaUrl() {
     await api.saveOAuthConfig({ llmLocaleUrl: urlCustom.value.trim() });
     messaggioUrl.value = urlCustom.value.trim()
       ? 'URL salvato. Ricarica lo stato per verificare la connessione.'
-      : 'URL custom rimosso — rilevazione automatica riattivata.';
+      : llmInRete ? 'URL rimosso.' : 'URL custom rimosso — rilevazione automatica riattivata.';
   } catch (err) {
     messaggioUrl.value = `Errore: ${err.message}`;
   } finally {
@@ -53,8 +59,8 @@ async function salvaUrl() {
 <template>
   <div>
     <p class="note-legal">
-      <strong>LLM locale</strong> (Ollama o LM Studio) — modello AI che gira direttamente sul tuo computer,
-      senza connessione internet, senza account, senza quota. Più lento e meno preciso dei servizi cloud,
+      <strong>LLM locale</strong> (Ollama o LM Studio) — modello AI che gira {{ llmInRete ? 'su un computer della tua rete' : 'direttamente sul tuo computer' }},
+      senza account e senza quota. Più lento e meno preciso dei servizi cloud,
       ma <strong>sempre disponibile</strong> finché il server è avviato. Ultimo slot del router AI.
     </p>
 
@@ -67,7 +73,7 @@ async function salvaUrl() {
           <div style="display:flex;align-items:center;gap:8px">
             <span class="dot-stato" :class="{ attivo: attivo, errore: !attivo }"></span>
             <span v-if="attivo">{{ nome }} attivo su <code>{{ urlRilevato }}</code></span>
-            <span v-else>Nessun server LLM rilevato</span>
+            <span v-else>Nessun server LLM rilevato<template v-if="errore"> ({{ errore }})</template></span>
           </div>
           <div v-if="modelli.length" style="font-size:.85rem;color:var(--muted)">
             Modelli: {{ modelli.join(', ') }}
@@ -85,9 +91,10 @@ async function salvaUrl() {
       <div class="card-head"><h2>URL server (opzionale)</h2></div>
       <div class="card-body">
         <p class="note-legal">
-          Lascia vuoto per la rilevazione automatica (Ollama su <code>localhost:11434</code>,
+          <template v-if="llmInRete">Indirizzo del server sul computer della tua rete (Ollama o LM Studio con server in rete locale attivo), per esempio <code>http://192.168.1.10:1234</code>. Alla prima verifica il sistema chiede il permesso di accedere alla rete locale.</template>
+          <template v-else>Lascia vuoto per la rilevazione automatica (Ollama su <code>localhost:11434</code>,
           LM Studio su <code>localhost:1234</code>). Imposta un URL per usare una porta diversa
-          o un server remoto OpenAI-compatibile.
+          o un server remoto OpenAI-compatibile.</template>
         </p>
         <div class="form-grid" style="margin-top:12px">
           <div class="field full">
@@ -101,7 +108,7 @@ async function salvaUrl() {
             {{ salvandoUrl ? 'Salvo…' : 'Salva URL' }}
           </button>
           <button class="btn btn-ghost" v-if="urlCustom" :disabled="salvandoUrl" @click="urlCustom = ''; salvaUrl()">
-            Rimuovi (torna ad auto)
+            {{ llmInRete ? 'Rimuovi' : 'Rimuovi (torna ad auto)' }}
           </button>
           <span class="badge-mono" v-if="messaggioUrl">{{ messaggioUrl }}</span>
         </div>
@@ -109,7 +116,7 @@ async function salvaUrl() {
     </div>
 
     <!-- ── Setup guide ── -->
-    <div class="card" style="margin-top:16px">
+    <div v-if="!llmInRete" class="card" style="margin-top:16px">
       <div class="card-head"><h2>Come configurare un LLM locale</h2></div>
       <div class="card-body">
         <p class="note-legal" style="margin-bottom:12px">Scegli uno dei due strumenti gratuiti:</p>

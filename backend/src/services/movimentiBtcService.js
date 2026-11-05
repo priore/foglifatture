@@ -6,6 +6,7 @@ import { readJson, writeJson } from '../lib/jsonStore.js';
 
 const FILE = 'movimentiBtc.json';
 const TIPI_INGRESSO = ['acquisto', 'ricevuto', 'mining'];
+const TIPO_GIACENZA = 'saldo-iniziale';
 const TIPI_USCITA = ['vendita', 'spesa', 'trasferimento'];
 const FONTI_USCITA = ['manuale', 'import-polling', 'import-file'];
 
@@ -62,6 +63,46 @@ export async function aggiungiIngresso(d) {
   mov.ingressi.push(ingresso);
   await writeJson(FILE, mov);
   return { movimento: ingresso, avvisi: avvisiAnno(ingresso.data) };
+}
+
+// Giacenza dichiarata a mano (senza storico): un solo `saldo-iniziale` per wallet (`custodia`, senza
+// distinzione di maiuscole; vuota = wallet non specificato). Se esiste già serve `modalita`:
+// 'somma' (quantità e costo si sommano, vale la data più recente) o 'sovrascrivi'. Senza `modalita`
+// restituisce `{ esistente }` e non scrive: la route risponde 409 e la UI chiede all'utente.
+// Costo assente = 0 con `costoNonDocumentato`: le plusvalenze su questi BTC risultano piene.
+const chiaveWallet = (c) => (c ?? '').trim().toLowerCase();
+
+export async function dichiaraGiacenza(d, modalita) {
+  validaComune({ ...d, tipo: TIPO_GIACENZA }, [TIPO_GIACENZA]);
+  if (d.costoEur != null && d.costoEur !== '' && !numeroNonNegativo(d.costoEur)) errore('Costo EUR: numero >= 0');
+  if (modalita != null && !['somma', 'sovrascrivi'].includes(modalita)) errore(`Modalità non valida: ${modalita}`);
+  const mov = await leggiMovimenti();
+  const esistente = mov.ingressi.find((i) => i.tipo === TIPO_GIACENZA && chiaveWallet(i.custodia) === chiaveWallet(d.custodia));
+  if (esistente && !modalita) return { esistente };
+  const somma = esistente && modalita === 'somma';
+  const costoEur = (d.costoEur || 0) + (somma ? esistente.costoEur : 0);
+  const nuovo = {
+    id: esistente?.id ?? nuovoId('IN-MAN'),
+    tipo: TIPO_GIACENZA,
+    data: somma && esistente.data > d.data ? esistente.data : d.data,
+    satoshi: d.satoshi + (somma ? esistente.satoshi : 0),
+    costoEur,
+    ...(costoEur === 0 ? { costoNonDocumentato: true } : {}),
+    ...campiOpzionali(d, ['custodia', 'note']),
+    fonte: 'manuale',
+  };
+  mov.ingressi = esistente ? mov.ingressi.map((i) => (i.id === esistente.id ? nuovo : i)) : [...mov.ingressi, nuovo];
+  await writeJson(FILE, mov);
+  const avvisi = avvisiAnno(nuovo.data);
+  if (costoEur === 0) avvisi.push('Costo non documentato: vendendo questi BTC la plusvalenza risulta pari all\'intero ricavo.');
+  return { movimento: nuovo, avvisi };
+}
+
+// Data della giacenza dichiarata più recente: le transazioni importate fino a quel giorno
+// potrebbero essere già comprese nella giacenza.
+export async function dataUltimaGiacenza() {
+  const { ingressi } = await leggiMovimenti();
+  return ingressi.filter((i) => i.tipo === TIPO_GIACENZA).map((i) => i.data).sort().pop() ?? null;
 }
 
 export function validaUscita(d) {

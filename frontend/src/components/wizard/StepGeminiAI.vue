@@ -105,8 +105,8 @@ async function avviaLoginCli() {
   <div>
     <p class="note-legal">
       Gemini è il provider AI primario. Puoi usarlo tramite <strong>API key</strong> (piano gratuito su
-      AI Studio, modello configurabile) o tramite <strong>login Google</strong> senza API key (canale CLI
-      gratuito). Il router tenta prima la API key se configurata, poi il CLI.
+      AI Studio, modello configurabile)<template v-if="conCli"> o tramite <strong>login Google</strong> senza API key (canale CLI
+      gratuito). Il router tenta prima la API key se configurata, poi il CLI</template>.
     </p>
 
     <!-- ── Canale 1: API key ── -->
@@ -148,7 +148,7 @@ async function avviaLoginCli() {
         </div>
 
         <div class="note-legal" style="margin-top:14px;font-size:.83rem">
-          Per ottenere una API key: vai su <strong>aistudio.google.com/apikey</strong>, accedi con Google,
+          Per ottenere una API key: vai su <strong><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></strong>, accedi con Google,
           clicca <strong>Create API key</strong> e incolla qui sopra.
         </div>
       </div>

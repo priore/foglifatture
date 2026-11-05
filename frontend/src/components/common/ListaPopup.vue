@@ -3,6 +3,7 @@
 // Casella di ricerca automatica sopra `SOGLIA_RICERCA` voci; il valore cambia solo con OK,
 // tap fuori / Esc / Annulla chiudono senza selezione.
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useTouch } from '../../composables/useTouch.js';
 const SOGLIA_RICERCA = 8;
 const props = defineProps({
   // [{ value, label, disabled? }] oppure intestazione di gruppo [{ gruppo: true, label }]
@@ -26,12 +27,13 @@ const visibili = computed(() => {
 });
 const haSelezione = computed(() => props.voci.some((v) => !v.gruppo && v.value === bozza.value));
 
+const { isTouch } = useTouch();
 const alTasto = (e) => { if (e.key === 'Escape') emit('chiudi'); };
 onMounted(() => {
   window.addEventListener('keydown', alTasto);
   nextTick(() => {
     // Al tocco la tastiera a schermo si aprirebbe subito e coprirebbe la lista: la ricerca si attiva con un tocco.
-    if (conRicerca.value && !matchMedia('(pointer: coarse)').matches) inputRicerca.value?.focus();
+    if (conRicerca.value && !isTouch.value) inputRicerca.value?.focus();
     lista.value?.querySelector('.selezionata')?.scrollIntoView({ block: 'center' });
   });
 });
@@ -41,7 +43,8 @@ onUnmounted(() => window.removeEventListener('keydown', alTasto));
 <template>
   <Teleport to="body">
     <div class="cal-overlay" @click.self="emit('chiudi')">
-      <div class="cal-box lista-box" role="dialog" aria-modal="true" :aria-label="titolo">
+      <button v-if="conRicerca" type="button" class="schermo-chiudi" aria-label="Chiudi" @click="emit('chiudi')">✕</button>
+      <div class="cal-box lista-box" :class="{ 'schermo-intero': conRicerca }" role="dialog" aria-modal="true" :aria-label="titolo">
         <h2 class="cal-titolo">{{ titolo }}</h2>
         <p v-if="descrizione" class="cal-descrizione">{{ descrizione }}</p>
         <input v-if="conRicerca" ref="inputRicerca" v-model="ricerca" type="search" class="lista-ricerca" placeholder="Cerca…" aria-label="Cerca nella lista">

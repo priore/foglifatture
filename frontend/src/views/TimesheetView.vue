@@ -6,6 +6,7 @@ import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import TimesheetGrid from '../components/timesheet/TimesheetGrid.vue';
 import TemplateStampa from '../components/common/TemplateStampa.vue';
+import { registro } from '../registroEstensioni.js';
 import { api } from '../services/api.js';
 import { calcolaTotaleMensile, calcolaOreGiorno, decimaleAHHmm, STATI_ASSENZA } from '../composables/useTimeCalculator.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
@@ -126,7 +127,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="timesheet-pagina">
     <div class="page-head">
       <div>
         <h1>Timesheet — {{ mese }}/{{ anno }}</h1>
@@ -136,16 +137,16 @@ onMounted(async () => {
     <div class="cliente-row" v-if="clientiAttivi.length">
       <ClienteSwitcher v-model="clienteId" :clienti="clientiAttivi" />
     </div>
-    <div class="actions" style="margin-bottom:16px">
+    <div class="actions timesheet-azioni" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
       <button class="btn btn-ok" :disabled="salvando" @click="salvaTimesheet">
         {{ salvando ? 'Salvo…' : (messaggioSalvataggio || 'Salva') }}
       </button>
-      <button class="btn btn-blue" @click="esporta">Esporta PDF</button>
+      <button class="btn btn-blue" @click="esporta"><span class="lbl-esteso">Esporta PDF</span><span class="lbl-breve">PDF</span></button>
       <button class="btn btn-blue" :disabled="!clienteCorrente?.email || inviandoEmail" @click="inviaEmail">
-        {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
+        <template v-if="inviandoEmail">Preparo…</template><template v-else><span class="lbl-esteso">Invia email al cliente</span><span class="lbl-breve">Email</span></template>
       </button>
-      <button class="btn btn-blue" :disabled="!giorni.length" @click="esportaVms">Esporta CSV per import VMS</button>
+      <button class="btn btn-blue" :disabled="!giorni.length" @click="esportaVms"><span class="lbl-esteso">Esporta CSV per import VMS</span><span class="lbl-breve">CSV</span></button>
     </div>
     <p v-if="esitoEmail" class="badge-mono" style="margin-top:-10px;margin-bottom:16px">{{ esitoEmail }}</p>
 
@@ -159,11 +160,11 @@ onMounted(async () => {
     <div class="card" v-if="giorni.length">
       <div class="card-head"><h2>Griglia giornaliera</h2><span class="badge-mono">{{ giorni.length }} giorni</span></div>
       <div class="card-body">
-        <TimesheetGrid :giorni="giorni" />
+        <component :is="registro.timesheetGriglia || TimesheetGrid" :giorni="giorni" v-bind="registro.timesheetGriglia ? { anno, mese } : {}" />
       </div>
     </div>
 
-    <div class="card" v-if="config && clienteCorrente && giorni.length">
+    <div class="card anteprima-stampa" v-if="config && clienteCorrente && giorni.length">
       <div class="card-head"><h2>Anteprima stampa PDF</h2><span class="badge-mono">replica foglio Excel aziendale</span></div>
       <div class="card-body" style="min-width:0">
         <TemplateStampa v-if="datiTimesheet" ref="anteprimaRef" :template-id="templateIdTimesheet" :dati="datiTimesheet" />

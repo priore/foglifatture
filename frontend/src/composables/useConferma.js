@@ -14,6 +14,11 @@ export function chiediConferma(messaggio, { titolo = 'Conferma', ok = 'OK', annu
   return apri({ titolo, messaggio, ok, annulla });
 }
 
+// Tre scelte: risolve 'ok' (sinistra, verde), 'alternativa' (centro, blu) o null (Annulla, tap fuori, Esc).
+export function chiediScelta(messaggio, { titolo = 'Conferma', ok, alternativa, annulla = 'Annulla' }) {
+  return apri({ titolo, messaggio, ok, alternativa, annulla, tre: true });
+}
+
 export function avvisa(messaggio, { titolo = 'Attenzione', ok = 'Ho capito' } = {}) {
   return apri({ titolo, messaggio, ok });
 }

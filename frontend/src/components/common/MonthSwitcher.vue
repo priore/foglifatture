@@ -66,7 +66,7 @@ function alCambio(valore) {
 
 <template>
   <div class="actions">
-    <button class="btn btn-ghost" :disabled="!puoIndietro" @click="vai(-1)">← {{ NOMI_MESI[(mese - 2 + 12) % 12] }}</button>
+    <button class="btn btn-ghost" :disabled="!puoIndietro" @click="vai(-1)" aria-label="Mese precedente">←<span class="lbl-esteso"> {{ NOMI_MESI[(mese - 2 + 12) % 12] }}</span></button>
     <span
       class="btn btn-ghost" style="cursor:pointer"
       role="button" tabindex="0" title="Vai a mese/anno..." aria-label="Vai a mese/anno..."
@@ -74,13 +74,13 @@ function alCambio(valore) {
       @keydown.enter="aperto = true"
       @keydown.space.prevent="aperto = true"
     >
-      {{ NOMI_MESI[mese - 1] }} {{ anno }}
+      <span class="lbl-esteso">{{ NOMI_MESI[mese - 1] }}</span><span class="lbl-breve">{{ NOMI_MESI[mese - 1].slice(0, 3) }}</span>&nbsp;{{ anno }}
       <CalendarioPopup
         v-if="aperto" modo="mese" :model-value="valoreInput" titolo="Vai a mese/anno" descrizione="Scegli il mese da visualizzare"
         :max="`${ANNO_MASSIMO}-12`" :min="meseMinimo || ''"
         @conferma="alCambio" @chiudi="aperto = false"
       />
     </span>
-    <button class="btn btn-ghost" :disabled="!puoAvanti" @click="vai(1)">{{ NOMI_MESI[mese % 12] }} →</button>
+    <button class="btn btn-ghost" :disabled="!puoAvanti" @click="vai(1)" aria-label="Mese successivo"><span class="lbl-esteso">{{ NOMI_MESI[mese % 12] }} </span>→</button>
   </div>
 </template>

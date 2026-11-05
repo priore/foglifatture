@@ -259,3 +259,12 @@ test('lo stato dice quali provider sono disponibili in questa build', async () =
   const { disponibili } = await statoCloud();
   assert.deepEqual(disponibili, { dropbox: true, onedrive: false, google: false });
 });
+
+test('dati di prova in uso: login e scelta archivio rifiutati, poi di nuovo liberi', async () => {
+  globalThis.__cloudBloccato = true;
+  try {
+    await assert.rejects(avviaLogin({ provider: 'dropbox' }), /modalità dimostrativa/);
+    await assert.rejects(scegliArchivio('carica'), /modalità dimostrativa/);
+  } finally { delete globalThis.__cloudBloccato; }
+  await avviaLogin({ provider: 'dropbox' });
+});

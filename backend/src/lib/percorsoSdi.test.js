@@ -24,3 +24,10 @@ test('percorso SDI ambiente embedded: vuoto o assoluto estraneo usano la cartell
   assert.equal(risolviPercorsoSdi('/archivio/dati/ricevute', dati, 'ricevute-sdi'), '/archivio/dati/ricevute');
   assert.equal(risolviPercorsoSdi('ricevute', dati, 'ricevute-sdi'), '/archivio/dati/ricevute');
 });
+
+test('percorso SDI ambiente embedded: un assoluto dentro una cartella autorizzata resta valido', () => {
+  const autorizzate = ['/Volumes/Nas/SDI'];
+  assert.equal(risolviPercorsoSdi('/Volumes/Nas/SDI', dati, 'ricevute-sdi', autorizzate), '/Volumes/Nas/SDI');
+  assert.equal(risolviPercorsoSdi('/Volumes/Nas/SDI/2026', dati, 'ricevute-sdi', autorizzate), '/Volumes/Nas/SDI/2026');
+  assert.equal(risolviPercorsoSdi('/Volumes/Altro', dati, 'ricevute-sdi', autorizzate), '/archivio/dati/ricevute-sdi');
+});

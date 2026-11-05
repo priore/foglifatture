@@ -1,6 +1,6 @@
 // Archiviazione dati su file JSON semplice (flat file), portabile e senza dipendenze da DB.
 // Ogni "collezione" è una cartella; ogni record è un file <chiave>.json al suo interno.
-import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 const DATA_DIR_DEFAULT = path.join(import.meta.dirname, '..', '..', 'data');
@@ -45,6 +45,12 @@ export async function writeJson(relativePath, data) {
   await ensureDir(path.dirname(file));
   await writeFile(file, JSON.stringify(data, null, 2), 'utf-8');
   try { dopoScrittura?.(relativePath); } catch { /* la scrittura locale è riuscita */ }
+}
+
+// Elimina un file JSON dall'archivio; nessun errore se non esiste.
+export async function eliminaJson(relativePath) {
+  await rm(path.join(DATA_DIR, relativePath), { force: true });
+  try { dopoScrittura?.(relativePath); } catch { /* l'eliminazione locale è riuscita */ }
 }
 
 // Elenca i nomi (senza estensione) dei file .json presenti in una cartella dell'archivio.

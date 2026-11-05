@@ -20,10 +20,23 @@ const router = useRouter();
 // così le sotto-voci verticali in AppSidebar possono linkarci direttamente con router-link.
 const passoAttivo = computed({
   get: () => {
-    const n = Number(route.query.passo);
+    // `?passo=` è l'indice, oppure il nome del passo (link nativi, dove l'elenco dei passi dipende dal dispositivo).
+    const q = route.query.passo;
+    const n = /^\d+$/.test(q) ? Number(q) : PASSI.value.indexOf(q);
     return Number.isInteger(n) && n >= 0 && n < PASSI.value.length ? n : 0;
   },
-  set: (n) => router.push({ query: { passo: n } }),
+  set: (n) => router.push({ query: { ...route.query, passo: n } }),
+});
+// Titolo nelle shell compatte: «Passo - Scheda» per i passi che hanno schede interne (scelte dal foglio nativo con `?sub=`).
+const SCHEDE_PASSO = {
+  Fornitore: { Anagrafica: 'Anagrafica', Fiscale: 'Fiscale', Fatturazione: 'Fatturazione' },
+  AI: { gemini: 'Gemini', copilot: 'Copilot', claude: 'Claude', groq: 'Groq', locale: 'Locale' },
+};
+const titoloCompatto = computed(() => {
+  const passo = PASSI.value[passoAttivo.value];
+  const schede = SCHEDE_PASSO[passo];
+  if (!schede) return passo;
+  return `${passo} - ${schede[route.query.sub] ?? Object.values(schede)[0]}`;
 });
 const config = ref(null);
 const messaggio = ref('');
@@ -86,32 +99,32 @@ onBeforeRouteUpdate(async (to, from, next) => {
 <template>
   <div v-if="config">
     <div class="page-head">
-      <div><h1>Impostazioni</h1><p>{{ DESCRIZIONI_PASSI[PASSI[passoAttivo]] }}</p></div>
+      <div><h1><span class="solo-desktop">Impostazioni</span><span class="solo-compatto">{{ titoloCompatto }}</span></h1><p>{{ DESCRIZIONI_PASSI[PASSI[passoAttivo]] }}</p></div>
     </div>
 
-    <div class="card">
-      <div class="card-head"><h2>Passo {{ passoAttivo + 1 }} — {{ PASSI[passoAttivo] }}</h2></div>
+    <div class="card card-passo">
+      <div class="card-head"><h2><span class="wizard-nav">Passo {{ passoAttivo + 1 }} — </span>{{ PASSI[passoAttivo] }}</h2></div>
       <div class="card-body">
-        <StepFornitore v-if="passoAttivo === 0" v-model="config.fornitore" :forfettario="config.forfettario" :fatturazione="config.fatturazione" :wallet-btc="config.walletBtc" :import-btc="config.importBtc" />
-        <StepPec v-else-if="passoAttivo === 1" v-model="config.pec" :sdi="config.sdi" />
-        <StepPercorsoDati v-else-if="passoAttivo === 2" ref="passoRef" v-model="config.dati" />
-        <StepBackup v-else-if="passoAttivo === 3" v-model="config.backup" />
-        <StepPromemoria v-else-if="passoAttivo === 4" v-model="config.reminder" :notifiche="config.notifiche" />
-        <StepGoogleAuth v-else-if="passoAttivo === 5" />
-        <StepAI v-else-if="passoAttivo === 6" />
+        <StepFornitore v-if="PASSI[passoAttivo] === 'Fornitore'" v-model="config.fornitore" :forfettario="config.forfettario" :fatturazione="config.fatturazione" :wallet-btc="config.walletBtc" :import-btc="config.importBtc" />
+        <StepPec v-else-if="PASSI[passoAttivo] === 'PEC'" v-model="config.pec" :sdi="config.sdi" />
+        <StepPercorsoDati v-else-if="PASSI[passoAttivo] === 'Percorso dati'" ref="passoRef" v-model="config.dati" />
+        <StepBackup v-else-if="PASSI[passoAttivo] === 'Backup Automatico'" v-model="config.backup" />
+        <StepPromemoria v-else-if="PASSI[passoAttivo] === 'Promemoria'" v-model="config.reminder" :notifiche="config.notifiche" />
+        <StepGoogleAuth v-else-if="PASSI[passoAttivo] === 'Login'" />
+        <StepAI v-else-if="PASSI[passoAttivo] === 'AI'" />
         <component :is="componentePasso(PASSI[passoAttivo])" v-else />
 
         <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
-          <button class="btn btn-ghost" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>
+          <button class="btn btn-ghost wizard-nav" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>
           <span class="badge-mono">{{ messaggio }}</span>
           <div style="display:flex;gap:8px">
             <button class="btn btn-ok" @click="salva">Salva</button>
-            <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary" @click="avanti">Avanti →</button>
+            <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary wizard-nav" @click="avanti">Avanti →</button>
           </div>
         </div>
         <div v-else style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
-          <button class="btn btn-ghost" @click="indietro">← Indietro</button>
-          <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary" @click="avanti">Avanti →</button>
+          <button class="btn btn-ghost wizard-nav" @click="indietro">← Indietro</button>
+          <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary wizard-nav" @click="avanti">Avanti →</button>
         </div>
       </div>
     </div>

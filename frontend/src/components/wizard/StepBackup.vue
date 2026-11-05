@@ -1,5 +1,6 @@
 <script setup>
 import { capacita } from '../../composables/useCapacita.js';
+import { registro } from '../../registroEstensioni.js';
 
 defineProps({
   modelValue: { type: Object, required: true }, // config.backup
@@ -15,6 +16,7 @@ defineProps({
     <div class="field field-full full">
       <label>Cartella di destinazione</label>
       <input v-if="capacita.cartellaLibera" v-model="modelValue.percorsoDestinazione" placeholder="/Users/tuonome/Dropbox/Backup Timesheet" :disabled="!modelValue.abilitato">
+      <component :is="registro.selettoreCartella" v-else-if="registro.selettoreCartella && capacita.sceltaCartella" v-model="modelValue.percorsoDestinazione" predefinita="backup-automatici (nell'archivio)" :disabled="!modelValue.abilitato" />
       <input v-else value="backup-automatici (nell'archivio)" disabled>
     </div>
     <div class="field"><label>Ogni (minuti)</label><input type="number" min="1" v-model.number="modelValue.intervalloOreMinuti" :disabled="!modelValue.abilitato"></div>

@@ -16,7 +16,7 @@ import { generaProspettoPdf } from '../services/prospettoDichiarazionePdfService
 import { generaF24Pdf } from '../services/f24PdfService.js';
 import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
 import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo, suggerisciOrdineCrediti } from '../services/creditiService.js';
-import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato } from '../services/movimentiBtcService.js';
+import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato, dichiaraGiacenza } from '../services/movimentiBtcService.js';
 import { lottiConStato, calcolaPlusvalenze, riepilogoAnnuale, anteprimaUscita } from '../services/lottiBtcService.js';
 import { importaDaFile } from '../services/importFileBtcService.js';
 import { leggiProposte, confermaProposta, scartaProposta, ripristinaProposta, controllaOra } from '../services/importBtcService.js';
@@ -510,6 +510,17 @@ forfettarioRoutes.get('/btc/movimenti', async (_req, res) => {
 forfettarioRoutes.post('/btc/movimenti/ingresso', async (req, res) => {
   try {
     res.status(201).json(await aggiungiIngresso(req.body));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.post('/btc/movimenti/giacenza', async (req, res) => {
+  try {
+    const { modalita, ...dati } = req.body;
+    const esito = await dichiaraGiacenza(dati, modalita);
+    if (esito.esistente) return res.status(409).json({ errore: 'Giacenza già dichiarata per questo wallet', esistente: esito.esistente });
+    res.status(201).json(esito);
   } catch (err) {
     res.status(400).json({ errore: err.message });
   }

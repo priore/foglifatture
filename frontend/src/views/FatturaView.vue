@@ -2,22 +2,29 @@
 import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
+import ModuloPopup from '../components/common/ModuloPopup.vue';
 // Schermata Fattura Pro-Forma: calcolo automatico da timesheet, generazione XML FatturaPA,
 // invio PEC. Il calcolo compenso è ricavato dal backend (unica fonte di verità sui totali).
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { clienteAttivoId } from '../composables/useClienteAttivo.js';
 import MonthSwitcher from '../components/common/MonthSwitcher.vue';
 import ClienteSwitcher from '../components/common/ClienteSwitcher.vue';
 import TemplateStampa from '../components/common/TemplateStampa.vue';
 import { api } from '../services/api.js';
+import { capacita } from '../composables/useCapacita.js';
 import { caricaQuota, daAccantonare } from '../composables/useAccantonamento.js';
 import { esportaPdf, generaPdfBlob } from '../composables/usePdfExport.js';
 import { inviaPdfEmail } from '../composables/useMailto.js';
 import { preparaDatiFattura, pagamentoDaConfig } from '../composables/useTemplateData.js';
+import { formattaEuro } from '../composables/useFormati.js';
+import { daRimborsareNota as calcolaDaRimborsareNota, anteprimaManuale, indirizzoBech32NonValido } from '../composables/useCalcoliFattura.js';
 
 const oggi = new Date();
-const anno = ref(oggi.getFullYear());
-const mese = ref(oggi.getMonth() + 1);
+// Una vista di dettaglio (shell compatta) arriva con mese e cliente nel percorso; senza, vale il mese corrente.
+const query = useRoute().query;
+const anno = ref(Number(query.anno) || oggi.getFullYear());
+const mese = ref(Number(query.mese) || oggi.getMonth() + 1);
 const config = ref(null);
 const valuteLista = ref([]);
 const clienteId = ref(null);
@@ -28,12 +35,7 @@ const inviandoPec = ref(false);
 const esitoPec = ref('');
 const importoNota = ref('');
 // Il GET fattura non arricchisce lo stato pagamento: quanto già incassato oltre il dovuto dopo la nota.
-const daRimborsareNota = computed(() => {
-  const f = fatturaGenerata.value;
-  if (!f?.notaCredito) return 0;
-  const pagato = (f.pagamenti ?? []).reduce((t, p) => t + p.importo, 0);
-  return Math.max(0, Number((pagato - (f.nettoAPagare - f.notaCredito.nettoAPagare)).toFixed(2)));
-});
+const daRimborsareNota = computed(() => calcolaDaRimborsareNota(fatturaGenerata.value));
 const lavorandoNota = ref(false);
 const esitoNota = ref('');
 const meseMinimo = ref(null);
@@ -85,14 +87,11 @@ const anteprimaEffettiva = computed(() => {
   if (fatturaGenerata.value) return fatturaGenerata.value;
   if (!modoManuale.value) return anteprima.value;
   if (!config.value) return null;
-  const imponibile = Number((Number(importoManuale.value) || 0).toFixed(2));
-  const bolloApplicabile = imponibile > config.value.fatturazione.sogliaBolloVirtuale;
-  const bollo = bolloApplicabile ? config.value.fatturazione.importoBollo : 0;
-  const rivalsaAttiva = clienteCorrente.value?.rivalsaInps !== null && clienteCorrente.value?.rivalsaInps !== undefined
-    ? Boolean(clienteCorrente.value.rivalsaInps)
-    : Boolean(config.value.forfettario?.rivalsaInps);
-  const rivalsaInps = rivalsaAttiva ? Number((imponibile * 0.04).toFixed(2)) : 0;
-  return { imponibile, bolloApplicabile, bollo, rivalsaInps, nettoAPagare: Number((imponibile + rivalsaInps).toFixed(2)) };
+  return anteprimaManuale(importoManuale.value, {
+    ...config.value.fatturazione,
+    rivalsaCliente: clienteCorrente.value?.rivalsaInps,
+    rivalsaConfig: config.value.forfettario?.rivalsaInps,
+  });
 });
 
 const templateIdFattura = computed(() => clienteCorrente.value?.templateFatturaId || 'fattura-default');
@@ -200,15 +199,12 @@ async function salvaScadenzaPagamento() {
   }
 }
 
-function formattaEuro(valore) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
-}
-
 function formattaData(valore) {
   return new Date(valore).toLocaleDateString('it-IT');
 }
 
 async function eliminaPagamento(indice) {
+  if (!(await chiediConferma('Eliminare il pagamento registrato? Lo stato di incasso della fattura verrà ricalcolato.', { titolo: 'Elimina pagamento', ok: 'Elimina' }))) return;
   await api.eliminaPagamentoFattura(fatturaGenerata.value.anno, fatturaGenerata.value.mese, fatturaGenerata.value.clienteId, indice);
   fatturaGenerata.value = await api.getFattura(anno.value, mese.value, clienteId.value);
 }
@@ -317,14 +313,8 @@ function applicaTx(tx, indirizzo) {
 
 // F4: legge TXID/orario/satoshi dalla blockchain pubblica invece dell'inserimento manuale.
 // Con TXID già inserito, legge quella transazione. Senza TXID ma con indirizzo compilato,
-// cerca l'ultima transazione ricevuta su quell'indirizzo e la propone.
-// bech32 (bc1...) esclude 1, b, i, o dal corpo per evitare ambiguità di lettura — un
-// indirizzo con questi caratteri è quasi sempre un errore di trascrizione (es. "O" al
-// posto di "0"). Controllo lato client per un errore immediato invece di un 400 remoto.
-function indirizzoBech32NonValido(indirizzo) {
-  if (!/^bc1/i.test(indirizzo)) return false;
-  return /[1boi]/.test(indirizzo.slice(3));
-}
+// cerca l'ultima transazione ricevuta su quell'indirizzo e la propone. Il controllo bech32
+// lato client dà un errore immediato invece di un 400 remoto.
 
 async function leggiDaBlockchain() {
   if (!btcForm.value.txid && !btcForm.value.indirizzoDestinatario) return;
@@ -458,7 +448,7 @@ async function inviaPecNotaCredito() {
 }
 
 function inizializzaClienteId() {
-  const salvato = localStorage.getItem('clienteAttivoId');
+  const salvato = query.cliente || localStorage.getItem('clienteAttivoId');
   clienteId.value = clientiAttivi.value.some(c => c.id === salvato)
     ? salvato
     : clientiAttivi.value[0]?.id ?? null;
@@ -554,9 +544,8 @@ onMounted(async () => {
     <div class="cliente-row" v-if="clientiAttivi.length">
       <ClienteSwitcher v-model="clienteId" :clienti="clientiAttivi" />
     </div>
-    <div class="actions" style="margin-bottom:16px">
+    <div class="actions fattura-azioni" style="margin-bottom:16px">
       <MonthSwitcher v-model:anno="anno" v-model:mese="mese" :mese-minimo="meseMinimo" />
-      <button class="btn btn-blue" @click="esporta">Scarica PDF</button>
     </div>
 
     <div class="two-col" style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start" v-if="anteprima && config && clienteCorrente">
@@ -642,7 +631,7 @@ onMounted(async () => {
             <div class="field">
               <button v-if="!mostraFormBtc" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
               <small v-if="!mostraFormBtc && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
-              <div v-if="mostraFormBtc" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+              <ModuloPopup v-if="mostraFormBtc" titolo="Incasso in BTC" descrizione="Pagamento ricevuto in bitcoin per questa fattura" @chiudi="mostraFormBtc = false">
                 <label>Indirizzo di destinazione</label>
                 <div style="display:flex;gap:6px">
                   <SelectField titolo="Indirizzo wallet" descrizione="Wallet che ha ricevuto il pagamento" v-if="config.walletBtc?.length && !indirizzoLibero" v-model="btcForm.indirizzoDestinatario" style="flex:1" @change="btcForm.indirizzoDestinatario === '__altro__' && (indirizzoLibero = true, btcForm.indirizzoDestinatario = '')">
@@ -666,7 +655,7 @@ onMounted(async () => {
                     <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </button>
                 </div>
-                <small class="note-legal">Con TXID: legge quella transazione. Senza TXID: cerca l'ultima ricevuta sull'indirizzo sopra. Invia dati a mempool.space (servizio esterno, vedi IP).</small>
+                <small class="note-legal">Con TXID: legge quella transazione. Senza TXID: cerca l'ultima ricevuta sull'indirizzo sopra. Invia dati a <a href="https://mempool.space" target="_blank" rel="noopener">mempool.space</a> (servizio esterno, vedi IP).</small>
                 <span v-if="erroreBtc && !erroreBtcSuIndirizzo" class="note-legal" style="color:var(--warn)">{{ erroreBtc }}</span>
 
                 <label>Satoshi ricevuti</label>
@@ -692,16 +681,16 @@ onMounted(async () => {
                   Da accantonare per le tasse: {{ formattaEuro(daAccantonare((btcForm.satoshi / 1e8) * btcForm.cambioEurBtc, new Date().getFullYear())) }}
                 </small>
 
-                <div style="display:flex;gap:6px">
-                  <button class="btn btn-ok" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra' }}</button>
-                  <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormBtc = false">Annulla</button>
-                </div>
-              </div>
+                <template #azioni>
+                  <button class="btn btn-ok" :disabled="registrandoBtc" @click="registraPagamentoBtc">{{ registrandoBtc ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-warn" @click="mostraFormBtc = false">Annulla</button>
+                </template>
+              </ModuloPopup>
             </div>
             <div class="field">
               <button v-if="!mostraFormValuta" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormValuta">€ Registra incasso in valuta estera</button>
               <small v-if="!mostraFormValuta && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
-              <div v-if="mostraFormValuta" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:8px;padding:10px">
+              <ModuloPopup v-if="mostraFormValuta" titolo="Incasso in valuta estera" descrizione="Pagamento ricevuto in una valuta diversa dall'euro" @chiudi="mostraFormValuta = false">
                 <label>Valuta</label>
                 <SelectField titolo="Valuta" descrizione="Valuta in cui è stato ricevuto il pagamento" v-model="valutaForm.codice">
                   <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
@@ -731,11 +720,11 @@ onMounted(async () => {
                 </small>
                 <span v-if="erroreValuta" class="note-legal" style="color:var(--warn)">{{ erroreValuta }}</span>
 
-                <div style="display:flex;gap:6px">
-                  <button class="btn btn-ok" style="flex:1;white-space:nowrap;justify-content:center" :disabled="registrandoValuta" @click="registraPagamentoValuta">{{ registrandoValuta ? 'Registro…' : 'Registra' }}</button>
-                  <button class="btn btn-ghost" style="flex:1;white-space:nowrap;justify-content:center" @click="mostraFormValuta = false">Annulla</button>
-                </div>
-              </div>
+                <template #azioni>
+                  <button class="btn btn-ok" :disabled="registrandoValuta" @click="registraPagamentoValuta">{{ registrandoValuta ? 'Registro…' : 'Registra' }}</button>
+                  <button class="btn btn-warn" @click="mostraFormValuta = false">Annulla</button>
+                </template>
+              </ModuloPopup>
             </div>
             <div v-if="!fatturaAccettataSdi" class="field">
               <label>Valuta fattura</label>
@@ -760,16 +749,17 @@ onMounted(async () => {
             <small v-if="fatturaAccettataSdi" class="note-legal">Fattura accettata dallo SDI: emessa e non più modificabile. Per correggere un errore, emetti una nota di credito (card sotto).</small>
             <small v-else-if="!fatturaGenerata && previsioneSogliaCorrente?.livelloUscita === 'uscitaImmediata'" class="note-legal" style="color:var(--warn)">⚠️ Con questa fattura supereresti i 100.000 €: se incassata nell'anno il regime cessa immediatamente. Sarà chiesta conferma.</small>
             <small v-else-if="!fatturaGenerata && (previsioneSogliaCorrente?.livelloSoglia === 'oltre' || previsioneSogliaCorrente?.livelloSoglia === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'vicino' || previsioneSogliaCorrente?.livelloLimitePersonale === 'oltre')" class="note-legal" style="color:var(--warn)">Attenzione: con questa fattura ti avvicini o superi la soglia forfettaria{{ previsioneSogliaCorrente?.livelloSoglia === 'oltre' ? ' — sarà chiesta conferma' : '' }}.</small>
+            <button class="btn" :class="ultimoScarto ? 'btn-warn' : 'btn-ok'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
+              {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
+            </button>
+            <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
             <button class="btn btn-blue" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
             <button class="btn btn-ghost" :disabled="!fatturaGenerata || !(clienteCorrente.emailFattura || clienteCorrente.email) || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
             <small v-if="fatturaGenerata && !(clienteCorrente.emailFattura || clienteCorrente.email)" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
             <span v-if="esitoEmail" class="badge-mono">{{ esitoEmail }}</span>
-            <button class="btn" :class="ultimoScarto ? 'btn-warn' : 'btn-ok'" :disabled="!fatturaGenerata || inviandoPec" @click="inviaPec">
-              {{ inviandoPec ? 'Invio…' : (ultimoScarto ? 'Fattura scartata: reinvia a SDI' : 'Invia PEC a SDI') }}
-            </button>
-            <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
+            <button class="btn btn-blue" @click="esporta">Scarica PDF</button>
           </div>
         </div>
 
@@ -803,10 +793,10 @@ onMounted(async () => {
           <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
             <p class="note-legal" v-if="config.sdi.pollingAbilitato">
               Controllo automatico periodico attivo in background. Usa questo bottone per un controllo immediato:
-              scarica ricevute/notifiche/fattura firmata nella cartella archivio configurata in Impostazioni.
+              scarica ricevute/notifiche/fattura firmata {{ capacita.cartellaLibera ? 'nella cartella archivio configurata in Impostazioni' : 'nell\'archivio dell\'app' }}.
             </p>
             <p class="note-legal" v-else>
-              Controllo ricevute SDI disattivato in Impostazioni &gt; PEC.
+              Controllo ricevute SDI disattivato in Impostazioni&nbsp;&gt;&nbsp;PEC.
             </p>
             <button class="btn btn-ghost" :disabled="controllandoSdi || !config.sdi.pollingAbilitato" @click="controllaSdi">
               {{ controllandoSdi ? 'Controllo…' : 'Controlla ora' }}

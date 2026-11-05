@@ -80,7 +80,7 @@ async function scegli(c) {
 </template>
 
 <style scoped>
-.scelta-box { max-width: 760px; padding: calc(var(--gap-md) * 2.4); }
+.scelta-box { max-width: 760px; --pad: calc(var(--gap-md) * 2.4); padding: var(--pad); }
 .scelta-griglia { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap-md); margin-top: var(--gap-md); }
 @media (max-width: 640px) { .scelta-griglia { grid-template-columns: 1fr; } }
 .scelta-voce { display: flex; gap: var(--gap-md); align-items: flex-start; text-align: left; padding: var(--gap-md); background: var(--ground); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-md); cursor: pointer; font: inherit; }

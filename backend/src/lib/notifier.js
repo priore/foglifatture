@@ -12,10 +12,17 @@ export function dedupScaduta(stato, chiave, ora = Date.now()) {
   return !stato[chiave] || ora - stato[chiave] >= DEDUP_TTL_MS;
 }
 
+// Una alla volta: su macOS due notifiche lanciate insieme si sostituiscono e terminal-notifier
+// restituisce due JSON in un solo output (callback in errore, nessuna notifica visibile).
+let coda = Promise.resolve();
+
 function inviaNotifica(titolo, messaggio) {
-  notifier.notify({ title: titolo, message: messaggio }, (err) => {
-    if (err) logger.warn('Notifica desktop fallita', { err: err.message });
-  });
+  coda = coda.then(() => new Promise((resolve) => {
+    notifier.notify({ title: titolo, message: messaggio }, (err) => {
+      if (err) logger.warn('Notifica desktop fallita', { err: err.message });
+      resolve();
+    });
+  }));
 }
 
 export async function notifica(titolo, messaggio) {

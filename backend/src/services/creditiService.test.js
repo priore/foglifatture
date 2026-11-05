@@ -1,7 +1,11 @@
 // Test per creditiService: funzione pura compensaCrediti + regole limite.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compensaCrediti, costruisciPromptOrdineCrediti, suggerisciOrdineCrediti } from './creditiService.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { setDataDir, writeJson, DATA_DIR } from '../lib/jsonStore.js';
+import { compensaCrediti, costruisciPromptOrdineCrediti, suggerisciOrdineCrediti, creditiConResiduo } from './creditiService.js';
 
 const REGOLE_BASE = { compensazione: { sogliaOrizzontale: 5000 } };
 
@@ -89,4 +93,25 @@ test('suggerisciOrdineCrediti: senza autorizzazione né conferma non chiama l\'A
     suggerisciOrdineCrediti({ config: { ai: { autorizzaDatiFiscali: false } }, scadenze: [] }),
     (e) => e.codice === 'AUTORIZZAZIONE_RICHIESTA',
   );
+});
+
+test('creditiConResiduo: le righe a credito negative di un F24 con compensazione consumano il credito', async () => {
+  const precedente = DATA_DIR;
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'ff-crediti-'));
+  setDataDir(dir);
+  try {
+    await writeJson('crediti.json', [
+      { id: 'a', importo: 500, sezione: 'erario', codice: '1792' },
+      { id: 'b', importo: 1000, sezione: 'erario', codice: '1792' },
+    ]);
+    await writeJson('f24.json', [
+      { id: 'f1', stato: 'da_pagare', righe: [{ importo: 700 }, { creditoId: 'a', importo: -500 }, { creditoId: 'b', importo: -200 }] },
+      { id: 'f2', stato: 'annullato', righe: [{ creditoId: 'b', importo: -800 }] },
+    ]);
+    const residui = await creditiConResiduo('2026-01-01');
+    assert.deepEqual(residui.map((c) => [c.id, c.usato, c.residuo]), [['b', 200, 800]]);
+  } finally {
+    setDataDir(precedente);
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

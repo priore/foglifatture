@@ -1,8 +1,10 @@
 <script setup>
 import { chiediConferma } from '../../composables/useConferma.js';
 import SelectField from '../common/SelectField.vue';
+import { registro } from '../../registroEstensioni.js';
 import { computed, ref, onMounted } from 'vue';
 import { api } from '../../services/api.js';
+import { capacita } from '../../composables/useCapacita.js';
 import { pecValida } from '../../composables/useValidazioneFiscale.js';
 
 const props = defineProps({
@@ -55,7 +57,7 @@ async function leggiRisposte() {
 
 <template>
   <div class="card">
-    <div class="card-head"><h2>Configurazione PEC</h2></div>
+    <div class="card-head ripete-passo"><h2>Configurazione PEC</h2></div>
     <div class="card-body">
   <div class="form-grid">
     <div class="field field-full full">
@@ -134,11 +136,16 @@ async function leggiRisposte() {
     </div>
     <div class="field"><label>Server IMAP PEC</label><input v-model="modelValue.imapHost" placeholder="imaps.pec-provider.it" :disabled="!sdi.pollingAbilitato"></div>
     <div class="field"><label>Porta IMAP</label><input type="number" v-model.number="modelValue.imapPort" :disabled="!sdi.pollingAbilitato"></div>
-    <div class="field field-full full">
+    <div v-if="capacita.cartellaLibera" class="field field-full full">
       <label>Cartella archivio locale (es. una cartella dentro Dropbox)</label>
       <input v-model="sdi.percorsoArchivio" placeholder="/Users/tuonome/Dropbox/Fatture/SDI" :disabled="!sdi.pollingAbilitato">
     </div>
+    <div v-else-if="registro.selettoreCartella && capacita.sceltaCartella" class="field field-full full">
+      <label>Cartella archivio ricevute SDI</label>
+      <component :is="registro.selettoreCartella" v-model="sdi.percorsoArchivio" predefinita="ricevute-sdi (nell'archivio)" :disabled="!sdi.pollingAbilitato" />
+    </div>
     <div class="field"><label>Controllo automatico ogni (minuti)</label><input type="number" min="1" v-model.number="sdi.intervalloPollingMinuti" :disabled="!sdi.pollingAbilitato"></div>
+    <p v-if="capacita.piattaforma !== 'desktop'" class="note-legal field-full full">Controllato quando apri l'app e, se il sistema lo consente, in background: l'intervallo è un minimo tra due controlli.</p>
   </div>
     </div>
   </div>

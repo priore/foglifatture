@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { api } from '../services/api.js';
+import { capacita } from '../composables/useCapacita.js';
 
 // Pagina informativa privacy: testo statico (app locale, single-user) + termini d'uso dal backend.
 const termini = ref(null);
+const desktop = () => capacita.piattaforma === 'desktop';
 onMounted(async () => { termini.value = await api.getTermini().catch(() => null); });
 </script>
 
@@ -23,7 +25,8 @@ onMounted(async () => { termini.value = await api.getTermini().catch(() => null)
     <div class="card">
       <div class="card-head"><h2>2. Natura dell'applicazione</h2></div>
       <div class="card-body">
-        <p>Fogli &amp; Fatture è un'applicazione eseguita localmente sulla macchina dell'operatore (<code>localhost:1969</code>), utilizzata per la gestione di timesheet mensili e la fatturazione elettronica in regime forfettario verso più clienti. Non è un servizio SaaS: nessun dato viene inviato a server dell'autore del software o di terze parti, salvo i canali obbligatori per legge descritti al punto 4.</p>
+        <p v-if="!desktop()">Fogli &amp; Fatture è un'app eseguita interamente sul dispositivo dell'operatore, utilizzata per la gestione di timesheet mensili e la fatturazione elettronica in regime forfettario verso più clienti. Non è un servizio SaaS: nessun dato viene inviato a server dell'autore del software o di terze parti, salvo i canali obbligatori per legge descritti al punto 4.</p>
+        <p v-else>Fogli &amp; Fatture è un'applicazione eseguita localmente sulla macchina dell'operatore (<code>localhost:1969</code>), utilizzata per la gestione di timesheet mensili e la fatturazione elettronica in regime forfettario verso più clienti. Non è un servizio SaaS: nessun dato viene inviato a server dell'autore del software o di terze parti, salvo i canali obbligatori per legge descritti al punto 4.</p>
       </div>
     </div>
 
@@ -39,7 +42,7 @@ onMounted(async () => { termini.value = await api.getTermini().catch(() => null)
             <tr><td>Fatture emesse</td><td>Numero, data, importo, descrizione, XML FatturaPA</td><td>Adempimento fiscale, invio a SDI, storico</td></tr>
             <tr><td>Credenziali PEC</td><td>Indirizzo, password casella PEC (SMTP/IMAP)</td><td>Invio fatture a SDI e ricezione ricevute di consegna/esito</td></tr>
             <tr><td>Ricevute SDI</td><td>Notifiche di consegna/scarto/esito (RC/NS/MC/NE/EC/DT/AT)</td><td>Verifica dell'esito di consegna delle fatture</td></tr>
-            <tr><td>Credenziali Google OAuth</td><td>Client ID/secret, email autorizzata</td><td>Accesso protetto all'app (whitelist di una sola email)</td></tr>
+            <tr v-if="desktop()"><td>Credenziali Google OAuth</td><td>Client ID/secret, email autorizzata</td><td>Accesso protetto all'app (whitelist di una sola email)</td></tr>
             <tr><td>Chiave API Gemini (opzionale)</td><td>API key</td><td>Ricerca automatica del codice ATECO durante la configurazione iniziale</td></tr>
           </tbody>
         </table>
@@ -53,7 +56,7 @@ onMounted(async () => { termini.value = await api.getTermini().catch(() => null)
         <ul>
           <li><strong>Sistema di Interscambio (SDI)</strong> — l'Agenzia delle Entrate, tramite PEC, per l'obbligo legale di fatturazione elettronica.</li>
           <li><strong>Gestore della casella PEC</strong> (es. Postecert o altro provider scelto dall'operatore) — per l'invio delle fatture e la ricezione delle ricevute, via SMTP/IMAP.</li>
-          <li><strong>Google</strong> — solo se configurato l'accesso OAuth, per l'autenticazione all'app.</li>
+          <li v-if="desktop()"><strong>Google</strong> — solo se configurato l'accesso OAuth, per l'autenticazione all'app.</li>
           <li><strong>Google Gemini API</strong> — solo se l'operatore inserisce volontariamente una API key e utilizza la ricerca ATECO; in tal caso vengono inviati al servizio i soli dati testuali necessari alla ricerca (es. descrizione attività), non l'intero archivio clienti/fatture.</li>
         </ul>
       </div>
@@ -62,7 +65,8 @@ onMounted(async () => { termini.value = await api.getTermini().catch(() => null)
     <div class="card">
       <div class="card-head"><h2>5. Conservazione e luogo dei dati</h2></div>
       <div class="card-body">
-        <p>Tutti i dati sono salvati in file locali sul disco della macchina che esegue l'app (cartella <code>backend/data/</code>: config, timesheet, fatture, allegati ricevute SDI). Non esiste un database remoto né una sincronizzazione cloud gestita dall'applicazione. È disponibile una funzione opzionale di backup automatico/manuale con esportazione cifrata (Impostazioni → Backup), il cui file risultante resta comunque nella disponibilità e responsabilità dell'operatore.</p>
+        <p v-if="!desktop()">Tutti i dati sono salvati in file locali nello spazio riservato all'app sul dispositivo. Non esiste un database remoto; una copia nel cloud esiste solo se l'operatore collega un proprio archivio cloud. È disponibile l'esportazione cifrata dei dati, il cui file risultante resta comunque nella disponibilità e responsabilità dell'operatore.</p>
+        <p v-else>Tutti i dati sono salvati in file locali sul disco della macchina che esegue l'app (cartella <code>backend/data/</code>: config, timesheet, fatture, allegati ricevute SDI). Non esiste un database remoto né una sincronizzazione cloud gestita dall'applicazione. È disponibile una funzione opzionale di backup automatico/manuale con esportazione cifrata (Impostazioni → Backup), il cui file risultante resta comunque nella disponibilità e responsabilità dell'operatore.</p>
         <p>Le fatture elettroniche e i relativi dati fiscali devono essere conservati secondo gli obblighi di legge italiani in materia di conservazione a norma (tipicamente 10 anni); l'app fornisce supporto a questo obbligo tramite l'esportazione dei documenti ma la conservazione sostitutiva a norma, se richiesta, resta a carico di un servizio esterno scelto dall'operatore.</p>
       </div>
     </div>
@@ -70,7 +74,8 @@ onMounted(async () => { termini.value = await api.getTermini().catch(() => null)
     <div class="card">
       <div class="card-head"><h2>6. Sicurezza</h2></div>
       <div class="card-body">
-        <p>L'accesso all'app è protetto da autenticazione Google OAuth con whitelist di una singola email autorizzata (se configurata). Le credenziali PEC e le API key sono salvate nella configurazione locale dell'app e non vengono mai trasmesse a servizi diversi da quelli strettamente necessari alla funzione che le utilizza. Essendo un'applicazione locale, la sicurezza dei dati dipende anche dalla protezione fisica/logica della macchina su cui è installata (es. cifratura disco, aggiornamenti di sistema, accesso utente).</p>
+        <p v-if="!desktop()">Le credenziali PEC e le API key sono salvate nella configurazione locale dell'app e non vengono mai trasmesse a servizi diversi da quelli strettamente necessari alla funzione che le utilizza. Essendo un'app locale, la sicurezza dei dati dipende anche dalla protezione del dispositivo su cui è installata (codice di sblocco, cifratura, aggiornamenti di sistema).</p>
+        <p v-else>L'accesso all'app è protetto da autenticazione Google OAuth con whitelist di una singola email autorizzata (se configurata). Le credenziali PEC e le API key sono salvate nella configurazione locale dell'app e non vengono mai trasmesse a servizi diversi da quelli strettamente necessari alla funzione che le utilizza. Essendo un'applicazione locale, la sicurezza dei dati dipende anche dalla protezione fisica/logica della macchina su cui è installata (es. cifratura disco, aggiornamenti di sistema, accesso utente).</p>
       </div>
     </div>
 

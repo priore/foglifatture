@@ -2,10 +2,12 @@
 import SelectField from '../common/SelectField.vue';
 import ListaPopup from '../common/ListaPopup.vue';
 import { avvisa } from '../../composables/useConferma.js';
+import { capacita } from '../../composables/useCapacita.js';
 import DateField from '../common/DateField.vue';
 // Anagrafica fornitore, regime forfettario, INPS, bollo e dati di pagamento in un'unica pagina (card per
 // categoria): sono lo stesso soggetto fiscale, l'utente li compila/verifica insieme invece che in step separati.
 import { ref, onMounted, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import LogoUpload from './LogoUpload.vue';
 import { pivaValida, codiceFiscaleValido } from '../../composables/useValidazioneFiscale.js';
 import { api } from '../../services/api.js';
@@ -29,7 +31,10 @@ function rimuoviWalletBtc(indice) {
 
 // Tab: il salvataggio resta unico (pulsante Salva del wizard), le card restano tutte nel DOM (v-show).
 const TABS = ['Anagrafica', 'Fiscale', 'Fatturazione'];
-const tabAttivo = ref(TABS[0]);
+// Nelle shell compatte la scheda si sceglie dal foglio nativo (`?sub=`): le tab restano nascoste, la query le pilota.
+const route = useRoute();
+const tabAttivo = ref(TABS.includes(route.query.sub) ? route.query.sub : TABS[0]);
+watch(() => route.query.sub, (sub) => { if (TABS.includes(sub)) tabAttivo.value = sub; });
 
 const partitaIvaOk = computed(() => pivaValida(props.modelValue.partitaIva));
 const codiceFiscaleOk = computed(() => codiceFiscaleValido(props.modelValue.codiceFiscale));
@@ -51,7 +56,7 @@ async function apriPopupSedi() {
   if (!sedi.value.length) {
     try {
       const elenco = await api.sediInps();
-      if (!Array.isArray(elenco?.sedi)) throw new Error('risposta non valida (riavviare il backend?)');
+      if (!Array.isArray(elenco?.sedi)) throw new Error('risposta non valida');
       sedi.value = elenco.sedi;
     } catch (err) {
       erroreSedi.value = `Elenco sedi non disponibile: ${err.message}`;
@@ -120,12 +125,12 @@ function selezionaCodice(codice) {
 </script>
 
 <template>
-  <div class="tab-toggle">
+  <div class="tab-toggle wizard-sub">
     <button v-for="t in TABS" :key="t" type="button" :class="tabAttivo === t ? 'btn btn-primary' : 'btn btn-ghost'" @click="tabAttivo = t">{{ t }}</button>
   </div>
   <div class="tab-pannello" v-show="tabAttivo === 'Anagrafica'">
     <div class="card" style="margin-bottom:0">
-      <div class="card-head"><h2>Fornitore</h2></div>
+      <div class="card-head ripete-passo"><h2>Fornitore</h2></div>
       <div class="card-body">
         <div class="form-grid">
           <div class="field full"><LogoUpload v-model="modelValue.logoDataUrl" etichetta="Logo per la Fattura Pro-Forma (PDF)" /></div>
@@ -348,6 +353,7 @@ function selezionaCodice(codice) {
         </p>
         <div class="form-grid riga-import">
           <div class="field"><label for="import-btc-intervallo">Controlla ogni (minuti)</label><input id="import-btc-intervallo" type="number" min="1" v-model.number="importBtc.intervalloMinuti"></div>
+          <p v-if="capacita.piattaforma !== 'desktop'" class="note-legal field-full full">Controllato quando apri l'app e, se il sistema lo consente, in background: l'intervallo è un minimo tra due controlli.</p>
           <div class="field"><label for="import-btc-conferme">Conferme minime</label><input id="import-btc-conferme" type="number" min="1" v-model.number="importBtc.confermeMinime"></div>
           <div class="field"><label for="import-btc-primario">URL provider primario</label><input id="import-btc-primario" type="url" v-model="importBtc.urlPrimario"></div>
           <div class="field"><label for="import-btc-riserva">URL provider di riserva</label><input id="import-btc-riserva" type="url" v-model="importBtc.urlFallback"></div>
@@ -369,7 +375,6 @@ function selezionaCodice(codice) {
       <div class="ai-popup" role="dialog" aria-modal="true">
         <div class="ai-popup-header">
           <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
-          <button class="btn-chiudi" @click="popupAI = null" aria-label="Chiudi">✕</button>
         </div>
         <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
         <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>

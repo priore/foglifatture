@@ -1,6 +1,9 @@
 <script setup>
+import { chiediConferma } from '../composables/useConferma.js';
+import { formattaEuro } from '../composables/useFormati.js';
 import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
+import ModuloPopup from '../components/common/ModuloPopup.vue';
 // Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, confrontati con
 // l'imposta stimata dal regime forfettario (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md).
 import { ref, computed, onMounted, watch } from 'vue';
@@ -17,6 +20,7 @@ const filtroTipo = ref('');
 const tipiVersamento = ['Imposta sostitutiva', 'INPS', 'Altro'];
 
 const codiciTributo = ['', '1790', '1791', '1792', '1715', '1727', '1728', '1729', 'PXX', 'P10'];
+const mostraFormVersamento = ref(false);
 const nuovoVersamento = ref({ data: '', tipo: tipiVersamento[0], importo: null, codice: '' });
 
 const testoIncollato = ref('');
@@ -68,6 +72,7 @@ async function salvaVersamento() {
   try {
     await api.aggiungiVersamentoF24(nuovoVersamento.value);
     nuovoVersamento.value = { data: '', tipo: tipiVersamento[0], importo: null, codice: '' };
+    mostraFormVersamento.value = false;
     await carica();
   } catch (err) {
     errore.value = err.message;
@@ -75,6 +80,7 @@ async function salvaVersamento() {
 }
 
 async function rimuoviVersamento(id) {
+  if (!(await chiediConferma('Eliminare il versamento registrato?', { titolo: 'Elimina versamento', ok: 'Elimina' }))) return;
   await api.eliminaVersamentoF24(id);
   await carica();
 }
@@ -92,10 +98,6 @@ const totaleVersato = computed(() => versamenti.value.reduce((tot, v) => tot + v
 
 function esportaCsv() {
   window.open(api.urlExportVersamentiF24(annoSelezionato.value), '_blank');
-}
-
-function formattaEuro(valore) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(valore ?? 0);
 }
 </script>
 
@@ -149,7 +151,8 @@ function formattaEuro(valore) {
           </tbody>
         </table>
 
-        <form @submit.prevent="salvaVersamento" style="display:flex;gap:12px;margin-top:20px;align-items:flex-end;flex-wrap:wrap">
+        <button type="button" class="btn btn-ok" style="margin-top:20px" @click="mostraFormVersamento = true">Aggiungi versamento</button>
+        <ModuloPopup v-if="mostraFormVersamento" come-form titolo="Nuovo versamento" descrizione="Registra un F24 già pagato" @invia="salvaVersamento" @chiudi="mostraFormVersamento = false">
           <div class="field"><label>Data</label><DateField v-model="nuovoVersamento.data" titolo="Data versamento" descrizione="Giorno in cui è stato pagato l'F24" required /></div>
           <div class="field">
             <label>Tipo</label>
@@ -165,8 +168,11 @@ function formattaEuro(valore) {
             </SelectField>
           </div>
           <div class="field"><label>Importo (€)</label><input type="number" step="0.01" min="0.01" v-model.number="nuovoVersamento.importo" required></div>
-          <button type="submit" class="btn btn-ok">Aggiungi</button>
-        </form>
+          <template #azioni>
+            <button type="submit" class="btn btn-ok">Aggiungi</button>
+            <button type="button" class="btn btn-warn" @click="mostraFormVersamento = false">Annulla</button>
+          </template>
+        </ModuloPopup>
       </div>
     </div>
 

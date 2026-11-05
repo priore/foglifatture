@@ -6,7 +6,7 @@ import path from 'node:path';
 import { setDataDir } from '../lib/jsonStore.js';
 import {
   controllaIndirizzi, controllaOra, filtraTransazioni, leggiProposte,
-  confermaProposta, scartaProposta, ripristinaProposta,
+  confermaProposta, scartaProposta, ripristinaProposta, controllaSeDovuto, salvaProposte,
 } from './importBtcService.js';
 import { leggiMovimenti, aggiungiIngresso } from './movimentiBtcService.js';
 
@@ -166,4 +166,12 @@ test('scarta e ripristina: scartata non viene riproposta', async () => {
   await ripristinaProposta(id);
   assert.equal((await leggiProposte()).proposte[0].stato, 'proposta');
   await assert.rejects(() => ripristinaProposta(id), /già proposta/);
+});
+
+test('controllaSeDovuto: non parte se spento, senza avviso privacy o prima dell\'intervallo', async () => {
+  const cfg = (importBtc) => async () => ({ walletBtc: [{ etichetta: 'w', indirizzo: MIO }], importBtc });
+  assert.equal(await controllaSeDovuto(cfg({ abilitato: false, avvisoPrivacyAccettato: true, intervalloMinuti: 60 })), null);
+  assert.equal(await controllaSeDovuto(cfg({ abilitato: true, avvisoPrivacyAccettato: false, intervalloMinuti: 60 })), null);
+  await salvaProposte([], { ultimoControllo: new Date().toISOString(), ultimoErrore: null });
+  assert.equal(await controllaSeDovuto(cfg({ abilitato: true, avvisoPrivacyAccettato: true, intervalloMinuti: 60 })), null);
 });

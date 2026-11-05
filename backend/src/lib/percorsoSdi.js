@@ -15,10 +15,12 @@ export function relativizzaPercorsoSdi(valore, dataDir) {
 }
 
 // Percorso reale da usare. `predefinito` (solo ambienti embedded, dove una cartella scelta a mano su un altro
-// dispositivo non esiste) sostituisce il vuoto e gli assoluti fuori dalla cartella dati.
-export function risolviPercorsoSdi(valore, dataDir, predefinito = '') {
+// dispositivo non esiste) sostituisce il vuoto e gli assoluti fuori dalla cartella dati, salvo quelli dentro una
+// cartella `autorizzate` (scelta col pannello nativo su questo dispositivo).
+export function risolviPercorsoSdi(valore, dataDir, predefinito = '', autorizzate = []) {
   if (valore && !path.isAbsolute(valore)) return path.join(dataDir, valore);
   if (valore && !predefinito) return valore;
   if (valore && dentro(valore, dataDir)) return valore;
+  if (valore && autorizzate.some((radice) => valore === radice || dentro(valore, radice))) return valore;
   return predefinito ? path.join(dataDir, predefinito) : '';
 }

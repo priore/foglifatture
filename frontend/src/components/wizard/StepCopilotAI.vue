@@ -126,9 +126,12 @@ function chiudiOtp() {
   background: var(--surface, #1e1e2e);
   border: 1px solid var(--border);
   border-radius: var(--radius, 12px);
-  padding: 32px;
+  --pad: 32px;
+  padding: var(--pad);
   max-width: 480px;
   width: 90%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   text-align: center;
   box-shadow: 0 8px 32px rgba(0,0,0,.4);
 }

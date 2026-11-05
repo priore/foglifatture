@@ -69,7 +69,7 @@ defineExpose({ contentDocument });
 </script>
 
 <template>
-  <div ref="wrapperRef" :style="{ height: (altezza * scala) + 'px', width: adatta ? '100%' : LARGHEZZA_A4 + 'px', position: 'relative', overflow: 'hidden' }">
+  <div ref="wrapperRef" class="anteprima-doc" :style="{ height: (altezza * scala) + 'px', width: adatta ? '100%' : LARGHEZZA_A4 + 'px', position: 'relative', overflow: 'hidden' }">
     <iframe
       ref="iframeRef"
       sandbox="allow-same-origin"

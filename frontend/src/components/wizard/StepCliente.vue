@@ -192,7 +192,6 @@ async function aiutamiCapire7Septies() {
       <div class="ai-popup" role="dialog" aria-modal="true">
         <div class="ai-popup-header">
           <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
-          <button class="btn-chiudi" @click="popupAI = null" aria-label="Chiudi">✕</button>
         </div>
         <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
         <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>

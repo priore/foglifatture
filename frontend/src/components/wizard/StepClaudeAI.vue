@@ -79,7 +79,7 @@ async function salvaClaude() {
         <p class="note-legal" style="margin-top:6px">
           Necessario solo se l'API key è collegata a più workspace dell'organizzazione: in quel
           caso Claude risponde con l'errore "anthropic-workspace-id is required". Trovi l'ID in
-          console.anthropic.com → Settings → Workspaces. Lascia vuoto se non serve.
+          <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> → Settings → Workspaces. Lascia vuoto se non serve.
         </p>
       </div>
     </div>
@@ -112,9 +112,9 @@ async function salvaClaude() {
       <div class="card-head"><h2>Come ottenere una Claude API Key</h2></div>
       <div class="card-body">
         <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:.88rem;line-height:1.6">
-          <li>Vai su <strong>console.anthropic.com</strong> e accedi.</li>
+          <li>Vai su <strong><a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a></strong> e accedi.</li>
           <li>Vai in <strong>API Keys</strong>, crea una nuova chiave e copiala.</li>
-          <li>Incollala nel campo qui sopra e salva: vale subito, senza bisogno di riavviare il servizio.</li>
+          <li>Incollala nel campo qui sopra e salva: vale subito.</li>
         </ol>
       </div>
     </div>

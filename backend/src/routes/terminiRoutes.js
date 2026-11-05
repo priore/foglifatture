@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getConfig, accettaTermini } from '../services/configService.js';
-import { VERSIONE_TERMINI, TESTO_TERMINI, APPROVAZIONE_SPECIFICA, terminiAccettati } from '../lib/termini.js';
+import { VERSIONE_TERMINI, testoTermini, APPROVAZIONE_SPECIFICA, terminiAccettati } from '../lib/termini.js';
 
 export const terminiRoutes = Router();
 
@@ -8,7 +8,7 @@ terminiRoutes.get('/', async (req, res) => {
   const config = await getConfig();
   res.json({
     versione: VERSIONE_TERMINI,
-    testo: TESTO_TERMINI,
+    testo: testoTermini(),
     approvazioneSpecifica: APPROVAZIONE_SPECIFICA,
     accettati: terminiAccettati(config),
     accettatoIl: config.termini?.accettatoIl || null,

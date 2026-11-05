@@ -28,6 +28,8 @@ export const api = {
   // Configurazione (anagrafica fornitore/cliente, tariffa, PEC)
   getConfig: () => richiesta('/config'),
   saveConfig: (config) => richiesta('/config', { method: 'PUT', body: JSON.stringify(config) }),
+  clientiConDati: () => richiesta('/config/clienti/con-dati'),
+  eliminaCliente: (id) => richiesta(`/config/clienti/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   spostaPercorsoDati: (percorso) => richiesta('/config/percorso-dati', { method: 'PUT', body: JSON.stringify({ percorso }) }),
   apriArchivioEsistente: (percorso) => richiesta('/config/percorso-dati/apri', { method: 'PUT', body: JSON.stringify({ percorso }) }),
 
@@ -256,6 +258,7 @@ export const api = {
   // Registro lotti BTC (FP-012/013): movimenti manuali, lotti LIFO, plusvalenze, RW
   movimentiBtc: () => richiesta('/forfettario/btc/movimenti'),
   aggiungiIngressoBtc: (dati) => richiesta('/forfettario/btc/movimenti/ingresso', { method: 'POST', body: JSON.stringify(dati) }),
+  dichiaraGiacenzaBtc: (dati) => richiesta('/forfettario/btc/movimenti/giacenza', { method: 'POST', body: JSON.stringify(dati) }),
   aggiungiUscitaBtc: (dati) => richiesta('/forfettario/btc/movimenti/uscita', { method: 'POST', body: JSON.stringify(dati) }),
   eliminaMovimentoBtc: (id) => richiesta(`/forfettario/btc/movimenti/${id}`, { method: 'DELETE' }),
   lottiBtc: (anno) => richiesta(`/forfettario/btc/lotti?anno=${anno}`),

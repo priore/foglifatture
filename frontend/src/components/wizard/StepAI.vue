@@ -3,7 +3,8 @@
 // della catena: Gemini (API key + CLI OAuth) → GitHub Copilot (CLI OAuth) →
 // Claude (API key) → Groq (API key) → LLM locale (offline).
 // Lo stato AI non viene caricato al mount: l'utente clicca "Verifica stato" quando vuole.
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { api } from '../../services/api.js';
 import StepGeminiAI from './StepGeminiAI.vue';
 import StepCopilotAI from './StepCopilotAI.vue';
@@ -22,7 +23,11 @@ const PROVIDER_PER_SCHEDA = {
   locale:  ['llm-locale'],
 };
 
-const schedaAttiva = ref('gemini');
+// Nelle shell compatte la scheda si sceglie dal foglio nativo (`?sub=`): le tab restano nascoste, la query le pilota.
+const route = useRoute();
+const SCHEDE = ['gemini', 'copilot', 'claude', 'groq', 'locale'];
+const schedaAttiva = ref(SCHEDE.includes(route.query.sub) ? route.query.sub : 'gemini');
+watch(() => route.query.sub, (sub) => { if (SCHEDE.includes(sub)) schedaAttiva.value = sub; });
 
 const geminiOk = ref(false);
 const copilotOk = ref(false);
@@ -100,7 +105,7 @@ async function verificaStato() {
     <p class="note-legal" style="margin-bottom:12px">
       Il sistema AI usa una catena di fallback automatica: se un provider è esaurito o non configurato,
       passa al successivo senza interrompere l'operazione. Configura almeno uno dei provider gratuiti
-      (Gemini o GitHub Copilot) per avere l'AI sempre disponibile senza costi.
+      ({{ capacita.aiCli ? 'Gemini o GitHub Copilot' : 'Gemini, Groq o Claude' }}) per avere l'AI sempre disponibile senza costi.
     </p>
 
     <div class="ai-cards">
@@ -117,7 +122,7 @@ async function verificaStato() {
     </div>
     </div>
 
-    <div class="tab-row">
+    <div class="tab-row wizard-sub">
       <button class="tab-btn" :class="{ attiva: schedaAttiva === 'gemini' }" @click="schedaAttiva = 'gemini'">
         <span class="dot-stato" :class="{ attivo: geminiOk }"></span>Gemini
         <span class="tab-badge free">gratuito</span>

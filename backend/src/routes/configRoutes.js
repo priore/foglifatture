@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getConfigSicura, saveConfig, validaConfig, spostaPercorsoDati, apriArchivioEsistente } from '../services/configService.js';
+import { clientiConDati, eliminaCliente } from '../services/clientiService.js';
 import { logger } from '../lib/logger.js';
 
 export const configRoutes = Router();
@@ -37,6 +38,20 @@ configRoutes.put('/percorso-dati/apri', async (req, res) => {
     res.json({ percorso: await apriArchivioEsistente(percorso) });
   } catch (err) {
     logger.error('Errore apertura archivio esistente', { errore: err.message });
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+// Clienti con fatture, numeri o timesheet compilati: per questi esiste solo la disattivazione.
+configRoutes.get('/clienti/con-dati', async (req, res) => {
+  res.json(await clientiConDati());
+});
+
+configRoutes.delete('/clienti/:id', async (req, res) => {
+  try {
+    await eliminaCliente(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(400).json({ errore: err.message });
   }
 });

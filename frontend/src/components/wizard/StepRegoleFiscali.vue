@@ -370,7 +370,6 @@ async function apriEstratto(fonte) {
       <div class="ai-popup" role="dialog" aria-modal="true">
         <div class="ai-popup-header">
           <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
-          <button class="btn-chiudi" @click="popupAI = false" aria-label="Chiudi">✕</button>
         </div>
         <div class="ai-popup-body">
           <div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div>
@@ -388,7 +387,6 @@ async function apriEstratto(fonte) {
       <div class="ai-popup fonte-popup" role="dialog" aria-modal="true">
         <div class="ai-popup-header">
           <span class="ai-popup-titolo">{{ popupFonte.voce.titolo }}</span>
-          <button class="btn-chiudi" @click="popupFonte = null" aria-label="Chiudi">✕</button>
         </div>
         <div class="ai-popup-body">
           <div v-if="popupFonte.estratto" class="fonte-brano">
@@ -412,7 +410,6 @@ async function apriEstratto(fonte) {
       <div class="ai-popup" role="dialog" aria-modal="true">
         <div class="ai-popup-header">
           <span class="ai-popup-titolo">✓ Regole {{ popupConferma.anno }} confermate</span>
-          <button class="btn-chiudi" @click="popupConferma = null" aria-label="Chiudi">✕</button>
         </div>
         <div class="ai-popup-body">
           <p class="ai-popup-testo">Le regole fiscali per l'anno {{ popupConferma.anno }} sono state confermate e sono ora attive.</p>

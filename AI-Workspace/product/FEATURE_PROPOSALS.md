@@ -44,6 +44,72 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ---
 
+## FP-008 — Avviso su numero fattura duplicato nell'import dello ZIP del Cassetto Fiscale
+
+**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S
+
+🟢 L'import dello ZIP accetta una fattura storica con un numero già usato nello stesso anno (verificato con un archivio di prova). Dopo l'import ogni nuova emissione risponde 409 «numeri duplicati».
+- decisione di prodotto: l'import deve avvisare, rifiutare la fattura o accettarla come oggi
+- un avviso in anteprima (colonna «Dettaglio» della tabella) basterebbe a evitare la sorpresa all'emissione
+
+**Riferimenti:** `frontend/src/views/ImportaStoricoView.vue` (anteprima ZIP), `backend/src/services/invoiceService.js`
+
+---
+
+## FP-009 — Creare ed eliminare F24 dalla dashboard
+
+**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+
+🟢 Le rotte `POST /f24` e `DELETE /f24/:id` esistono ma il frontend non le usa: nel tab F24 della dashboard non c'è modo di creare o eliminare un F24, solo di registrare versamenti e crediti.
+- decisione di prodotto: è una scelta voluta (F24 solo stimati) o una mancanza
+
+**Riferimenti:** `frontend/src/views/DashboardView.vue`, `frontend/src/views/VersamentiF24View.vue`, `backend/src/routes/forfettarioRoutes.js`
+
+---
+
+## FP-010 — Valori di mercato nei movimenti Bitcoin
+
+**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+
+🟢 `GET /api/forfettario/btc/movimenti` non restituisce `valoriMercato`, che stanno in `btc/rw`. Chi consuma solo i movimenti deve fare una seconda chiamata.
+- decidere se unificare le due risposte o lasciare la separazione
+
+**Riferimenti:** `backend/src/routes/forfettarioRoutes.js`
+
+---
+
+## FP-011 — Campo data vuoto: aprire il calendario sul mese corrente
+
+**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+
+🟡 Con un `DateField` vuoto il calendario si apre sul mese di default; scegliere una data lontana richiede molti passaggi di mese.
+- aprire sul mese corrente e permettere la scelta rapida dell'anno
+
+**Riferimenti:** `frontend/src/components/common/DateField.vue`, `frontend/src/components/common/CalendarioPopup.vue`
+
+---
+
+## FP-012 — Riordino delle card della dashboard
+
+**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** M
+
+🔴 L'ordine delle card è fisso. Un riordino scelto dall'utente, ricordato per dispositivo (preferenza di visualizzazione, non dato fiscale), adatterebbe la dashboard all'uso.
+
+**Riferimenti:** `frontend/src/views/DashboardView.vue`
+
+---
+
+## FP-013 — Test UI dei pagamenti da CSV con Gemini simulato
+
+**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+
+🟢 Il riconoscimento delle colonne del CSV bancario passa da Gemini, richiesta esterna bloccata nei test UI: oggi la sezione «Pagamenti fatture» è provata solo all'apertura.
+- simulare la risposta con una route di test e coprire proposte, abbinamento e conferma
+
+**Riferimenti:** `frontend/src/views/ImportaStoricoView.vue`, `backend/src/services/`
+
+---
+
 ## Review Checklist
 
 - **Completeness:** solo le proposte non ancora implementate. Le voci realizzate sono state rimosse, la numerazione resta stabile.

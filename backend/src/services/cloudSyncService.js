@@ -114,10 +114,17 @@ async function provider() {
   return remotoCache ??= await providerAuth();
 }
 
+// Chi ospita il servizio imposta `globalThis.__cloudBloccato` quando i dati in uso sono di prova: collegare un archivio vero li
+// copierebbe sul provider, o scriverebbe sui dati veri con l'app ancora in prova.
+function controllaNonBloccato() {
+  if (globalThis.__cloudBloccato) throw new Error('Con la modalità dimostrativa attiva non si può collegare un archivio cloud: esci dalla modalità dimostrativa e riprova');
+}
+
 // ---- login OAuth (PKCE) ----
 // `redirectUri` assente: flusso a codice senza redirect (Dropbox mostra il codice, l'utente lo incolla).
 // Il client ID è quello dell'app dello sviluppatore (cloudClients.js): l'utente fa solo il login al suo account.
 export async function avviaLogin({ provider: nome, redirectUri }) {
+  controllaNonBloccato();
   if (!PROVIDER_CLOUD.includes(nome)) throw new Error('Provider non valido');
   const cliente = dipendenze.clienti(nome);
   if (!cliente.clientId) throw new Error('Questo provider non è ancora disponibile in questa versione dell\'app');
@@ -208,6 +215,7 @@ async function sostituisciCopia(staging) {
 // 'apri': l'archivio trovato sul provider diventa la copia locale; i dati locali attuali restano dove sono, intatti.
 // 'carica': il provider è vuoto, vi si copiano i dati locali attuali (copia, non spostamento).
 export async function scegliArchivio(azione) {
+  controllaNonBloccato();
   await caricaStato();
   if (!stato?.connesso) throw new Error('Provider non collegato');
   if (azione !== 'apri' && azione !== 'carica') throw new Error('Azione non valida');

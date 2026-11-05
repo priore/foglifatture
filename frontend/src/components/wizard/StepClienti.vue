@@ -1,7 +1,8 @@
 <script setup>
 import { chiediConferma, avvisa } from '../../composables/useConferma.js';
 import SelectField from '../common/SelectField.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { api } from '../../services/api.js';
 import StepCliente from './StepCliente.vue';
 import TemplateGrid from './TemplateGrid.vue';
 
@@ -47,8 +48,28 @@ async function disattivaCliente(cliente) {
     return;
   }
   if (!(await chiediConferma(`Disattivare "${cliente.denominazione || 'questo cliente'}"? Rimane nello storico ma sparisce dai selettori.`, { titolo: 'Disattiva cliente', ok: 'Disattiva' }))) return;
-  if (!(await chiediConferma('Confermi? Potrai riattivarlo in qualsiasi momento da "Clienti disattivati".', { titolo: 'Disattiva cliente' }))) return;
+  if (!(await chiediConferma('Confermi? Potrai riattivarlo in qualsiasi momento da "Clienti disattivati".', { titolo: 'Disattiva cliente', ok: 'Disattiva' }))) return;
   cliente.attivo = false;
+}
+
+// Id dei clienti con fatture, numeri o timesheet compilati: per loro «Elimina» resta disattivato.
+const conDati = ref(new Set());
+onMounted(async () => {
+  try { conDati.value = new Set(await api.clientiConDati()); } catch { /* il server rifiuta comunque l'eliminazione */ }
+});
+const titoloElimina = (cliente) => (conDati.value.has(cliente.id)
+  ? 'Ha fatture o timesheet associati: si può solo disattivare'
+  : 'Elimina definitivamente il cliente');
+
+async function eliminaClienteDef(cliente) {
+  if (!(await chiediConferma(`Eliminare definitivamente "${cliente.denominazione || 'questo cliente'}"? Non ha dati associati e l'operazione non si può annullare.`, { titolo: 'Elimina cliente', ok: 'Elimina' }))) return;
+  try {
+    await api.eliminaCliente(cliente.id);
+  } catch (err) {
+    await avvisa(err.message, { titolo: 'Elimina cliente' });
+    return;
+  }
+  props.modelValue.splice(props.modelValue.indexOf(cliente), 1);
 }
 
 function riattivaCliente(cliente) {
@@ -77,8 +98,11 @@ function riattivaCliente(cliente) {
         @keydown.enter="toggleAperto(cliente.id)"
         @keydown.space.prevent="toggleAperto(cliente.id)"
       >
-        <h3 style="margin:0">{{ cliente.denominazione || 'Nuovo cliente' }}</h3>
-        <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
+        <h3 class="titolo-cliente"><span class="chevron-cliente solo-compatto" :class="{ aperto: aperti.has(cliente.id) }" aria-hidden="true">›</span>{{ cliente.denominazione || 'Nuovo cliente' }}</h3>
+        <span class="azioni-cliente">
+          <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
+          <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click.stop="eliminaClienteDef(cliente)">Elimina</button>
+        </span>
       </div>
       <div class="card-body" v-show="aperti.has(cliente.id)">
         <div class="sub-cards">
@@ -117,7 +141,7 @@ function riattivaCliente(cliente) {
         <section class="card" style="margin-bottom:0">
           <div class="card-head"><h2>Pagamento e fatturazione</h2></div>
           <div class="card-body">
-          <div style="display:flex;gap:20px">
+          <div class="riga-campi">
             <div class="field" style="flex:1">
               <label>Modalità di pagamento</label>
               <SelectField titolo="Modalità di pagamento" descrizione="Come il cliente paga le fatture" v-model="cliente.modalitaPagamento">
@@ -157,10 +181,10 @@ function riattivaCliente(cliente) {
           </div>
         </div>
    </section>
-        <section class="card" style="margin-bottom:0">
+        <section class="card sezione-template" style="margin-bottom:0">
           <div class="card-head"><h2>Template</h2></div>
           <div class="card-body">
-          <div style="display:flex;gap:20px">
+          <div class="riga-campi">
             <div class="field" style="flex:1">
               <label>Template fattura</label>
               <TemplateGrid v-model="cliente.templateFatturaId" tipo="fattura" fallback-id="fattura-default" @update:model-value="emit('salva-subito')" />
@@ -173,6 +197,10 @@ function riattivaCliente(cliente) {
         </div>
    </section>
         </div>
+        <div class="azioni-cliente-piede">
+          <button type="button" class="btn btn-ghost" @click="disattivaCliente(cliente)">Disattiva</button>
+          <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click="eliminaClienteDef(cliente)">Elimina</button>
+        </div>
       </div>
     </div>
 
@@ -180,13 +208,18 @@ function riattivaCliente(cliente) {
       <summary>Clienti disattivati</summary>
       <div v-for="cliente in modelValue.filter(c => !c.attivo)" :key="cliente.id" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
         <span>{{ cliente.denominazione || 'Cliente senza nome' }}</span>
-        <button type="button" class="btn btn-ghost" @click="riattivaCliente(cliente)">Riattiva</button>
+        <span class="azioni-cliente">
+          <button type="button" class="btn btn-ghost" @click="riattivaCliente(cliente)">Riattiva</button>
+          <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click="eliminaClienteDef(cliente)">Elimina</button>
+        </span>
       </div>
     </details>
   </div>
 </template>
 
 <style scoped>
+.azioni-cliente { display: flex; gap: 8px; }
+.titolo-cliente { margin: 0; }
 .clienti-cerca-input {
   flex: 1; border: 1px solid var(--line); border-radius: var(--radius-md);
   padding: 9px 11px; font-size: var(--font-size-base); background: var(--ground); color: var(--ink);

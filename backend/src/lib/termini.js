@@ -18,6 +18,12 @@ export const TESTO_TERMINI = `1. Natura dello strumento. Fogli & Fatture è uno 
 
 5. Modifiche. Se i termini cambiano, l'accettazione viene richiesta di nuovo.`;
 
+// Il nome del prodotto nel testo: sul desktop è «Fogli & Fatture»; l'app embedded imposta `globalThis.__nomeApp`.
+const NOME_PRODOTTO = 'Fogli & Fatture';
+export function testoTermini() {
+  return TESTO_TERMINI.replaceAll(NOME_PRODOTTO, globalThis.__nomeApp || NOME_PRODOTTO);
+}
+
 // Clausole che richiedono approvazione specifica per iscritto (art. 1341 c. 2 c.c.).
 export const APPROVAZIONE_SPECIFICA = 'Approvo specificamente, ai sensi dell\'art. 1341, secondo comma, del codice civile, la clausola 4 (Limitazione di responsabilità).';
 

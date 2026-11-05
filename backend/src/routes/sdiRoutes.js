@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getConfig } from '../services/configService.js';
-import { controllaRicevuteSdi, listaTutteRicevute } from '../services/sdiRicevuteService.js';
+import { controllaRicevuteSdi, listaTutteRicevute, raggruppaCronologia } from '../services/sdiRicevuteService.js';
 import { listMesiFatturati, getInvoice } from '../services/invoiceService.js';
 
 export const sdiRoutes = Router();
@@ -27,5 +27,5 @@ sdiRoutes.get('/cronologia', async (req, res) => {
     ...invio, anno: mesi[i].anno, mese: mesi[i].mese, clienteId: mesi[i].clienteId,
   }))).sort((a, b) => b.dataInvio.localeCompare(a.dataInvio));
   const ricevute = await listaTutteRicevute(config.sdi.percorsoArchivio);
-  res.json({ invii, ricevute });
+  res.json({ invii: raggruppaCronologia(invii, ricevute, config.fornitore) });
 });

@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { setDataDir } from '../lib/jsonStore.js';
-import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato } from './movimentiBtcService.js';
+import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato, dichiaraGiacenza, dataUltimaGiacenza } from './movimentiBtcService.js';
 import { anteprimaUscita, lottiConStato } from './lottiBtcService.js';
 
 const dirs = [];
@@ -83,4 +83,35 @@ test('anteprima uscita: LIFO senza salvare', async () => {
   const [lotto] = await lottiConStato(2026);
   assert.equal(lotto.stato, 'intatto');
   await assert.rejects(() => anteprimaUscita({ ...vendita, ricavoEur: 0 }), /Ricavo/);
+});
+
+test('giacenza: costo assente = 0 con avviso, nessuna scrittura se esiste già senza modalità', async () => {
+  const g = { data: '2099-01-01', satoshi: 50_000_000, custodia: 'Ledger' };
+  const { movimento, avvisi } = await dichiaraGiacenza(g);
+  assert.equal(movimento.tipo, 'saldo-iniziale');
+  assert.equal(movimento.costoNonDocumentato, true);
+  assert.ok(avvisi.some((a) => /Costo non documentato/.test(a)));
+  const doppio = await dichiaraGiacenza({ ...g, custodia: ' ledger ' });
+  assert.equal(doppio.esistente.id, movimento.id);
+  assert.equal((await leggiMovimenti()).ingressi.length, 1);
+});
+
+test('giacenza: somma e sovrascrivi sullo stesso wallet, wallet diverso = giacenza separata', async () => {
+  const base = { data: '2099-01-01', satoshi: 10_000_000, costoEur: 100, custodia: 'Ledger' };
+  const { movimento: m } = await dichiaraGiacenza(base);
+  const somma = await dichiaraGiacenza({ ...base, data: '2099-03-01', satoshi: 5_000_000, costoEur: 70 }, 'somma');
+  assert.deepEqual([somma.movimento.id, somma.movimento.satoshi, somma.movimento.costoEur, somma.movimento.data], [m.id, 15_000_000, 170, '2099-03-01']);
+  const sovr = await dichiaraGiacenza({ ...base, satoshi: 2_000_000 }, 'sovrascrivi');
+  assert.equal(sovr.movimento.satoshi, 2_000_000);
+  assert.equal(sovr.movimento.costoNonDocumentato, undefined);
+  await dichiaraGiacenza({ ...base, custodia: 'Trezor' });
+  assert.equal((await leggiMovimenti()).ingressi.length, 2);
+  assert.equal(await dataUltimaGiacenza(), '2099-01-01');
+  await assert.rejects(dichiaraGiacenza(base, 'boh'), /Modalità/);
+});
+
+test('giacenza: il lotto entra nel saldo', async () => {
+  await dichiaraGiacenza({ data: '2099-01-01', satoshi: 10_000_000 });
+  const lotti = await lottiConStato(2099);
+  assert.equal(lotti.reduce((t, l) => t + l.residui, 0), 10_000_000);
 });

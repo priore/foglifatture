@@ -38,6 +38,7 @@ function rimuovi() {
       <FileDrop
         accept="image/png,image/jpeg,image/svg+xml"
         label="Trascina un'immagine o clicca"
+        label-touch="Tocca per scegliere un'immagine"
         style="flex:1"
         @change="files => onFileSelezionato(files[0])"
       />

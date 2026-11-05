@@ -68,7 +68,7 @@ export async function creditiConResiduo(oggi = new Date().toISOString().slice(0,
     if (f24.stato === 'annullato') continue;
     for (const riga of f24.righe ?? []) {
       if (riga.creditoId) {
-        utilizziPerId[riga.creditoId] = (utilizziPerId[riga.creditoId] ?? 0) + riga.importo;
+        utilizziPerId[riga.creditoId] = (utilizziPerId[riga.creditoId] ?? 0) + Math.abs(riga.importo); // le righe a credito dei F24 con compensazione hanno importo negativo
       }
     }
   }

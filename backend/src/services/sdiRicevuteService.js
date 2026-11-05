@@ -411,6 +411,35 @@ export async function listaTutteRicevute(percorsoArchivio) {
   return listaRicevuteArchivio(percorsoArchivio, '');
 }
 
+/**
+ * Una scheda per fattura (anno/mese/cliente): lo stato è quello dell'ultimo invio, perché
+ * un rinvio sostituisce i tentativi precedenti (scartati o senza risposta); questi restano
+ * in tentativiPrecedenti. Le ricevute si legano all'invio dal progressivo nel nome file
+ * IT<piva>_<progressivo>_<TIPO>... Ordinate dalla più recente.
+ * @returns {Array<{ ...ultimoInvio, stato: 'errore-invio'|'accettata'|'scartata'|'in-attesa', ricevute, tentativiPrecedenti }>}
+ */
+export function raggruppaCronologia(invii, ricevute, fornitore) {
+  const perInvio = invii.map((invio) => {
+    const prefisso = `${generaNomeFileXml(fornitore, invio.progressivoInvio).replace(/\.xml$/i, '')}_`;
+    const proprie = ricevute.filter((r) => r.nomeFile.startsWith(prefisso))
+      .sort((a, b) => a.data.localeCompare(b.data));
+    const ultima = [...proprie].reverse().find((r) => TIPI_ACCETTAZIONE.has(r.tipo) || r.tipo === 'NS' || r.tipo === 'MC');
+    let stato = 'in-attesa';
+    if (invio.esito === 'errore-invio') stato = 'errore-invio';
+    else if (ultima) stato = TIPI_ACCETTAZIONE.has(ultima.tipo) ? 'accettata' : 'scartata';
+    return { ...invio, stato, ricevute: proprie };
+  }).sort((a, b) => b.dataInvio.localeCompare(a.dataInvio));
+
+  const perFattura = new Map();
+  for (const invio of perInvio) {
+    const chiave = `${invio.clienteId}|${invio.anno}|${invio.mese}`;
+    const scheda = perFattura.get(chiave);
+    if (scheda) scheda.tentativiPrecedenti.push(invio);
+    else perFattura.set(chiave, { ...invio, tentativiPrecedenti: [] });
+  }
+  return [...perFattura.values()];
+}
+
 async function listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile) {
   // Le ricevute sono smistate in <archivio>/<anno>/<esito>/ (Accettate/Rifiutate/...); si
   // scandiscono anche la cartella archivio e le sue sottocartelle esito direttamente, per

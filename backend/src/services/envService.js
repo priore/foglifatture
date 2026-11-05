@@ -9,7 +9,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import keytar from 'keytar';
 
-const ENV_PATH = path.join(import.meta.dirname, '..', '..', '.env');
+const ENV_PATH_DEFAULT = path.join(import.meta.dirname, '..', '..', '.env');
+// Sostituibile da variabile d'ambiente, letta a ogni uso: chi non può scrivere accanto al codice indica un altro file.
+const envPath = () => process.env.FOGLIFATTURE_ENV_PATH || ENV_PATH_DEFAULT;
 const CHIAVI_GESTITE = ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAIL', 'GEMINI_MODEL', 'GROQ_MODEL', 'CLAUDE_MODEL', 'CLAUDE_WORKSPACE_ID', 'LLM_LOCALE_URL', 'AI_PROVIDER_DISABILITATI'];
 const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
 const KEYTAR_ACCOUNT_GOOGLE_SECRET = 'oauth.googleClientSecret';
@@ -28,7 +30,7 @@ function parseEnv(contenuto) {
 }
 
 export async function leggiCredenzialiOAuth() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   const { valori } = parseEnv(contenuto);
   const [googleClientSecret, geminiApiKey, groqApiKey, claudeApiKey] = await Promise.all([
     keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT_GOOGLE_SECRET),
@@ -55,7 +57,7 @@ export async function leggiCredenzialiOAuth() {
 
 // Aggiorna solo le righe delle chiavi gestite, preservando il resto del file (commenti, PORT, ecc.).
 export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret, allowedEmail, geminiApiKey, groqApiKey, claudeApiKey, claudeWorkspaceId, llmLocaleUrl, aiProviderDisabilitati }) {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
 
   const nuoviValori = { ...valori };
@@ -88,7 +90,7 @@ export async function salvaCredenzialiOAuth({ googleClientId, googleClientSecret
     if (!chiaviScritte.has(chiave)) righeAggiornate.push(`${chiave}=${nuoviValori[chiave] ?? ''}`);
   }
 
-  await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
+  await writeFile(envPath(), righeAggiornate.join('\n'), 'utf-8');
 }
 
 // Letta dal Keychain (non da process.env) così la key vale subito dopo il salvataggio, senza riavviare il server.
@@ -104,12 +106,12 @@ export async function leggiGoogleClientSecret() {
 // Modello Gemini valido scoperto/verificato l'ultima volta (vedi geminiAtecoService):
 // evita di rifare la ListModels ad ogni chiamata finché il modello continua a funzionare.
 export async function leggiGeminiModello() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.GEMINI_MODEL || '';
 }
 
 async function salvaChiaveEnv(chiave, valore) {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   const { righe, valori } = parseEnv(contenuto);
   valori[chiave] = valore;
   const righeAggiornate = [];
@@ -126,7 +128,7 @@ async function salvaChiaveEnv(chiave, valore) {
   for (const c of CHIAVI_GESTITE) {
     if (!chiaviScritte.has(c)) righeAggiornate.push(`${c}=${valori[c] ?? ''}`);
   }
-  await writeFile(ENV_PATH, righeAggiornate.join('\n'), 'utf-8');
+  await writeFile(envPath(), righeAggiornate.join('\n'), 'utf-8');
 }
 
 export async function salvaGeminiModello(modello) {
@@ -139,7 +141,7 @@ export async function leggiGroqApiKey() {
 }
 
 export async function leggiGroqModello() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.GROQ_MODEL || '';
 }
 
@@ -153,7 +155,7 @@ export async function leggiClaudeApiKey() {
 }
 
 export async function leggiClaudeModello() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.CLAUDE_MODEL || '';
 }
 
@@ -165,14 +167,14 @@ export async function salvaClaudeModello(modello) {
 // anthropic-workspace-id su ogni richiesta, altrimenti l'API risponde 400. Non è un segreto
 // (identificatore), resta in .env come GEMINI_MODEL/GROQ_MODEL.
 export async function leggiClaudeWorkspaceId() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.CLAUDE_WORKSPACE_ID || '';
 }
 
 // URL custom per LLM locale (Ollama/LM Studio o server remoto OpenAI-compat).
 // Vuoto = usa i default (localhost:11434 e localhost:1234).
 export async function leggiLlmLocaleUrl() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return parseEnv(contenuto).valori.LLM_LOCALE_URL || '';
 }
 
@@ -181,6 +183,6 @@ export async function salvaLlmLocaleUrl(url) {
 }
 
 export async function leggiProviderDisabilitati() {
-  const contenuto = await readFile(ENV_PATH, 'utf-8').catch(() => '');
+  const contenuto = await readFile(envPath(), 'utf-8').catch(() => '');
   return (parseEnv(contenuto).valori.AI_PROVIDER_DISABILITATI || '').split(',').map((s) => s.trim()).filter(Boolean);
 }

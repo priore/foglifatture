@@ -101,7 +101,7 @@ async function riavvia() {
       <div class="card-head"><h2>Come ottenere Client ID e Client Secret</h2></div>
       <div class="card-body">
         <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:.88rem;line-height:1.6">
-          <li>Vai su <strong>console.cloud.google.com</strong> e accedi con il tuo account Google personale.</li>
+          <li>Vai su <strong><a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a></strong> e accedi con il tuo account Google personale.</li>
           <li>In alto a sinistra clicca il selettore progetti → <strong>Nuovo progetto</strong>. Dagli un nome a piacere (es. "Fatturazione") e crealo.</li>
           <li>Con il progetto selezionato, apri il menu ☰ → <strong>API e servizi</strong> → <strong>Schermata consenso OAuth</strong>.</li>
           <li>Scegli tipo utente <strong>Esterno</strong> → Crea. Compila nome app, la tua email come contatto, e salva/continua nelle schermate successive (scope e utenti di test si possono lasciare vuoti).</li>

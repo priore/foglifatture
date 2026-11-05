@@ -72,6 +72,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Timesheet multi-cliente** — ore giornaliere per cliente, con tariffa oraria propria per ciascuno.
 - **Promemoria fine mese** — notifica opzionale per non dimenticare di compilare il timesheet.
 - **Import storico** — importazione di timesheet pregressi (XLS) e fatture già emesse (XML FatturaPA), per partire senza perdere lo storico.
+  - Le sezioni si scelgono da una tabbar in alto; il menu laterale mostra la sola voce «Importa storico».
 
 ### Fatturazione elettronica
 
@@ -95,6 +96,11 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
     - Numeri duplicati, copie in conflitto del cloud o file estranei nella cartella delle fatture.
     - Due fatture con lo stesso numero, nate da due dispositivi, si sistemano da sole: il documento non ancora inviato passa al primo numero libero.
     - Un numero prenotato e mai usato in fondo alla sequenza si libera dopo 10 minuti.
+- **Giacenza Bitcoin dichiarata a mano** — nel registro BTC si indicano i BTC posseduti senza storico dei movimenti, una giacenza per wallet.
+  - Entra nel saldo e nel quadro RW; il costo di acquisto è facoltativo, con avviso se manca.
+  - Se il wallet ha già una giacenza, un popup chiede se sommare o sovrascrivere.
+  - Le transazioni importate precedenti alla giacenza sono segnalate come possibili duplicati.
+- **Elimina cliente** — eliminazione definitiva di un cliente senza fatture, note di credito o timesheet compilati; deve restare almeno un cliente attivo.
 - **Nota di credito (TD04)** — storno totale o parziale di una fattura già accettata dallo SDI.
   - Prende il prossimo numero della sequenza, con XML collegato alla fattura stornata, download e invio PEC.
   - La fattura stornata esce dal dovuto e dai ricavi per competenza; se già pagata, l'app segnala la somma da rimborsare.
@@ -107,6 +113,10 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - Riconoscimento e archiviazione delle ricevute (accettazione, scarto, consegna, mancata consegna...), anche se annidate in altre email.
   - Le fatture ricevute nella casella non vengono scambiate per ricevute né rielaborate.
   - Notifica desktop.
+- **Cronologia PEC** — una scheda per ogni fattura inviata, con le ricevute SDI collegate.
+  - Percorso a tappe: Inviata, Risposta SDI, Esito (accettata o scartata).
+  - In alto le fatture da risolvere (scartate, invio non riuscito, nessuna ricevuta da oltre 48 ore), con errore SDI e pulsante per aprire la fattura.
+  - Un rinvio sostituisce i tentativi precedenti, che restano in un elenco apribile.
 - **Email separata per timesheet e fattura** — ogni cliente può avere indirizzi email distinti per l'invio del timesheet e della fattura, con supporto più destinatari per indirizzo.
 
 ### Dashboard e F24
@@ -167,6 +177,8 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 - **Interfaccia a popup coerente** — calendari, liste di scelta, conferme e avvisi si aprono al centro dello schermo, con titolo, descrizione e pulsanti OK e Annulla.
   - Liste lunghe (ATECO, sede INPS, paesi) con casella di ricerca.
   - Un tap fuori dal popup o Esc chiude senza modificare nulla.
+  - Anche i moduli di inserimento (incassi, uscite, versamenti F24) si aprono in un popup.
+- **Menu laterale con icone e comprimibile** — ogni voce ha un'icona; un pulsante accanto al titolo comprime il menu alle sole icone e la scelta resta memorizzata.
 
 ## Sicurezza
 

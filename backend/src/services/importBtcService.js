@@ -6,7 +6,7 @@
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
 import { notifica } from '../lib/notifier.js';
-import { aggiungiIngresso, aggiungiUscita, leggiMovimenti } from './movimentiBtcService.js';
+import { aggiungiIngresso, aggiungiUscita, leggiMovimenti, dataUltimaGiacenza } from './movimentiBtcService.js';
 import { costruisciLotti } from './lottiBtcService.js';
 
 const FILE = 'btcImportProposte.json';
@@ -229,6 +229,13 @@ export async function controllaOra(config, opts = {}) {
   const nuove = filtraTransazioni(candidati, {
     confermeMinime: config.importBtc.confermeMinime, txidNoti: await txidNoti(), proposteEsistenti: proposte,
   });
+  // ponytail: cutoff unico (giacenza più recente), senza attribuzione per wallet: avvisa, non scarta.
+  const cutoff = await dataUltimaGiacenza();
+  if (cutoff) {
+    for (const n of nuove) {
+      if (n.data && n.data <= cutoff) n.avvisi = [...n.avvisi, `Precedente o uguale alla giacenza dichiarata del ${cutoff.split('-').reverse().join('/')}: potrebbe essere già inclusa. Scartala se lo è.`];
+    }
+  }
   // Errore registrato solo se nessun provider ha risposto; un provider giù è già coperto da `unaFonte`.
   const nessunaRisposta = errori.length > 0 && candidati.length === 0 && discordanti.length === 0;
   await salvaProposte(nuove, {
@@ -242,22 +249,27 @@ export async function controllaOra(config, opts = {}) {
 let timerBtc = null;
 let inCorso = false;
 
-// Tick ogni minuto; il controllo parte quando è trascorso `intervalloMinuti` dall'ultimo
-// (persistito), così un cambio di intervallo o di abilitazione vale subito, senza riavvio.
-// Non parte mai senza avviso privacy accettato (gli indirizzi vanno a servizi terzi).
+// Un giro: parte solo se abilitato, con avviso privacy accettato (gli indirizzi vanno a servizi terzi) e se è trascorso
+// `intervalloMinuti` dall'ultimo controllo (persistito), così un cambio di intervallo o di abilitazione vale subito.
+export async function controllaSeDovuto(getConfig) {
+  const config = await getConfig();
+  const { abilitato, avvisoPrivacyAccettato, intervalloMinuti } = config.importBtc ?? {};
+  if (!abilitato || !avvisoPrivacyAccettato || !config.walletBtc?.length) return null;
+  const { ultimoControllo } = await leggiProposte();
+  if (ultimoControllo && Date.now() - Date.parse(ultimoControllo) < intervalloMinuti * 60_000) return null;
+  const { nuove } = await controllaOra(config);
+  if (nuove.length) notifica('Import BTC', `${nuove.length} nuove transazioni BTC da confermare`);
+  return { nuove };
+}
+
+// Tick ogni minuto.
 export function avviaPollingBtc(getConfig, tickMs = 60_000) {
   fermaPollingBtc();
   timerBtc = setInterval(async () => {
     if (inCorso) return;
     inCorso = true;
     try {
-      const config = await getConfig();
-      const { abilitato, avvisoPrivacyAccettato, intervalloMinuti } = config.importBtc ?? {};
-      if (!abilitato || !avvisoPrivacyAccettato || !config.walletBtc?.length) return;
-      const { ultimoControllo } = await leggiProposte();
-      if (ultimoControllo && Date.now() - Date.parse(ultimoControllo) < intervalloMinuti * 60_000) return;
-      const { nuove } = await controllaOra(config);
-      if (nuove.length) notifica('Import BTC', `${nuove.length} nuove transazioni BTC da confermare`);
+      await controllaSeDovuto(getConfig);
     } catch (err) {
       logger.error('Errore import BTC', { errore: err.message });
     } finally {

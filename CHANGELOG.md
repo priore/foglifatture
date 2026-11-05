@@ -6,6 +6,47 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-05
+
+### Added
+- **Importa storico con tabbar superiore** — le sezioni si scelgono da una tabbar in alto, come nella Dashboard
+  - Il menu laterale mostra solo la voce «Importa storico», senza sotto-voci
+- **Giacenza Bitcoin dichiarata a mano** — nel registro BTC un nuovo pulsante «Dichiara giacenza» per indicare i BTC posseduti senza storico dei movimenti
+  - Una giacenza per wallet; entra nel saldo e nel quadro RW
+  - Il costo di acquisto è facoltativo: se manca, compare un avviso e la plusvalenza di una futura vendita risulta pari all'intero ricavo
+  - Se il wallet ha già una giacenza, un popup chiede se sommare o sovrascrivere
+  - Le transazioni importate dal wallet precedenti alla giacenza sono segnalate come possibili duplicati
+- **Menu laterale con icone e comprimibile** — ogni voce e sotto-voce ha un'icona monocolore
+  - Un pulsante a destra del titolo comprime il menu alle sole icone o lo riespande
+  - La scelta resta memorizzata
+- **Elimina cliente** — in Clienti, accanto a «Disattiva» e «Riattiva», un pulsante per eliminare definitivamente un cliente
+  - Disponibile solo se il cliente non ha fatture, note di credito o timesheet compilati; altrimenti il pulsante è disattivato e spiega perché
+  - Richiede conferma; deve restare almeno un cliente attivo
+
+### Changed
+- **Cronologia PEC** — una scheda per ogni fattura inviata, con le sue ricevute SDI collegate
+  - Percorso a tappe: Inviata, Risposta SDI, Esito (accettata o scartata)
+  - In alto riepilogo e fatture da risolvere (scartate, invio non riuscito, nessuna ricevuta da oltre 48 ore), con errore SDI e pulsante per aprire la fattura
+  - Un rinvio sostituisce i tentativi precedenti: la fattura mostra l'esito dell'ultimo invio e i precedenti stanno in un elenco apribile, con riga colorata in base all'esito
+  - Archivio paginato a 20 schede per volta
+- **Moduli di inserimento a popup** — incasso in BTC, incasso in valuta estera, registra uscita e ingresso manuale BTC, conferma delle transazioni importate, colonne del file BTC e nuovo versamento F24 si aprono in un popup al centro invece che dentro la pagina
+  - Titolo e pulsanti restano fissi mentre i campi scorrono
+  - Un tap fuori dal popup o Esc chiudono senza salvare
+- **Fattura: ordine delle azioni** — i pulsanti seguono i passi dell'emissione: Genera fattura, Invia PEC a SDI, Scarica XML FatturaPA, Invia email al cliente, Scarica PDF
+- **Indirizzi web nei testi** — gli indirizzi citati nelle istruzioni (per esempio dove ottenere una API key) sono link che si aprono nel browser
+- **Dashboard Bitcoin** — il pulsante «Registro e import» è ora in fondo alla card «Valore BTC detenuti»
+- **Dashboard: titolo per sezione** — il titolo in alto segue la scheda aperta (Dashboard, Bitcoin, F24, Regole fiscali, AI)
+- **Popup con testo o liste lunghe** — titolo e pulsanti restano fissi in alto e in basso mentre il contenuto scorre
+- **Icona dell'app** — nuova icona su macOS e Windows
+
+### Fixed
+- **Conferma prima di eliminare** — eliminare un pagamento di una fattura, un credito F24 o un versamento F24 ora chiede conferma
+- **Incasso parziale in dashboard** — nelle fatture da incassare l'importo digitato non torna più al residuo
+- **Crediti F24 compensati** — dopo un F24 con compensazione il credito usato risultava più grande invece che consumato
+  - Il residuo ora scende dell'importo compensato e un credito esaurito sparisce dall'elenco
+  - Un credito già compensato non può più essere riutilizzato per errore
+- **Ricevute SDI: «Controlla ora»** — non mostra più un errore quando una email ricevuta contiene allegati non riconosciuti
+
 ## [1.11.0] - 2026-10-26
 
 ### Added
