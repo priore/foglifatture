@@ -3,8 +3,14 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import keytar from 'keytar';
 import { setDataDir, writeJson, readJson, listKeys } from '../lib/jsonStore.js';
 import { clientiConDati, eliminaCliente } from './clientiService.js';
+
+// Il Keychain OS non esiste in CI (Linux senza secret service) e in locale non va toccato: finto in memoria.
+keytar.getPassword = async () => null;
+keytar.setPassword = async () => {};
+keytar.deletePassword = async () => true;
 
 const A = 'aaaa-1111';
 const B = 'bbbb-2222';
