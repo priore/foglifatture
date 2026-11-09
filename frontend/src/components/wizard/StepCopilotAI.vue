@@ -71,7 +71,7 @@ function chiudiOtp() {
         </div>
 
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-ghost" @click="emit('refresh')">Verifica stato</button>
+          <button class="btn btn-blue" @click="emit('refresh')">Verifica stato</button>
           <button class="btn btn-primary" :disabled="avviandoLogin" @click="avviaLogin">
             {{ avviandoLogin ? 'Apertura browser…' : 'Accedi con GitHub' }}
           </button>

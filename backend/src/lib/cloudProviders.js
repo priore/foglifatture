@@ -42,7 +42,8 @@ async function scambioToken(http, url, campi) {
   const res = await http(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form(campi) });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (json.error === 'invalid_grant') throw new NonAutorizzato('Autorizzazione revocata o scaduta');
+    // Un refresh token rifiutato come «parametri non validi» (Dropbox con un token salvato da un'altra build o app) equivale a revocato: si ricollega.
+    if (json.error === 'invalid_grant' || (campi.grant_type === 'refresh_token' && json.error === 'invalid_request')) throw new NonAutorizzato('Autorizzazione revocata o scaduta');
     throw new ErroreCloud(`Token: ${json.error_description ?? json.error ?? res.status}`, res.status);
   }
   return { accessToken: json.access_token, refreshToken: json.refresh_token, scadenzaMs: Date.now() + (json.expires_in ?? 3600) * 1000 };

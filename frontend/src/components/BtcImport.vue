@@ -2,7 +2,7 @@
 import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from './common/SelectField.vue';
 import ModuloPopup from './common/ModuloPopup.vue';
-// Import BTC (FP-014, piano REGISTRO_LOTTI_BTC.md Step 12): proposte da polling blockchain e da file,
+// Import BTC (FP-014): proposte da polling blockchain e da file,
 // da confermare (con il controvalore EUR) o scartare. Stato del polling e import da file. Tab Bitcoin.
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../services/api.js';
@@ -135,7 +135,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
     <p v-if="info" class="avviso-riga avviso-info" role="status">{{ info }}</p>
 
     <div class="azioni">
-      <button type="button" class="btn btn-ghost" :disabled="occupato || !!motivoControllo" :title="motivoControllo" @click="controlla">Controlla ora</button>
+      <button type="button" class="btn btn-blue" :disabled="occupato || !!motivoControllo" :title="motivoControllo" @click="controlla">Controlla ora</button>
       <div class="field campo-provider">
         <label for="import-formato">Provider / exchange</label>
         <SelectField titolo="Formato file" descrizione="Come interpretare il file importato" id="import-formato" v-model="formato" :disabled="occupato">
@@ -225,7 +225,7 @@ const confermaMapping = () => importaFile({ mapping: mappingDaConfermare.value.m
       <ul class="proposte">
         <li v-for="p in scartate" :key="p.id" class="riga">
           <span class="dettaglio"><strong>{{ p.direzione === 'ingresso' ? '+' : '−' }}{{ btcTesto(p.satoshi) }} BTC</strong> <span class="nota">{{ p.data ? dataIt(p.data) : '' }}</span></span>
-          <button type="button" class="btn btn-ghost" :disabled="occupato" @click="azione(p, 'ripristina')">Ripristina</button>
+          <button type="button" class="btn btn-blue" :disabled="occupato" @click="azione(p, 'ripristina')">Ripristina</button>
         </li>
       </ul>
     </details>

@@ -1,5 +1,5 @@
 <script setup>
-// Primo avvio sul desktop (nessun fornitore ancora configurato), prima dei termini: se sul computer ci sono client Dropbox, OneDrive o Google Drive già collegati
+// Primo avvio sul desktop (nessun fornitore ancora configurato), prima dei termini: se sul computer ci sono client Dropbox o OneDrive già collegati
 // si offre di tenere l'archivio in una loro cartella. Nessun login: il client del provider è già collegato all'account.
 import { ref, onMounted, onUnmounted } from 'vue';
 import { api } from '../../services/api.js';
@@ -38,9 +38,9 @@ async function scegli(c) {
   occupato.value = true;
   errore.value = '';
   try {
-    const esito = await api.cartelleCloudEsamina(c.radice);
+    const esito = await api.cartelleCloudEsamina(c.radice, c.provider);
     if (esito.stato === 'estranea') {
-      await avvisa(`La cartella FogliFatture su ${c.nome} contiene file che non sono un archivio: svuotala o scegli un altro servizio.`, { titolo: `Archivio su ${c.nome}` });
+      await avvisa(`La cartella dell'app su ${c.nome} contiene file che non sono un archivio: svuotala o scegli un altro servizio.`, { titolo: `Archivio su ${c.nome}` });
       return;
     }
     await (esito.stato === 'archivio' ? api.apriArchivioEsistente(esito.percorso) : api.spostaPercorsoDati(esito.percorso));
@@ -63,7 +63,7 @@ async function scegli(c) {
           <svg class="scelta-icona" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17 8.5a4.75 4.75 0 0 1 .5 9.5z"/></svg>
           <span class="scelta-testo">
             <b>{{ c.nome }}</b>
-            <span>Sincronizza con la cartella FogliFatture del client {{ c.nome }} già installato e collegato al tuo account su questo computer: nessun altro accesso.</span>
+            <span>Sincronizza con la cartella Apps/FogliFatture del client {{ c.nome }} già installato e collegato al tuo account su questo computer: nessun altro accesso.</span>
           </span>
         </button>
         <button type="button" class="scelta-voce" :disabled="occupato" @click="chiudi">

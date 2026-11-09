@@ -247,7 +247,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
     // Congelati al momento della generazione, come oreTotali/tariffaOraria: la clausola
     // di ammissione pagamento BTC (art.1197 c.c.) è pattuita all'emissione, non va letta
     // live da cliente ad ogni download XML/PDF — l'XML già trasmesso a SDI è immutabile
-    // (AI-Workspace/Plans/PAGAMENTI_BTC.md, F3). La registrazione dell'incasso BTC vero e
+    //. La registrazione dell'incasso BTC vero e
     // proprio resta indipendente e sempre possibile in qualsiasi momento successivo.
     pagamentoBtc: Boolean(cliente.pagamentoBtc) || (cliente.modalitaPagamento || config.fatturazione.modalitaDefault) === 'BTC',
     causaleBtc: cliente.causaleBtc ?? '',

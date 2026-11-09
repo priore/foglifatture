@@ -5,7 +5,7 @@
 // contengono data/importo/descrizione, poi il file viene parsato in locale col mapping ottenuto.
 // Il mapping è salvato su disco per intestazione (vedi createHash su nomi colonna normalizzati):
 // stesso export banca → stesso mapping riusato, AI richiamata solo se l'elenco colonne non è
-// mai stato visto prima (vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md).
+// mai stato visto prima.
 import { createHash } from 'node:crypto';
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import {
@@ -208,7 +208,7 @@ export async function confermaPagamento(anno, mese, clienteId, dataPagamento, im
 
 // Registra un incasso in BTC come rata: l'importo EUR è SEMPRE calcolato qui dal cambio
 // dichiarato, mai accettato dal client, così il prospetto di cambio e l'EUR registrato
-// non possono divergere (vedi AI-Workspace/Plans/PAGAMENTI_BTC.md, F1).
+// non possono divergere.
 export async function confermaPagamentoBtc(anno, mese, clienteId, dataPagamento, datiBtc) {
   const { txid, satoshi, cambioEurBtc, fonteCambio, dataOraCambio, indirizzoDestinatario } = datiBtc || {};
   if (!/^[0-9a-fA-F]{64}$/.test(txid || '')) throw new Error('TXID non valido (attesi 64 caratteri esadecimali)');

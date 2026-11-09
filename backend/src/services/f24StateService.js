@@ -1,5 +1,5 @@
 // Stato degli F24 generati dal piano versamenti + versamenti automatici al pagamento.
-// FP-024 · FEATURES_GAP_ANALISI_ESTERNA.md voce 8 / sezione G 17°.
+// FP-024.
 //
 // Flusso stati: da_pagare → programmato → pagato (o annullato da qualsiasi stato).
 // Al passaggio a 'pagato': crea record in f24Versamenti.json con codice tributo corretto.

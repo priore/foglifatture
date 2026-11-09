@@ -4,7 +4,7 @@ import { chat } from '../services/chatService.js';
 
 export const chatRoutes = Router();
 
-// FP-009 — body: { messaggi: [{ruolo, testo}], conferma?, ricorda? }. 403 se l'invio dati all'AI non è autorizzato.
+// FP-036 — body: { messaggi: [{ruolo, testo}], conferma?, ricorda? }. 403 se l'invio dati all'AI non è autorizzato.
 chatRoutes.post('/', async (req, res) => {
   try {
     const { messaggi, conferma, ricorda } = req.body ?? {};

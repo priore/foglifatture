@@ -1,6 +1,6 @@
 // Registro lotti BTC: lotti in ingresso (rate BTC delle fatture + ingressi manuali), consumo LIFO
 // dalle uscite, plusvalenze (art. 67 c. 1 lett. c-sexies TUIR) e IVCA 0,2% (quadro RW).
-// Piano: AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md §4-§6. Il nucleo di calcolo è puro (testabile
+// Il nucleo di calcolo è puro (testabile
 // senza I/O); in fondo le funzioni async che caricano fatture, movimenti e regole.
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 import { leggiMovimenti, validaUscita } from './movimentiBtcService.js';

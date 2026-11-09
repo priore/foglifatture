@@ -6,6 +6,35 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-09
+
+### Added
+- **Archivio su Google Drive con accesso tramite account**
+  - Si collega con il login Google, senza installare il client del servizio
+  - Stato, «Sincronizza ora», file in conflitto e «Scollega» nello stesso passo
+- **Migrazione guidata dell'archivio cloud**
+  - Chi ha l'archivio nella vecchia cartella di Dropbox, OneDrive o Google Drive trova un avviso con un solo pulsante
+  - Nulla si sposta finché non si conferma e nessun dato viene cancellato
+- **Liste lunghe: filtro per iniziale**
+  - Nelle liste con ricerca e nella pagina Clienti, con più di 8 voci, c'è una riga di iniziali
+  - Un tocco filtra per quella lettera, un secondo tocco la toglie
+  - Il filtro si combina con la casella di ricerca
+
+### Changed
+- **Pulsanti d'azione colorati**
+  - I pulsanti con sfondo neutro hanno ora un colore in base all'azione (verde, blu, rosso), come gli altri
+- **Dashboard: avviso sulle regole fiscali in cima**
+  - L'avviso sta sempre sotto l'anno e sopra i ricavi cumulati
+- **Dashboard: nuovo ordine predefinito delle card**
+  - Soglia e accantonamento affiancati, composizione, grafico andamento a tutta larghezza, poi scadenze e fatture da incassare
+  - Il nuovo ordine si applica anche a chi aveva già un ordine salvato: chi aveva riordinato le card le ritrova nell'ordine predefinito
+- **Archivio su Dropbox e OneDrive nella cartella `Apps/FogliFatture`**
+  - Chi ha già l'archivio in `FogliFatture` lo sposta con la migrazione guidata
+
+### Fixed
+- **Archivio cloud: accesso non più valido**
+  - Se il provider rifiuta il rinnovo dell'accesso, l'app chiede di ricollegare invece di mostrare un errore tecnico
+
 ## [1.12.0] - 2026-11-05
 
 ### Added

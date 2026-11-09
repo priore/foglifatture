@@ -3,7 +3,7 @@
 // della catena: Gemini (API key + CLI OAuth) → GitHub Copilot (CLI OAuth) →
 // Claude (API key) → Groq (API key) → LLM locale (offline).
 // Lo stato AI non viene caricato al mount: l'utente clicca "Verifica stato" quando vuole.
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../../services/api.js';
 import StepGeminiAI from './StepGeminiAI.vue';
@@ -12,6 +12,7 @@ import StepClaudeAI from './StepClaudeAI.vue';
 import StepGroqAI from './StepGroqAI.vue';
 import StepLocaleLLM from './StepLocaleLLM.vue';
 import StepMcp from './StepMcp.vue';
+import TabbarPassi from '../common/TabbarPassi.vue';
 import { capacita } from '../../composables/useCapacita.js';
 
 // Mappa scheda → provider interni del router (uno per scheda tranne Gemini che ne ha due)
@@ -23,11 +24,13 @@ const PROVIDER_PER_SCHEDA = {
   locale:  ['llm-locale'],
 };
 
-// Nelle shell compatte la scheda si sceglie dal foglio nativo (`?sub=`): le tab restano nascoste, la query le pilota.
+// Nelle shell compatte le schede sono la tabbar scorrevole (TabbarPassi); `?sub=` resta come link diretto a una scheda.
 const route = useRoute();
 const SCHEDE = ['gemini', 'copilot', 'claude', 'groq', 'locale'];
 const schedaAttiva = ref(SCHEDE.includes(route.query.sub) ? route.query.sub : 'gemini');
 watch(() => route.query.sub, (sub) => { if (SCHEDE.includes(sub)) schedaAttiva.value = sub; });
+const NOMI_SCHEDE = { gemini: 'Gemini', copilot: 'Copilot', claude: 'Claude', groq: 'Groq', locale: 'Locale' };
+const schedeVisibili = computed(() => SCHEDE.filter((k) => k !== 'copilot' || capacita.aiCli));
 
 const geminiOk = ref(false);
 const copilotOk = ref(false);
@@ -122,6 +125,7 @@ async function verificaStato() {
     </div>
     </div>
 
+    <TabbarPassi class="solo-compatto tabbar-compatta" :passi="schedeVisibili.map((k) => NOMI_SCHEDE[k])" :model-value="schedeVisibili.indexOf(schedaAttiva)" @update:model-value="schedaAttiva = schedeVisibili[$event]" />
     <div class="tab-row wizard-sub">
       <button class="tab-btn" :class="{ attiva: schedaAttiva === 'gemini' }" @click="schedaAttiva = 'gemini'">
         <span class="dot-stato" :class="{ attivo: geminiOk }"></span>Gemini

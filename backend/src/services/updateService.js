@@ -1,6 +1,5 @@
 // Rilevamento/esecuzione aggiornamento app via tag Git semver (vX.Y.Z), provider-agnostico
 // (solo comandi `git` puri: funziona identico su Gitea self-hosted oggi e GitHub domani).
-// Vedi AI-Workspace/Plans/AUTO_UPDATE_DASHBOARD.md per il disegno completo.
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readFile } from 'node:fs/promises';

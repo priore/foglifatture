@@ -1,6 +1,6 @@
 // Versamenti F24 inseriti manualmente (imposta sostitutiva, INPS): input minimo per
 // confrontare stimato (forfettarioService) vs effettivamente versato, senza scraping/OCR
-// (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md — fonti automatiche scartate).
+//.
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import { randomUUID } from 'node:crypto';
 

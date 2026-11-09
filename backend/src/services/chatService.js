@@ -1,4 +1,4 @@
-// FP-009: chat AI in-app sui propri dati. Riusa i tool in sola lettura di mcpService (stessa
+// FP-036: chat AI in-app sui propri dati. Riusa i tool in sola lettura di mcpService (stessa
 // allowlist: anagrafica, IBAN e segreti non sono raggiungibili) e il router AI a cascata.
 // I provider del router non hanno tool use nativo comune, quindi il protocollo è testuale:
 // il modello risponde con un solo oggetto JSON, {"tool","args"} oppure {"risposta"}.

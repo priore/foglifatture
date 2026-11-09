@@ -1,4 +1,4 @@
-// Import automatico transazioni BTC (AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md, Step 10, FP-014).
+// Import automatico transazioni BTC (FP-014).
 // Interroga SOLO gli indirizzi di config.walletBtc[] su due explorer Esplora-compatibili (mempool.space,
 // blockstream.info) e confronta le risposte. Non registra mai nulla da sé: produce proposte in
 // data/btcImportProposte.json (gitignored con backend/data/) che l'utente conferma o scarta.

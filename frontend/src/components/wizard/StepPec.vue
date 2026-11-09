@@ -80,7 +80,7 @@ async function leggiRisposte() {
   </div>
 
   <div style="margin-top:16px">
-    <button type="button" class="btn btn-ghost" :disabled="provaInCorso" @click="provaConnessione">
+    <button type="button" class="btn btn-blue" :disabled="provaInCorso" @click="provaConnessione">
       {{ provaInCorso ? 'Prova in corso…' : 'Prova connessione' }}
     </button>
     <small class="note-legal">Usa i dati già salvati (salva prima di provare). Non invia nulla.</small>
@@ -92,11 +92,11 @@ async function leggiRisposte() {
   </div>
 
   <div style="margin-top:16px">
-    <button type="button" class="btn btn-ghost" :disabled="provaSdiInCorso" @click="inviaProvaSdi">PEC di prova allo SDI</button>
+    <button type="button" class="btn btn-blue" :disabled="provaSdiInCorso" @click="inviaProvaSdi">PEC di prova allo SDI</button>
     <small class="note-legal">Invia una PEC vuota, senza fattura: lo SDI risponde con un messaggio di cortesia. Attendi la risposta prima di riprovare.</small>
     <p v-if="provaSdi" :class="provaSdi.inviato ? 'prova-ok' : 'prova-ko'">
       {{ provaSdi.inviato ? 'PEC di prova inviata.' : provaSdi.errore }}
-      <button v-if="provaSdi.inviato" type="button" class="btn btn-ghost" @click="leggiRisposte">Controlla risposte</button>
+      <button v-if="provaSdi.inviato" type="button" class="btn btn-blue" @click="leggiRisposte">Controlla risposte</button>
     </p>
     <p v-if="risposteSdi?.errore" class="prova-ko">{{ risposteSdi.errore }}</p>
     <ul v-else-if="risposteSdi" class="lista-prova">

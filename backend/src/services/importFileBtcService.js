@@ -1,6 +1,5 @@
-// Import transazioni BTC da file CSV/JSON di wallet o exchange (AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md,
-// Step 11, FP-014). Il file è letto in locale; nulla viene registrato: le righe diventano proposte
-// (stesso flusso e stesso file del polling, Step 10) che l'utente conferma o scarta.
+// Import transazioni BTC da file CSV/JSON di wallet o exchange (FP-014). Il file è letto in locale; nulla viene registrato: le righe diventano proposte
+// (stesso flusso e stesso file del polling) che l'utente conferma o scarta.
 // Formato non riconosciuto: l'AI propone il mapping colonne su un campione con dati sensibili
 // sostituiti da hash; il mapping va confermato dall'utente prima del parsing.
 import { createHash } from 'node:crypto';
@@ -320,7 +319,7 @@ export async function importaDaFile(contenuto, { formato = 'auto', mapping, conf
     validaMapping(mapping, righe[0].length);
     return { formato: 'mapping', ...(await salvaDaFile(parseConMapping(righe, mapping), 0)) };
   }
-  // Righe (anche se hashate) e importi vanno al provider AI: stessa autorizzazione della chat (FP-009).
+  // Righe (anche se hashate) e importi vanno al provider AI: stessa autorizzazione della chat (FP-036).
   if (!config?.ai?.autorizzaDatiFiscali && conferma !== true) {
     throw Object.assign(new Error('Invio dati fiscali all\'AI non autorizzato'), { codice: 'AUTORIZZAZIONE_RICHIESTA' });
   }

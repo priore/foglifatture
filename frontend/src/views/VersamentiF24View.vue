@@ -5,7 +5,7 @@ import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
 import ModuloPopup from '../components/common/ModuloPopup.vue';
 // Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, confrontati con
-// l'imposta stimata dal regime forfettario (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md).
+// l'imposta stimata dal regime forfettario.
 import { ref, computed, onMounted, watch } from 'vue';
 import { api } from '../services/api.js';
 
@@ -192,7 +192,7 @@ function esportaCsv() {
           style="width:100%;margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--ground);color:var(--ink);font-family:inherit;font-size:.86rem;resize:vertical"
         ></textarea>
         <div style="display:flex;gap:10px;margin-top:10px">
-          <button type="button" class="btn btn-ghost" :disabled="!testoIncollato" @click="anteprimaImportaTesto">Analizza</button>
+          <button type="button" class="btn btn-ok" :disabled="!testoIncollato" @click="anteprimaImportaTesto">Analizza</button>
           <button v-if="anteprimaImport?.length" type="button" class="btn btn-ok" :disabled="importando" @click="confermaImportaTesto">
             Importa {{ anteprimaImport.length }} versamenti
           </button>

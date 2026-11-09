@@ -1,5 +1,5 @@
 <script setup>
-// FP-009: chat AI in sola lettura sui dati dell'app (stessi tool dell'MCP, nessuna scrittura).
+// FP-036: chat AI in sola lettura sui dati dell'app (stessi tool dell'MCP, nessuna scrittura).
 import { ref, nextTick } from 'vue';
 import { api } from '../services/api.js';
 
@@ -60,7 +60,7 @@ function svuota() {
   <div class="card chat-ai">
     <div class="card-head">
       <span class="card-head-titolo"><h2>Assistente AI</h2></span>
-      <button v-if="messaggi.length" type="button" class="btn btn-ghost" @click="svuota">Nuova conversazione</button>
+      <button v-if="messaggi.length" type="button" class="btn btn-warn" @click="svuota">Nuova conversazione</button>
     </div>
     <div class="card-body">
       <p class="note-legal">Interroga i tuoi dati in linguaggio naturale. L'assistente legge soltanto: non emette fatture, non modifica dati e non invia nulla. Anagrafica, codice fiscale, IBAN e credenziali non sono accessibili. Le risposte sono indicative, non consulenza fiscale.</p>
@@ -93,7 +93,7 @@ function svuota() {
         <p class="note-legal">Per rispondere, l'assistente invia al provider AI configurato i dati fiscali che servono alla domanda (importi, fatture, scadenze F24, bollo, crediti). Anagrafica, codice fiscale, IBAN e credenziali non vengono mai inviati.</p>
         <div class="modal-actions">
           <button type="button" class="btn btn-ok" @click="invia({ conferma: true })">Sì, questa volta</button>
-          <button type="button" class="btn btn-ghost" @click="invia({ conferma: true, ricorda: true })">Sì, sempre</button>
+          <button type="button" class="btn btn-blue" @click="invia({ conferma: true, ricorda: true })">Sì, sempre</button>
           <button type="button" class="btn btn-warn" @click="chiediConsenso = false">Annulla</button>
         </div>
       </div>

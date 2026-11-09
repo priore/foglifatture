@@ -1,6 +1,6 @@
 <script setup>
 import { chiediConferma } from '../../composables/useConferma.js';
-// Server MCP in sola lettura (FP-008). Salva da sé: toggle e token passano da /api/mcp, non da config.json generico.
+// Server MCP in sola lettura (FP-035). Salva da sé: toggle e token passano da /api/mcp, non da config.json generico.
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api.js';
 
@@ -64,17 +64,17 @@ async function copia(chiave, testo) {
       <h4 class="mcp-titolo">Claude Desktop</h4>
       <small class="note-legal mcp-nota">Incolla in <code>claude_desktop_config.json</code> e riavvia Claude Desktop.</small>
       <textarea class="mcp-code" readonly rows="8" :value="jsonDesktop"></textarea>
-      <button class="btn btn-ghost" @click="copia('desktop', jsonDesktop)">{{ copiato === 'desktop' ? 'Copiato' : 'Copia JSON' }}</button>
+      <button class="btn btn-blue" @click="copia('desktop', jsonDesktop)">{{ copiato === 'desktop' ? 'Copiato' : 'Copia JSON' }}</button>
 
       <h4 class="mcp-titolo">Claude Code</h4>
       <textarea class="mcp-code" readonly rows="2" :value="comandoClaudeCode"></textarea>
-      <button class="btn btn-ghost" @click="copia('code', comandoClaudeCode)">{{ copiato === 'code' ? 'Copiato' : 'Copia comando' }}</button>
+      <button class="btn btn-blue" @click="copia('code', comandoClaudeCode)">{{ copiato === 'code' ? 'Copiato' : 'Copia comando' }}</button>
 
       <h4 class="mcp-titolo">ChatGPT, Gemini e altri client HTTP</h4>
       <small class="note-legal mcp-nota">Il token equivale a una password: non condividerlo.</small>
       <textarea class="mcp-code" readonly rows="2" :value="stato.urlHttp"></textarea>
-      <button class="btn btn-ghost" @click="copia('http', stato.urlHttp)">{{ copiato === 'http' ? 'Copiato' : 'Copia URL' }}</button>
-      <button class="btn btn-ghost" @click="rigenera">Rigenera token</button>
+      <button class="btn btn-blue" @click="copia('http', stato.urlHttp)">{{ copiato === 'http' ? 'Copiato' : 'Copia URL' }}</button>
+      <button class="btn btn-warn" @click="rigenera">Rigenera token</button>
     </template>
 
     <small v-if="errore" class="note-legal mcp-nota">{{ errore }}</small>

@@ -140,7 +140,7 @@ async function avviaLoginCli() {
                 <option v-if="modelloScelto && !modelliDisponibili.includes(modelloScelto)" :value="modelloScelto">{{ modelloScelto }}</option>
                 <option v-for="m in modelliDisponibili" :key="m" :value="m">{{ m }}</option>
               </SelectField>
-              <button class="btn btn-ghost" :disabled="caricandoModelli" @click="caricaModelli">{{ caricandoModelli ? 'Carico…' : 'Carica elenco' }}</button>
+              <button class="btn btn-blue" :disabled="caricandoModelli" @click="caricaModelli">{{ caricandoModelli ? 'Carico…' : 'Carica elenco' }}</button>
               <button class="btn btn-ok" :disabled="!modelloScelto || verificandoModello" @click="verificaModello">{{ verificandoModello ? 'Verifico…' : 'Verifica e salva' }}</button>
             </div>
           </div>
@@ -185,7 +185,7 @@ async function avviaLoginCli() {
         </div>
 
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-ghost" @click="ricaricaStatoCli">Verifica stato</button>
+          <button class="btn btn-blue" @click="ricaricaStatoCli">Verifica stato</button>
           <button class="btn btn-primary"
             :disabled="avviandoLoginCli"
             @click="avviaLoginCli">

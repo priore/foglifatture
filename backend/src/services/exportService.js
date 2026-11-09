@@ -1,7 +1,7 @@
 // Export CSV per il commercialista: elenco fatture emesse nell'anno + riepilogo forfettario
 // (ricavi, imposta stimata, soglia). Riusa listMesiFatturati/getInvoice e
 // calcolaDashboardForfettario esistenti — nessun nuovo dato persistito, tutto calcolato
-// on-the-fly (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
+// on-the-fly.
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
 import { calcolaDashboardForfettario, tutteLeFattureRisolte, ricaviAnnoCassa } from './forfettarioService.js';
 import { lottiConStato, riepilogoAnnuale } from './lottiBtcService.js';
@@ -50,7 +50,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
   // Sezione cassa: una riga per RATA (fattureCassa già rimappata a rata da
   // ricaviAnnoCassa), imponibile della riga = importo della singola rata — evita
   // il doppio conteggio fiscale di una fattura con rate a cavallo di più anni.
-  // Colonne BTC (F6, AI-Workspace/Plans/PAGAMENTI_BTC.md) in coda, vuote sulle rate non BTC.
+  // Colonne BTC in coda, vuote sulle rate non BTC.
   const rigaFatturaCassa = (f) => {
     const cliente = clientiPerId.get(f.clienteId);
     return [
@@ -111,7 +111,7 @@ export async function esportaReportCommercialistaCsv(config, anno) {
 const btc = (satoshi) => (satoshi / 1e8).toFixed(8);
 const eur = (n) => (n == null ? '' : n.toFixed(2));
 
-// Sezioni cripto (FP-012/013, AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md Step 7), in coda al CSV:
+// Sezioni cripto (FP-012/013), in coda al CSV:
 // senza lotti né uscite non produce nulla e l'export resta identico a prima.
 async function sezioniCripto(anno) {
   const [lotti, { uscite }] = await Promise.all([lottiConStato(anno), leggiMovimenti()]);

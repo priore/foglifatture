@@ -98,7 +98,7 @@ function formatta(data) {
               <span v-if="e.dettaglio" class="sub">{{ e.dettaglio }}</span>
               <span v-else-if="e.suggerimento" class="sub">{{ e.suggerimento }}</span>
             </div>
-            <div><router-link :to="linkFattura(i)" class="btn btn-ghost">Apri fattura</router-link></div>
+            <div><router-link :to="linkFattura(i)" class="btn btn-blue">Apri fattura</router-link></div>
           </article>
         </div>
       </template>
@@ -133,9 +133,9 @@ function formatta(data) {
       </p>
 
       <div v-if="pagine > 1" class="cp-pagine">
-        <button class="btn btn-ghost" :disabled="pagina === 1" @click="pagina--">Precedente</button>
+        <button class="btn btn-blue" :disabled="pagina === 1" @click="pagina--">Precedente</button>
         <span class="badge-mono">Pagina {{ pagina }} di {{ pagine }}</span>
-        <button class="btn btn-ghost" :disabled="pagina === pagine" @click="pagina++">Successiva</button>
+        <button class="btn btn-blue" :disabled="pagina === pagine" @click="pagina++">Successiva</button>
       </div>
       </details>
     </template>

@@ -64,3 +64,10 @@ for (const nome of ['dropbox', 'onedrive', 'google']) {
     await assert.rejects(p.elenca(), NonAutorizzato);
   });
 }
+
+test('rinnovo con invalid_request: equivale a revocato, si chiede di ricollegare', async () => {
+  const http = async () => new Response(JSON.stringify({ error: 'invalid_request', error_description: 'The request parameters do not match any of the supported authorization flows.' }), { status: 400 });
+  const p = creaProvider('dropbox', { clientId: 'id-prova', http, token: async () => 'tok' });
+  await assert.rejects(p.rinnova('qualunque'), NonAutorizzato);
+  await assert.rejects(p.scambia({ codice: 'c', verifier: 'v', redirectUri: 'http://127.0.0.1/cb' }), (e) => !(e instanceof NonAutorizzato));
+});

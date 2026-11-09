@@ -5,8 +5,9 @@ import { chiediConferma } from '../../composables/useConferma.js';
 import { registro } from '../../registroEstensioni.js';
 import { capacita } from '../../composables/useCapacita.js';
 import StepCartelleCloud from './StepCartelleCloud.vue';
+import AvvisoMigrazioneCloud from './AvvisoMigrazioneCloud.vue';
 
-// Negli ambienti embedded l'archivio cloud passa dall'API del provider; sul desktop dalla cartella del suo client.
+// Negli ambienti embedded l'archivio cloud passa dall'API del provider; sul desktop dalla cartella del client (Dropbox, OneDrive) o dal login Google.
 const archivioCloud = registro.archivioCloud;
 const cartelleRef = ref(null);
 
@@ -71,13 +72,13 @@ async function apriArchivioEsistente() {
     </div>
     <div class="field field-full full" style="flex-direction:row;align-items:center;gap:12px">
       <button
-        class="btn btn-ghost"
+        class="btn btn-blue"
         type="button"
         :disabled="spostamentoInCorso || !nuovoPercorso || nuovoPercorso === modelValue.percorso"
         @click="spostaPercorsoDati"
       >Sposta dati qui</button>
       <button
-        class="btn btn-ghost"
+        class="btn btn-blue"
         type="button"
         :disabled="spostamentoInCorso || !nuovoPercorso || nuovoPercorso === modelValue.percorso"
         @click="apriArchivioEsistente"
@@ -93,5 +94,8 @@ async function apriArchivioEsistente() {
     spostare nulla: i dati attuali restano dove sono.
   </p>
   <component :is="archivioCloud" v-if="archivioCloud" />
-  <StepCartelleCloud v-else ref="cartelleRef" :percorso-attuale="modelValue.percorso" @cambiata="cartellaCambiata" />
+  <template v-else>
+    <AvvisoMigrazioneCloud style="margin-top:24px" :google="cartelleRef?.google()" @cambiata="cartellaCambiata" />
+    <StepCartelleCloud ref="cartelleRef" :percorso-attuale="modelValue.percorso" @cambiata="cartellaCambiata" @google-scollegato="cartelleRef?.google()?.aggiorna()" />
+  </template>
 </template>

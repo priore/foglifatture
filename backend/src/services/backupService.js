@@ -8,6 +8,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import { randomBytes, scryptSync, createCipheriv, createDecipheriv } from 'node:crypto';
 import { DATA_DIR } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
+import { dopoRipristino } from '../lib/cloudHook.js';
 import { notifica } from '../lib/notifier.js';
 
 const MAGIC = 'TSBK1'; // firma file di backup + versione formato
@@ -174,6 +175,7 @@ export async function ripristinaBackup(bufferBackup, password) {
     await mkdir(path.dirname(destinazione), { recursive: true });
     await writeFile(destinazione, contenuto);
   }
+  await dopoRipristino();
   return { fileRipristinati: voci.length };
 }
 

@@ -9,6 +9,7 @@ import { parseEmails } from '../lib/email.js';
 import { VERSIONE_TERMINI } from '../lib/termini.js';
 import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
 import { relativizzaPercorsoSdi, risolviPercorsoSdi } from '../lib/percorsoSdi.js';
+import { percorsoCambiato } from '../lib/cloudHook.js';
 
 const CONFIG_FILE = 'config.json';
 
@@ -112,7 +113,7 @@ const DEFAULT_CONFIG = {
     autorizzaDatiFiscali: false,
   },
   mcp: {
-    // FP-008: server MCP in sola lettura. Il toggle vale come consenso esplicito all'invio di
+    // FP-035: server MCP in sola lettura. Il toggle vale come consenso esplicito all'invio di
     // aggregati fiscali al client AI; il token protegge l'accesso HTTP (stdio non lo usa).
     abilitato: false,
     token: '',
@@ -120,10 +121,10 @@ const DEFAULT_CONFIG = {
   notifiche: {
     abilitate: true, // toggle globale notifiche desktop macOS (OS.0, FP-022 piano sez. G)
   },
-  // Indirizzi BTC dell'operatore proposti come destinazione incasso (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2).
+  // Indirizzi BTC dell'operatore proposti come destinazione incasso.
   // Un indirizzo è pubblico ma collegato all'identità fiscale: resta solo in config.json (gitignored).
   walletBtc: [],
-  // Import automatico transazioni BTC (AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md, FP-014). Disabilitato di default.
+  // Import automatico transazioni BTC (FP-014). Disabilitato di default.
   importBtc: {
     abilitato: false,
     intervalloMinuti: 30,
@@ -478,6 +479,7 @@ export async function apriArchivioEsistente(percorso) {
   }
   await scriviPuntatore(percorsoAssoluto);
   setDataDir(percorsoAssoluto);
+  await percorsoCambiato(percorsoAssoluto);
   return percorsoAssoluto;
 }
 
@@ -496,6 +498,7 @@ export async function spostaPercorsoDati(nuovoPercorso) {
   if (vociEsistenti.includes('config.json')) {
     await scriviPuntatore(percorsoAssoluto);
     setDataDir(percorsoAssoluto);
+    await percorsoCambiato(percorsoAssoluto);
     return percorsoAssoluto;
   }
   if (vociEsistenti.length > 0) {
@@ -523,5 +526,6 @@ export async function spostaPercorsoDati(nuovoPercorso) {
   // recursive:true serve comunque a fs.rm per rimuovere una directory anche vuota.
   await rm(vecchioDir, { recursive: true }).catch(() => {});
 
+  await percorsoCambiato(percorsoAssoluto);
   return percorsoAssoluto;
 }

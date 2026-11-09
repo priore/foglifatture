@@ -12,7 +12,7 @@ import { regoleAnno } from './regoleFiscaliService.js';
 const F24_MIN_RIGA = 1.03;
 
 // Giorni commerciali tra due Date (mesi di 30 gg, convenzione 30/360).
-// DM 21/5/2009 art. 5; A9 piano FEATURES_GAP_ANALISI_ESTERNA.
+// DM 21/5/2009 art. 5.
 function giorniCommerciali(da, a) {
   const d1 = da instanceof Date ? da : new Date(da);
   const d2 = a instanceof Date ? a : new Date(a);
@@ -175,7 +175,7 @@ export function maxRateConsentite(dataBase) {
   return n;
 }
 
-// Righe F24 cripto (REGISTRO_LOTTI_BTC.md Step 6) per l'anno fiscale `anno`:
+// Righe F24 cripto per l'anno fiscale `anno`:
 // 1715 plusvalenze (solo saldo, nessun acconto: Circ. 30/E §3.2.1), 1727 saldo IVCA,
 // 1728/1729 acconti IVCA anno+1 (40%/60% sull'IVCA di `anno`, regola IRPEF 🟡 domanda 7).
 // `accontiVersati` null = nessun acconto registrato: si stima con l'IVCA dell'anno precedente.

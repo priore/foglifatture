@@ -391,7 +391,7 @@ async function caricaMercatoBtc() {
 // Card riordinabili via drag & drop nativo (HTML5) + CSS order. Persistenza per-browser,
 // non è un dato di dominio: nessuna sincronizzazione col backend.
 // Tre viste (Dashboard/Bitcoin/F24), ognuna col proprio ordine e la propria chiave localStorage.
-const ORDINE_DEFAULT = ['soglia-cassa', 'accantonamento', 'soglia-competenza', 'composizione', 'andamento', 'fatture-da-incassare', 'scadenze-fiscali'];
+const ORDINE_DEFAULT = ['soglia-cassa', 'accantonamento', 'soglia-competenza', 'composizione', 'andamento', 'scadenze-fiscali', 'fatture-da-incassare'];
 const ORDINE_DEFAULT_BTC = ['btc-mercato', 'btc-detenuti', 'btc-valore-attuale', 'btc-riepilogo', 'btc-plusvalenze', 'btc-rw', 'btc-rate'];
 const ORDINE_DEFAULT_F24 = ['versamenti-stimati', 'bollo-trimestrale', 'crediti-f24', 'prospetto-dichiarazione'];
 const CHIAVE_ORDINE = 'dashboardOrdineCard';
@@ -401,6 +401,8 @@ const CHIAVE_TAB = 'dashboardTabAttivo';
 
 function caricaOrdineSalvato(chiave, ordineDefault) {
   try {
+    // L'ordine salvato vale solo se l'ordine predefinito non è cambiato da allora: altrimenti un riordino della dashboard non arriva a chi ha già salvato.
+    if (localStorage.getItem(`${chiave}Base`) !== ordineDefault.join()) return [...ordineDefault];
     const salvato = JSON.parse(localStorage.getItem(chiave));
     if (!Array.isArray(salvato)) return [...ordineDefault];
     // Tieni solo id noti, poi aggiungi in coda quelli mancanti (card nuove non spariscono).
@@ -464,6 +466,9 @@ function salvaOrdine() {
     localStorage.setItem(CHIAVE_ORDINE, JSON.stringify(ordineCard.value));
     localStorage.setItem(CHIAVE_ORDINE_BTC, JSON.stringify(ordineCardBtc.value));
     localStorage.setItem(CHIAVE_ORDINE_F24, JSON.stringify(ordineCardF24.value));
+    localStorage.setItem(`${CHIAVE_ORDINE}Base`, ORDINE_DEFAULT.join());
+    localStorage.setItem(`${CHIAVE_ORDINE_BTC}Base`, ORDINE_DEFAULT_BTC.join());
+    localStorage.setItem(`${CHIAVE_ORDINE_F24}Base`, ORDINE_DEFAULT_F24.join());
   } catch {
     // storage non disponibile (privato/pieno): ordine resta solo in memoria per questa sessione.
   }
@@ -582,6 +587,22 @@ function ripristinaLayout() {
     <p v-if="errore" class="note-legal">Errore: {{ errore }}</p>
 
     <template v-if="dashboard">
+      <div
+        v-if="statoRegoleFiscali?.aggiornamentoDisponibile"
+        class="banner-regole"
+      >
+        Regole fiscali {{ statoRegoleFiscali.annoDisponibile }} disponibili e non ancora confermate.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
+      <div v-if="statoRegoleFiscali?.proposte > 0" class="banner-regole">
+        Proposta di aggiornamento normativo da verificare.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
+      <div v-else-if="statoRegoleFiscali?.fonteCambiate > 0" class="banner-regole">
+        Rilevata una modifica in una fonte normativa ufficiale.
+        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
+      </div>
+
       <div class="summary-row">
         <div class="stat"><div class="label">Ricavi cumulati</div><div class="value">{{ formattaEuro(dashboard.ricaviCumulati) }}</div></div>
         <div class="stat"><div class="label">Reddito imponibile</div><div class="value">{{ formattaEuro(dashboard.redditoImponibile) }}</div></div>
@@ -600,22 +621,6 @@ function ripristinaLayout() {
           </div>
         </div>
         <div class="nota-stima">Stime, metodo storico (100% dell'imposta per cassa, incassi proiettati a fine anno, al netto dei contributi INPS versati) — verificare sempre con il commercialista.</div>
-      </div>
-
-      <div
-        v-if="statoRegoleFiscali?.aggiornamentoDisponibile"
-        class="banner-regole"
-      >
-        Regole fiscali {{ statoRegoleFiscali.annoDisponibile }} disponibili e non ancora confermate.
-        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
-      </div>
-      <div v-if="statoRegoleFiscali?.proposte > 0" class="banner-regole">
-        Proposta di aggiornamento normativo da verificare.
-        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
-      </div>
-      <div v-else-if="statoRegoleFiscali?.fonteCambiate > 0" class="banner-regole">
-        Rilevata una modifica in una fonte normativa ufficiale.
-        <button class="banner-link-btn" @click="cambiaTab('Regole fiscali')">Vai a Regole fiscali</button>
       </div>
 
       <div class="tab-toggle">
@@ -737,7 +742,7 @@ function ripristinaLayout() {
           </div>
         </div>
 
-        <div class="card" :style="{ order: ordinePer('andamento') }">
+        <div class="card card-intera" :style="{ order: ordinePer('andamento') }">
           <div
             class="card-head" draggable="true" tabindex="0" aria-label="Sposta card"
             @dragstart="dragStart('andamento')" @dragover.prevent @drop="drop('andamento')"
@@ -757,7 +762,7 @@ function ripristinaLayout() {
             @keydown.alt.up.prevent="spostaConTastiera('fatture-da-incassare', -1)" @keydown.alt.down.prevent="spostaConTastiera('fatture-da-incassare', 1)"
           >
             <span class="card-head-titolo"><span class="maniglia-card">⋮⋮</span><h2>Fatture da incassare</h2></span>
-            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ghost azione-testata">Importa CSV pagamenti</router-link>
+            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ok azione-testata">Importa CSV pagamenti</router-link>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;flex:1">
             <p v-if="!fattureAperte.length" class="note-legal">Nessuna fattura in attesa di incasso.</p>
@@ -797,7 +802,7 @@ function ripristinaLayout() {
                 </tr>
               </tbody>
             </table>
-            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ghost azione-piede">Importa CSV pagamenti</router-link>
+            <router-link to="/importa-storico?passo=2&da=1" class="btn btn-ok azione-piede">Importa CSV pagamenti</router-link>
             <p class="nota-piede">Incasso rilevato da import CSV home banking (Importa storico → Pagamenti fatture), o inserito a mano qui sopra. L'importo è precompilato col residuo: confermalo così com'è per un incasso totale, oppure modificalo per registrare un acconto — la fattura resta "da incassare" finché il residuo non arriva a zero.</p>
           </div>
         </div>
@@ -932,7 +937,7 @@ function ripristinaLayout() {
             </template>
             <template v-else>
               <p class="note-legal">{{ dashboard.anno < 2026 ? 'Plusvalenze cripto calcolate dal 2026.' : 'Regole cripto non attive per il ' + dashboard.anno + '.' }}</p>
-              <router-link v-if="dashboard.anno >= 2026" to="/impostazioni?da=1" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+              <router-link v-if="dashboard.anno >= 2026" to="/impostazioni?da=1" class="btn btn-blue">Riconferma le regole fiscali</router-link>
             </template>
           </div>
         </div>
@@ -976,7 +981,7 @@ function ripristinaLayout() {
             </template>
             <template v-else>
               <p class="note-legal">Regole cripto non attive per il {{ dashboard.anno }}.</p>
-              <router-link to="/impostazioni?da=1" class="btn btn-ghost">Riconferma le regole fiscali</router-link>
+              <router-link to="/impostazioni?da=1" class="btn btn-blue">Riconferma le regole fiscali</router-link>
             </template>
           </div>
         </div>
@@ -1226,7 +1231,7 @@ function ripristinaLayout() {
                 <span v-for="a in prospettoDichiarazione.avvisi" :key="a" style="display:block" :style="a.startsWith('(*)') ? 'color:var(--warn);font-weight:600' : ''">{{ a.startsWith('(*)') ? '' : '⚠ ' }}{{ a }}</span>
               </p>
               <div style="display:flex;justify-content:flex-end;margin-top:12px">
-                <a class="btn btn-ghost" :href="api.urlProspettoDichiarazionePdf(annoSelezionato)" target="_blank" rel="noopener">Scarica PDF quadro LM</a>
+                <a class="btn btn-blue" :href="api.urlProspettoDichiarazionePdf(annoSelezionato)" target="_blank" rel="noopener">Scarica PDF quadro LM</a>
               </div>
               <p class="nota-piede">
                 Clicca una casella per copiarne il valore. Importi in euro interi come da modello; le caselle evidenziate con (*) vanno controllate e compilate a mano.
@@ -1280,7 +1285,7 @@ function ripristinaLayout() {
             <p v-else class="note-legal" style="margin-bottom:14px">Nessun credito registrato.</p>
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:14px">
-              <button type="button" class="btn btn-ghost" :aria-expanded="mostraFormCredito" @click="mostraFormCredito = true">Aggiungi credito</button>
+              <button type="button" class="btn btn-ok" :aria-expanded="mostraFormCredito" @click="mostraFormCredito = true">Aggiungi credito</button>
               <button type="button" class="btn btn-ai" :disabled="suggerimentoInCorso || !creditiResidui.length" :title="creditiResidui.length ? '' : 'Registra almeno un credito per ottenere il suggerimento'" @click="suggerisciOrdineCrediti()">{{ suggerimentoInCorso ? '…' : 'Suggerisci ordine con AI' }}</button>
             </div>
 
@@ -1329,7 +1334,7 @@ function ripristinaLayout() {
         <p class="note-legal">Il suggerimento invia all'AI importi e codici tributo dei tuoi crediti e delle prossime scadenze F24.</p>
         <div class="modal-actions">
           <button type="button" class="btn btn-ok" @click="suggerisciOrdineCrediti({ conferma: true })">Sì, questa volta</button>
-          <button type="button" class="btn btn-ghost" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
+          <button type="button" class="btn btn-blue" @click="suggerisciOrdineCrediti({ conferma: true, ricorda: true })">Sì, sempre</button>
           <button type="button" class="btn btn-warn" @click="chiediConsensoAi = false">Annulla</button>
         </div>
       </div>
@@ -1344,7 +1349,7 @@ function ripristinaLayout() {
           <button type="button" class="btn btn-ghost" :disabled="i === 0" aria-label="Sposta su" @click="spostaVisibile(id, -1)">▲</button>
           <button type="button" class="btn btn-ghost" :disabled="i === cardRiordinabili.length - 1" aria-label="Sposta giù" @click="spostaVisibile(id, 1)">▼</button>
         </div>
-        <div class="modal-actions"><button type="button" class="btn btn-ghost" @click="mostraRiordino = false">Chiudi</button></div>
+        <div class="modal-actions"><button type="button" class="btn btn-blue" @click="mostraRiordino = false">Chiudi</button></div>
       </div>
     </div>
 

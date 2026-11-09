@@ -20,7 +20,7 @@ const versioneRegistro = ref(0); // cambia quando una proposta confermata aggiun
         <SelectField titolo="Anno" descrizione="Anno delle operazioni da mostrare" v-model.number="annoSelezionato" class="status" aria-label="Anno">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
         </SelectField>
-        <router-link to="/dashboard" class="btn btn-ghost link-riepilogo-dashboard">Riepilogo in dashboard</router-link>
+        <router-link to="/dashboard" class="btn btn-blue link-riepilogo-dashboard">Riepilogo in dashboard</router-link>
       </div>
     </div>
 

@@ -9,6 +9,7 @@ import DateField from '../common/DateField.vue';
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import LogoUpload from './LogoUpload.vue';
+import TabbarPassi from '../common/TabbarPassi.vue';
 import { pivaValida, codiceFiscaleValido } from '../../composables/useValidazioneFiscale.js';
 import { api } from '../../services/api.js';
 import { renderMarkdown } from '../../composables/useMarkdown.js';
@@ -20,7 +21,7 @@ const props = defineProps({
   walletBtc: { type: Array, required: true }, // config.walletBtc: [{ etichetta, indirizzo }]
   importBtc: { type: Object, required: true }, // config.importBtc: import automatico transazioni (FP-014)
 });
-// Indirizzo di default proposto negli incassi BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F2):
+// Indirizzo di default proposto negli incassi BTC:
 // un solo indirizzo principale, gestito qui come primo elemento dell'array.
 function aggiungiWalletBtc() {
   props.walletBtc.push({ etichetta: '', indirizzo: '' });
@@ -31,7 +32,7 @@ function rimuoviWalletBtc(indice) {
 
 // Tab: il salvataggio resta unico (pulsante Salva del wizard), le card restano tutte nel DOM (v-show).
 const TABS = ['Anagrafica', 'Fiscale', 'Fatturazione'];
-// Nelle shell compatte la scheda si sceglie dal foglio nativo (`?sub=`): le tab restano nascoste, la query le pilota.
+// Nelle shell compatte le schede sono la tabbar scorrevole (TabbarPassi); `?sub=` resta come link diretto a una scheda.
 const route = useRoute();
 const tabAttivo = ref(TABS.includes(route.query.sub) ? route.query.sub : TABS[0]);
 watch(() => route.query.sub, (sub) => { if (TABS.includes(sub)) tabAttivo.value = sub; });
@@ -128,6 +129,7 @@ function selezionaCodice(codice) {
   <div class="tab-toggle wizard-sub">
     <button v-for="t in TABS" :key="t" type="button" :class="tabAttivo === t ? 'btn btn-primary' : 'btn btn-ghost'" @click="tabAttivo = t">{{ t }}</button>
   </div>
+  <TabbarPassi class="solo-compatto tabbar-compatta" :passi="TABS" :model-value="TABS.indexOf(tabAttivo)" @update:model-value="tabAttivo = TABS[$event]" />
   <div class="tab-pannello" v-show="tabAttivo === 'Anagrafica'">
     <div class="card" style="margin-bottom:0">
       <div class="card-head ripete-passo"><h2>Fornitore</h2></div>
@@ -254,7 +256,7 @@ function selezionaCodice(codice) {
               <input id="codice-sede-inps" type="text" readonly style="flex:1"
                 :value="forfettario.codiceSedeInps ? `${forfettario.codiceSedeInps}${sedeAttuale ? ' — ' + sedeAttuale.nome : ''}` : ''"
                 placeholder="Non selezionato" @click="apriPopupSedi">
-              <button type="button" class="btn btn-ghost" @click="apriPopupSedi">Scegli…</button>
+              <button type="button" class="btn btn-blue" @click="apriPopupSedi">Scegli…</button>
             </div>
             <small class="note-legal" style="margin-top:6px">Sede INPS della tua posizione contributiva: viene scritta nella sezione INPS dell'F24. Elenco ufficiale Agenzia delle Entrate.</small>
           </div>
@@ -328,7 +330,7 @@ function selezionaCodice(codice) {
           </div>
         </div>
         <div style="margin-top:8px">
-          <button type="button" class="btn btn-ghost" @click="aggiungiWalletBtc">+ Aggiungi indirizzo</button>
+          <button type="button" class="btn btn-ok" @click="aggiungiWalletBtc">+ Aggiungi indirizzo</button>
         </div>
 
         <h3 class="sotto-titolo">Import automatico transazioni</h3>
@@ -377,7 +379,7 @@ function selezionaCodice(codice) {
           <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
         </div>
         <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
-        <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>
+        <div class="ai-popup-footer"><button class="btn btn-blue" @click="popupAI = null">Chiudi</button></div>
       </div>
     </div>
   </Teleport>

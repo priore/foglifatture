@@ -35,8 +35,19 @@ export const api = {
 
   // Cartelle dei client Dropbox, OneDrive e Google Drive trovate su questo computer (solo desktop)
   cartelleCloud: () => richiesta('/cartelle-cloud'),
-  cartelleCloudEsamina: (radice) => richiesta(`/cartelle-cloud/esamina?radice=${encodeURIComponent(radice)}`),
-  cartelleCloudScegli: () => richiesta('/cartelle-cloud/scegli', { method: 'POST', body: JSON.stringify({}) }),
+  cartelleCloudEsamina: (radice, provider) => richiesta(`/cartelle-cloud/esamina?radice=${encodeURIComponent(radice)}&provider=${encodeURIComponent(provider)}`),
+  cartelleCloudScegli: (provider) => richiesta('/cartelle-cloud/scegli', { method: 'POST', body: JSON.stringify({ provider }) }),
+
+  // Migrazione guidata dalla vecchia posizione `<client>/FogliFatture` (null se non c'è nulla da migrare)
+  migrazioneCloud: () => richiesta('/cartelle-cloud/migrazione'),
+  migraCloudClient: (azione) => richiesta('/cartelle-cloud/migrazione', { method: 'POST', body: JSON.stringify({ azione }) }),
+
+  // Archivio su Google Drive via API (login con l'account)
+  cloudStato: () => richiesta('/cloud/stato'),
+  cloudLogin: (dati) => richiesta('/cloud/login', { method: 'POST', body: JSON.stringify(dati) }),
+  cloudArchivio: (azione) => richiesta('/cloud/archivio', { method: 'POST', body: JSON.stringify({ azione }) }),
+  cloudSincronizza: () => richiesta('/cloud/sincronizza', { method: 'POST' }),
+  cloudScollega: () => richiesta('/cloud', { method: 'DELETE' }),
 
   // Termini d'uso
   getTermini: () => richiesta('/termini'),
@@ -167,7 +178,7 @@ export const api = {
     location.reload();
   },
 
-  // Server MCP in sola lettura (FP-008)
+  // Server MCP in sola lettura (FP-035)
   statoMcp: () => richiesta('/mcp/stato'),
   impostaMcpAbilitato: (abilitato) => richiesta('/mcp/abilitato', { method: 'PUT', body: JSON.stringify({ abilitato }) }),
   rigeneraTokenMcp: () => richiesta('/mcp/rigenera-token', { method: 'POST' }),

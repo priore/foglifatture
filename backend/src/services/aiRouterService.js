@@ -2,7 +2,7 @@
 // in caso di quota esaurita o provider non disponibile. Non solleva mai errore se almeno
 // un provider risponde; solleva solo se tutti i provider tentati falliscono.
 //
-// Ordine di priorità (basato su AI-Workspace/Plans/AI_CLI_OAUTH_ANALISI.md):
+// Ordine di priorità:
 //   1. Gemini API key (se configurata)
 //   2. agy CLI (Gemini OAuth, se installato e autenticato)
 //   3. GitHub Copilot CLI (gh copilot, se installato e autenticato)

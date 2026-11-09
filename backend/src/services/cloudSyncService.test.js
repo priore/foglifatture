@@ -1,14 +1,15 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { setDataDir, readJson, writeJson, DATA_DIR } from '../lib/jsonStore.js';
 import { creaFinto } from '../lib/cloudProviders.fake.js';
+import { percorsoCambiato } from '../lib/cloudHook.js';
 import { registraNumero, azzeraIdDispositivo } from './numerazioneService.js';
 import {
   dipendenze, _azzera, avviaLogin, completaLogin, scegliArchivio, statoCloud, sincronizza,
-  sincronizzaPrimaDiEmettere, disconnetti, riprendiCloud, _dimenticaAccesso,
+  sincronizzaPrimaDiEmettere, disconnetti, riprendiCloud, _dimenticaAccesso, segnaTuttoDaCaricare,
 } from './cloudSyncService.js';
 
 const CLI = 'a1b2c3d4-cliX';
@@ -71,6 +72,12 @@ test('carica: i dati locali vanno sul provider, la copia diventa la cartella dat
   assert.equal((await readJson('config.json')).fornitore.denominazione, 'Esempio Srl');
 });
 
+test('carica su dispositivo nuovo (senza dati locali) crea un archivio vuoto sul provider', async () => {
+  assert.equal((await collega()).remoto, 'vuoto');
+  assert.equal((await scegliArchivio('carica')).archivio, true);
+  assert.deepEqual([...finto.file.keys()], ['config.json']);
+});
+
 test('carica rifiuta un provider non vuoto, apri rifiuta uno senza archivio', async () => {
   await archivioLocale();
   finto.scrivi('altro.txt', Buffer.from('x'));
@@ -115,6 +122,25 @@ test('conflitto: file modificato qui e sul provider, vince il provider e la copi
   const salvata = await readJson(stato.conflitti[0]);
   assert.equal(salvata.ore, 8);
   assert.equal(stato.inAttesa, 0);
+});
+
+test('conflitti: 3 copie per file, le più vecchie si eliminano; i file rigenerabili non ne lasciano', async () => {
+  await archivioLocale();
+  await collega();
+  await scegliArchivio('carica');
+  let primo;
+  for (let i = 0; i < 5; i++) {
+    await writeJson('timesheets/2026-01.json', { ore: i });
+    await writeJson('fonti-cambiate.json', { i });
+    finto.scrivi('timesheets/2026-01.json', Buffer.from(`{"ore":${1000 + i}}`));
+    finto.scrivi('fonti-cambiate.json', Buffer.from(`{"i":${1000 + i}}`));
+    const s = await sincronizza();
+    primo ??= s.conflitti[0];
+  }
+  const stato = await statoCloud();
+  assert.equal(stato.conflitti.length, 3);
+  assert.ok(stato.conflitti.every((c) => c.startsWith('conflitti/timesheets/')));
+  await assert.rejects(stat(path.join(process.env.FOGLIFATTURE_CLOUD_DIR, 'copia', ...primo.split('/'))));
 });
 
 test('offline: lo stato riporta l\'errore, le scritture restano in coda, l\'emissione è bloccata', async () => {
@@ -267,4 +293,65 @@ test('dati di prova in uso: login e scelta archivio rifiutati, poi di nuovo libe
     await assert.rejects(scegliArchivio('carica'), /modalità dimostrativa/);
   } finally { delete globalThis.__cloudBloccato; }
   await avviaLogin({ provider: 'dropbox' });
+});
+
+test('scollegato e dati spostati altrove: il riavvio non rimette la cartella dati sulla copia', async () => {
+  await archivioLocale();
+  await collega();
+  await scegliArchivio('carica');
+  await disconnetti();
+  const altrove = path.join(path.dirname(dati), 'altrove');
+  setDataDir(altrove);
+  await percorsoCambiato(altrove);
+  await _azzera();
+  assert.equal(await riprendiCloud(), null);
+  assert.equal(path.resolve(DATA_DIR), path.resolve(altrove));
+});
+
+test('scollegato e dati ancora sulla copia: il riavvio la mantiene come cartella dati', async () => {
+  await archivioLocale();
+  await collega();
+  await scegliArchivio('carica');
+  await disconnetti();
+  await percorsoCambiato(DATA_DIR);
+  await _azzera();
+  assert.ok((await riprendiCloud()).endsWith('copia'));
+});
+
+test('carica: dati.percorso (percorso locale del computer) non va sul provider né nella copia', async () => {
+  await writeJson('config.json', { fornitore: { denominazione: 'Esempio Srl' }, dati: { percorso: '/home/esempio/Dropbox/FogliFatture' } });
+  await collega();
+  await scegliArchivio('carica');
+  assert.equal(JSON.parse(remoto('config.json')).dati.percorso, undefined);
+  assert.equal(JSON.parse(await readFile(path.join(DATA_DIR, 'config.json'), 'utf-8')).dati.percorso, undefined);
+  assert.equal(JSON.parse(remoto('config.json')).fornitore.denominazione, 'Esempio Srl');
+});
+
+test('dopo il ripristino di un backup tutti i JSON risultano da caricare sul provider', async () => {
+  await archivioLocale();
+  await collega();
+  await scegliArchivio('carica');
+  // file scritti senza passare da jsonStore, come fa il ripristino
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(path.join(DATA_DIR, 'config.json'), JSON.stringify({ fornitore: { denominazione: 'Ripristinata Srl' } }));
+  await segnaTuttoDaCaricare();
+  await sincronizza();
+  assert.match(remoto('config.json'), /Ripristinata/);
+});
+
+test('rete che cade a metà del caricamento: i dati in uso restano quelli di prima e si può riprovare', async () => {
+  await archivioLocale();
+  await collega();
+  const http = dipendenze.http;
+  let chiamate = 0;
+  dipendenze.http = async (...a) => { if (++chiamate > 2) throw new TypeError('fetch failed'); return http(...a); };
+  await assert.rejects(scegliArchivio('carica'));
+  assert.equal(path.resolve(DATA_DIR), path.resolve(dati));
+  assert.equal((await readJson('config.json')).fornitore.denominazione, 'Esempio Srl');
+  assert.equal((await statoCloud()).archivio, false);
+  // Rete tornata: la stessa operazione riesce (il provider può aver ricevuto file parziali).
+  dipendenze.http = http;
+  finto.file.clear();
+  await scegliArchivio('carica');
+  assert.ok(remoto('config.json'));
 });

@@ -349,7 +349,7 @@ async function apriEstratto(fonte) {
           <p v-else class="mon-ultima">Nessun controllo eseguito ancora.</p>
           <div v-if="erroreControllo" class="notifica notifica-warn">{{ erroreControllo }}</div>
           <div class="diff-actions">
-            <button class="btn btn-ghost" :disabled="controlloInCorso" @click="controllaOra">
+            <button class="btn btn-blue" :disabled="controlloInCorso" @click="controllaOra">
               {{ controlloInCorso ? 'Controllo in corso…' : 'Controlla ora' }}
             </button>
           </div>
@@ -375,7 +375,7 @@ async function apriEstratto(fonte) {
           <div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div>
         </div>
         <div class="ai-popup-footer">
-          <button class="btn btn-ghost" @click="popupAI = false">Chiudi</button>
+          <button class="btn btn-blue" @click="popupAI = false">Chiudi</button>
         </div>
       </div>
     </div>
@@ -397,8 +397,8 @@ async function apriEstratto(fonte) {
           <p v-else class="ai-popup-testo muted">Testo non ancora archiviato per questa fonte.</p>
         </div>
         <div class="ai-popup-footer">
-          <a v-if="popupFonte.voce.url" :href="popupFonte.voce.url" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Apri testo integrale ↗</a>
-          <button class="btn btn-ghost" @click="popupFonte = null">Chiudi</button>
+          <a v-if="popupFonte.voce.url" :href="popupFonte.voce.url" target="_blank" rel="noopener noreferrer" class="btn btn-blue">Apri testo integrale ↗</a>
+          <button class="btn btn-blue" @click="popupFonte = null">Chiudi</button>
         </div>
       </div>
     </div>

@@ -86,7 +86,7 @@ export function generaXmlFatturaPA(dati) {
 
   // Letto da fattura (congelato al momento di "Genera fattura" in invoiceRoutes.js),
   // mai da cliente: la clausola BTC è pattuita all'emissione e non deve cambiare
-  // retroattivamente se il flag cliente viene modificato dopo (vedi PAGAMENTI_BTC.md, F3).
+  // retroattivamente se il flag cliente viene modificato dopo.
   const causaleBtc = fattura.pagamentoBtc && fattura.causaleBtc
     ? `\n        <Causale>${escapeXml(fattura.causaleBtc)}</Causale>`
     : '';

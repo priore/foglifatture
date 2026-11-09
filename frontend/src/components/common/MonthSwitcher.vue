@@ -66,9 +66,9 @@ function alCambio(valore) {
 
 <template>
   <div class="actions">
-    <button class="btn btn-ghost" :disabled="!puoIndietro" @click="vai(-1)" aria-label="Mese precedente">←<span class="lbl-esteso"> {{ NOMI_MESI[(mese - 2 + 12) % 12] }}</span></button>
+    <button class="btn btn-blue" :disabled="!puoIndietro" @click="vai(-1)" aria-label="Mese precedente">←<span class="lbl-esteso"> {{ NOMI_MESI[(mese - 2 + 12) % 12] }}</span></button>
     <span
-      class="btn btn-ghost" style="cursor:pointer"
+      class="btn btn-blue" style="cursor:pointer"
       role="button" tabindex="0" title="Vai a mese/anno..." aria-label="Vai a mese/anno..."
       @click="aperto = true"
       @keydown.enter="aperto = true"
@@ -81,6 +81,6 @@ function alCambio(valore) {
         @conferma="alCambio" @chiudi="aperto = false"
       />
     </span>
-    <button class="btn btn-ghost" :disabled="!puoAvanti" @click="vai(1)" aria-label="Mese successivo"><span class="lbl-esteso">{{ NOMI_MESI[mese % 12] }} </span>→</button>
+    <button class="btn btn-blue" :disabled="!puoAvanti" @click="vai(1)" aria-label="Mese successivo"><span class="lbl-esteso">{{ NOMI_MESI[mese % 12] }} </span>→</button>
   </div>
 </template>

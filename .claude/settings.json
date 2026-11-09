@@ -27,6 +27,17 @@
       "Bash(gh pr list*)",
       "Bash(lsof -i :1969*)",
       "WebFetch(domain:infoprecompilata.agenziaentrate.gov.it)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p8)",
+      "Read(**/*.p12)",
+      "Read(**/backend/data/config.json)",
+      "Read(~/.config/foglifatture/**)",
+      "Read(**/Web.config)",
+      "Read(**/web.config)"
     ]
   },
   "model": "sonnet",
@@ -46,6 +57,11 @@
       {
         "matcher": "Bash",
         "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-credential-exposure.py\"",
+            "timeout": 10
+          },
           {
             "type": "command",
             "command": "jq -r '.tool_input.command' | { read -r cmd; if echo \"$cmd\" | grep -qE '\\bgit\\s+commit\\b'; then out=$(\"$CLAUDE_PROJECT_DIR\"/scripts/git-hooks/pre-commit 2>&1) || { jq -n --arg r \"$out\" '{decision:\"block\",reason:$r}'; exit 0; }; fi; exit 0; }",

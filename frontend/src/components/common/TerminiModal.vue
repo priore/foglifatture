@@ -45,7 +45,7 @@ async function accetta() {
       <p v-if="!spuntato || !spuntatoSpecifica" class="note-legal">Per proseguire spunta entrambe le caselle.</p>
       <p v-if="errore" class="note-legal">{{ errore }}</p>
       <div class="modal-actions">
-        <router-link to="/privacy" class="btn btn-ghost">Privacy</router-link>
+        <router-link to="/privacy" class="btn btn-blue">Privacy</router-link>
         <button type="button" class="btn btn-ok" :disabled="!spuntato || !spuntatoSpecifica" :title="spuntato && spuntatoSpecifica ? '' : 'Spunta entrambe le caselle per accettare'" @click="accetta">Accetta</button>
       </div>
     </div>

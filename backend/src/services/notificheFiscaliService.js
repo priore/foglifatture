@@ -1,5 +1,4 @@
 // Notifiche OS per eventi fiscali in background: F24, bollo, crediti, regole, Intrastat.
-// OS.1–OS.5, OS.7 del piano FEATURES_GAP_ANALISI_ESTERNA.md.
 // OS.6 (IMAP) è in sdiRicevuteService.js perché condivide lo stato del polling.
 import { notificaConDedup } from '../lib/notifier.js';
 import { listF24 } from './f24StateService.js';

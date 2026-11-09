@@ -26,7 +26,6 @@ Limiti e incoerenze osservati. Solo documentazione: nulla qui viene corretto da 
 - 🟢 La fattura resta non archiviata nell'app: nel file c'è solo oggetto, nomi degli allegati e data. L'archiviazione è il tema di K5.
 - 🟡 Segnate come lette nel client di posta, le fatture d'acquisto non saltano più all'occhio.
 - 🟢 Il polling automatico parte solo se c'è una fattura emessa nelle ultime 72 ore ancora senza esito (`inAttesaRispostaRecente`). Le fatture ricevute vengono quindi lette solo per coincidenza o col controllo manuale.
-- Vedi K5 in `Plans/CONCORRENZA_GAP_FUNZIONALITA.md` e `Plans/SPESE_ACQUISTO_DA_PEC.md`.
 
 ## Acconti INPS stimati, non letti dai versamenti
 

@@ -1,4 +1,4 @@
-// FP-008: server MCP in sola lettura. JSON-RPC 2.0 scritto a mano (stdio e HTTP/SSE lo
+// FP-035: server MCP in sola lettura. JSON-RPC 2.0 scritto a mano (stdio e HTTP/SSE lo
 // condividono tramite gestisciRichiesta): nessun SDK, nessuna dipendenza nuova.
 //
 // Confine: ogni tool restituisce SOLO i campi elencati nelle funzioni proietta* (allowlist,

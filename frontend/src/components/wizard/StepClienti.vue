@@ -5,16 +5,23 @@ import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api.js';
 import StepCliente from './StepCliente.vue';
 import TemplateGrid from './TemplateGrid.vue';
+import { iniziale, inizialiDi } from '../../composables/useIniziali.js';
 
 const props = defineProps({ modelValue: { type: Array, required: true } });
 const emit = defineEmits(['salva-subito']);
 
 const ricerca = ref('');
+const lettera = ref('');
+const SOGLIA_INIZIALI = 8; // stessa soglia delle liste a popup (ListaPopup)
+const clientiAttivi = computed(() => props.modelValue.filter((c) => c.attivo));
+const iniziali = computed(() => inizialiDi(clientiAttivi.value.map((c) => c.denominazione)));
 const clientiFiltrati = computed(() => {
   const q = ricerca.value.trim().toLowerCase();
-  const attivi = props.modelValue.filter((c) => c.attivo);
-  if (!q) return attivi;
-  return attivi.filter((c) => (c.denominazione || '').toLowerCase().includes(q));
+  // Se l'ultimo cliente di quella lettera viene disattivato/eliminato il filtro non resta orfano.
+  const l = iniziali.value.includes(lettera.value) ? lettera.value : '';
+  if (!q && !l) return clientiAttivi.value;
+  return clientiAttivi.value.filter((c) => (!l || iniziale(c.denominazione) === l)
+    && (!q || (c.denominazione || '').toLowerCase().includes(q)));
 });
 
 // Tracciato per id cliente, non per indice posizionale: con la ricerca attiva l'indice
@@ -88,7 +95,11 @@ function riattivaCliente(cliente) {
       >
     </div>
 
-    <p v-if="ricerca && !clientiFiltrati.length" class="note-legal">Nessun cliente trovato.</p>
+    <div v-if="clientiAttivi.length > SOGLIA_INIZIALI" class="lista-iniziali clienti-iniziali" role="group" aria-label="Filtra per iniziale">
+      <button v-for="l in iniziali" :key="l" type="button" class="lista-iniziale" :class="{ attiva: l === lettera }" :aria-pressed="l === lettera" @click="lettera = lettera === l ? '' : l">{{ l }}</button>
+    </div>
+
+    <p v-if="(ricerca || lettera) && !clientiFiltrati.length" class="note-legal">Nessun cliente trovato.</p>
 
     <div v-for="cliente in clientiFiltrati" :key="cliente.id" class="card" style="margin-bottom:12px">
       <div
@@ -100,7 +111,7 @@ function riattivaCliente(cliente) {
       >
         <h3 class="titolo-cliente"><span class="chevron-cliente solo-compatto" :class="{ aperto: aperti.has(cliente.id) }" aria-hidden="true">›</span>{{ cliente.denominazione || 'Nuovo cliente' }}</h3>
         <span class="azioni-cliente">
-          <button type="button" class="btn btn-ghost" @click.stop="disattivaCliente(cliente)">Disattiva</button>
+          <button type="button" class="btn btn-warn" @click.stop="disattivaCliente(cliente)">Disattiva</button>
           <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click.stop="eliminaClienteDef(cliente)">Elimina</button>
         </span>
       </div>
@@ -198,7 +209,7 @@ function riattivaCliente(cliente) {
    </section>
         </div>
         <div class="azioni-cliente-piede">
-          <button type="button" class="btn btn-ghost" @click="disattivaCliente(cliente)">Disattiva</button>
+          <button type="button" class="btn btn-warn" @click="disattivaCliente(cliente)">Disattiva</button>
           <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click="eliminaClienteDef(cliente)">Elimina</button>
         </div>
       </div>
@@ -209,7 +220,7 @@ function riattivaCliente(cliente) {
       <div v-for="cliente in modelValue.filter(c => !c.attivo)" :key="cliente.id" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
         <span>{{ cliente.denominazione || 'Cliente senza nome' }}</span>
         <span class="azioni-cliente">
-          <button type="button" class="btn btn-ghost" @click="riattivaCliente(cliente)">Riattiva</button>
+          <button type="button" class="btn btn-ok" @click="riattivaCliente(cliente)">Riattiva</button>
           <button type="button" class="btn btn-warn" :disabled="conDati.has(cliente.id)" :title="titoloElimina(cliente)" @click="eliminaClienteDef(cliente)">Elimina</button>
         </span>
       </div>
@@ -220,6 +231,7 @@ function riattivaCliente(cliente) {
 <style scoped>
 .azioni-cliente { display: flex; gap: 8px; }
 .titolo-cliente { margin: 0; }
+.clienti-iniziali { margin: 0 0 16px; }
 .clienti-cerca-input {
   flex: 1; border: 1px solid var(--line); border-radius: var(--radius-md);
   padding: 9px 11px; font-size: var(--font-size-base); background: var(--ground); color: var(--ink);

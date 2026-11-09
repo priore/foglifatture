@@ -194,7 +194,7 @@ async function aiutamiCapire7Septies() {
           <span class="ai-popup-titolo">{{ popupAI.titolo }}</span>
         </div>
         <div class="ai-popup-body"><div class="ai-popup-testo" v-html="renderMarkdown(popupAI.testo)"></div></div>
-        <div class="ai-popup-footer"><button class="btn btn-ghost" @click="popupAI = null">Chiudi</button></div>
+        <div class="ai-popup-footer"><button class="btn btn-blue" @click="popupAI = null">Chiudi</button></div>
       </div>
     </div>
   </Teleport>

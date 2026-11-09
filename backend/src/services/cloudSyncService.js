@@ -1,4 +1,4 @@
-// Archivio su Dropbox, OneDrive o Google Drive: copia locale + sincronizzazione (CLOUD_STORAGE_ANALISI §6.3).
+// Archivio su Dropbox, OneDrive o Google Drive: copia locale + sincronizzazione.
 // `jsonStore` continua a leggere e scrivere file locali (DATA_DIR punta alla copia); qui si allinea la copia al
 // provider. Un solo servizio, eseguito da Node sul desktop e da core.js negli ambienti embedded.
 //   - Pull: ogni file con rev diversa dal provider si scarica; se era stato modificato anche qui, vince il provider e
@@ -9,14 +9,14 @@
 // Il refresh token sta nel Keychain; provider e stato di sincronizzazione in un file
 // locale del dispositivo, FUORI dall'archivio (backend/.cloud/, in .gitignore).
 import { randomBytes } from 'node:crypto';
-import { readFile, writeFile, mkdir, readdir, rename, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, rename, stat, rm } from 'node:fs/promises';
 import path from 'node:path';
 import keytar from 'keytar';
 import { setDataDir, setDopoScrittura, DATA_DIR } from '../lib/jsonStore.js';
 import { creaProvider, pkce, ConflittoRev, NonAutorizzato } from '../lib/cloudProviders.js';
 import { apriArchivioEsistente } from './configService.js';
 import { clientCloud } from '../lib/cloudClients.js';
-import { impostaCloud } from '../lib/cloudHook.js';
+import { impostaCloud, impostaDopoCambioPercorso } from '../lib/cloudHook.js';
 import { logger } from '../lib/logger.js';
 
 const KEYTAR_SERVICE = 'Timesheet-Fatturazione';
@@ -24,6 +24,8 @@ export const PROVIDER_CLOUD = ['dropbox', 'onedrive', 'google'];
 export const FILE_NUMERAZIONE = 'numerazione.json';
 const INTERVALLO_MS = 60_000;
 const ATTESA_PUSH_MS = 5_000;
+const MAX_COPIE_CONFLITTO = 3; // rotazione per file: le copie più vecchie in `conflitti/` si eliminano
+const RIGENERABILI = /^(fonti-|monitoraggio-)[^/]*\.json$/; // stato del monitoraggio fonti: lo rigenera l'app, nessuna copia da conservare
 const REDIRECT_AMMESSO = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/api\/cloud\/callback$/;
 
 // Sostituibili: i test usano un fetch finto e un Keychain in memoria; gli ambienti embedded spostano il puntatore ai dati.
@@ -212,6 +214,19 @@ async function sostituisciCopia(staging) {
   await rename(staging, copia);
 }
 
+// `dati.percorso` del config è un percorso locale di questo computer: sul provider e agli altri dispositivi non serve.
+function senzaPercorsoLocale(percorso, dati) {
+  if (percorso !== 'config.json') return dati;
+  try {
+    const config = JSON.parse(dati.toString('utf-8'));
+    if (!config?.dati || !('percorso' in config.dati)) return dati;
+    delete config.dati.percorso;
+    return Buffer.from(JSON.stringify(config, null, 2));
+  } catch {
+    return dati;
+  }
+}
+
 // 'apri': l'archivio trovato sul provider diventa la copia locale; i dati locali attuali restano dove sono, intatti.
 // 'carica': il provider è vuoto, vi si copiano i dati locali attuali (copia, non spostamento).
 export async function scegliArchivio(azione) {
@@ -236,11 +251,12 @@ export async function scegliArchivio(azione) {
   } else {
     if (tipo !== 'vuoto') throw new Error('Sul provider c\'è già qualcosa: aprilo invece di caricare');
     const tutti = await elencaLocali(origine);
-    if (!tutti.includes('config.json')) throw new Error('Nessun archivio locale da caricare');
     staging = await nuovaCopiaInCostruzione();
+    // Dispositivo nuovo, mai configurato: config.json non c'è ancora, si parte da un archivio vuoto (getConfig applica i predefiniti).
+    if (!tutti.includes('config.json')) { await scriviLocale(staging, 'config.json', Buffer.from('{}')); revs['config.json'] = await p.scrivi('config.json', Buffer.from('{}'), { rev: null }); }
     // Tutta la cartella si copia (ricevute SDI comprese, la cartella dati cambia); sul provider vanno solo i JSON.
     for (const percorso of tutti) {
-      const dati = await readFile(path.join(origine, ...percorso.split('/')));
+      const dati = senzaPercorsoLocale(percorso, await readFile(path.join(origine, ...percorso.split('/'))));
       await scriviLocale(staging, percorso, dati);
       if (percorso.endsWith('.json')) revs[percorso] = await p.scrivi(percorso, dati, { rev: null });
     }
@@ -267,11 +283,18 @@ function sporca(rel) {
 }
 
 async function salvaConflitto(percorso) {
+  if (RIGENERABILI.test(percorso)) return;
   const dati = await readFile(path.join(cartellaCopia(), ...percorso.split('/'))).catch(() => null);
   if (!dati) return;
   const nome = `conflitti/${percorso.replace(/\.json$/, '')}-${Date.now()}.json`;
   await scriviLocale(cartellaCopia(), nome, dati);
   stato.conflitti.push(nome);
+  const prefisso = `conflitti/${percorso.replace(/\.json$/, '')}-`;
+  const stessoFile = stato.conflitti.filter((c) => c.startsWith(prefisso));
+  for (const vecchio of stessoFile.slice(0, Math.max(0, stessoFile.length - MAX_COPIE_CONFLITTO))) {
+    stato.conflitti = stato.conflitti.filter((c) => c !== vecchio);
+    await rm(path.join(cartellaCopia(), ...vecchio.split('/')), { force: true });
+  }
 }
 
 async function giroSincronizzazione() {
@@ -388,4 +411,24 @@ export async function riprendiCloud() {
   return cartellaCopia();
 }
 
-impostaCloud({ remotoPerNumerazione, sincronizzaPrimaDiEmettere });
+// Dopo il ripristino di un backup i file sono scritti senza passare da jsonStore: con un archivio cloud attivo
+// tutti i JSON risultano da caricare, altrimenti il provider resterebbe con i dati vecchi.
+export async function segnaTuttoDaCaricare() {
+  await caricaStato();
+  if (!stato?.archivio) return;
+  const tutti = (await elencaLocali(DATA_DIR)).filter((p) => p.endsWith('.json') && p !== FILE_NUMERAZIONE && !p.startsWith('conflitti/'));
+  stato.sporchi = [...new Set([...stato.sporchi, ...tutti])];
+  await salvaStato();
+  sincronizza().catch(() => {});
+}
+
+// Scollegato e con i dati spostati altrove (cartella di un client, altra cartella): all'avvio non si torna alla copia.
+impostaDopoCambioPercorso(async (nuovo) => {
+  await caricaStato();
+  if (stato && !stato.archivio && stato.copia && path.resolve(nuovo) !== path.resolve(cartellaCopia())) {
+    stato.copia = false;
+    await salvaStato();
+  }
+});
+
+impostaCloud({ remotoPerNumerazione, sincronizzaPrimaDiEmettere, segnaTuttoDaCaricare });

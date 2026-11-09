@@ -4,6 +4,7 @@
 // tap fuori / Esc / Annulla chiudono senza selezione.
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useTouch } from '../../composables/useTouch.js';
+import { iniziale, inizialiDi } from '../../composables/useIniziali.js';
 const SOGLIA_RICERCA = 8;
 const props = defineProps({
   // [{ value, label, disabled? }] oppure intestazione di gruppo [{ gruppo: true, label }]
@@ -20,10 +21,14 @@ const inputRicerca = ref(null);
 const lista = ref(null);
 
 const conRicerca = computed(() => props.voci.filter((v) => !v.gruppo && !v.disabled).length > SOGLIA_RICERCA);
+const lettera = ref('');
+const iniziali = computed(() => inizialiDi(props.voci.filter((v) => !v.gruppo && !v.disabled).map((v) => v.label)));
 const visibili = computed(() => {
   const q = ricerca.value.trim().toLowerCase();
-  if (!q) return props.voci;
-  return props.voci.filter((v) => !v.gruppo && !v.disabled && String(v.label).toLowerCase().includes(q));
+  if (!q && !lettera.value) return props.voci;
+  return props.voci.filter((v) => !v.gruppo && !v.disabled
+    && (!lettera.value || iniziale(v.label) === lettera.value)
+    && (!q || String(v.label).toLowerCase().includes(q)));
 });
 const haSelezione = computed(() => props.voci.some((v) => !v.gruppo && v.value === bozza.value));
 
@@ -48,7 +53,10 @@ onUnmounted(() => window.removeEventListener('keydown', alTasto));
         <h2 class="cal-titolo">{{ titolo }}</h2>
         <p v-if="descrizione" class="cal-descrizione">{{ descrizione }}</p>
         <input v-if="conRicerca" ref="inputRicerca" v-model="ricerca" type="search" class="lista-ricerca" placeholder="Cerca…" aria-label="Cerca nella lista">
-        <ul ref="lista" class="lista-voci" role="listbox">
+        <div v-if="conRicerca" class="lista-iniziali" role="group" aria-label="Filtra per iniziale">
+          <button v-for="l in iniziali" :key="l" type="button" class="lista-iniziale" :class="{ attiva: l === lettera }" :aria-pressed="l === lettera" @click="lettera = lettera === l ? '' : l">{{ l }}</button>
+        </div>
+        <ul ref="lista"class="lista-voci" role="listbox">
           <template v-for="(v, i) in visibili" :key="i">
             <li v-if="v.gruppo" class="lista-gruppo">{{ v.label }}</li>
             <li v-else-if="v.disabled" class="lista-gruppo">{{ v.label }}</li>

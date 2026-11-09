@@ -4,7 +4,7 @@ import SelectField from './common/SelectField.vue';
 import DateField from './common/DateField.vue';
 import ModuloPopup from './common/ModuloPopup.vue';
 import ListaPopup from './common/ListaPopup.vue';
-// Registro BTC (FP-012, piano REGISTRO_LOTTI_BTC.md Step 8): movimenti in ingresso (rate fattura + manuali)
+// Registro BTC (FP-012): movimenti in ingresso (rate fattura + manuali)
 // e uscite, saldo residuo LIFO, form di registrazione con anteprima plusvalenza. Vive nella tab Bitcoin.
 import { ref, computed, watch, onMounted } from 'vue';
 import { api } from '../services/api.js';
@@ -182,9 +182,9 @@ async function elimina(r) {
     <p v-for="a in avvisi" :key="a" class="avviso-riga avviso-info">{{ a }}</p>
 
     <div class="azioni">
-      <button type="button" :class="formAperto === 'uscita' ? 'btn btn-primary' : 'btn btn-ghost'" @click="apri('uscita')">Registra uscita</button>
-      <button type="button" :class="formAperto === 'ingresso' ? 'btn btn-primary' : 'btn btn-ghost'" @click="apri('ingresso')">Aggiungi ingresso manuale</button>
-      <button type="button" :class="formAperto === 'giacenza' ? 'btn btn-primary' : 'btn btn-ghost'" title="Quantità posseduta senza storico dei movimenti" @click="apri('giacenza')">Dichiara giacenza</button>
+      <button type="button" :class="formAperto === 'uscita' ? 'btn btn-primary' : 'btn btn-ok'" @click="apri('uscita')">Registra uscita</button>
+      <button type="button" :class="formAperto === 'ingresso' ? 'btn btn-primary' : 'btn btn-ok'" @click="apri('ingresso')">Aggiungi ingresso manuale</button>
+      <button type="button" :class="formAperto === 'giacenza' ? 'btn btn-primary' : 'btn btn-ok'" title="Quantità posseduta senza storico dei movimenti" @click="apri('giacenza')">Dichiara giacenza</button>
     </div>
 
     <ModuloPopup v-if="formAperto" come-form :titolo="{ uscita: 'Registra uscita', ingresso: 'Aggiungi ingresso manuale', giacenza: 'Dichiara giacenza' }[formAperto]" @invia="salva" @chiudi="formAperto = null">

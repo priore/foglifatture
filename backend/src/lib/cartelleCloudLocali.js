@@ -1,5 +1,5 @@
-// Cartelle di sincronizzazione dei client desktop di Dropbox, OneDrive e Google Drive presenti su questo computer.
-// Il client del provider è già collegato all'account dell'utente del PC: l'app usa la cartella `FogliFatture` al suo
+// Cartelle di sincronizzazione dei client desktop di Dropbox e OneDrive presenti su questo computer.
+// Il client del provider è già collegato all'account dell'utente del PC: l'app usa la cartella `Apps/FogliFatture` al suo
 // interno, senza chiavi API né login propri. Solo desktop Node (macOS e Windows): gli ambienti embedded non leggono cartelle altrui.
 // Il file system, la home e la piattaforma si iniettano per i test.
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
@@ -7,6 +7,15 @@ import os from 'node:os';
 import path from 'node:path';
 
 export const SOTTOCARTELLA = 'FogliFatture';
+// La cartella che l'app mobile vede via API («Apps/<nome app>»), così desktop e mobile condividono lo stesso archivio.
+// Google Drive non passa dal client: si collega con il login (cloudSyncService).
+// Dropbox e OneDrive danno alla cartella delle app il nome della lingua del sistema (in italiano `Applicazioni`):
+// si usa quella già presente nella radice del client, altrimenti `Apps`.
+const NOMI_APPS = ['Apps', 'Applicazioni', 'Aplicaciones', 'Applications', 'Anwendungen', 'Aplicativos'];
+export const sottocartellaDi = (radice, fs = { statSync }) => {
+  const nome = radice ? NOMI_APPS.find((n) => eCartella(fs, path.join(radice, n))) : null;
+  return path.join(nome ?? NOMI_APPS[0], SOTTOCARTELLA);
+};
 const NOMI_DRIVE = ['My Drive', 'Il mio Drive'];
 
 const eCartella = (fs, p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
@@ -56,8 +65,12 @@ function googleDrive({ fs, home, piattaforma }) {
 const PROVIDER = [
   ['dropbox', 'Dropbox', dropbox],
   ['onedrive', 'OneDrive', onedrive],
-  ['google', 'Google Drive', googleDrive],
 ];
+
+// Solo per riconoscere un archivio rimasto nella vecchia posizione `<client Google>/FogliFatture`: non è una scelta possibile.
+export function radiciGoogleDrive({ fs = { statSync, readdirSync }, home = os.homedir(), piattaforma = process.platform } = {}) {
+  return googleDrive({ fs, home, piattaforma });
+}
 
 // Stato della sottocartella dell'app: 'assente', 'vuota', 'archivio' (c'è config.json con il fornitore) o 'estranea'.
 export function statoSottocartella(fs, cartella) {
@@ -72,10 +85,26 @@ export function statoSottocartella(fs, cartella) {
 }
 
 // Percorso `FogliFatture` dentro una cartella scelta dall'utente e suo stato (la sottocartella non è modificabile).
-export function esaminaRadice(radice, { fs = { statSync, readdirSync, readFileSync, existsSync, realpathSync } } = {}) {
+export function esaminaRadice(radice, _provider, { fs = { statSync, readdirSync, readFileSync, existsSync, realpathSync } } = {}) {
   if (!radice || !eCartella(fs, radice)) throw new Error('La cartella scelta non esiste');
-  const percorso = path.join(radice, SOTTOCARTELLA);
-  return { radice, percorso, stato: statoSottocartella(fs, percorso) };
+  const sottocartella = sottocartellaDi(radice, fs);
+  const percorso = path.join(radice, sottocartella);
+  return { radice, sottocartella, percorso, stato: statoSottocartella(fs, percorso) };
+}
+
+// Riconosce l'archivio rimasto nella vecchia posizione `<radice client>/FogliFatture` (Dropbox, OneDrive, Google Drive).
+// null se il percorso dati non è lì. Serve solo alla migrazione guidata: nessuno spostamento parte da solo.
+export function vecchiaPosizione(percorsoDati, {
+  fs = { statSync, readdirSync, readFileSync, existsSync, realpathSync }, home = os.homedir(), piattaforma = process.platform, env = process.env,
+} = {}) {
+  const attuale = path.resolve(percorsoDati || '');
+  const ctx = { fs, home, piattaforma, env };
+  const tutti = [...PROVIDER, ['google', 'Google Drive', googleDrive]];
+  for (const [provider, nome, trova] of tutti) {
+    const radice = trova(ctx).find((r) => path.resolve(r, SOTTOCARTELLA) === attuale);
+    if (radice) return { provider, nome, radice, vecchio: attuale };
+  }
+  return null;
 }
 
 export function cartelleCloudLocali({
@@ -83,7 +112,8 @@ export function cartelleCloudLocali({
 } = {}) {
   const ctx = { fs, home, piattaforma, env };
   return PROVIDER.flatMap(([provider, nome, trova]) => trova(ctx).map((radice) => {
-    const percorso = path.join(radice, SOTTOCARTELLA);
-    return { provider, nome, radice, percorso, stato: statoSottocartella(fs, percorso) };
+    const sottocartella = sottocartellaDi(radice, fs);
+    const percorso = path.join(radice, sottocartella);
+    return { provider, nome, radice, sottocartella, percorso, stato: statoSottocartella(fs, percorso) };
   }));
 }

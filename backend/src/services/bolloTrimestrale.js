@@ -1,5 +1,5 @@
 // Imposta di bollo trimestrale sulle fatture elettroniche.
-// FP-025 · FEATURES_GAP_ANALISI_ESTERNA.md voce 10 / sezione G 18°.
+// FP-025.
 //
 // Calcola il bollo accumulato per trimestre nell'anno, applica i rinvii previsti dalla guida
 // AdE (importo Q1 ≤ 5.000 € → versa con Q2; importo Q1+Q2 ≤ 5.000 € → versa con Q3),

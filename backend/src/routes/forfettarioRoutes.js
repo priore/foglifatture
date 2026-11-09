@@ -141,7 +141,7 @@ forfettarioRoutes.get('/scadenze-fiscali', async (req, res) => {
 });
 
 // Export CSV per il commercialista: fatture emesse nell'anno + riepilogo forfettario
-// (vedi AI-Workspace/Plans/EXPORT_COMMERCIALISTA.md).
+//.
 forfettarioRoutes.get('/export-commercialista', async (req, res) => {
   const anno = Number(req.query.anno) || new Date().getFullYear();
   const config = await getConfig();
@@ -152,7 +152,7 @@ forfettarioRoutes.get('/export-commercialista', async (req, res) => {
 });
 
 // Versamenti F24 effettivi (imposta sostitutiva, INPS) inseriti a mano, per il confronto
-// stimato/versato in dashboard (vedi AI-Workspace/Plans/F24_STEP1_RICOGNIZIONE.md).
+// stimato/versato in dashboard.
 forfettarioRoutes.get('/versamenti', async (req, res) => {
   const anno = req.query.anno ? Number(req.query.anno) : undefined;
   res.json(await listVersamenti(anno));
@@ -282,7 +282,7 @@ forfettarioRoutes.get('/versamenti-stimati/:anno/f24/:indice/pdf', async (req, r
 });
 
 // Stato F24: lista, creazione da piano, cambio stato, eliminazione.
-// FP-024 · FEATURES_GAP_ANALISI_ESTERNA.md voce 8.
+// FP-024.
 forfettarioRoutes.get('/f24', async (req, res) => {
   try {
     const anno = req.query.anno ? Number(req.query.anno) : undefined;
@@ -389,7 +389,7 @@ forfettarioRoutes.post('/f24/con-compensazione', async (req, res) => {
 });
 
 // Bollo trimestrale: scadenze e importi per anno.
-// FP-025 · FEATURES_GAP_ANALISI_ESTERNA.md voce 10.
+// FP-025.
 forfettarioRoutes.get('/bollo/:anno', async (req, res) => {
   try {
     const anno = Number(req.params.anno);
@@ -420,7 +420,7 @@ forfettarioRoutes.get('/bollo/:anno/trim/:trim/f24/pdf', async (req, res) => {
 });
 
 // Data di incasso fatture da CSV home banking: solo i nomi colonna vengono inviati a Gemini
-// per il mapping (mai righe/importi/causali reali), vedi AI-Workspace/Plans/DATE_PAGAMENTO_FATTURE.md.
+// per il mapping (mai righe/importi/causali reali).
 // Un unico endpoint: rileva mapping (cache o Gemini), estrae movimenti, propone abbinamenti.
 forfettarioRoutes.post('/pagamenti/analizza-csv', uploadCsv.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
@@ -499,7 +499,7 @@ forfettarioRoutes.delete('/pagamenti/:anno/:mese/:clienteId/:indice', async (req
   }
 });
 
-// ── Registro lotti BTC (FP-012/013, piano REGISTRO_LOTTI_BTC.md Step 5) ─────
+// ── Registro lotti BTC (FP-012/013) ─────
 const annoQuery = (req) => (req.query.anno ? Number(req.query.anno) : new Date().getFullYear());
 
 forfettarioRoutes.get('/btc/movimenti', async (_req, res) => {

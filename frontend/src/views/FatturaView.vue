@@ -108,8 +108,8 @@ const datiFattura = computed(() => {
     rivalsaInps: anteprimaEffettiva.value.rivalsaInps ?? 0,
     bolloApplicabile: anteprimaEffettiva.value.bolloApplicabile,
     nettoAPagare: anteprimaEffettiva.value.nettoAPagare,
-    // Se già generata, usa i valori congelati in fattura (immutabili dopo l'emissione,
-    // vedi PAGAMENTI_BTC.md F3): altrimenti mostra un'anteprima dal cliente corrente.
+    // Se già generata, usa i valori congelati in fattura (immutabili dopo l'emissione):
+    // altrimenti mostra un'anteprima dal cliente corrente.
     pagamentoBtc: fatturaGenerata.value?.pagamentoBtc ?? clienteCorrente.value.pagamentoBtc,
     causaleBtc: fatturaGenerata.value?.causaleBtc ?? clienteCorrente.value.causaleBtc,
     pagamento: fatturaGenerata.value ? (fatturaGenerata.value.pagamento ?? null) : pagamentoDaConfig(config.value, clienteCorrente.value),
@@ -264,7 +264,7 @@ async function registraPagamentoValuta() {
   }
 }
 
-// Incasso in BTC (AI-Workspace/Plans/PAGAMENTI_BTC.md, F1/F4/F5): l'EUR è calcolato dal
+// Incasso in BTC: l'EUR è calcolato dal
 // backend, mai inviato dal client — qui solo i dati grezzi della transazione/cambio.
 const mostraFormBtc = ref(false);
 const avvisoModale = ref('');
@@ -629,7 +629,7 @@ onMounted(async () => {
               </ul>
             </div>
             <div class="field">
-              <button v-if="!mostraFormBtc" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
+              <button v-if="!mostraFormBtc" class="btn btn-ok" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormBtc">₿ Registra incasso in BTC</button>
               <small v-if="!mostraFormBtc && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
               <ModuloPopup v-if="mostraFormBtc" titolo="Incasso in BTC" descrizione="Pagamento ricevuto in bitcoin per questa fattura" @chiudi="mostraFormBtc = false">
                 <label>Indirizzo di destinazione</label>
@@ -639,7 +639,7 @@ onMounted(async () => {
                     <option value="__altro__">Altro indirizzo…</option>
                   </SelectField>
                   <input v-else v-model="btcForm.indirizzoDestinatario" placeholder="il tuo indirizzo BTC che ha ricevuto il pagamento" style="flex:1" />
-                  <button class="btn btn-ghost" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
+                  <button class="btn btn-blue" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
                     <span v-if="caricandoTx">…</span>
                     <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </button>
@@ -650,7 +650,7 @@ onMounted(async () => {
                 <label>TXID</label>
                 <div style="display:flex;gap:6px">
                   <input v-model="btcForm.txid" placeholder="64 caratteri esadecimali (lascia vuoto per cercarlo dall'indirizzo)" style="flex:1" />
-                  <button class="btn btn-ghost" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
+                  <button class="btn btn-blue" :disabled="(!btcForm.txid && !btcForm.indirizzoDestinatario) || caricandoTx" :title="btcForm.txid ? 'Leggi da blockchain' : 'Trova ultima transazione ricevuta su questo indirizzo'" @click="leggiDaBlockchain">
                     <span v-if="caricandoTx">…</span>
                     <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </button>
@@ -664,7 +664,7 @@ onMounted(async () => {
                 <label>Cambio EUR/BTC</label>
                 <div style="display:flex;gap:6px">
                   <input v-model.number="btcForm.cambioEurBtc" type="number" min="0" step="0.01" style="flex:1" />
-                  <button class="btn btn-ghost" :disabled="caricandoCambio" @click="recuperaCambio">{{ caricandoCambio ? '…' : 'Recupera cambio' }}</button>
+                  <button class="btn btn-blue" :disabled="caricandoCambio" @click="recuperaCambio">{{ caricandoCambio ? '…' : 'Recupera cambio' }}</button>
                 </div>
                 <small class="note-legal">Invia solo la data al servizio esterno (CoinGecko). Il valore resta modificabile: prevale il criterio concordato col cliente.</small>
 
@@ -688,7 +688,7 @@ onMounted(async () => {
               </ModuloPopup>
             </div>
             <div class="field">
-              <button v-if="!mostraFormValuta" class="btn btn-ghost" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormValuta">€ Registra incasso in valuta estera</button>
+              <button v-if="!mostraFormValuta" class="btn btn-ok" :style="motivoBtcDisabilitato ? 'opacity:.5' : ''" :title="motivoBtcDisabilitato" @click="apriFormValuta">€ Registra incasso in valuta estera</button>
               <small v-if="!mostraFormValuta && motivoBtcDisabilitato" class="note-legal">{{ motivoBtcDisabilitato }}</small>
               <ModuloPopup v-if="mostraFormValuta" titolo="Incasso in valuta estera" descrizione="Pagamento ricevuto in una valuta diversa dall'euro" @chiudi="mostraFormValuta = false">
                 <label>Valuta</label>
@@ -702,7 +702,7 @@ onMounted(async () => {
                 <label>Cambio (quantità di valuta per 1 EUR)</label>
                 <div style="display:flex;gap:6px">
                   <input v-model.number="valutaForm.cambio" type="number" min="0" step="0.0001" style="flex:1" />
-                  <button class="btn btn-ghost" :disabled="!valutaForm.codice || caricandoCambioValuta" @click="recuperaCambioIncasso">{{ caricandoCambioValuta ? '…' : 'Recupera cambio' }}</button>
+                  <button class="btn btn-blue" :disabled="!valutaForm.codice || caricandoCambioValuta" @click="recuperaCambioIncasso">{{ caricandoCambioValuta ? '…' : 'Recupera cambio' }}</button>
                 </div>
                 <small class="note-legal">Invia la data della fattura a Banca d'Italia. Il valore resta modificabile. Convenzione: quantità di {{ valutaForm.codice?.toUpperCase() || 'valuta' }} per 1 EUR.</small>
 
@@ -733,7 +733,7 @@ onMounted(async () => {
                   <option value="">EUR (default)</option>
                   <option v-for="v in valuteLista" :key="v.codice" :value="v.codice">{{ v.codice }} — {{ v.nome }}</option>
                 </SelectField>
-                <button v-if="valutaFatturaCodice" class="btn btn-ghost" :disabled="caricandoCambioFattura" @click="recuperaCambioFattura">{{ caricandoCambioFattura ? '…' : 'Recupera cambio' }}</button>
+                <button v-if="valutaFatturaCodice" class="btn btn-blue" :disabled="caricandoCambioFattura" @click="recuperaCambioFattura">{{ caricandoCambioFattura ? '…' : 'Recupera cambio' }}</button>
               </div>
               <div v-if="valutaFatturaCambio && valutaFatturaCodice" style="display:flex;gap:6px;align-items:center;margin-top:4px">
                 <input v-model.number="valutaFatturaCambio" type="number" min="0" step="0.0001" style="flex:1" />
@@ -754,7 +754,7 @@ onMounted(async () => {
             </button>
             <span v-if="esitoPec" class="badge-mono">{{ esitoPec }}</span>
             <button class="btn btn-blue" :disabled="!fatturaGenerata" @click="scaricaXml">Scarica XML FatturaPA</button>
-            <button class="btn btn-ghost" :disabled="!fatturaGenerata || !(clienteCorrente.emailFattura || clienteCorrente.email) || inviandoEmail" @click="inviaEmail">
+            <button class="btn btn-blue" :disabled="!fatturaGenerata || !(clienteCorrente.emailFattura || clienteCorrente.email) || inviandoEmail" @click="inviaEmail">
               {{ inviandoEmail ? 'Preparo…' : 'Invia email al cliente' }}
             </button>
             <small v-if="fatturaGenerata && !(clienteCorrente.emailFattura || clienteCorrente.email)" class="note-legal">Configura l'email del cliente in Impostazioni per abilitare l'invio.</small>
@@ -798,7 +798,7 @@ onMounted(async () => {
             <p class="note-legal" v-else>
               Controllo ricevute SDI disattivato in Impostazioni&nbsp;&gt;&nbsp;PEC.
             </p>
-            <button class="btn btn-ghost" :disabled="controllandoSdi || !config.sdi.pollingAbilitato" @click="controllaSdi">
+            <button class="btn btn-blue" :disabled="controllandoSdi || !config.sdi.pollingAbilitato" @click="controllaSdi">
               {{ controllandoSdi ? 'Controllo…' : 'Controlla ora' }}
             </button>
             <span v-if="esitoSdi" class="badge-mono">{{ esitoSdi }}</span>

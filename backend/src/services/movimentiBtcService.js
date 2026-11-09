@@ -1,6 +1,6 @@
 // Ingressi manuali (BTC non da fatture) e uscite BTC, persistiti in data/movimentiBtc.json
 // (gitignored con backend/data/). I lotti da fatture non passano di qui: sono derivati a runtime
-// da pagamenti[].btc (AI-Workspace/Plans/REGISTRO_LOTTI_BTC.md §4.1, §5).
+// da pagamenti[].btc.
 import { randomUUID } from 'node:crypto';
 import { readJson, writeJson } from '../lib/jsonStore.js';
 

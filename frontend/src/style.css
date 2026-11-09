@@ -198,6 +198,11 @@ body {
 .conferma-messaggio { margin: 12px 0 0; font-size: var(--font-size-md); line-height: 1.5; white-space: pre-line; }
 .lista-box { width: min(420px, 100%); display: flex; flex-direction: column; max-height: min(80vh, 640px); }
 .lista-ricerca { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 9px 11px; font-size: .88rem; background: var(--ground); color: var(--ink); font-family: inherit; }
+/* Ancorato in alto: filtrando la lista si accorcia e la riga delle iniziali non deve spostarsi. Le shell compatte lo mostrano a schermo intero (override in estensioni). */
+.lista-box.schermo-intero { align-self: flex-start; margin-top: 8vh; }
+.lista-iniziali { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.lista-iniziale { min-width: 30px; height: 30px; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--ground); color: var(--ink); font: inherit; font-size: .8rem; cursor: pointer; }
+.lista-iniziale.attiva { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .lista-voci { list-style: none; margin: 12px 0 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .lista-voce { display: block; width: 100%; text-align: left; border: none; background: none; cursor: pointer; padding: 9px 11px; border-radius: var(--radius-md); font-family: inherit; font-size: var(--font-size-md); color: var(--ink); }
 .lista-voce:hover { background: var(--ground); }

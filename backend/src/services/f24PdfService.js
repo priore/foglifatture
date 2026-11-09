@@ -1,5 +1,5 @@
 // Stesura F24 Ordinario sul modello ufficiale AdE (PDF fillabile).
-// FP-023 · FEATURES_GAP_ANALISI_ESTERNA.md voce 7.
+// FP-023.
 //
 // Il modello PDF non si ridistribuisce: URL e impronta SHA-256 stanno nel registro fonti
 // (voce MODELLO_ID) e lib/modelloPdf.js lo scarica al primo uso in backend/data/modelli/.
