@@ -72,10 +72,10 @@ async function leggiRisposte() {
     <div class="field"><label>Porta SMTP</label><input type="number" v-model.number="modelValue.smtpPort"></div>
     <div class="field">
       <label>Casella PEC mittente</label>
-      <input v-model="modelValue.casellaMittente" :class="{ 'campo-non-valido': !casellaMittenteOk }" placeholder="nome@pec.it">
+      <input autocomplete="off" v-model="modelValue.casellaMittente" :class="{ 'campo-non-valido': !casellaMittenteOk }" placeholder="nome@pec.it">
       <small v-if="!casellaMittenteOk" class="nota-errore">Formato email non valido.</small>
     </div>
-    <div class="field"><label>Password casella PEC</label><input type="password" v-model="modelValue.passwordMittente"></div>
+    <div class="field"><label>Password casella PEC</label><input type="password" autocomplete="new-password" v-model="modelValue.passwordMittente"></div>
     <div class="field field-full full"><label>Destinatario SDI</label><input v-model="modelValue.destinatarioSdi"></div>
   </div>
 

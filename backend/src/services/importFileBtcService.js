@@ -272,7 +272,7 @@ const idProposta = (m) => (m.txid
   : `PRP-F${sha([m.data, m.direzione, m.satoshi, m.riferimento ?? ''].join('|')).slice(0, 15)}-${m.direzione}`);
 
 // Duplicati (stesso id in proposte esistenti o nel file, txid già in lotti/uscite) non diventano proposte.
-async function salvaDaFile(movimenti, ignorate) {
+async function salvaDaFile(movimenti, ignorate, exchange) {
   const validi = movimenti.filter(Boolean);
   const noti = await txidNoti();
   const viste = new Set((await leggiProposte()).proposte.map((p) => p.id));
@@ -282,7 +282,7 @@ async function salvaDaFile(movimenti, ignorate) {
     if (viste.has(id) || (m.txid && noti.has(m.txid))) continue;
     viste.add(id);
     nuove.push({
-      ...m, id, conferme: null, providers: [], unaFonte: false, fonte: 'import-file',
+      ...m, id, conferme: null, providers: [], unaFonte: false, fonte: 'import-file', ...(exchange ? { exchange } : {}),
       avvisi: m.direzione === 'uscita'
         ? ['Uscita da file: verifica tipo (vendita, spesa o trasferimento tra wallet propri) prima di confermare.'] : [],
     });
@@ -307,11 +307,11 @@ export async function importaDaFile(contenuto, { formato = 'auto', mapping, conf
   const noto = formato === 'auto' ? rilevaFormato(righe[0]) : formato;
   if (FORMATI_EXCHANGE[noto]) {
     const { movimenti, ignorate } = parseExchange(righe, FORMATI_EXCHANGE[noto]);
-    return { formato: noto, ...(await salvaDaFile(movimenti, ignorate)) };
+    return { formato: noto, ...(await salvaDaFile(movimenti, ignorate, noto)) };
   }
   if (noto === 'kraken') {
     const { movimenti, ignorate } = parseKraken(righe);
-    return { formato: noto, ...(await salvaDaFile(movimenti, ignorate)) };
+    return { formato: noto, ...(await salvaDaFile(movimenti, ignorate, noto)) };
   }
   if (PARSER_CSV[noto]) return { formato: noto, ...(await salvaDaFile(PARSER_CSV[noto](righe), 0)) };
 

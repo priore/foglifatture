@@ -1,4 +1,5 @@
 <script setup>
+import { annoSelezionato } from '../composables/useAnnoSelezionato.js';
 import SelectField from '../components/common/SelectField.vue';
 // Vista Bitcoin: registro movimenti BTC (FP-012) e import transazioni (FP-014), cioè le azioni
 // che modificano i dati. La dashboard (tab Bitcoin) resta la sola visualizzazione.
@@ -8,7 +9,6 @@ import BtcImport from '../components/BtcImport.vue';
 import BtcValoreLive from '../components/BtcValoreLive.vue';
 
 const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-const annoSelezionato = ref(new Date().getFullYear());
 const versioneRegistro = ref(0); // cambia quando una proposta confermata aggiunge movimenti
 </script>
 
@@ -20,7 +20,7 @@ const versioneRegistro = ref(0); // cambia quando una proposta confermata aggiun
         <SelectField titolo="Anno" descrizione="Anno delle operazioni da mostrare" v-model.number="annoSelezionato" class="status" aria-label="Anno">
           <option v-for="a in anni" :key="a" :value="a">{{ a }}</option>
         </SelectField>
-        <router-link to="/dashboard" class="btn btn-blue link-riepilogo-dashboard">Riepilogo in dashboard</router-link>
+        <router-link to="/dashboard?tab=bitcoin" class="btn btn-blue link-riepilogo-dashboard">Riepilogo in dashboard</router-link>
       </div>
     </div>
 

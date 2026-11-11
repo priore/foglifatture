@@ -8,6 +8,7 @@ function formattaEuro(numero) {
 }
 
 function formattaData(isoDate) {
+  if (!isoDate) return '';
   const [anno, mese, giorno] = isoDate.split('-');
   return `${giorno}/${mese}/${anno}`;
 }
@@ -29,7 +30,8 @@ export function pagamentoDaConfig(config, cliente) {
 function aggiungiGiorni(isoDate, giorni) {
   const d = new Date(`${isoDate}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + Number(giorni));
-  return d.toISOString().slice(0, 10);
+  // Anteprima di una fattura non ancora emessa: data o giorni mancanti, nessuna scadenza da mostrare.
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
 }
 
 function qrSvg(testo) {

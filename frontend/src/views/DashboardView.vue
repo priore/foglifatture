@@ -1,4 +1,5 @@
 <script setup>
+import { annoSelezionato } from '../composables/useAnnoSelezionato.js';
 import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
@@ -22,7 +23,6 @@ import { MESI_BREVI, formattaEuro } from '../composables/useFormati.js';
 import * as calcoli from '../composables/useCalcoliDashboard.js';
 
 const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-const annoSelezionato = ref(new Date().getFullYear());
 const dashboard = ref(null);
 const errore = ref('');
 
@@ -313,9 +313,52 @@ async function caricaFiscaleBtc() {
   try {
     fiscaleBtc.value = await api.rwBtc(annoSelezionato.value);
     prezzo1231Btc.value = fiscaleBtc.value.ivca?.valoreMercato != null ? String(fiscaleBtc.value.ivca.valoreMercato).replace('.', ',') : '';
+    prezzoInizioBtc.value = fiscaleBtc.value.prezzi?.inizio ? String(fiscaleBtc.value.prezzi.inizio.valore).replace('.', ',') : '';
+    recuperaPrezziMancanti();
   } catch (err) {
     fiscaleBtc.value = null;
     erroreFiscaleBtc.value = err.message;
+  }
+}
+// Prezzi al 31/12 mancanti: recuperati e salvati in automatico (una sola volta per anno, se la data è passata)
+// dall'exchange di riferimento, con la fonte. Restano correggibili a mano («inserito a mano»).
+const recuperoTentato = new Set();
+const erroreExchangeBtc = ref('');
+const exchangeBtcEtichette = { binance: 'Binance', coinbase: 'Coinbase', kraken: 'Kraken', onetrading: 'One Trading' };
+const salvaPrezzoAutomatico = async (anno) => {
+  const r = await api.prezzoStoricoBtc(anno);
+  await api.impostaValoreMercatoBtc(anno, r.prezzoEurBtc, r.fonte);
+};
+async function recuperaPrezziMancanti() {
+  const f = fiscaleBtc.value;
+  if (!f?.ivca) return;
+  const anno = annoSelezionato.value;
+  const mancanti = [];
+  if (f.ivca.valoreInizio == null) mancanti.push(anno - 1);
+  if (f.ivca.mancaValoreMercato && f.saldo.satoshi > 0) mancanti.push(anno);
+  const da = mancanti.filter((a) => a < new Date().getFullYear() && !recuperoTentato.has(a));
+  if (!da.length) return;
+  da.forEach((a) => recuperoTentato.add(a));
+  const esiti = await Promise.allSettled(da.map(salvaPrezzoAutomatico));
+  if (esiti.some((e) => e.status === 'fulfilled')) await caricaFiscaleBtc();
+}
+// Riporta al valore automatico (exchange di riferimento) i prezzi indicati, anche se modificati a mano.
+async function ripristinaPrezziAutomatici(anni) {
+  erroreExchangeBtc.value = '';
+  const esiti = await Promise.allSettled(anni.filter((a) => a < new Date().getFullYear()).map(salvaPrezzoAutomatico));
+  const fallito = esiti.find((e) => e.status === 'rejected');
+  if (fallito) erroreExchangeBtc.value = fallito.reason.message;
+  await caricaFiscaleBtc();
+}
+// Cambio exchange: i prezzi recuperati in automatico si riallineano, quelli inseriti a mano restano.
+async function cambiaExchangeBtc(valore) {
+  erroreExchangeBtc.value = '';
+  try {
+    await api.impostaExchangeRiferimentoBtc(valore || null);
+    const p = (await api.rwBtc(annoSelezionato.value)).prezzi;
+    await ripristinaPrezziAutomatici([p.inizio, p.fine].map((x, i) => (x && !x.manuale ? annoSelezionato.value - 1 + i : null)).filter(Boolean));
+  } catch (err) {
+    erroreExchangeBtc.value = err.message;
   }
 }
 async function salvaPrezzo1231Btc() {
@@ -335,7 +378,6 @@ async function salvaPrezzoInizioBtc() {
   erroreFiscaleBtc.value = '';
   try {
     await api.impostaValoreMercatoBtc(annoSelezionato.value - 1, Number(prezzoInizioBtc.value.replace(',', '.')));
-    prezzoInizioBtc.value = '';
     await caricaFiscaleBtc();
   } catch (err) {
     erroreFiscaleBtc.value = err.message;
@@ -956,12 +998,27 @@ function ripristinaLayout() {
             <template v-else-if="fiscaleBtc.ivca">
               <template v-if="detenzioneBtc">
                 <QuadroRwCripto :rw="fiscaleBtc" :anno="dashboard.anno" />
-                <div v-if="fiscaleBtc.ivca.valoreInizio == null" class="field" style="margin-top:12px">
-                  <label for="prezzo-inizio">Prezzo EUR/BTC al 31/12/{{ dashboard.anno - 1 }} (da inserire per il valore iniziale, colonna 7)</label>
+                <div class="field" style="margin-top:12px">
+                  <label>Exchange di riferimento per il prezzo al 31/12</label>
+                  <SelectField
+                    titolo="Exchange di riferimento" descrizione="Il prezzo al 31/12 si rileva sull'exchange dove hai acquistato o, in mancanza, dove effettui la maggior parte delle operazioni"
+                    :model-value="fiscaleBtc.exchange.riferimento ?? ''" @change="cambiaExchangeBtc"
+                  >
+                    <option value="">Automatico: {{ exchangeBtcEtichette[fiscaleBtc.exchange.prevalente] ?? 'Binance (nessuna operazione con exchange registrata)' }}</option>
+                    <option v-for="e in fiscaleBtc.exchange.noti" :key="e" :value="e">{{ exchangeBtcEtichette[e] ?? e }}{{ fiscaleBtc.exchange.supportati.includes(e) ? '' : ' (prezzo da inserire a mano)' }}</option>
+                  </SelectField>
+                  <p v-if="erroreExchangeBtc" class="avviso-riga avviso-warn" role="alert">{{ erroreExchangeBtc }}</p>
+                </div>
+                <div v-if="fiscaleBtc.ivca.valoreInizio == null || fiscaleBtc.prezzi.inizio" class="field" style="margin-top:12px">
+                  <label for="prezzo-inizio">Prezzo EUR/BTC al 31/12/{{ dashboard.anno - 1 }} {{ fiscaleBtc.prezzi.inizio ? '(valore iniziale, colonna 7)' : '(da inserire per il valore iniziale, colonna 7)' }}</label>
                   <div style="display:flex;gap:8px">
                     <input id="prezzo-inizio" v-model="prezzoInizioBtc" type="text" inputmode="decimal" placeholder="0,00" style="flex:1" @keydown.enter.prevent="salvaPrezzoInizioBtc">
                     <button type="button" class="btn btn-ok" :disabled="salvandoPrezzoBtc || !prezzoInizioBtc" @click="salvaPrezzoInizioBtc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
                   </div>
+                  <p v-if="fiscaleBtc.prezzi.inizio" class="note-legal">
+                    {{ fiscaleBtc.prezzi.inizio.manuale ? 'Inserito a mano' : fiscaleBtc.prezzi.inizio.fonte }}
+                    <a v-if="fiscaleBtc.prezzi.inizio.manuale && dashboard.anno - 1 < new Date().getFullYear()" href="#" @click.prevent="ripristinaPrezziAutomatici([dashboard.anno - 1])">Ripristina il valore automatico</a>
+                  </p>
                 </div>
                 <p v-if="fiscaleBtc.saldo.satoshi === 0" class="avviso-riga avviso-info">
                   Saldo al 31/12 = 0, ma BTC detenuti nell'anno: IVCA stimata {{ formattaEuro(fiscaleBtc.ivca.impostaLorda) }}, rigo RW da compilare.
@@ -975,6 +1032,10 @@ function ripristinaLayout() {
                     <input id="prezzo-1231" v-model="prezzo1231Btc" type="text" inputmode="decimal" placeholder="0,00" style="flex:1" @keydown.enter.prevent="salvaPrezzo1231Btc">
                     <button type="button" class="btn btn-ok" :disabled="salvandoPrezzoBtc || !prezzo1231Btc" @click="salvaPrezzo1231Btc">{{ salvandoPrezzoBtc ? 'Salvataggio…' : 'Salva' }}</button>
                   </div>
+                  <p v-if="fiscaleBtc.prezzi.fine" class="note-legal">
+                    {{ fiscaleBtc.prezzi.fine.manuale ? 'Inserito a mano' : fiscaleBtc.prezzi.fine.fonte }}
+                    <a v-if="fiscaleBtc.prezzi.fine.manuale && dashboard.anno < new Date().getFullYear()" href="#" @click.prevent="ripristinaPrezziAutomatici([dashboard.anno])">Ripristina il valore automatico</a>
+                  </p>
                 </div>
               </template>
               <p v-else class="note-legal">Nessun BTC detenuto nel {{ dashboard.anno }}.</p>
@@ -1373,20 +1434,20 @@ function ripristinaLayout() {
 .stat-gruppo-stima { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
 .stat-gruppo-riga { display: flex; gap: 32px; }
 .stat-gruppo-riga .stat { background: none; border: none; box-shadow: none; padding: 0; }
-.nota-stima { font-size: .68rem; color: var(--muted); margin-top: 14px; line-height: 1.3; border-top: 1px solid var(--line); padding-top: 10px; }
+.nota-stima { font-size: .75rem; color: var(--muted); margin-top: 14px; line-height: 1.3; border-top: 1px solid var(--line); padding-top: 10px; }
 .lista-piatta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .lista-piatta li { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: .88rem; color: var(--ink-soft); }
 .riga-fattura-aperta { display: flex; flex-direction: column; gap: 2px; }
 .scadenza-sotto { padding-left: 14px; font-size: .74rem; color: var(--muted); }
-.nota-piede { margin-top: auto; padding-top: 10px; font-size: .68rem; color: var(--muted); }
+.nota-piede { margin-top: auto; padding-top: 10px; font-size: .75rem; color: var(--muted); }
 .input-incasso { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px 8px; font-size: .78rem; background: var(--ground); color: var(--ink); font-family: inherit; }
 .input-importo-incasso { width: 90px; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 4px 8px; font-size: .78rem; background: var(--ground); color: var(--ink); font-family: inherit; }
 .tabella-incasso td:first-child { white-space: normal; }
-.badge-parziale { margin-left: 8px; font-size: .68rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: var(--radius-pill); padding: 2px 8px; }
+.badge-parziale { margin-left: 8px; font-size: .75rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: var(--radius-pill); padding: 2px 8px; }
 
 .mini-stat-row { display: flex; gap: 12px; margin-top: 16px; }
 .mini-stat { flex: 1; background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
-.mini-stat-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.mini-stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
 .mini-stat-value { font-size: .92rem; font-weight: 700; color: var(--ink); }
 .avviso-riga { margin-top: 8px; font-size: .74rem; padding: 6px 10px; border-radius: var(--radius-sm); }
 .avviso-warn { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
@@ -1402,12 +1463,12 @@ function ripristinaLayout() {
 .lista-scadenze li.prossima .data-badge-giorno { color: var(--card); }
 .lista-scadenze li.prossima .data-badge-mese { color: var(--card); opacity: .85; }
 .data-badge-giorno { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
-.data-badge-mese { font-size: .62rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
+.data-badge-mese { font-size: .75rem; font-weight: 600; color: var(--accent-text); text-transform: uppercase; letter-spacing: .04em; }
 .scadenza-testo { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .scadenza-tipo { font-size: .86rem; font-weight: 600; color: var(--ink); }
 .scadenza-descrizione { font-size: .76rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.badge-prossima { flex: none; font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius-pill); padding: 3px 9px; }
-.badge-fonte { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px 9px; cursor: help; }
+.badge-prossima { flex: none; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius-pill); padding: 3px 9px; }
+.badge-fonte { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--ground); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px 9px; cursor: help; }
 .dot-scaduta { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 6px; }
 .dot-scaduta.visibile { background: var(--warn); }
 .lista-scroll { max-height: 220px; overflow: auto; }
@@ -1496,21 +1557,21 @@ function ripristinaLayout() {
 .f24-tl-card.open .f24-tl-caret { transform: rotate(90deg); }
 
 .f24-tl-badge {
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
   letter-spacing: .02em;
   flex-shrink: 0;
 }
-.f24-badge-saldo { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+.f24-badge-saldo { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent-text); }
 .f24-badge-nov { background: color-mix(in srgb, var(--info, #0ea5e9) 15%, transparent); color: var(--info, #0ea5e9); }
 
 .f24-tl-body { display: none; padding: 0 14px 12px; }
 .f24-tl-card.open .f24-tl-body { display: block; }
 
 .f24-table { font-size: .81rem; }
-.f24-table th { font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); padding: 3px 4px 6px; border-bottom: 1px solid var(--line); }
+.f24-table th { font-size: .75rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); padding: 3px 4px 6px; border-bottom: 1px solid var(--line); }
 .f24-table td { padding: 5px 4px; color: var(--ink-soft); border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); font-variant-numeric: tabular-nums; }
 .f24-table tr:last-child td { border-bottom: none; }
 .f24-mono { font-family: var(--font-mono, monospace); font-size: .77rem; color: var(--ink); }

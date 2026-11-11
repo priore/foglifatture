@@ -266,6 +266,9 @@ export const api = {
     if (!r.ok) throw new Error(`CoinGecko ha risposto ${r.status}`);
     return r.json();
   }),
+  // Prezzo BTC/EUR di chiusura al 31/12 dell'anno (backend, Binance), per precompilare il Quadro RW
+  prezzoStoricoBtc: (anno) => richiesta(`/forfettario/btc/rw/prezzo-storico?anno=${anno}`), // { prezzoEurBtc, fonte }
+  impostaExchangeRiferimentoBtc: (exchange) => richiesta('/forfettario/btc/rw/exchange-riferimento', { method: 'PUT', body: JSON.stringify({ exchange }) }),
   // Registro lotti BTC (FP-012/013): movimenti manuali, lotti LIFO, plusvalenze, RW
   movimentiBtc: () => richiesta('/forfettario/btc/movimenti'),
   aggiungiIngressoBtc: (dati) => richiesta('/forfettario/btc/movimenti/ingresso', { method: 'POST', body: JSON.stringify(dati) }),
@@ -276,7 +279,7 @@ export const api = {
   plusvalenzeBtc: (anno) => richiesta(`/forfettario/btc/plusvalenze?anno=${anno}`),
   rwBtc: (anno) => richiesta(`/forfettario/btc/rw?anno=${anno}`),
   anteprimaUscitaBtc: (dati) => richiesta('/forfettario/btc/plusvalenze/anteprima', { method: 'POST', body: JSON.stringify(dati) }),
-  impostaValoreMercatoBtc: (anno, prezzoEurBtc) => richiesta('/forfettario/btc/rw/valore-mercato', { method: 'PUT', body: JSON.stringify({ anno, prezzoEurBtc }) }),
+  impostaValoreMercatoBtc: (anno, prezzoEurBtc, fonte) => richiesta('/forfettario/btc/rw/valore-mercato', { method: 'PUT', body: JSON.stringify({ anno, prezzoEurBtc, fonte }) }),
   proposteImportBtc: () => richiesta('/forfettario/btc/import'),
   controllaImportBtc: () => richiesta('/forfettario/btc/import/controlla', { method: 'POST' }),
   azioneProposta: (id, azione, dati = {}) => richiesta(`/forfettario/btc/import/proposte/${id}/${azione}`, { method: 'POST', body: JSON.stringify(dati) }),

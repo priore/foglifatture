@@ -1,4 +1,5 @@
 <script setup>
+import { annoSelezionato } from '../composables/useAnnoSelezionato.js';
 import { clienteAttivoId } from '../composables/useClienteAttivo.js';
 // Schermata Timesheet: editor mensile + riepilogo + anteprima di stampa PDF.
 import { ref, computed, watch, onMounted } from 'vue';
@@ -14,7 +15,7 @@ import { inviaPdfEmail } from '../composables/useMailto.js';
 import { preparaDatiTimesheet } from '../composables/useTemplateData.js';
 
 const oggi = new Date();
-const anno = ref(oggi.getFullYear());
+const anno = annoSelezionato;
 const mese = ref(oggi.getMonth() + 1);
 const giorni = ref([]);
 const config = ref(null);

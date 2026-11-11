@@ -53,8 +53,9 @@ async function accetta() {
 </template>
 
 <style scoped>
-.termini-box { max-width: 900px; max-height: 90vh; overflow-y: auto; }
-.termini-testo { margin: var(--gap-sm) 0; }
+.termini-box { max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+/* Solo il testo scorre: caselle e pulsanti restano sempre visibili per intero, anche su schermi bassi. */
+.termini-testo { margin: var(--gap-sm) 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .termini-testo p { font-size: var(--font-size-xs); line-height: 1.4; margin: 0 0 var(--gap-sm); }
 .termini-check label { font-size: var(--font-size-sm); }
 .termini-check { margin-top: var(--gap-sm); }

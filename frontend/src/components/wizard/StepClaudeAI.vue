@@ -71,7 +71,7 @@ async function salvaClaude() {
     <div class="form-grid" style="margin-top:16px">
       <div class="field full">
         <label>Claude API Key {{ claudeApiKeyImpostata ? '(già impostata — lascia vuoto per non cambiarla)' : '' }}</label>
-        <input type="password" v-model="claudeApiKey" :placeholder="claudeApiKeyImpostata ? '••••••••' : ''">
+        <input type="password" autocomplete="new-password" v-model="claudeApiKey" :placeholder="claudeApiKeyImpostata ? '••••••••' : ''">
       </div>
       <div class="field full">
         <label>Workspace ID (solo se richiesto)</label>

@@ -1,6 +1,6 @@
 <script setup>
 // Wizard di configurazione: fornitore (anagrafica, fiscali, pagamento), PEC.
-// I dati vengono salvati sul backend (config.json) ad ogni "Avanti"/"Salva".
+// I dati vengono salvati sul backend (config.json) al "Salva".
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import StepFornitore from '../components/wizard/StepFornitore.vue';
@@ -46,7 +46,7 @@ onMounted(async () => {
   config.value = await api.getConfig();
 });
 
-// Restituisce false se il passo ha rinunciato (annullo nel popup) o il salvataggio è fallito: «Avanti» allora non procede.
+// Restituisce false se il passo ha rinunciato (annullo nel popup) o il salvataggio è fallito: il chiamante non procede.
 async function salva() {
   messaggio.value = 'Salvataggio…';
   try {
@@ -71,19 +71,6 @@ async function salva() {
 
 function eAutosalvante(passo) {
   return PASSI_AUTOSALVANTI.includes(PASSI.value[passo]);
-}
-
-async function avanti() {
-  if (passoAttivo.value < PASSI.value.length - 1) {
-    if (!eAutosalvante(passoAttivo.value) && !(await salva())) return;
-    passoAttivo.value += 1;
-  } else if (!eAutosalvante(passoAttivo.value)) {
-    await salva();
-  }
-}
-
-function indietro() {
-  if (passoAttivo.value > 0) passoAttivo.value -= 1;
 }
 
 // Click su una sotto-voce diversa in AppSidebar: salva il passo corrente (se non
@@ -114,17 +101,9 @@ onBeforeRouteUpdate(async (to, from, next) => {
         <StepAI v-else-if="PASSI[passoAttivo] === 'AI'" />
         <component :is="componentePasso(PASSI[passoAttivo])" v-else />
 
-        <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
-          <button class="btn btn-ghost wizard-nav" :disabled="passoAttivo === 0" @click="indietro">← Indietro</button>
+        <div v-if="!eAutosalvante(passoAttivo)" style="margin-top:20px;display:flex;justify-content:flex-end;align-items:center;gap:12px">
           <span class="badge-mono">{{ messaggio }}</span>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ok" @click="salva">Salva</button>
-            <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary wizard-nav" @click="avanti">Avanti →</button>
-          </div>
-        </div>
-        <div v-else style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
-          <button class="btn btn-ghost wizard-nav" @click="indietro">← Indietro</button>
-          <button v-if="passoAttivo < PASSI.length - 1" class="btn btn-primary wizard-nav" @click="avanti">Avanti →</button>
+          <button class="btn btn-ok" @click="salva">Salva</button>
         </div>
       </div>
     </div>

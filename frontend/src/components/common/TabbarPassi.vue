@@ -29,7 +29,9 @@ watch(() => props.modelValue, async () => {
 </template>
 
 <style scoped>
-.tabbar-passi { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* `display` separato: il selettore scoped batte `.solo-compatto { display: none }` e mostrerebbe la barra anche su desktop. */
+.tabbar-passi:not(.solo-compatto) { display: flex; }
+.tabbar-passi { gap: 8px; overflow-x: auto; margin-bottom: 20px; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .tabbar-passi::-webkit-scrollbar { display: none; }
 .tabbar-passi .btn { flex: 0 0 auto; white-space: nowrap; }
 </style>

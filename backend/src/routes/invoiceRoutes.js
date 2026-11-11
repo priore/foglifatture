@@ -122,8 +122,20 @@ invoiceRoutes.patch('/:anno/:mese/:clienteId/scadenza-pagamento', async (req, re
   }
 });
 
+// Le emissioni vanno una alla volta: la numerazione è unica e due richieste ravvicinate (doppio click)
+// leggerebbero lo stesso «prossimo numero»; la seconda, riallineandosi, lascerebbe un buco in sequenza.
+// ponytail: coda in memoria, vale per un solo processo server (come il resto dell'app).
+let codaEmissioni = Promise.resolve();
+function inCoda(gestore) {
+  return (req, res, next) => {
+    const esito = codaEmissioni.then(() => gestore(req, res, next));
+    codaEmissioni = esito.catch(() => {});
+    return esito;
+  };
+}
+
 // Genera e salva la fattura definitiva del mese (numero, data, importi congelati).
-invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
+invoiceRoutes.post('/:anno/:mese/:clienteId/genera', inCoda(async (req, res) => {
   const { anno, mese, clienteId } = req.params;
   const config = await getConfig();
   const cliente = risolviCliente(config, clienteId);
@@ -291,7 +303,7 @@ invoiceRoutes.post('/:anno/:mese/:clienteId/genera', async (req, res) => {
   }
   await saveInvoice(Number(anno), Number(mese), clienteId, invoice);
   res.json(invoice);
-});
+}));
 
 // Progressivo dell'ultimo tentativo di invio, o del prossimo mai ancora fatto (fattura
 // generata ma non ancora inviata): usato per nome file XML scaricabile "in anteprima".

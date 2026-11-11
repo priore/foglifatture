@@ -83,7 +83,7 @@ async function riavvia() {
       </div>
       <div class="field full">
         <label>Google Client Secret {{ secretGiaImpostato ? '(già impostato — lascia vuoto per non cambiarlo)' : '' }}</label>
-        <input type="password" v-model="clientSecret" :placeholder="secretGiaImpostato ? '••••••••' : ''">
+        <input type="password" autocomplete="new-password" v-model="clientSecret" :placeholder="secretGiaImpostato ? '••••••••' : ''">
       </div>
       <div class="field full">
         <label>Email autorizzate all'accesso (separate da virgola)</label>

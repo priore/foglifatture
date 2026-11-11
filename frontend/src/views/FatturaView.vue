@@ -1,4 +1,5 @@
 <script setup>
+import { annoSelezionato } from '../composables/useAnnoSelezionato.js';
 import { chiediConferma } from '../composables/useConferma.js';
 import SelectField from '../components/common/SelectField.vue';
 import DateField from '../components/common/DateField.vue';
@@ -23,7 +24,8 @@ import { daRimborsareNota as calcolaDaRimborsareNota, anteprimaManuale, indirizz
 const oggi = new Date();
 // Una vista di dettaglio (shell compatta) arriva con mese e cliente nel percorso; senza, vale il mese corrente.
 const query = useRoute().query;
-const anno = ref(Number(query.anno) || oggi.getFullYear());
+if (Number(query.anno)) annoSelezionato.value = Number(query.anno);
+const anno = annoSelezionato;
 const mese = ref(Number(query.mese) || oggi.getMonth() + 1);
 const config = ref(null);
 const valuteLista = ref([]);

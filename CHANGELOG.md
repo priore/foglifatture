@@ -6,6 +6,33 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-11-11
+
+### Added
+- Calendario: toccando l'anno (o il mese) si apre una griglia di anni per saltare rapidamente a una data lontana
+- Importa storico ZIP: l'anteprima avvisa se una fattura ha un numero già in archivio o ripetuto nello ZIP
+- Menu laterale compresso: passando il mouse si espande sopra il contenuto e si ricomprime all'uscita; il clic sull'icona resta il comando manuale
+- **Quadro RW Bitcoin: prezzo EUR/BTC al 31/12 automatico**
+  - Valore iniziale e IVCA vengono recuperati e salvati da soli a anno concluso, con la fonte mostrata accanto al prezzo
+  - Il prezzo resta correggibile a mano («Inserito a mano») e si può ripristinare il valore automatico
+  - Exchange di riferimento: il prevalente per numero di operazioni (da import CSV Binance, Coinbase, Kraken, One Trading) o scelto a mano; prezzi automatici da Binance, Kraken e Coinbase
+
+### Fixed
+- Import di un file troppo grande: messaggio chiaro invece di «Errore interno del server»
+- Termini d'uso su schermi bassi: scorre solo il testo, le due caselle restano visibili per intero
+- Calendario scadenze: con gestione separata INPS non compaiono più le rate fisse artigiani/commercianti
+- L'anno scelto resta lo stesso passando tra Dashboard, Timesheet, Fattura, Bitcoin e F24
+- Bitcoin: «Riepilogo in dashboard» apre la dashboard Bitcoin invece di quella principale
+- Impostazioni: tolti i pulsanti «Indietro» e «Avanti» in fondo, resta solo «Salva»; i passi si scelgono dal menu
+- Impostazioni: la barra delle schede non compare più doppia sul desktop
+- Navigando con la tastiera (Tab) i pulsanti mostrano ora l'anello di focus
+- Testi secondari e valori in ambra più leggibili (contrasto aumentato), etichette più grandi e pulsanti più alti
+- I font sono inclusi nell'app: nessuna richiesta a servizi esterni all'avvio, funzionano anche offline
+- Il doppio clic su «Genera fattura» non può più lasciare un numero saltato nella numerazione: le emissioni ravvicinate vengono eseguite una alla volta
+- Archivio su cloud: se un file non è ancora scaricato dal servizio, la lettura viene ripetuta invece di fallire con «Unknown system error -11» (esportazione backup e lettura dei dati)
+- Cartella archivio ricevute SDI non più sostituita da quella predefinita quando si salvano altre impostazioni
+- Il gestore password del browser non propone più di salvare le password PEC e le chiavi API quando si cambia la pagina
+
 ## [1.13.0] - 2026-11-09
 
 ### Added

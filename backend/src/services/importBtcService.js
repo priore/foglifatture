@@ -201,7 +201,7 @@ export async function confermaProposta(id, dati = {}) {
   if (!p) throw new Error(`Proposta non trovata: ${id}`);
   if (p.stato !== 'proposta') throw new Error(`Proposta già ${p.stato}`);
   if (!p.data) throw new Error('Transazione non ancora confermata: manca la data');
-  const base = { data: p.data, satoshi: p.satoshi, txid: p.txid, note: dati.note };
+  const base = { data: p.data, satoshi: p.satoshi, txid: p.txid, note: dati.note, exchange: dati.exchange ?? p.exchange };
   const tipo = dati.tipo ?? p.tipoSuggerito ?? 'vendita';
   const esito = p.direzione === 'ingresso'
     ? await aggiungiIngresso({ ...base, tipo: dati.tipo ?? p.tipoSuggerito ?? 'ricevuto', costoEur: dati.costoEur ?? p.valoreEur, custodia: dati.custodia })

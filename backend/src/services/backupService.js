@@ -6,7 +6,7 @@ import { readFile, writeFile, mkdir, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { randomBytes, scryptSync, createCipheriv, createDecipheriv } from 'node:crypto';
-import { DATA_DIR } from '../lib/jsonStore.js';
+import { DATA_DIR, leggiConRiprova } from '../lib/jsonStore.js';
 import { logger } from '../lib/logger.js';
 import { dopoRipristino } from '../lib/cloudHook.js';
 import { notifica } from '../lib/notifier.js';
@@ -69,7 +69,7 @@ export async function creaBackup(password) {
   const voci = [];
   for (const relativo of fileRelativi) {
     const percorso = Buffer.from(relativo.split(path.sep).join('/'), 'utf-8');
-    const contenuto = await readFile(path.join(DATA_DIR, relativo));
+    const contenuto = await leggiConRiprova(path.join(DATA_DIR, relativo));
     const intestazione = Buffer.alloc(2 + percorso.length + 8);
     intestazione.writeUInt16BE(percorso.length, 0);
     percorso.copy(intestazione, 2);

@@ -9,6 +9,7 @@
 // configurata o fallisce, la dashboard mostra comunque le date ordinarie invece di un errore.
 import { readJson, writeJson } from '../lib/jsonStore.js';
 import { chiamaAI } from './aiRouterService.js';
+import { getConfig } from './configService.js';
 
 const FILE = 'scadenzeFiscali.json';
 const GIORNI_VALIDITA_CACHE = 365;
@@ -88,7 +89,8 @@ export function scadenzeIntrastatAnno(anno) {
 }
 
 // L'anno successivo compare per le rate a cavallo (saldo INPS artigiani, acconto imposta anno+1).
-export function scadenzeBaseAnno(anno) {
+// Con gestione separata configurata le rate fisse artigiani/commercianti non competono (FP-007).
+export function scadenzeBaseAnno(anno, gestionePrevidenziale = '') {
   return [
     { data: primoGiornoLavorativo(anno, 6, 30), tipo: 'Saldo + I acconto imposta sostitutiva', descrizione: `Saldo ${anno - 1} + I acconto ${anno} (termine ordinario, verificare proroghe)` },
     { data: primoGiornoLavorativo(anno, 11, 30), tipo: 'II acconto imposta sostitutiva', descrizione: `II acconto ${anno}` },
@@ -98,7 +100,8 @@ export function scadenzeBaseAnno(anno) {
     { data: primoGiornoLavorativo(anno, 8, 20), tipo: 'INPS artigiani/commercianti', descrizione: `II rata fissa ${anno}` },
     { data: primoGiornoLavorativo(anno, 11, 16), tipo: 'INPS artigiani/commercianti', descrizione: `III rata fissa ${anno}` },
     { data: primoGiornoLavorativo(anno + 1, 2, 16), tipo: 'INPS artigiani/commercianti', descrizione: `IV rata fissa ${anno}` },
-  ].sort((x, y) => x.data.localeCompare(y.data));
+  ].filter((s) => !(gestionePrevidenziale === 'gestioneSeparata' && s.tipo === 'INPS artigiani/commercianti'))
+    .sort((x, y) => x.data.localeCompare(y.data));
 }
 
 // La quota gratuita Gemini (in particolare con google_search, molto più bassa della quota
@@ -184,7 +187,7 @@ function applicaProroghe(base, proroghe) {
 // comunque le date ordinarie con fonte 'base'.
 export async function prossimeScadenzeFiscali() {
   const anno = new Date().getFullYear();
-  const base = scadenzeBaseAnno(anno);
+  const base = scadenzeBaseAnno(anno, (await getConfig()).forfettario?.gestionePrevidenziale);
 
   let cache = await readJson(FILE, null);
   if (!cacheValida(cache, anno) && ritentareDopoErrore(cache)) {

@@ -97,3 +97,22 @@ test('percorso dati: una cartella dati già esistente viene collegata senza spos
     await rm(base, { recursive: true, force: true });
   }
 });
+
+test('salvataggio: il percorso archivio SDI scelto altrove non viene sostituito dal predefinito embedded', async () => {
+  const { base, predefinita } = await ambiente();
+  globalThis.__percorsoSdiPredefinito = 'ricevute-sdi';
+  try {
+    const esterno = path.join(base, 'fuori', 'SDI');
+    await writeFile(path.join(predefinita, 'config.json'), JSON.stringify({ sdi: { percorsoArchivio: esterno } }));
+    const { saveConfig, getConfig } = await import('./configService.js');
+    const letta = await getConfig();
+    await saveConfig({ sdi: { percorsoArchivio: letta.sdi.percorsoArchivio } });
+    assert.equal((await readJson('config.json')).sdi.percorsoArchivio, esterno);
+    await saveConfig({ sdi: { percorsoArchivio: path.join(base, 'altro') } });
+    assert.equal((await readJson('config.json')).sdi.percorsoArchivio, path.join(base, 'altro'));
+  } finally {
+    delete globalThis.__percorsoSdiPredefinito;
+    setDataDir(null);
+    await rm(base, { recursive: true, force: true });
+  }
+});

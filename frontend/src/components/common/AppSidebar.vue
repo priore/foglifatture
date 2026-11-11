@@ -12,9 +12,24 @@ const route = useRoute();
 const router = useRouter();
 const compresso = ref(localStorage.getItem('menuCompresso') === '1');
 function toggleMenu() {
+  sopra.value = false;
   compresso.value = !compresso.value;
   localStorage.setItem('menuCompresso', compresso.value ? '1' : '0');
 }
+// Menu compresso: al passaggio del mouse si espande sopra il contenuto (senza spostarlo) e si ricomprime all'uscita.
+// Solo con puntatore che supporta l'hover; il clic sull'icona resta il comando manuale persistente.
+const sopra = ref(false);
+const conHover = matchMedia('(hover: hover)').matches;
+let ritardo = null;
+let suPulsante = false; // sull'icona expand/collapse il menu non si apre: lì il comando è il clic
+function entra() {
+  if (!conHover || !compresso.value || suPulsante) return;
+  clearTimeout(ritardo);
+  ritardo = setTimeout(() => { sopra.value = true; }, 600);
+}
+function esci() { clearTimeout(ritardo); sopra.value = false; }
+function entraPulsante() { suPulsante = true; clearTimeout(ritardo); }
+function esciPulsante() { suPulsante = false; entra(); }
 const nomeFornitore = ref('');
 const versioneApp = ref('');
 onMounted(async () => {
@@ -41,10 +56,10 @@ function toggleTheme() {
 </script>
 
 <template>
-  <aside class="sidebar" :class="{ compresso }">
+  <aside class="sidebar" :class="{ compresso: compresso && !sopra, sovrapposta: compresso && sopra }" @mouseenter="entra" @mouseleave="esci">
     <div class="brand-riga">
       <div class="brand">{{ capacita.nomeApp }}<small>Consulenza IT · Regime forfettario</small></div>
-      <button type="button" class="menu-toggle" @click="toggleMenu" :title="compresso ? 'Espandi menu' : 'Comprimi menu'" :aria-label="compresso ? 'Espandi menu' : 'Comprimi menu'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path :d="compresso ? 'm14 9 3 3-3 3' : 'm17 9-3 3 3 3'"/></svg></button>
+      <button type="button" class="menu-toggle" @click="toggleMenu" @mouseenter="entraPulsante" @mouseleave="esciPulsante" :title="compresso ? 'Espandi menu' : 'Comprimi menu'" :aria-label="compresso ? 'Espandi menu' : 'Comprimi menu'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path :d="compresso ? 'm14 9 3 3-3 3' : 'm17 9-3 3 3 3'"/></svg></button>
     </div>
     <nav class="nav">
       <router-link to="/dashboard"><svg class="nav-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="iconaMenu('Dashboard')"></svg><span class="nav-txt">Dashboard forfettario</span></router-link>

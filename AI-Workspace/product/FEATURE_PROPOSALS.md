@@ -29,7 +29,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ## FP-007 — Supporto alle altre gestioni previdenziali
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** M
+**Stato:** 🔍 parte 1 (filtro rate fisse nel calendario) ✅ 2026-11-10; parte 2 (calcolo altre gestioni) 💡 proposta · **Impatto:** Medio · **Sforzo:** M
 
 🟢 Oggi il calcolo INPS copre solo la gestione separata: `stimaVersamentiService.js` produce righe INPS solo se `config.forfettario.gestionePrevidenziale === 'gestioneSeparata'` e altrimenti emette l'avviso «Gestione previdenziale non configurata: righe INPS non incluse». `altraCoperturaPrevidenziale` riduce l'aliquota della gestione separata, non è un'altra gestione.
 
@@ -46,7 +46,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ## FP-008 — Avviso su numero fattura duplicato nell'import dello ZIP del Cassetto Fiscale
 
-**Stato:** 💡 proposta · **Impatto:** Medio · **Sforzo:** S
+**Stato:** ✅ implementata 2026-11-10 (avviso in anteprima, l'import resta consentito) · **Impatto:** Medio · **Sforzo:** S
 
 🟢 L'import dello ZIP accetta una fattura storica con un numero già usato nello stesso anno (verificato con un archivio di prova). Dopo l'import ogni nuova emissione risponde 409 «numeri duplicati».
 - decisione di prodotto: l'import deve avvisare, rifiutare la fattura o accettarla come oggi
@@ -80,7 +80,7 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ## FP-011 — Campo data vuoto: aprire il calendario sul mese corrente
 
-**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** S
+**Stato:** ✅ implementata 2026-11-10 (il calendario si apriva già sul mese corrente; aggiunta la griglia di anni) · **Impatto:** Basso · **Sforzo:** S
 
 🟡 Con un `DateField` vuoto il calendario si apre sul mese di default; scegliere una data lontana richiede molti passaggi di mese.
 - aprire sul mese corrente e permettere la scelta rapida dell'anno

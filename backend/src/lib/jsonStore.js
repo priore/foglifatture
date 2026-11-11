@@ -27,11 +27,24 @@ async function ensureDir(dir) {
   await mkdir(dir, { recursive: true });
 }
 
+// File non ancora scaricato dal provider cloud (Dropbox/OneDrive "dataless"): la prima lettura può fallire con
+// errno 11 (EDEADLK) mentre il provider lo scarica, la successiva riesce.
+export async function leggiConRiprova(file, tentativi = 6, attesaMs = 500, leggi = readFile) {
+  for (let i = 1; ; i++) {
+    try {
+      return await leggi(file);
+    } catch (err) {
+      if (err.errno !== -11 || i >= tentativi) throw err;
+      await new Promise((r) => setTimeout(r, attesaMs * i));
+    }
+  }
+}
+
 // Legge un file JSON; restituisce defaultValue se non esiste ancora.
 export async function readJson(relativePath, defaultValue = null) {
   const file = path.join(DATA_DIR, relativePath);
   try {
-    const raw = await readFile(file, 'utf-8');
+    const raw = (await leggiConRiprova(file)).toString('utf-8');
     return JSON.parse(raw);
   } catch (err) {
     if (err.code === 'ENOENT') return defaultValue;

@@ -144,6 +144,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - Quadro LM, quadro RR (gestione separata) e rigo RX31; le caselle da verificare sono evidenziate.
   - PDF del quadro LM compilato sul modello ufficiale dell'Agenzia delle Entrate, come bozza da verificare.
   - Quadro RW per le cripto-attività con colonne e righi come nel modello ufficiale.
+  - Il prezzo EUR/BTC al 31/12 si recupera da solo, con la fonte mostrata; resta correggibile a mano.
 - **Avvisi di verifica** — note prima dell'emissione della fattura, nel riepilogo plusvalenze BTC e accanto all'export per il commercialista; mai nel PDF, XML o CSV.
 
 ### Normativa e aggiornamenti
@@ -168,6 +169,11 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
   - Nessun login né chiave: il client è già collegato al tuo account.
   - **Apri archivio esistente** — usa un archivio già presente in una cartella senza spostare i dati attuali.
   - Cartella delle ricevute SDI salvata in forma relativa, così lo stesso archivio funziona su più dispositivi.
+  - **Requisito: file sempre disponibili offline** — la cartella dell'archivio deve essere mantenuta su questo computer, non solo online.
+    - Dropbox: Offline locale, non «Solo online».
+    - OneDrive: «Mantieni sempre su questo dispositivo», non «File su richiesta».
+    - Google Drive: «Mirroring», non «Streaming».
+    - Con i file solo online, la lettura può fallire (per esempio «Unknown system error -11») e backup e salvataggi possono bloccarsi finché il servizio non li scarica.
 - **Backup automatico ed esportazione cifrata**:
   - Copia periodica programmabile.
   - Esportazione manuale protetta da password.

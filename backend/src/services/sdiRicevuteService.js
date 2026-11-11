@@ -6,9 +6,9 @@
 // casella resta intoccata e non viene nemmeno scaricata nel dettaglio.
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
-import { mkdir, writeFile, readFile, readdir, stat } from 'node:fs/promises';
+import { mkdir, writeFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { readJson, writeJson } from '../lib/jsonStore.js';
+import { readJson, writeJson, leggiConRiprova } from '../lib/jsonStore.js';
 import { sdiLogger } from '../lib/logger.js';
 import { notifica, notificaConDedup, cancellaDedup } from '../lib/notifier.js';
 import { messaggioPerCodice } from './scartoSuggerimenti.js';
@@ -473,7 +473,7 @@ async function listaRicevuteArchivio(percorsoArchivio, prefissoNomeFile) {
       // Solo per le notifiche di scarto (NS) si legge il contenuto per estrarre il
       // dettaglio errori SDI: le altre ricevute non hanno <ListaErrori> da mostrare.
       if (tipo.codice === 'NS') {
-        ricevuta.errori = estraiErroriScarto(await readFile(percorso));
+        ricevuta.errori = estraiErroriScarto(await leggiConRiprova(percorso));
       }
       return ricevuta;
     }));

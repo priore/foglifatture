@@ -82,3 +82,11 @@ test('II rata INPS artigiani/commercianti non scende mai sotto il 20 agosto', ()
     assert.ok(inpsArt.data >= `${anno}-08-20`, `II rata INPS artigiani ${anno} prima del 20/8`);
   }
 });
+
+test('scadenzeBaseAnno: con gestione separata niente rate fisse artigiani/commercianti (FP-007)', () => {
+  const tipi = (g) => scadenzeBaseAnno(2026, g).map((s) => s.tipo);
+  assert.ok(!tipi('gestioneSeparata').includes('INPS artigiani/commercianti'));
+  assert.equal(scadenzeBaseAnno(2026, 'gestioneSeparata').length, 4);
+  assert.equal(tipi('').filter((t) => t === 'INPS artigiani/commercianti').length, 4);
+  assert.equal(tipi('altra').filter((t) => t === 'INPS artigiani/commercianti').length, 4);
+});

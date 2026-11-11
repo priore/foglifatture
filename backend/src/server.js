@@ -100,6 +100,7 @@ app.get('/{*splat}', (req, res) => {
 // Error handler globale: qualunque eccezione non gestita nelle route finisce
 // nel log invece che sparire in console, con il dettaglio per poter intervenire.
 app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ errore: 'File troppo grande: supera la dimensione massima consentita per questo import' });
   logger.error(`Errore non gestito su ${req.method} ${req.originalUrl}`, { errore: err.message, stack: err.stack });
   res.status(500).json({ errore: 'Errore interno del server' });
 });

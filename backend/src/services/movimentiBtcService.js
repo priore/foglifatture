@@ -10,7 +10,10 @@ const TIPO_GIACENZA = 'saldo-iniziale';
 const TIPI_USCITA = ['vendita', 'spesa', 'trasferimento'];
 const FONTI_USCITA = ['manuale', 'import-polling', 'import-file'];
 
-const vuoto = () => ({ ingressi: [], uscite: [], valoriMercato: {} });
+export const EXCHANGE_NOTI = ['binance', 'coinbase', 'kraken', 'onetrading'];
+// fontiValoreMercato[anno] = { fonte } (prezzo recuperato) o { manuale: true } (inserito/corretto dall'utente).
+// exchangeRiferimento: scelta esplicita dell'utente; null = si usa quello con più operazioni.
+const vuoto = () => ({ ingressi: [], uscite: [], valoriMercato: {}, fontiValoreMercato: {}, exchangeRiferimento: null });
 
 export async function leggiMovimenti() {
   return { ...vuoto(), ...(await readJson(FILE, {})) };
@@ -56,7 +59,7 @@ export async function aggiungiIngresso(d) {
     data: d.data,
     satoshi: d.satoshi,
     costoEur: d.costoEur,
-    ...campiOpzionali(d, ['txid', 'indirizzo', 'custodia', 'note']),
+    ...campiOpzionali(d, ['txid', 'indirizzo', 'custodia', 'exchange', 'note']),
     fonte: 'manuale',
   };
   const mov = await leggiMovimenti();
@@ -127,7 +130,7 @@ export async function aggiungiUscita(d) {
     data: d.data,
     satoshi: d.satoshi,
     ricavoEur: d.tipo === 'trasferimento' ? 0 : d.ricavoEur,
-    ...campiOpzionali(d, ['feeSatoshi', 'cambioEurBtc', 'fonteCambio', 'custodia', 'txid', 'indirizzo', 'note']),
+    ...campiOpzionali(d, ['feeSatoshi', 'cambioEurBtc', 'fonteCambio', 'custodia', 'exchange', 'txid', 'indirizzo', 'note']),
     fonte,
   };
   const mov = await leggiMovimenti();
@@ -149,11 +152,37 @@ export const eliminaIngresso = (id) => elimina('ingressi', id);
 export const eliminaUscita = (id) => elimina('uscite', id);
 
 // Prezzo EUR/BTC al 31/12, base dell'IVCA sui lotti ancora detenuti (inserito dall'utente, §4d).
-export async function impostaValoreMercato(anno, prezzo) {
+export async function impostaValoreMercato(anno, prezzo, fonte) {
   if (!Number.isInteger(anno) || anno < 2000 || anno > 2100) errore('Anno non valido');
   if (!(typeof prezzo === 'number' && Number.isFinite(prezzo) && prezzo > 0)) errore('Valore EUR/BTC: numero > 0');
   const mov = await leggiMovimenti();
   mov.valoriMercato[anno] = prezzo;
+  mov.fontiValoreMercato[anno] = fonte ? { fonte: String(fonte) } : { manuale: true };
   await writeJson(FILE, mov);
   return mov.valoriMercato;
+}
+
+// Exchange dove si effettua la maggior parte delle operazioni (criterio della circolare 30/E per il cambio al 31/12):
+// conta i movimenti (acquisti, vendite, ricevuti), non i BTC. I trasferimenti tra wallet propri non sono operazioni.
+// Parità: vince l'exchange con l'operazione più recente. Nessun exchange noto: null.
+export function exchangePrevalente({ ingressi = [], uscite = [] }) {
+  const conta = new Map();
+  for (const m of [...ingressi, ...uscite.filter((u) => u.tipo !== 'trasferimento')]) {
+    if (!m.exchange) continue;
+    const c = conta.get(m.exchange) ?? { n: 0, ultima: '' };
+    conta.set(m.exchange, { n: c.n + 1, ultima: m.data > c.ultima ? m.data : c.ultima });
+  }
+  return [...conta].sort(([, a], [, b]) => b.n - a.n || b.ultima.localeCompare(a.ultima))[0]?.[0] ?? null;
+}
+
+// Exchange da usare per il cambio al 31/12: scelta dell'utente, altrimenti il prevalente, altrimenti Binance
+// (predefinito dei movimenti già in archivio, senza exchange registrato).
+export const exchangeEffettivo = (mov) => mov.exchangeRiferimento ?? exchangePrevalente(mov) ?? 'binance';
+
+export async function impostaExchangeRiferimento(exchange) {
+  if (exchange != null && !EXCHANGE_NOTI.includes(exchange)) errore(`Exchange non valido: ${exchange}`);
+  const mov = await leggiMovimenti();
+  mov.exchangeRiferimento = exchange ?? null;
+  await writeJson(FILE, mov);
+  return mov.exchangeRiferimento;
 }

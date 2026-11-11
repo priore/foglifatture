@@ -40,6 +40,19 @@ export function classificaFile(nome, contenuto, pivaOperatore) {
   return { tipo: 'ignorato', motivo: radice ? `XML non riconosciuto (${radice})` : 'XML non riconosciuto' };
 }
 
+// Aggiunge `avviso` alle fatture il cui numero è già in archivio o ripetuto nello stesso ZIP:
+// l'import le accetta, ma poi ogni emissione risponderebbe 409 «numeri duplicati».
+export function segnalaNumeriDuplicati(voci, numeriArchivio) {
+  const visti = new Set();
+  return voci.map((v) => {
+    const n = Number(v.anteprima?.numero);
+    if (v.tipo !== 'fattura' || !Number.isFinite(n)) return v;
+    const avviso = numeriArchivio.has(n) ? `numero ${n} già presente in archivio` : visti.has(n) ? `numero ${n} ripetuto nello ZIP` : undefined;
+    visti.add(n);
+    return avviso ? { ...v, avviso } : v;
+  });
+}
+
 // Legge lo ZIP e classifica ogni file. Un nome ripetuto (cartelle diverse) resta duplicato
 // nella lista: è l'import, non l'anteprima, a non creare doppioni.
 export function analizzaZip(buffer, pivaOperatore) {

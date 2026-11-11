@@ -7,7 +7,7 @@ import keytar from 'keytar';
 import { ibanValido } from '../lib/iban.js';
 import { parseEmails } from '../lib/email.js';
 import { VERSIONE_TERMINI } from '../lib/termini.js';
-import { readJson, writeJson, DATA_DIR, setDataDir } from '../lib/jsonStore.js';
+import { readJson, writeJson, DATA_DIR, setDataDir, leggiConRiprova } from '../lib/jsonStore.js';
 import { relativizzaPercorsoSdi, risolviPercorsoSdi } from '../lib/percorsoSdi.js';
 import { percorsoCambiato } from '../lib/cloudHook.js';
 
@@ -408,7 +408,12 @@ export async function saveConfig(partialConfig) {
     dati: current.dati,
   };
   // Su disco (config.json) le due password restano sempre vuote: risiedono solo nel Keychain.
-  await writeJson(CONFIG_FILE, { ...next, sdi: { ...next.sdi, percorsoArchivio: relativizzaPercorsoSdi(next.sdi.percorsoArchivio, DATA_DIR) } });
+  // Percorso archivio non cambiato dall'utente (arriva uguale a quello risolto da getConfig): si conserva il valore
+  // già salvato, altrimenti il predefinito sostituito nell'ambiente embedded sovrascriverebbe la scelta fatta altrove.
+  const sdiSalvato = (await readJson(CONFIG_FILE, null))?.sdi?.percorsoArchivio;
+  const sdiInvariato = next.sdi.percorsoArchivio === current.sdi.percorsoArchivio && sdiSalvato !== undefined;
+  const percorsoSdiDaSalvare = sdiInvariato ? sdiSalvato : relativizzaPercorsoSdi(next.sdi.percorsoArchivio, DATA_DIR);
+  await writeJson(CONFIG_FILE, { ...next, sdi: { ...next.sdi, percorsoArchivio: percorsoSdiDaSalvare } });
   return { ...next, pec: { ...next.pec, passwordMittente }, backup: { ...next.backup, password: backupPassword } };
 }
 
@@ -473,7 +478,7 @@ export async function applicaPercorsoDatiAllAvvio() {
 export async function apriArchivioEsistente(percorso) {
   const percorsoAssoluto = path.resolve(percorso || '');
   if (percorsoAssoluto === DATA_DIR) throw new Error('Il percorso indicato è già quello attuale');
-  const config = await readFile(path.join(percorsoAssoluto, 'config.json'), 'utf-8').then(JSON.parse, () => null);
+  const config = await leggiConRiprova(path.join(percorsoAssoluto, 'config.json')).then((b) => JSON.parse(b.toString('utf-8')), () => null);
   if (!config?.fornitore) {
     throw new Error('La cartella scelta non contiene un archivio valido (manca config.json con i dati del fornitore)');
   }

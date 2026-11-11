@@ -69,7 +69,7 @@ async function salvaGroq() {
     <div class="form-grid" style="margin-top:16px">
       <div class="field full">
         <label>Groq API Key {{ groqApiKeyImpostata ? '(già impostata — lascia vuoto per non cambiarla)' : '' }}</label>
-        <input type="password" v-model="groqApiKey" :placeholder="groqApiKeyImpostata ? '••••••••' : ''">
+        <input type="password" autocomplete="new-password" v-model="groqApiKey" :placeholder="groqApiKeyImpostata ? '••••••••' : ''">
       </div>
     </div>
 

@@ -100,3 +100,20 @@ test('i backup automatici degli ambienti embedded non entrano nel backup', async
     assert.ok(!existsSync(path.join(dest, CARTELLA_BACKUP_AUTOMATICI)));
   } finally { setDataDir(null); rmSync(sorgente, { recursive: true }); rmSync(dest, { recursive: true }); }
 });
+
+test('leggiConRiprova: ripete la lettura su errno -11 e rilancia gli altri errori', async () => {
+  const { leggiConRiprova } = await import('../lib/jsonStore.js');
+  await assert.rejects(leggiConRiprova('/percorso/inesistente', 3, 1), { code: 'ENOENT' });
+});
+
+test('leggiConRiprova: riesce dopo errno -11 ripetuti, si ferma al limite di tentativi', async () => {
+  const { leggiConRiprova } = await import('../lib/jsonStore.js');
+  const eagain = () => Object.assign(new Error('Unknown system error -11'), { errno: -11 });
+  let n = 0;
+  const dopoDue = async () => { if (++n <= 2) throw eagain(); return Buffer.from('ok'); };
+  assert.equal((await leggiConRiprova('x', 6, 1, dopoDue)).toString(), 'ok');
+  assert.equal(n, 3);
+  let m = 0;
+  await assert.rejects(leggiConRiprova('x', 3, 1, async () => { m++; throw eagain(); }), { errno: -11 });
+  assert.equal(m, 3);
+});

@@ -1,3 +1,8 @@
+---
+paths:
+  - "frontend/src/**"
+---
+
 # UI design rules (popups and dialogs)
 
 - **Confirm/cancel button pair**: the confirm action (OK, Aggiorna, Sì…) is on the LEFT of the popup, green (`btn btn-ok`). Cancel is on the RIGHT, soft red (`btn btn-warn`, the muted token, never a saturated red). Intermediate/secondary choices (e.g. "Sovrascrivi", "Sì, sempre") sit in the middle as `btn btn-blue` (or another filled colored variant): never a transparent/plain ghost button inside a popup, it must have a proper app-style background. Use `chiediScelta` from `composables/useConferma.js` for the three-button case.
@@ -9,5 +14,5 @@
 - **Lists / selections**: never use a native `<select>` (or a custom inline dropdown). Use `SelectField` (`components/common/SelectField.vue`, same `<option>`/`<optgroup>` slot and `v-model`; pass `titolo` and `descrizione`) or `ListaPopup` directly. The popup is centered with title, sub-description and OK/Cancel as above. Lists longer than 8 selectable items get a search box automatically.
 - **Dates**: never use `<input type="date|month">`; use `DateField` (`components/common/DateField.vue`) or `CalendarioPopup` directly.
 - **Confirmations and alerts**: never `confirm()`/`alert()`. Use `chiediConferma(msg, {titolo, ok})` / `avvisa(msg)` from `composables/useConferma.js` (single `ConfermaPopup` mounted in `App.vue`, `await` the boolean). Name the confirm button after the action ("Elimina", "Emetti"), not a generic OK.
-- **URLs in texts**: any address mentioned in a text (e.g. "get an API key at console.example.com") is a tappable `<a href="https://…" target="_blank" rel="noopener">`. In the Apple apps it opens in the external Safari, never in an in-app sheet. Never leave a bare URL as plain text or `<strong>`.
+- **URLs in texts**: any address mentioned in a text (e.g. "get an API key at console.example.com") is a tappable `<a href="https://…" target="_blank" rel="noopener">`. It opens in the external browser, never in an in-app sheet. Never leave a bare URL as plain text or `<strong>`.
 - **Modules that insert data** (payment forms, manual entries): never inline in the page. Use `ModuloPopup` (`components/common/ModuloPopup.vue`; `come-form` + `@invia` for a `<form>`, body in the default slot, buttons in the `azioni` slot). Same popup rules as above. In compact shells it becomes a full-screen modal view automatically when the content does not fit the screen.

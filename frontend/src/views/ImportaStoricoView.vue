@@ -389,7 +389,7 @@ async function riavvia() {
               <td><input type="checkbox" class="checkbox-app" :checked="selezionatiZip.has(v.nome)" :disabled="v.tipo === 'ignorato'" @change="alternaZip(v.nome)"></td>
               <td class="cella-descrizione">{{ v.nome }}</td>
               <td>{{ DESCRIZIONE_TIPO_ZIP[v.tipo] }}{{ v.codiceTipo ? ` (${v.codiceTipo})` : '' }}</td>
-              <td>{{ v.anteprima ? `n.${v.anteprima.numero} del ${v.anteprima.data}` : v.motivo || '' }}</td>
+              <td>{{ v.anteprima ? `n.${v.anteprima.numero} del ${v.anteprima.data}` : v.motivo || '' }}<span v-if="v.avviso" class="avviso-duplicato"> · ⚠ {{ v.avviso }}: l'emissione di nuove fatture verrebbe bloccata</span></td>
             </tr>
           </tbody>
         </table>
@@ -453,7 +453,7 @@ async function riavvia() {
       <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <p class="note-legal">Archivio cifrato di tutti i dati (timesheet, fatture, configurazione). Conserva la password: senza non è possibile ripristinare.</p>
         <div class="form-grid">
-          <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordEsporta"></div>
+          <div class="field field-full full"><label>Password</label><input type="password" autocomplete="new-password" v-model="passwordEsporta"></div>
         </div>
         <button class="btn btn-primary" :disabled="!passwordEsporta || esportandoBackup" @click="esportaBackup">
           {{ esportandoBackup ? 'Esporto…' : 'Scarica backup' }}
@@ -472,7 +472,7 @@ async function riavvia() {
             <FileDrop accept=".tsbk" label="Trascina il file .tsbk o clicca per sfogliare" label-touch="Tocca per scegliere il file .tsbk" @change="files => fileBackup = files[0] ?? null" />
             <span v-if="fileBackup" class="badge-mono">{{ fileBackup.name }}</span>
           </div>
-          <div class="field field-full full"><label>Password</label><input type="password" v-model="passwordRipristina"></div>
+          <div class="field field-full full"><label>Password</label><input type="password" autocomplete="new-password" v-model="passwordRipristina"></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <button class="btn btn-primary" :disabled="!fileBackup || !passwordRipristina || ripristinandoBackup" @click="ripristinaBackup">

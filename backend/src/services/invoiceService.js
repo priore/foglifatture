@@ -141,6 +141,11 @@ async function tutteLeFatture() {
   return [...fatture.filter(Boolean), ...note].sort((a, b) => Number(a.numero) - Number(b.numero));
 }
 
+// Numeri già usati (fatture e note di credito): l'emissione si blocca se la sequenza ne ha di duplicati.
+export async function numeriInUso() {
+  return new Set((await tutteLeFatture()).map((d) => Number(d.numero)).filter(Number.isFinite));
+}
+
 // ProgressivoInvio SDI: a differenza del numero fattura (che identifica il documento
 // fiscale e non cambia mai), il progressivo identifica il singolo TENTATIVO di
 // trasmissione — ogni invio o reinvio via PEC (anche dopo scarto) ne consuma uno nuovo.

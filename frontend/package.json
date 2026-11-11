@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/composables/useCalcoli.test.js"
+    "test": "node --test src/composables/useCalcoli.test.js src/composables/useTemplateData.test.js",
+    "test:e2e": "node --experimental-test-module-mocks --test --test-concurrency=1 --test-timeout=120000 e2e/*.test.js"
   },
   "dependencies": {
     "handlebars": "^4.7.9",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
+    "playwright-core": "^1.65.0",
     "vite": "^8.3.1"
   }
 }

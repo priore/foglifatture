@@ -22,7 +22,7 @@ const ingresso = { tipo: 'acquisto', data: '2099-06-10', satoshi: 10_000_000, co
 const vendita = { tipo: 'vendita', data: '2099-08-20', satoshi: 3_000_000, ricavoEur: 350 };
 
 test('file mancante: default vuoto', async () => {
-  assert.deepEqual(await leggiMovimenti(), { ingressi: [], uscite: [], valoriMercato: {} });
+  assert.deepEqual(await leggiMovimenti(), { ingressi: [], uscite: [], valoriMercato: {}, fontiValoreMercato: {}, exchangeRiferimento: null });
 });
 
 test('CRUD ingresso e uscita, valoriMercato preservato', async () => {

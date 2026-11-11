@@ -148,14 +148,14 @@ function formatta(data) {
 .cp-riepilogo b { font-size: 1.5rem; line-height: 1.1; }
 .cp-riepilogo span { font-size: var(--font-size-xs); color: var(--muted); }
 .cp-riepilogo .ko b { color: var(--warn); }
-.cp-riepilogo .wait b { color: var(--accent); }
+.cp-riepilogo .wait b { color: var(--accent-text); }
 .cp-riepilogo .ok b { color: var(--ok); }
 .cp-archivio > summary { cursor: pointer; font-size: 1rem; font-weight: 600; margin: 18px 0 8px; }
 .cp-titolo { font-size: 1rem; margin: 18px 0 8px; }
 .cp-lista { display: flex; flex-direction: column; gap: 10px; }
-.cp-scheda { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; border-left: 4px solid var(--line); }
-.cp-scheda.ko { border-left-color: var(--warn); }
-.cp-scheda.wait { border-left-color: var(--accent); }
+.cp-scheda { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.cp-scheda.ko { border-color: var(--warn); }
+.cp-scheda.wait { border-color: var(--accent); }
 .cp-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cp-stato { font-size: var(--font-size-xs); font-weight: 600; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--ground); color: var(--ink-soft); }
 .cp-stato.ok { background: var(--ok-bg); color: var(--ok); }

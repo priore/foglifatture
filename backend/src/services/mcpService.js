@@ -137,7 +137,7 @@ export async function callTool(name, args = {}) {
     case 'scadenze_fiscali':
       // ponytail: date base, non prossimeScadenzeFiscali() — quella può lanciare una ricerca AI
       // (quota + invio dati a terzi) e un server di sola lettura non deve avere effetti. Proroghe: aggiungere solo leggendo la cache.
-      return proiettaScadenze(scadenzeBaseAnno(annoDa(args)));
+      return proiettaScadenze(scadenzeBaseAnno(annoDa(args), (await getConfig()).forfettario?.gestionePrevidenziale));
     case 'versamenti_f24':
       return proiettaF24(await listF24(annoDa(args)));
     case 'bollo_trimestrale':

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { radiceXml, classificaFile } from './importZipService.js';
+import { radiceXml, classificaFile, segnalaNumeriDuplicati } from './importZipService.js';
 
 const xml = testo => Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>\n${testo}`);
 
@@ -39,4 +39,14 @@ test('fattura ricevuta (cedente diverso dall\'operatore) ⇒ ignorata; senza p.i
   assert.equal(classificaFile('f.xml', fattura, '1234567890').tipo, 'fattura');
   assert.match(classificaFile('f.xml', fattura, '09999999999').motivo, /ricevuta/);
   assert.equal(classificaFile('f.xml', fattura, '').tipo, 'fattura');
+});
+
+test('segnalaNumeriDuplicati: avvisa su numero in archivio o ripetuto nello ZIP', () => {
+  const f = (numero) => ({ tipo: 'fattura', anteprima: { numero } });
+  const r = segnalaNumeriDuplicati([f('3'), f('4'), f('4'), { tipo: 'ricevuta' }, f('x')], new Set([3]));
+  assert.match(r[0].avviso, /già presente/);
+  assert.equal(r[1].avviso, undefined);
+  assert.match(r[2].avviso, /ripetuto/);
+  assert.equal(r[3].avviso, undefined);
+  assert.equal(r[4].avviso, undefined);
 });

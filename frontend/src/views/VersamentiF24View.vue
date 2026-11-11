@@ -1,4 +1,5 @@
 <script setup>
+import { annoSelezionato } from '../composables/useAnnoSelezionato.js';
 import { chiediConferma } from '../composables/useConferma.js';
 import { formattaEuro } from '../composables/useFormati.js';
 import SelectField from '../components/common/SelectField.vue';
@@ -10,7 +11,6 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { api } from '../services/api.js';
 
 const anni = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-const annoSelezionato = ref(new Date().getFullYear());
 const impostaStimata = ref(0);
 const versamenti = ref([]);
 const errore = ref('');

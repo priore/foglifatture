@@ -74,5 +74,5 @@ const percorsoSmooth = computed(() => {
 .line-chart { display: flex; flex-direction: column; gap: 4px; }
 .line-svg { width: 100%; height: 80px; }
 .line-chart-sparkline .line-svg { height: 48px; }
-.line-legenda { display: flex; justify-content: space-between; font-size: .68rem; color: var(--muted); }
+.line-legenda { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
 </style>

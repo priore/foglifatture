@@ -16,10 +16,11 @@ import { generaProspettoPdf } from '../services/prospettoDichiarazionePdfService
 import { generaF24Pdf } from '../services/f24PdfService.js';
 import { listF24, creaF24DaPiano, creaF24DaPianoConCompensazione, aggiornaStatoF24, eliminaF24, filtraGiaPresentiInF24 } from '../services/f24StateService.js';
 import { listCrediti, aggiungiCredito, eliminaCredito, creditiConResiduo, suggerisciOrdineCrediti } from '../services/creditiService.js';
-import { leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato, dichiaraGiacenza } from '../services/movimentiBtcService.js';
+import { exchangeEffettivo, impostaExchangeRiferimento, leggiMovimenti, aggiungiIngresso, aggiungiUscita, eliminaIngresso, eliminaUscita, impostaValoreMercato, dichiaraGiacenza } from '../services/movimentiBtcService.js';
 import { lottiConStato, calcolaPlusvalenze, riepilogoAnnuale, anteprimaUscita } from '../services/lottiBtcService.js';
 import { importaDaFile } from '../services/importFileBtcService.js';
 import { leggiProposte, confermaProposta, scartaProposta, ripristinaProposta, controllaOra } from '../services/importBtcService.js';
+import { prezzoChiusura3112 } from '../services/prezzoStoricoBtcService.js';
 import { scadenzeBollo } from '../services/bolloTrimestrale.js';
 
 export const forfettarioRoutes = Router();
@@ -564,9 +565,26 @@ forfettarioRoutes.post('/btc/plusvalenze/anteprima', async (req, res) => {
   }
 });
 
+forfettarioRoutes.get('/btc/rw/prezzo-storico', async (req, res) => {
+  try {
+    const exchange = req.query.exchange || exchangeEffettivo(await leggiMovimenti());
+    res.json(await prezzoChiusura3112(Number(req.query.anno), exchange));
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
+forfettarioRoutes.put('/btc/rw/exchange-riferimento', async (req, res) => {
+  try {
+    res.json({ exchangeRiferimento: await impostaExchangeRiferimento(req.body.exchange ?? null) });
+  } catch (err) {
+    res.status(400).json({ errore: err.message });
+  }
+});
+
 forfettarioRoutes.put('/btc/rw/valore-mercato', async (req, res) => {
   try {
-    const valoriMercato = await impostaValoreMercato(Number(req.body.anno), req.body.prezzoEurBtc);
+    const valoriMercato = await impostaValoreMercato(Number(req.body.anno), req.body.prezzoEurBtc, req.body.fonte);
     res.json({ valoriMercato });
   } catch (err) {
     res.status(400).json({ errore: err.message });

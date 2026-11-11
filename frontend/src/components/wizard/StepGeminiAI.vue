@@ -121,7 +121,7 @@ async function avviaLoginCli() {
         <div class="form-grid">
           <div class="field full">
             <label>Gemini API Key {{ geminiApiKeyImpostata ? '(già impostata — lascia vuoto per non cambiarla)' : '' }}</label>
-            <input type="password" v-model="geminiApiKey" :placeholder="geminiApiKeyImpostata ? '••••••••' : ''">
+            <input type="password" autocomplete="new-password" v-model="geminiApiKey" :placeholder="geminiApiKeyImpostata ? '••••••••' : ''">
           </div>
         </div>
         <div style="margin-top:12px;display:flex;align-items:center;gap:12px">

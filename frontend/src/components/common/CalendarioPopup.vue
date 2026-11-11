@@ -35,7 +35,20 @@ const celle = computed(() => {
 });
 const chiaveGiorno = (g) => `${anno.value}-${pad(mese.value)}-${pad(g)}`;
 
+// Vista «anni»: griglia di 12 anni attorno all'anno corrente del calendario, per salti rapidi.
+const annoInizio = ref(a0 - 5);
+const anni = computed(() => Array.from({ length: 12 }, (_, i) => annoInizio.value + i));
+function alternaVista() {
+  if (vista.value === 'giorni') vista.value = 'mesi';
+  else if (vista.value === 'mesi') { annoInizio.value = anno.value - 5; vista.value = 'anni'; }
+  else vista.value = 'mesi';
+}
+function scegliAnno(a) {
+  anno.value = a;
+  vista.value = 'mesi';
+}
 function sposta(delta) {
+  if (vista.value === 'anni') { annoInizio.value += delta * 12; return; }
   if (vista.value === 'mesi') { anno.value += delta; return; }
   const d = new Date(anno.value, mese.value - 1 + delta, 1);
   anno.value = d.getFullYear();
@@ -64,9 +77,8 @@ onUnmounted(() => window.removeEventListener('keydown', alTasto));
         <div class="cal-nav">
           <button type="button" class="cal-freccia" aria-label="Precedente" @click="sposta(-1)">‹</button>
           <button
-            type="button" class="cal-etichetta" :disabled="modo === 'mese'"
-            @click="vista = vista === 'giorni' ? 'mesi' : 'giorni'"
-          >{{ vista === 'mesi' ? anno : `${NOMI_MESI[mese - 1]} ${anno}` }}</button>
+            type="button" class="cal-etichetta" @click="alternaVista"
+          >{{ vista === 'anni' ? `${annoInizio}–${annoInizio + 11}` : vista === 'mesi' ? anno : `${NOMI_MESI[mese - 1]} ${anno}` }}</button>
           <button type="button" class="cal-freccia" aria-label="Successivo" @click="sposta(1)">›</button>
         </div>
 
@@ -81,6 +93,14 @@ onUnmounted(() => window.removeEventListener('keydown', alTasto));
               @click="bozza = chiaveGiorno(g)"
             >{{ g }}</button>
           </template>
+        </div>
+        <div v-else-if="vista === 'anni'" class="cal-griglia cal-mesi">
+          <button
+            v-for="a in anni" :key="a" type="button" class="cal-giorno"
+            :class="{ selezionato: a === anno, oggi: a === oggi.getFullYear() }"
+            :disabled="fuoriLimiti(String(a))"
+            @click="scegliAnno(a)"
+          >{{ a }}</button>
         </div>
         <div v-else class="cal-griglia cal-mesi">
           <button

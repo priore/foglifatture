@@ -16,7 +16,12 @@ timesheetRoutes.get('/:anno/:mese/:clienteId', async (req, res) => {
 
 timesheetRoutes.put('/:anno/:mese/:clienteId', async (req, res) => {
   const { anno, mese, clienteId } = req.params;
-  const timesheet = await saveTimesheet(Number(anno), Number(mese), clienteId, req.body.giorni);
+  const { giorni } = req.body ?? {};
+  // Prima di scrivere: un corpo malformato non deve lasciare su disco un mese illeggibile.
+  if (!Array.isArray(giorni) || giorni.some((g) => !g || typeof g !== 'object' || Array.isArray(g))) {
+    return res.status(400).json({ errore: 'Giorni del timesheet non validi' });
+  }
+  const timesheet = await saveTimesheet(Number(anno), Number(mese), clienteId, giorni);
   res.json({ ...timesheet, riepilogo: calcolaRiepilogo(timesheet) });
 });
 

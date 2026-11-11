@@ -7,10 +7,10 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { importaTimesheetDaXls, estraiAnnoMeseDaNomeFile } from '../services/xlsTimesheetImporter.js';
 import { importaFatturaDaXml, eFatturaRicevuta, normalizzaPiva } from '../services/xmlInvoiceImporter.js';
-import { analizzaZip } from '../services/importZipService.js';
+import { analizzaZip, segnalaNumeriDuplicati } from '../services/importZipService.js';
 import { archiviaRicevuta } from '../services/sdiRicevuteService.js';
 import { saveTimesheet } from '../services/timesheetService.js';
-import { saveInvoice } from '../services/invoiceService.js';
+import { saveInvoice, numeriInUso } from '../services/invoiceService.js';
 import { getConfig, saveConfig } from '../services/configService.js';
 import { logger } from '../lib/logger.js';
 import { randomUUID } from 'node:crypto';
@@ -215,7 +215,8 @@ importRoutes.post('/zip/anteprima', uploadZip.single('file'), async (req, res) =
   if (!req.file) return res.status(400).json({ errore: 'Nessun file caricato' });
   try {
     const { fornitore } = await getConfig();
-    const file = analizzaZip(req.file.buffer, fornitore?.partitaIva).map(({ nome, tipo, codiceTipo, motivo, anteprima }) => ({ nome, tipo, codiceTipo, motivo, anteprima }));
+    const file = segnalaNumeriDuplicati(analizzaZip(req.file.buffer, fornitore?.partitaIva), await numeriInUso())
+      .map(({ nome, tipo, codiceTipo, motivo, anteprima, avviso }) => ({ nome, tipo, codiceTipo, motivo, anteprima, avviso }));
     res.json({ file });
   } catch (err) {
     logger.error('Errore lettura ZIP', { errore: err.message });

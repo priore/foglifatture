@@ -20,7 +20,7 @@ defineProps({
       <input v-else value="backup-automatici (nell'archivio)" disabled>
     </div>
     <div class="field"><label>Ogni (minuti)</label><input type="number" min="1" v-model.number="modelValue.intervalloOreMinuti" :disabled="!modelValue.abilitato"></div>
-    <div class="field"><label>Password di cifratura</label><input type="password" v-model="modelValue.password" :disabled="!modelValue.abilitato"></div>
+    <div class="field"><label>Password di cifratura</label><input type="password" autocomplete="new-password" v-model="modelValue.password" :disabled="!modelValue.abilitato"></div>
   </div>
   <p class="note-legal" style="margin-top:16px">
     Il backup automatico viene salvato cifrato nella cartella indicata con la cadenza scelta.

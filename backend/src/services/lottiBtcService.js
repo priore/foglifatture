@@ -3,7 +3,8 @@
 // Il nucleo di calcolo è puro (testabile
 // senza I/O); in fondo le funzioni async che caricano fatture, movimenti e regole.
 import { listMesiFatturati, getInvoice, arricchisciStatoPagamento } from './invoiceService.js';
-import { leggiMovimenti, validaUscita } from './movimentiBtcService.js';
+import { leggiMovimenti, validaUscita, exchangePrevalente, exchangeEffettivo, EXCHANGE_NOTI } from './movimentiBtcService.js';
+import { exchangeSupportati } from './prezzoStoricoBtcService.js';
 import { regoleAnno } from './regoleFiscaliService.js';
 import { listVersamenti, accontiIvcaVersati } from './versamentiF24Service.js';
 
@@ -176,8 +177,9 @@ async function caricaDati() {
     const f = arricchisciStatoPagamento(await getInvoice(c.anno, c.mese, c.clienteId));
     return f && { anno: c.anno, mese: c.mese, clienteId: c.clienteId, pagamenti: f.pagamenti };
   }))).filter(Boolean);
-  const { ingressi, uscite, valoriMercato } = await leggiMovimenti();
-  return { lotti: unisciLotti(lottiDaFatture(fatture), ingressi), uscite, valoriMercato };
+  const mov = await leggiMovimenti();
+  const { ingressi, uscite, valoriMercato } = mov;
+  return { lotti: unisciLotti(lottiDaFatture(fatture), ingressi), uscite, valoriMercato, mov };
 }
 
 export async function costruisciLotti() {
@@ -271,9 +273,14 @@ export async function riepilogoAnnuale(anno) {
   const saldo = saldoDaLotti(lifoAllaData(dati, `${anno}-12-31`).lotti);
   const prezzo = dati.valoriMercato[anno] ?? null;
   const ivca = cripto ? ivcaSu(dati, anno, cripto) : null;
+  const { mov } = dati;
+  const prezzoDi = (a) => (dati.valoriMercato[a] == null ? null : { valore: dati.valoriMercato[a], ...(mov.fontiValoreMercato?.[a] ?? { manuale: true }) });
   return {
     anno,
     plusvalenze,
+    // Prezzi EUR/BTC al 31/12 con fonte (o «manuale») e exchange di riferimento per il recupero automatico.
+    prezzi: { inizio: prezzoDi(anno - 1), fine: prezzoDi(anno) },
+    exchange: { riferimento: mov.exchangeRiferimento ?? null, prevalente: exchangePrevalente(mov), effettivo: exchangeEffettivo(mov), noti: EXCHANGE_NOTI, supportati: exchangeSupportati() },
     saldo: { ...saldo, valoreEur: prezzo == null ? null : arrotonda((saldo.satoshi / SAT) * prezzo) },
     ivca,
     codiciTributo: cripto?.codiciTributo ?? null,
