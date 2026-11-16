@@ -2,7 +2,8 @@
 
 [![Licenza](https://img.shields.io/badge/licenza-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
-![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows-lightgrey)
+![Piattaforma](https://img.shields.io/badge/piattaforma-macOS%20%7C%20Windows%20%7C%20iPhone%20%7C%20iPad-lightgrey)
+[![App Store](https://img.shields.io/badge/App%20Store-iPhone%20%7C%20iPad-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/it/app/id1553543725)
 ![FatturaPA XML](https://img.shields.io/badge/FatturaPA%20XML-conforme-blue)
 ![Invio SDI](https://img.shields.io/badge/SDI-invio%20diretto-blue)
 ![Incasso Bitcoin](https://img.shields.io/badge/Bitcoin-incasso%20fatture-orange?logo=bitcoin)
@@ -19,6 +20,10 @@ App per chi lavora in regime forfettario, con due funzioni indipendenti:
 - **Fatturazione elettronica** — genera fatture calcolate da timesheet (ore × tariffa) oppure a importo e descrizione liberi, senza bisogno del timesheet.
 
 Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
+
+Disponibile anche per iPhone e iPad:
+
+[![Scarica su App Store](https://img.shields.io/badge/Scarica%20su-App%20Store-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/it/app/id1553543725)
 
 ## Indice
 
@@ -163,6 +168,7 @@ Gira sul tuo computer: nessun dato va su internet, nessun abbonamento.
 
 ### Dati, sicurezza, piattaforma
 
+- **App per iPhone e iPad** — disponibile su [App Store](https://apps.apple.com/it/app/id1553543725).
 - **Multi-piattaforma** — installazione come servizio persistente su macOS (`launchd`) e Windows (Task Scheduler).
 - **Archivio su cloud** — in Impostazioni → Percorso dati l'archivio può stare nella cartella dei client Dropbox, OneDrive o Google Drive installati sul computer, per usarlo su più computer.
   - Si sceglie il servizio da un popup; la sottocartella FogliFatture è fissa e la cartella del servizio si può cambiare con la finestra di sistema.

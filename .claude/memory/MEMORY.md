@@ -8,3 +8,4 @@ Index of project-specific rules kept in the repo so a checkout on any machine ca
 - [UI changes need pre/post screenshot](ui_changes_pre_post_screenshot.md) — grid/layout edits verified with Playwright screenshots before/after, light+dark, 2 viewports; unexplained diffs root-caused first
 - [Plans self-contained](plans_self_contained.md) — no outside refs to plan docs; root = live plans only, done → completati/, dropped → scartati/
 - [Plans: keep status](plans_keep_status.md) — never prune plan content; move files and update status marks only
+- [Backward compatibility](backward_compatibility.md) — fundamental: data, config, rule files, API and older builds must keep working; new fields optional, migrate old shapes

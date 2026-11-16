@@ -91,9 +91,9 @@ Stati: 💡 proposta · 🔍 in analisi (piano interno di dettaglio) · 🚧 in 
 
 ## FP-012 — Riordino delle card della dashboard
 
-**Stato:** 💡 proposta · **Impatto:** Basso · **Sforzo:** M
+**Stato:** ✅ implementata (v1.4.0, commit ced6efa; drag & drop con ordine salvato per browser, tre viste Dashboard/Bitcoin/F24) · **Impatto:** Basso · **Sforzo:** M
 
-🔴 L'ordine delle card è fisso. Un riordino scelto dall'utente, ricordato per dispositivo (preferenza di visualizzazione, non dato fiscale), adatterebbe la dashboard all'uso.
+🟢 Le card si riordinano a mano con il drag & drop e l'ordine è ricordato per browser (preferenza di visualizzazione, non dato fiscale), in `DashboardView.vue`.
 
 **Riferimenti:** `frontend/src/views/DashboardView.vue`
 
