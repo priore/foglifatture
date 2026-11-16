@@ -439,5 +439,7 @@ Scansiona il codice qui sotto con il tuo wallet, oppure copia l'indirizzo. In al
 
 |Donate with BTC (Bitcoin)|
 |:------------:|
-|![](https://www.prioregroup.com/images/priore_btc_segwit_binance.jpg)|
-|`BTC Address (SegWit) : bc1q6rj0uuwu9k2fvs5n5elmqy9v4ljazhexejykjm`|
+|![BTC QR code](docs/priore_btc_segwit_safepay.jpg)|
+|`BTC Address (SegWit) : bc1q6mxjea7xfjprl70k80jt8gyqxjvp5j6pa9yzxs`|
+
+Questo indirizzo può accettare solo BTC (Bitcoin). Per prevenire di perdere degli asset, NON inviare altre valute a questo indirizzo.
